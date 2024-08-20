@@ -10,34 +10,134 @@ The repository is organized into several main directories:
 lendpeak/
 │
 ├── src/
+│   ├── engine/            # Core stateless engine that handles lending computations
+│   │   ├── calculations/  # Modules related to financial calculations
+│   │   ├── contracts/     # Handling contract parameters and logic
+│   │   ├── outputs/       # Modules generating outputs based on computations
+│   │   └── utils/         # Utility functions and helpers for the engine
+│   │
+│   ├── api/               # API that interfaces with the engine
+│   │   ├── routes/        # API routes to expose engine functionality
+│   │   ├── controllers/   # Controllers handling API requests
+│   │   └── middlewares/   # Middleware for request processing
+│   │
+│   ├── backend/           # Backend services and logic, including user management
+│   │   ├── services/      # Business logic and services
+│   │   ├── models/        # Database models and ORM configurations
+│   │   ├── controllers/   # Controllers for managing business logic
+│   │   └── config/        # Backend configuration files
+│   │
+│   ├── frontend/          # Frontend applications and interfaces
+│   │   ├── lender-portal/ # Lender's portal application
+│   │   │   ├── components/ # UI components specific to the lender portal
+│   │   │   ├── pages/      # Lender portal pages (e.g., Dashboard, Portfolio)
+│   │   │   ├── services/   # Frontend services for API calls
+│   │   │   └── styles/     # Styles specific to the lender portal
+│   │   │
+│   │   ├── borrower-portal/ # Borrower's portal application
+│   │   │   ├── components/  # UI components specific to the borrower portal
+│   │   │   ├── pages/       # Borrower portal pages (e.g., Account, Payments)
+│   │   │   ├── services/    # Frontend services for API calls
+│   │   │   └── styles/      # Styles specific to the borrower portal
+│   │   │
+│   │   └── shared/          # Shared components, services, and styles between portals
+│   │       ├── components/  # Shared UI components
+│   │       ├── services/    # Shared services and API calls
+│   │       └── styles/      # Shared styles across both portals
+│   │
+│   └── common/            # Shared utilities, models, or components across the project
+│
 ├── docs/
+│   ├── architecture/
+│   ├── setup/
+│   ├── user-guides/
+│   ├── developer-guides/
+│   └── business/          # Business-related documents, including the business plan
+│
 ├── assets/
+│   ├── images/
+│   └── logos/
+│
 ├── tests/
+│   ├── unit/
+│   ├── integration/
+│   └── e2e/
+│
 ├── tools/
+│   ├── build/
+│   ├── deployment/
+│   └── dev-scripts/
+│
 ├── config/
+│   ├── dev/
+│   ├── staging/
+│   └── prod/
+│
 ├── plugins/
+│   ├── custom/
+│   └── third-party/
+│
 ├── data/
+│   ├── migrations/
+│   ├── seeds/
+│   └── backups/
+│
+├── db/
+│   ├── schema/
+│   ├── queries/
+│   └── config/
+│
 ├── .github/
+│   └── workflows/
+│
 ├── README.md
 ├── LICENSE
-└── CHANGELOG.md
+├── CHANGELOG.md
+└── CONTRIBUTING.md
 ```
 
 ### Directory Descriptions
 
 - **src/**: Contains the core source code for the LendPeak software. It is organized into subdirectories for different parts of the application:
 
-  - **api/**: API-specific code.
-  - **backend/**: Backend services and logic.
-  - **frontend/**: Frontend applications and interfaces.
-  - **common/**: Shared utilities, models, or components used across the project.
+  - **engine/**: Core stateless engine that handles all lending computations.
+    - **calculations/**: Modules related to financial calculations.
+    - **contracts/**: Handling contract parameters and business logic.
+    - **outputs/**: Modules generating outputs based on the computations.
+    - **utils/**: Utility functions and helpers for the engine.
+  - **api/**: API that interfaces with the engine, exposing its functionality via endpoints.
+    - **routes/**: API routes for different functionalities.
+    - **controllers/**: Controllers managing the logic for API requests.
+    - **middlewares/**: Middleware for processing API requests.
+  - **backend/**: Manages the persistence, business logic, and backend services.
+    - **services/**: Business logic and service layer.
+    - **models/**: Database models and ORM configurations.
+    - **controllers/**: Controllers managing business operations.
+    - **config/**: Configuration files for the backend services.
+  - **frontend/**: Contains the front-end code for both the lender and borrower portals.
+    - **lender-portal/**: Application and components specific to the lender's portal.
+      - **components/**: UI components specific to the lender portal.
+      - **pages/**: Lender portal pages, such as Dashboard and Portfolio.
+      - **services/**: Frontend services making API calls.
+      - **styles/**: Styles specific to the lender portal.
+    - **borrower-portal/**: Application and components specific to the borrower’s portal.
+      - **components/**: UI components specific to the borrower portal.
+      - **pages/**: Borrower portal pages, such as Account and Payments.
+      - **services/**: Frontend services making API calls.
+      - **styles/**: Styles specific to the borrower portal.
+    - **shared/**: Shared components, services, and styles used across both portals.
+      - **components/**: Shared UI components used in both portals.
+      - **services/**: Shared services and API calls.
+      - **styles/**: Shared styles across both portals.
+  - **common/**: Shared utilities, models, or components that can be used throughout the project.
 
-- **docs/**: All project documentation is stored here, organized by type:
+- **docs/**: Documentation for the project, organized by type:
 
   - **architecture/**: Diagrams and descriptions of the system architecture.
   - **setup/**: Setup guides, including this document.
   - **user-guides/**: Manuals and feature documentation for end users.
   - **developer-guides/**: Documentation aimed at developers.
+  - **business/**: Business-related documents, including the business plan.
 
 - **assets/**: Stores non-code assets such as images, logos, and other design materials:
 
@@ -67,20 +167,17 @@ lendpeak/
   - **custom/**: Custom plugins developed in-house.
   - **third-party/**: Third-party plugins or integrations.
 
-- **data/**: Contains data-related files such as sample datasets, database migration scripts, seed data, and backups:
-
-  - **migrations/**: Database migration scripts that evolve your database schema over time.
-  - **seeds/**: Seed data scripts to populate your database with initial data for development or testing.
-  - **backups/**: Directory for storing database backups.
-
-- **db/**: Stores database schema definitions, predefined queries, and configuration files:
-  - **schema/**: SQL scripts or schema definition files describing the structure of your database.
-  - **queries/**: Predefined SQL queries, stored procedures, or functions.
-  - **config/**: Configuration files related to the database, such as connection settings or ORM configurations.
 - **data/**: Contains data-related files such as sample datasets and database migration scripts:
 
   - **migrations/**: Database migration scripts.
-  - **samples/**: Sample data for testing or demos.
+  - **seeds/**: Seed data for initial database setup.
+  - **backups/**: Directory for database backups.
+
+- **db/**: Stores database schema definitions, predefined queries, and configuration files:
+
+  - **schema/**: SQL scripts or schema definition files describing the structure of your database.
+  - **queries/**: Predefined SQL queries, stored procedures, or functions.
+  - **config/**: Configuration files related to the database, such as connection settings or ORM configurations.
 
 - **.github/**: GitHub-specific files, such as CI/CD workflows and issue templates:
 
@@ -92,13 +189,4 @@ lendpeak/
 
 - **CHANGELOG.md**: A log of changes made to the project, organized by version.
 
-## How to Use This Structure
-
-- **Development**: Begin by adding your code to the appropriate subdirectory within `src/`. Use the `common/` directory for shared components or utilities.
-- **Documentation**: Add or update documentation in the `docs/` directory. Make sure to keep user guides and developer guides up to date as the project evolves.
-- **Testing**: Place your test cases in the `tests/` directory, organized by type.
-- **Assets**: Store all design files, images, and branding materials in the `assets/` directory.
-- **Configuration**: Use the `config/` directory to manage environment-specific settings, ensuring smooth deployment across dev, staging, and production environments.
-- **Plugins**: If developing or integrating plugins, add them to the `plugins/` directory.
-
-This structure is designed to be expandable as the project grows. As new needs arise, you can easily add additional subdirectories or files while maintaining a clear and organized repository.
+- **CONTRIBUTING.md**: Guidelines for contributing to the project.

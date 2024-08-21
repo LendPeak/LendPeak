@@ -21,56 +21,28 @@ class Currency {
   private value: Decimal;
   private roundingError: Decimal;
 
-  /**
-   * Creates an instance of Currency.
-   * @param amount - The initial amount for the currency. Can be a number, string, or Decimal.
-   */
   constructor(amount: number | string | Decimal) {
     this.value = new Decimal(amount);
     this.roundingError = new Decimal(0);
   }
 
-  /**
-   * Creates a Currency object initialized to zero.
-   * @returns {Currency} - A zero-initialized Currency object.
-   */
   static Zero(): Currency {
     return new Currency(0);
   }
 
-  /**
-   * Creates a Currency object with a specified amount.
-   * This is a shortcut method to create an instance without using the new keyword.
-   * @param amount - The initial amount for the currency.
-   * @returns {Currency} - A Currency object initialized with the specified amount.
-   */
   static of(amount: number | string | Decimal): Currency {
     return new Currency(amount);
   }
 
-  /**
-   * Gets the current value of the Currency object.
-   * @returns {Decimal} - The current value.
-   */
   getValue(): Decimal {
     return this.value;
   }
 
-  /**
-   * Gets the rounding error after the last rounding operation.
-   * @returns {Decimal} - The rounding error.
-   */
   getRoundingError(): Decimal {
     return this.roundingError;
   }
 
-  /**
-   * Rounds the value to the specified number of decimal places using the provided rounding method.
-   * @param decimalPlaces - The number of decimal places to round to.
-   * @param method - The rounding method to use. Defaults to ROUND_HALF_UP.
-   * @returns {Currency} - The Currency object with the rounded value.
-   */
-  round(decimalPlaces: number, method: RoundingMethod = RoundingMethod.ROUND_HALF_UP): Currency {
+  round(decimalPlaces: number = 2, method: RoundingMethod = RoundingMethod.ROUND_HALF_UP): Currency {
     const originalValue = this.value;
 
     switch (method) {
@@ -104,49 +76,73 @@ class Currency {
   }
 
   /**
-   * Adds the specified amount to the current value.
-   * @param amount - The amount to add.
-   * @returns {Currency} - The updated Currency object.
+   * Returns the value rounded to the specified number of decimal places.
+   * Defaults to two decimal places.
+   * @param decimalPlaces - The number of decimal places to round to. Defaults to 2.
+   * @param method - The rounding method to use. Defaults to ROUND_HALF_UP.
+   * @returns {Decimal} - The rounded Decimal value.
    */
-  add(amount: number | string | Decimal): Currency {
-    this.value = this.value.plus(amount);
+  getRoundedValue(decimalPlaces: number = 2, method: RoundingMethod = RoundingMethod.ROUND_HALF_UP): Decimal {
+    return this.value.toDecimalPlaces(decimalPlaces, this.getRoundingMode(method));
+  }
+
+  private getRoundingMode(method: RoundingMethod): Decimal.Rounding {
+    switch (method) {
+      case RoundingMethod.ROUND_UP:
+        return Decimal.ROUND_UP;
+      case RoundingMethod.ROUND_DOWN:
+        return Decimal.ROUND_DOWN;
+      case RoundingMethod.ROUND_HALF_UP:
+        return Decimal.ROUND_HALF_UP;
+      case RoundingMethod.ROUND_HALF_DOWN:
+        return Decimal.ROUND_HALF_DOWN;
+      case RoundingMethod.ROUND_HALF_EVEN:
+        return Decimal.ROUND_HALF_EVEN;
+      case RoundingMethod.ROUND_HALF_CEIL:
+        return Decimal.ROUND_CEIL;
+      case RoundingMethod.ROUND_HALF_FLOOR:
+        return Decimal.ROUND_FLOOR;
+      default:
+        return Decimal.ROUND_HALF_UP;
+    }
+  }
+
+  add(amount: number | string | Decimal | Currency): Currency {
+    if (amount instanceof Currency) {
+      this.value = this.value.plus(amount.value);
+    } else {
+      this.value = this.value.plus(amount);
+    }
     return this;
   }
 
-  /**
-   * Subtracts the specified amount from the current value.
-   * @param amount - The amount to subtract.
-   * @returns {Currency} - The updated Currency object.
-   */
-  subtract(amount: number | string | Decimal): Currency {
-    this.value = this.value.minus(amount);
+  subtract(amount: number | string | Decimal | Currency): Currency {
+    if (amount instanceof Currency) {
+      this.value = this.value.minus(amount.value);
+    } else {
+      this.value = this.value.minus(amount);
+    }
     return this;
   }
 
-  /**
-   * Multiplies the current value by the specified amount.
-   * @param amount - The amount to multiply by.
-   * @returns {Currency} - The updated Currency object.
-   */
-  multiply(amount: number | string | Decimal): Currency {
-    this.value = this.value.times(amount);
+  multiply(amount: number | string | Decimal | Currency): Currency {
+    if (amount instanceof Currency) {
+      this.value = this.value.times(amount.value);
+    } else {
+      this.value = this.value.times(amount);
+    }
     return this;
   }
 
-  /**
-   * Divides the current value by the specified amount.
-   * @param amount - The amount to divide by.
-   * @returns {Currency} - The updated Currency object.
-   */
-  divide(amount: number | string | Decimal): Currency {
-    this.value = this.value.div(amount);
+  divide(amount: number | string | Decimal | Currency): Currency {
+    if (amount instanceof Currency) {
+      this.value = this.value.div(amount.value);
+    } else {
+      this.value = this.value.div(amount);
+    }
     return this;
   }
 
-  /**
-   * Returns the value formatted as a string in currency format with two decimal places.
-   * @returns {string} - The formatted currency string.
-   */
   toCurrencyString(): string {
     return this.value.toFixed(2);
   }

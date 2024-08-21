@@ -6,10 +6,12 @@ The `Currency` class is a utility for handling currency amounts with high precis
 
 1. [Installation](#installation)
 2. [Class Overview](#class-overview)
-3. [Static Methods](#static-methods)
-4. [Instance Methods](#instance-methods)
+3. [Enum: RoundingMethod](#enum-roundingmethod)
+4. [Class: Currency](#class-currency)
+   - [Constructor](#constructor)
+   - [Static Methods](#static-methods)
+   - [Instance Methods](#instance-methods)
 5. [Usage Examples](#usage-examples)
-6. [Rounding Methods](#rounding-methods)
 
 ## Installation
 
@@ -21,21 +23,33 @@ npm install decimal.js
 
 ## Class Overview
 
-### `Currency`
+### Enum: `RoundingMethod`
 
-A class that represents a currency amount with precision handling using `decimal.js`. The class supports various rounding methods and tracks rounding errors.
+The `RoundingMethod` enum defines different rounding strategies:
 
-### Constructor
+- **`ROUND_UP`**: Round towards positive infinity.
+- **`ROUND_DOWN`**: Round towards zero.
+- **`ROUND_HALF_UP`**: Round towards the nearest neighbor. If equidistant, round up.
+- **`ROUND_HALF_DOWN`**: Round towards the nearest neighbor. If equidistant, round down.
+- **`ROUND_HALF_EVEN`**: Round towards the nearest neighbor. If equidistant, round towards the even neighbor.
+- **`ROUND_HALF_CEIL`**: Round towards the nearest neighbor. If equidistant, round towards positive infinity.
+- **`ROUND_HALF_FLOOR`**: Round towards the nearest neighbor. If equidistant, round towards negative infinity.
+
+### Class: `Currency`
+
+The `Currency` class handles currency amounts using `decimal.js` for precision and supports various rounding methods.
+
+#### Constructor
 
 ```typescript
 constructor(amount: number | string | Decimal)
 ```
 
-- **amount**: The initial amount for the currency. Can be a number, string, or `Decimal`.
+- **`amount`**: The initial amount for the currency. Can be a number, string, or `Decimal`.
 
-## Static Methods
+#### Static Methods
 
-### `Currency.Zero()`
+##### `Currency.Zero()`
 
 Creates a `Currency` object initialized to zero.
 
@@ -43,7 +57,7 @@ Creates a `Currency` object initialized to zero.
 static Zero(): Currency
 ```
 
-### `Currency.of(amount)`
+##### `Currency.of(amount)`
 
 Creates a `Currency` object with a specified amount. This is a shortcut method to create an instance without using the `new` keyword.
 
@@ -51,11 +65,11 @@ Creates a `Currency` object with a specified amount. This is a shortcut method t
 static of(amount: number | string | Decimal): Currency
 ```
 
-- **amount**: The initial amount for the currency.
+- **`amount`**: The initial amount for the currency.
 
-## Instance Methods
+#### Instance Methods
 
-### `getValue()`
+##### `getValue()`
 
 Gets the current value of the `Currency` object.
 
@@ -63,7 +77,7 @@ Gets the current value of the `Currency` object.
 getValue(): Decimal
 ```
 
-### `getRoundingError()`
+##### `getRoundingError()`
 
 Gets the rounding error after the last rounding operation.
 
@@ -71,18 +85,29 @@ Gets the rounding error after the last rounding operation.
 getRoundingError(): Decimal
 ```
 
-### `round(decimalPlaces, method)`
+##### `round(decimalPlaces: number = 2, method: RoundingMethod = RoundingMethod.ROUND_HALF_UP)`
 
-Rounds the value to the specified number of decimal places using the provided rounding method.
+Rounds the value to the specified number of decimal places using the provided rounding method. Defaults to rounding to two decimal places using the `ROUND_HALF_UP` method.
 
 ```typescript
-round(decimalPlaces: number, method: RoundingMethod = RoundingMethod.ROUND_HALF_UP): Currency
+round(decimalPlaces: number = 2, method: RoundingMethod = RoundingMethod.ROUND_HALF_UP): Currency
 ```
 
-- **decimalPlaces**: The number of decimal places to round to.
-- **method**: The rounding method to use. Defaults to `ROUND_HALF_UP`.
+- **`decimalPlaces`**: The number of decimal places to round to. Defaults to 2.
+- **`method`**: The rounding method to use. Defaults to `ROUND_HALF_UP`.
 
-### `add(amount)`
+##### `getRoundedValue(decimalPlaces: number = 2, method: RoundingMethod = RoundingMethod.ROUND_HALF_UP)`
+
+Returns the value rounded to the specified number of decimal places. Defaults to two decimal places.
+
+```typescript
+getRoundedValue(decimalPlaces: number = 2, method: RoundingMethod = RoundingMethod.ROUND_HALF_UP): Decimal
+```
+
+- **`decimalPlaces`**: The number of decimal places to round to. Defaults to 2.
+- **`method`**: The rounding method to use. Defaults to `ROUND_HALF_UP`.
+
+##### `add(amount: number | string | Decimal)`
 
 Adds the specified amount to the current value.
 
@@ -90,9 +115,9 @@ Adds the specified amount to the current value.
 add(amount: number | string | Decimal): Currency
 ```
 
-- **amount**: The amount to add.
+- **`amount`**: The amount to add.
 
-### `subtract(amount)`
+##### `subtract(amount: number | string | Decimal)`
 
 Subtracts the specified amount from the current value.
 
@@ -100,9 +125,9 @@ Subtracts the specified amount from the current value.
 subtract(amount: number | string | Decimal): Currency
 ```
 
-- **amount**: The amount to subtract.
+- **`amount`**: The amount to subtract.
 
-### `multiply(amount)`
+##### `multiply(amount: number | string | Decimal)`
 
 Multiplies the current value by the specified amount.
 
@@ -110,9 +135,9 @@ Multiplies the current value by the specified amount.
 multiply(amount: number | string | Decimal): Currency
 ```
 
-- **amount**: The amount to multiply by.
+- **`amount`**: The amount to multiply by.
 
-### `divide(amount)`
+##### `divide(amount: number | string | Decimal)`
 
 Divides the current value by the specified amount.
 
@@ -120,14 +145,24 @@ Divides the current value by the specified amount.
 divide(amount: number | string | Decimal): Currency
 ```
 
-- **amount**: The amount to divide by.
+- **`amount`**: The amount to divide by.
+
+##### `toCurrencyString()`
+
+Returns the value formatted as a string in currency format with two decimal places.
+
+```typescript
+toCurrencyString(): string
+```
+
+- **Returns**: A string representing the currency value formatted to two decimal places (e.g., `100` becomes `"100.00"`).
 
 ## Usage Examples
 
 ### Example 1: Creating a Currency Object
 
 ```typescript
-import { Currency } from "./Currency";
+import { Currency } from "@utils/currency";
 
 const amount = Currency.of(123.456);
 console.log(amount.getValue().toString()); // "123.456"
@@ -136,52 +171,52 @@ console.log(amount.getValue().toString()); // "123.456"
 ### Example 2: Rounding a Currency Value
 
 ```typescript
-import { Currency, RoundingMethod } from "./Currency";
+import { Currency, RoundingMethod } from "@utils/currency";
 
 const amount = Currency.of(123.456);
-amount.round(2, RoundingMethod.ROUND_HALF_UP);
+amount.round(); // Defaults to 2 decimal places with ROUND_HALF_UP
 console.log(`Rounded Value: ${amount.getValue().toString()}`); // Output: "123.46"
-console.log(`Rounding Error: ${amount.getRoundingError().toString()}`); // Output: "-0.004"
+
+const roundedValue = amount.getRoundedValue();
+console.log(`Rounded Value: ${roundedValue.toString()}`); // Output: "123.46"
 ```
 
 ### Example 3: Arithmetic Operations
 
 ```typescript
-import { Currency } from "./Currency";
+import { Currency } from "@utils/currency";
 
 const amount = Currency.of(100);
 amount.add(50.25);
-console.log(`New Value after Addition: ${amount.getValue().toString()}`); // Output: "150.25"
+console.log(`New Value after Addition: ${amount.getRoundedValue().toString()}`); // Output: "150.25"
 
 amount.subtract(20);
-console.log(`New Value after Subtraction: ${amount.getValue().toString()}`); // Output: "130.25"
+console.log(`New Value after Subtraction: ${amount.getRoundedValue().toString()}`); // Output: "130.25"
 
 amount.multiply(2);
-console.log(`New Value after Multiplication: ${amount.getValue().toString()}`); // Output: "260.50"
+console.log(`New Value after Multiplication: ${amount.getRoundedValue().toString()}`); // Output: "260.50"
 
 amount.divide(4);
-console.log(`New Value after Division: ${amount.getValue().toString()}`); // Output: "65.125"
+console.log(`New Value after Division: ${amount.getRoundedValue().toString()}`); // Output: "65.12"
 ```
 
 ### Example 4: Creating a Zero-Initialized Currency Object
 
 ```typescript
-import { Currency } from "./Currency";
+import { Currency } from "@utils/currency";
 
 const zeroAmount = Currency.Zero();
-console.log(`Zero Value: ${zeroAmount.getValue().toString()}`); // Output: "0"
+console.log(`Zero Value: ${zeroAmount.getRoundedValue().toString()}`); // Output: "0.00"
 ```
 
-## Rounding Methods
+### Example 5: Formatting a Value as a Currency String
 
-The `Currency` class supports the following rounding methods:
+```typescript
+import { Currency } from "@utils/currency";
 
-- **ROUND_UP**: Round towards positive infinity.
-- **ROUND_DOWN**: Round towards zero.
-- **ROUND_HALF_UP**: Round towards nearest neighbor. If equidistant, round up.
-- **ROUND_HALF_DOWN**: Round towards nearest neighbor. If equidistant, round down.
-- **ROUND_HALF_EVEN**: Round towards nearest neighbor. If equidistant, round towards the even neighbor.
-- **ROUND_HALF_CEIL**: Round towards nearest neighbor. If equidistant, round towards positive infinity.
-- **ROUND_HALF_FLOOR**: Round towards nearest neighbor. If equidistant, round towards negative infinity.
+const amount = Currency.of(100);
+console.log(amount.toCurrencyString()); // Output: "100.00"
 
-To use these methods, import the `RoundingMethod` enum from the `Currency` class.
+const amount2 = Currency.of(45.5);
+console.log(amount2.toCurrencyString()); // Output: "45.50"
+```

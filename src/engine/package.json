@@ -18,6 +18,8 @@
     "typescript": "^5.5.4"
   },
   "dependencies": {
+    "cli-table3": "^0.6.5",
+    "dayjs": "^1.11.13",
     "decimal.js": "^10.4.3"
   }
 }

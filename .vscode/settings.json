@@ -1,0 +1,15 @@
+{
+  "jest.projects": [
+    {
+      "name": "LandPeak Engine",
+      "jest.pathToJest": "npm test --", // Ensures it uses your npm test script
+      "jest.config": "src/engine/jest.config.js", // Adjust the path to your Jest configuration file if necessary
+      "jest.rootPath": "src/engine" // Set the root path where Jest should look for tests
+    }
+  ],
+   "auto-run-command.tasks": [
+    {
+      "task": "TypeScript Watch"
+    }
+  ]
+}

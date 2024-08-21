@@ -1,0 +1,17 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "TypeScript Watch",
+      "type": "shell",
+      "command": "tsc",
+      "args": ["-w", "-p", "."],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": ["$tsc-watch"],
+      "isBackground": true
+    }
+  ]
+}

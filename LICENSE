@@ -1,15 +1,16 @@
-# Create the LICENSE file and add the content
-echo "# LendPeak License
+# LendPeak License
 
 ## Core Software
 
 The core lending software provided by LendPeak is licensed under the Mozilla Public License 2.0 (MPL 2.0).
 
 ### You May:
+
 - Use, modify, and distribute the software under the terms of the MPL 2.0.
 - Keep modifications to your internal modules and packages private as long as the modifications to the MPL-licensed code itself are shared.
 
 ### You Must:
+
 - Disclose any modifications made to the core software files under the MPL 2.0 when distributed.
 - Include a copy of this license in any distribution of the software.
 
@@ -27,5 +28,4 @@ All contributors to the core software must sign a Contributor License Agreement 
 
 ## Warranty Disclaimer
 
-The software is provided \"as-is\" without any warranty, express or implied. In no event shall LendPeak be liable for any claim, damages, or other liability, whether in an action of contract, tort, or otherwise, arising from, out of, or in connection with the software or the use or other dealings in the software." > lendpeak/LICENSE
-
+The software is provided "as-is" without any warranty, express or implied. In no event shall LendPeak be liable for any claim, damages, or other liability, whether in an action of contract, tort, or otherwise, arising from, out of, or in connection with the software or the use or other dealings in the software.

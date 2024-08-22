@@ -1,7 +1,7 @@
 import dayjs from "dayjs";
-import { InterestCalculator, PaymentSplit } from "@calculators/interestCalculator";
-import { CalendarType } from "@utils/calendar";
-import { Currency } from "@utils/currency";
+import { InterestCalculator, PaymentSplit } from "@models/InterestCalculator";
+import { CalendarType } from "@models/Calendar";
+import { Currency } from "@utils/Currency";
 
 describe("InterestCalculator", () => {
   const principal = Currency.of(100000); // $100,000 principal

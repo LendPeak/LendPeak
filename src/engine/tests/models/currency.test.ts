@@ -1,4 +1,4 @@
-import { Currency, RoundingMethod } from "../../utils/currency";
+import { Currency, RoundingMethod } from "@utils/Currency";
 import Decimal from "decimal.js";
 
 describe("Currency Class", () => {

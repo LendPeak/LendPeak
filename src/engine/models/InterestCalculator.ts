@@ -1,6 +1,6 @@
 import { Dayjs } from "dayjs";
-import { Currency } from "@utils/currency";
-import { Calendar, CalendarType } from "@utils/calendar";
+import { Currency } from "../utils/Currency";
+import { Calendar, CalendarType } from "./Calendar";
 
 interface PaymentSplit {
   principal: Currency;

@@ -3,7 +3,7 @@ import Decimal from "decimal.js";
 /**
  * Enum representing the available rounding methods.
  */
-enum RoundingMethod {
+export enum RoundingMethod {
   ROUND_UP,
   ROUND_DOWN,
   ROUND_HALF_UP,
@@ -17,7 +17,7 @@ enum RoundingMethod {
  * A class that represents a currency amount with precision handling using Decimal.js.
  * The class supports various rounding methods and tracks rounding errors.
  */
-class Currency {
+export class Currency {
   private value: Decimal;
   private roundingError: Decimal;
 
@@ -147,5 +147,3 @@ class Currency {
     return this.value.toFixed(2);
   }
 }
-
-export { Currency, RoundingMethod };

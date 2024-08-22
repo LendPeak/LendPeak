@@ -1,5 +1,5 @@
 import dayjs from "dayjs";
-import { Calendar, CalendarType } from "../../utils/calendar";
+import { Calendar, CalendarType } from "@models/Calendar";
 
 describe("Calendar Class", () => {
   const date1 = dayjs("2024-01-01");

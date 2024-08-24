@@ -5,23 +5,21 @@ import { LoanRestructureService } from "./services/RestructureService";
 import { PaymentService } from "./services/PaymentService";
 import { Restructure } from "./models/Restructure";
 import dayjs from "dayjs";
-
-// Extend the dayjs prototype
-dayjs.prototype.toJSON = function () {
-  return this.toISOString(); // Convert dayjs object to ISO string
-};
+import { Currency } from "./utils/Currency";
+import { CalendarType } from "./models/Calendar";
 
 const loan: Loan = {
   id: "loan1",
-  loanAmount: 100000,
-  interestRate: 0.05,
-  term: 360,
+  loanAmount: Currency.of(1000),
+  interestRate: 0.26,
+  term: 12,
   startDate: dayjs("2024-01-01"),
+  calendarType: CalendarType.THIRTY_360,
 };
 
 // Generate Amortization Schedule
 const amortization = AmortizationService.createAmortizationSchedule(loan);
-console.log(amortization.generateSchedule());
+amortization.printAmortizationSchedule();
 
 // Apply Loan Restructure
 const restructure: Restructure = {
@@ -30,7 +28,7 @@ const restructure: Restructure = {
 };
 
 const restructuredLoan = LoanRestructureService.applyRestructureToLoan(loan, restructure);
-console.log(restructuredLoan);
+//console.log(restructuredLoan);
 
 // Process Payment
 const payment: Payment = {
@@ -40,4 +38,4 @@ const payment: Payment = {
 };
 
 const updatedLoan = PaymentService.processPayment(restructuredLoan, payment);
-console.log(updatedLoan);
+//console.log(updatedLoan);

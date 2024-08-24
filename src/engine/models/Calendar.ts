@@ -1,5 +1,7 @@
 import dayjs, { Dayjs } from "dayjs";
+import isLeapYear from "dayjs/plugin/isLeapYear";
 
+dayjs.extend(isLeapYear);
 /**
  * Enum representing different calendar types.
  *
@@ -73,6 +75,55 @@ class Calendar {
       case CalendarType.ACTUAL_ACTUAL:
       default:
         return this.daysBetweenActual_Actual(date1, date2);
+    }
+  }
+
+  /**
+   * Adds a specified number of months to a date.
+   *
+   * @param date - The date to add months to.
+   * @param months - The number of months to add.
+   * @returns {Dayjs} - The new date with the added months.
+   */
+  addMonths(date: Dayjs, months: number): Dayjs {
+    return date.add(months, "month");
+  }
+
+  /**
+   * Gets the number of days in the month of a given date according to the current calendar type.
+   *
+   * @param date - The date to get the number of days in its month.
+   * @returns {number} - The number of days in the month based on the calendar type.
+   */
+  daysInMonth(date: Dayjs): number {
+    switch (this.calendarType) {
+      case CalendarType.THIRTY_360:
+      case CalendarType.THIRTY_ACTUAL:
+        return 30;
+      case CalendarType.ACTUAL_360:
+      case CalendarType.ACTUAL_365:
+      case CalendarType.ACTUAL_ACTUAL:
+      default:
+        return date.daysInMonth();
+    }
+  }
+
+  /**
+   * Gets the number of days in a year according to the current calendar type.
+   *
+   * @returns {number} - The number of days in the year based on the calendar type.
+   */
+  daysInYear(): number {
+    switch (this.calendarType) {
+      case CalendarType.THIRTY_360:
+      case CalendarType.ACTUAL_360:
+        return 360;
+      case CalendarType.ACTUAL_365:
+      case CalendarType.ACTUAL_ACTUAL:
+      case CalendarType.THIRTY_ACTUAL:
+        return 365;
+      default: // This should never happen
+        throw new Error("Invalid calendar type");
     }
   }
 

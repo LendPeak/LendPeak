@@ -1,6 +1,7 @@
 import { Dayjs } from "dayjs";
 import { Currency } from "../utils/Currency";
 import { Calendar, CalendarType } from "./Calendar";
+import Decimal from "decimal.js";
 
 interface PaymentSplit {
   principal: Currency;
@@ -26,9 +27,8 @@ class InterestCalculator {
    */
   calculateInterest(principal: Currency, startDate: Dayjs, endDate: Dayjs): Currency {
     const days = this.calendar.daysBetween(startDate, endDate);
-    const dailyInterestRate = this.annualInterestRate / 100 / 360; // Assuming 360-day year for simplicity
-    const interestAmount = principal.getValue().times(dailyInterestRate).times(days);
-    return Currency.of(interestAmount).round();
+    const interestAmount = this.calculateInterestForDays(principal, days);
+    return Currency.of(interestAmount);
   }
 
   /**
@@ -36,10 +36,25 @@ class InterestCalculator {
    * @param principal - The principal amount on which daily interest is calculated (Currency).
    * @returns {Currency} - The daily interest amount as a Currency object.
    */
-  calculateDailyInterest(principal: Currency): Currency {
-    const dailyInterestRate = this.annualInterestRate / 100 / 360; // Assuming 360-day year for simplicity
-    const dailyInterestAmount = principal.getValue().times(dailyInterestRate);
-    return Currency.of(dailyInterestAmount).round();
+  calculateDailyInterest(principal: Currency, customAnnualInterestRate?: number): Currency {
+    const annualRate = customAnnualInterestRate !== undefined ? customAnnualInterestRate : this.annualInterestRate;
+    const dailyInterestRate = new Decimal(annualRate).dividedBy(this.calendar.daysInYear());
+    const dailyInterestAmount = principal.multiply(dailyInterestRate);
+    return dailyInterestAmount;
+  }
+
+  /**
+   * Calculate the interest for a specified number of days.
+   * @param principal - The principal amount on which interest is calculated (Currency).
+   * @param days - The number of days for which to calculate interest.
+   * @param customAnnualInterestRate - (Optional) A custom annual interest rate to use for the calculation.
+   * @returns {Currency} - The interest amount as a Currency object.
+   */
+  calculateInterestForDays(principal: Currency, days: number, customAnnualInterestRate?: number): Currency {
+    const annualRate = customAnnualInterestRate !== undefined ? customAnnualInterestRate : this.annualInterestRate;
+    const dailyInterestRate = this.calculateDailyInterest(principal, annualRate);
+    const interestAmount = dailyInterestRate.multiply(days);
+    return interestAmount;
   }
 
   /**

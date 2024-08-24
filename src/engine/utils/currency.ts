@@ -8,7 +8,7 @@ export enum RoundingMethod {
   ROUND_DOWN,
   ROUND_HALF_UP,
   ROUND_HALF_DOWN,
-  ROUND_HALF_EVEN,
+  ROUND_HALF_EVEN, // aka Bankers Rounding
   ROUND_HALF_CEIL,
   ROUND_HALF_FLOOR,
 }
@@ -21,8 +21,12 @@ export class Currency {
   private value: Decimal;
   private roundingError: Decimal;
 
-  constructor(amount: number | string | Decimal) {
-    this.value = new Decimal(amount);
+  constructor(amount: number | string | Decimal | Currency) {
+    if (amount instanceof Currency) {
+      this.value = amount.getValue();
+    } else {
+      this.value = new Decimal(amount);
+    }
     this.roundingError = new Decimal(0);
   }
 
@@ -30,7 +34,7 @@ export class Currency {
     return new Currency(0);
   }
 
-  static of(amount: number | string | Decimal): Currency {
+  static of(amount: number | string | Decimal | Currency): Currency {
     return new Currency(amount);
   }
 
@@ -44,35 +48,37 @@ export class Currency {
 
   round(decimalPlaces: number = 2, method: RoundingMethod = RoundingMethod.ROUND_HALF_UP): Currency {
     const originalValue = this.value;
-
+    let roundedValue: Decimal;
     switch (method) {
       case RoundingMethod.ROUND_UP:
-        this.value = this.value.toDecimalPlaces(decimalPlaces, Decimal.ROUND_UP);
+        roundedValue = this.value.toDecimalPlaces(decimalPlaces, Decimal.ROUND_UP);
         break;
       case RoundingMethod.ROUND_DOWN:
-        this.value = this.value.toDecimalPlaces(decimalPlaces, Decimal.ROUND_DOWN);
+        roundedValue = this.value.toDecimalPlaces(decimalPlaces, Decimal.ROUND_DOWN);
         break;
       case RoundingMethod.ROUND_HALF_UP:
-        this.value = this.value.toDecimalPlaces(decimalPlaces, Decimal.ROUND_HALF_UP);
+        roundedValue = this.value.toDecimalPlaces(decimalPlaces, Decimal.ROUND_HALF_UP);
         break;
       case RoundingMethod.ROUND_HALF_DOWN:
-        this.value = this.value.toDecimalPlaces(decimalPlaces, Decimal.ROUND_HALF_DOWN);
+        roundedValue = this.value.toDecimalPlaces(decimalPlaces, Decimal.ROUND_HALF_DOWN);
         break;
       case RoundingMethod.ROUND_HALF_EVEN:
-        this.value = this.value.toDecimalPlaces(decimalPlaces, Decimal.ROUND_HALF_EVEN);
+        roundedValue = this.value.toDecimalPlaces(decimalPlaces, Decimal.ROUND_HALF_EVEN);
         break;
       case RoundingMethod.ROUND_HALF_CEIL:
-        this.value = this.value.toDecimalPlaces(decimalPlaces, Decimal.ROUND_CEIL);
+        roundedValue = this.value.toDecimalPlaces(decimalPlaces, Decimal.ROUND_CEIL);
         break;
       case RoundingMethod.ROUND_HALF_FLOOR:
-        this.value = this.value.toDecimalPlaces(decimalPlaces, Decimal.ROUND_FLOOR);
+        roundedValue = this.value.toDecimalPlaces(decimalPlaces, Decimal.ROUND_FLOOR);
         break;
       default:
-        this.value = this.value.toDecimalPlaces(decimalPlaces, Decimal.ROUND_HALF_UP);
+        roundedValue = this.value.toDecimalPlaces(decimalPlaces, Decimal.ROUND_HALF_UP);
     }
 
-    this.roundingError = originalValue.minus(this.value);
-    return this;
+    const roundingError = originalValue.minus(roundedValue);
+    const roundedCurrency = Currency.of(roundedValue);
+    roundedCurrency.roundingError = roundingError;
+    return roundedCurrency;
   }
 
   /**
@@ -109,41 +115,41 @@ export class Currency {
 
   add(amount: number | string | Decimal | Currency): Currency {
     if (amount instanceof Currency) {
-      this.value = this.value.plus(amount.value);
+      return Currency.of(this.value.plus(amount.value));
     } else {
-      this.value = this.value.plus(amount);
+      return Currency.of(this.value.plus(amount));
     }
-    return this;
   }
 
   subtract(amount: number | string | Decimal | Currency): Currency {
     if (amount instanceof Currency) {
-      this.value = this.value.minus(amount.value);
+      return Currency.of(this.value.minus(amount.value));
     } else {
-      this.value = this.value.minus(amount);
+      return Currency.of(this.value.minus(amount));
     }
-    return this;
   }
 
   multiply(amount: number | string | Decimal | Currency): Currency {
     if (amount instanceof Currency) {
-      this.value = this.value.times(amount.value);
+      return Currency.of(this.value.times(amount.value));
     } else {
-      this.value = this.value.times(amount);
+      return Currency.of(this.value.times(amount));
     }
-    return this;
   }
 
   divide(amount: number | string | Decimal | Currency): Currency {
     if (amount instanceof Currency) {
-      this.value = this.value.div(amount.value);
+      return Currency.of(this.value.dividedBy(amount.value));
     } else {
-      this.value = this.value.div(amount);
+      return Currency.of(this.value.dividedBy(amount));
     }
-    return this;
   }
 
   toCurrencyString(): string {
     return this.value.toFixed(2);
+  }
+
+  toJson(): string {
+    return this.toCurrencyString();
   }
 }

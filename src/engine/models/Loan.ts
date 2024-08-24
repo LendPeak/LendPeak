@@ -1,14 +1,12 @@
 import dayjs, { Dayjs } from "dayjs";
-
-// Extend the dayjs prototype
-dayjs.prototype.toJSON = function () {
-  return this.toISOString(); // Convert dayjs object to ISO string
-};
+import { Currency } from "@utils/Currency";
+import { CalendarType } from "./Calendar";
 
 export interface Loan {
   id: string;
-  loanAmount: number;
+  loanAmount: Currency;
   interestRate: number;
   term: number;
   startDate: Dayjs;
+  calendarType?: CalendarType;
 }

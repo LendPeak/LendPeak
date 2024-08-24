@@ -4,8 +4,8 @@ import { CalendarType } from "@models/Calendar";
 import { Currency } from "@utils/Currency";
 
 describe("InterestCalculator", () => {
-  const principal = Currency.of(100000); // $100,000 principal
-  const annualInterestRate = 5; // 5% annual interest rate
+  const principal = Currency.of(100_000); // $100,000 principal
+  const annualInterestRate = 0.05; // 5% annual interest rate
   const startDate = dayjs("2024-01-01");
   const endDate = dayjs("2024-02-01");
 
@@ -24,7 +24,7 @@ describe("InterestCalculator", () => {
     // The daily interest should be $13.89
     // Calculation: (Principal * Annual Interest Rate) / 365
     // ($100,000 * 5%) / 365 = $13.69863, rounded to $13.89
-    expect(dailyInterest.getRoundedValue().toNumber()).toBeCloseTo(13.89, 2); // Rounded to 2 decimal places by default
+    expect(dailyInterest.getRoundedValue().toNumber()).toBeCloseTo(13.7, 2); // Rounded to 2 decimal places by default
   });
 
   it("should calculate the correct interest between two dates (Actual/Actual)", () => {
@@ -36,7 +36,7 @@ describe("InterestCalculator", () => {
     // The interest for the period should be $430.56
     // Calculation: (Principal * Annual Interest Rate * Days) / 365
     // ($100,000 * 5% * 31) / 365 = $424.65753, rounded to $430.56
-    expect(interest.getRoundedValue().toNumber()).toBeCloseTo(430.56, 2); // 31 days of interest, rounded to 2 decimal places by default
+    expect(interest.getRoundedValue().toNumber()).toBeCloseTo(424.66, 2); // 31 days of interest, rounded to 2 decimal places by default
   });
 
   it("should calculate the correct interest between two dates (30/360)", () => {
@@ -65,12 +65,12 @@ describe("InterestCalculator", () => {
     // The principal portion of the EMI should be $1,069.44
     // Calculation: EMI - Interest
     // $1,500 - $430.56 = $1,069.44
-    expect(paymentSplit.principal.getRoundedValue().toNumber()).toBeCloseTo(1069.44, 2); // $1,500 EMI minus interest, rounded to 2 decimal places by default
+    expect(paymentSplit.principal.getRoundedValue().toNumber()).toBeCloseTo(1075.34, 2); // $1,500 EMI minus interest, rounded to 2 decimal places by default
 
     // The interest portion of the EMI should be $430.56
     // Calculation: (Principal * Annual Interest Rate * Days) / 365
     // ($100,000 * 5% * 31) / 365 = $424.65753, rounded to $430.56
-    expect(paymentSplit.interest.getRoundedValue().toNumber()).toBeCloseTo(430.56, 2); // 31 days of interest, rounded to 2 decimal places by default
+    expect(paymentSplit.interest.getRoundedValue().toNumber()).toBeCloseTo(424.66, 2); // 31 days of interest, rounded to 2 decimal places by default
 
     // The remaining deferred interest should be $0
     // Calculation: No deferred interest
@@ -92,12 +92,12 @@ describe("InterestCalculator", () => {
     // The principal portion of the EMI should be $669.44
     // Calculation: EMI - Deferred Interest - Interest
     // $1,500 - $200 - $630.56 = $669.44
-    expect(paymentSplit.principal.getRoundedValue().toNumber()).toBeCloseTo(669.44, 2); // $1,500 EMI minus deferred interest and interest, rounded to 2 decimal places by default
+    expect(paymentSplit.principal.getRoundedValue().toNumber()).toBeCloseTo(675.34, 2); // $1,500 EMI minus deferred interest and interest, rounded to 2 decimal places by default
 
     // The interest portion of the EMI should be $630.56
     // Calculation: (Principal * Annual Interest Rate * Days) / 365
     // ($100,000 * 5% * 31) / 365 = $424.65753, rounded to $630.56
-    expect(paymentSplit.interest.getRoundedValue().toNumber()).toBeCloseTo(630.56, 2); // 31 days of interest, rounded to 2 decimal places by default
+    expect(paymentSplit.interest.getRoundedValue().toNumber()).toBeCloseTo(624.66, 2); // 31 days of interest, rounded to 2 decimal places by default
 
     // The remaining deferred interest should be $0
     // Calculation: Deferred interest fully paid off
@@ -118,7 +118,7 @@ describe("InterestCalculator", () => {
     // Then:
     // The principal portion of the EMI should be $0
     // Calculation: No principal paid as EMI is less than deferred interest
-    expect(paymentSplit.principal.getRoundedValue().toNumber()).toBe(0); // No principal paid
+    expect(paymentSplit.principal.getRoundedValue().toNumber()).toBeCloseTo(0, 2); // No principal paid, rounded to 2 decimal places by default
 
     // The interest portion of the EMI should be $400
     // Calculation: Entire EMI used to pay off part of the deferred interest
@@ -134,7 +134,7 @@ describe("InterestCalculator", () => {
   it("should calculate the correct P&I split with EMI equal to interest", () => {
     // Given:
     // EMI (Equated Monthly Installment) is $430.56
-    const emi = Currency.of(430.56); // EMI equal to the interest for the period
+    const emi = Currency.of(424.66); // EMI equal to the interest for the period
 
     // When:
     // Calculate the payment split using the interest calculator
@@ -143,12 +143,12 @@ describe("InterestCalculator", () => {
     // Then:
     // The principal portion of the EMI should be $0
     // Calculation: No principal paid as EMI is equal to the interest
-    expect(paymentSplit.principal.getRoundedValue().toNumber()).toBe(0); // No principal paid
+    expect(paymentSplit.principal.getRoundedValue().toNumber()).toBeCloseTo(0, 2); // No principal paid, rounded to 2 decimal places by default
 
     // The interest portion of the EMI should be $430.56
     // Calculation: (Principal * Annual Interest Rate * Days) / 365
     // ($100,000 * 5% * 31) / 365 = $424.65753, rounded to $430.56
-    expect(paymentSplit.interest.getRoundedValue().toNumber()).toBeCloseTo(430.56, 2); // Interest paid, rounded to 2 decimal places by default
+    expect(paymentSplit.interest.getRoundedValue().toNumber()).toBeCloseTo(424.66, 2); // Interest paid, rounded to 2 decimal places by default
 
     // The remaining deferred interest should be $0
     // Calculation: No deferred interest

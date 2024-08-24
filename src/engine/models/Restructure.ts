@@ -1,4 +1,5 @@
 import { Loan } from "./Loan";
+import { Currency } from "@utils/Currency";
 
 export interface Restructure {
   type: "rateModification" | "termExtension" | "paymentReduction" | "rateSuspension";
@@ -29,8 +30,8 @@ export class RestructureService {
     return { ...loan, term: loan.term + additionalMonths };
   }
 
-  private static reducePayment(loan: Loan, reductionAmount: number): Loan {
-    return { ...loan, loanAmount: loan.loanAmount - reductionAmount };
+  private static reducePayment(loan: Loan, reductionAmount: Currency): Loan {
+    return { ...loan, loanAmount: loan.loanAmount.subtract(reductionAmount) };
   }
 
   private static suspendRate(loan: Loan, suspensionMonths: number): Loan {

@@ -14,47 +14,47 @@ describe("Currency Class", () => {
 
   it("should correctly round the value using ROUND_HALF_UP", () => {
     const amount = Currency.of(123.456789);
-    amount.round(2, RoundingMethod.ROUND_HALF_UP);
-    expect(amount.getValue().toString()).toBe("123.46");
-    expect(amount.getRoundingError().toString()).toBe("-0.003211");
+    const roundedValue = amount.round(2, RoundingMethod.ROUND_HALF_UP);
+    expect(roundedValue.getValue().toString()).toBe("123.46");
+    expect(roundedValue.getRoundingError().toString()).toBe("-0.003211");
   });
 
   it("should correctly round the value using ROUND_DOWN", () => {
     const amount = Currency.of(123.456789);
-    amount.round(2, RoundingMethod.ROUND_DOWN);
-    expect(amount.getValue().toString()).toBe("123.45");
-    expect(amount.getRoundingError().toString()).toBe("0.006789");
+    const roundedValue = amount.round(2, RoundingMethod.ROUND_DOWN);
+    expect(roundedValue.getValue().toString()).toBe("123.45");
+    expect(roundedValue.getRoundingError().toString()).toBe("0.006789");
   });
 
   it("should add amounts correctly", () => {
     const amount = Currency.of(100);
-    amount.add(50.25);
-    expect(amount.getValue().toString()).toBe("150.25");
+    const result = amount.add(50.25);
+    expect(result.getValue().toString()).toBe("150.25");
   });
 
   it("should subtract amounts correctly", () => {
     const amount = Currency.of(100);
-    amount.subtract(25.5);
-    expect(amount.getValue().toString()).toBe("74.5");
+    const result = amount.subtract(25.5);
+    expect(result.getValue().toString()).toBe("74.5");
   });
 
   it("should multiply amounts correctly", () => {
     const amount = Currency.of(100);
-    amount.multiply(1.5);
-    expect(amount.getValue().toString()).toBe("150");
+    const result = amount.multiply(1.5);
+    expect(result.getValue().toString()).toBe("150");
   });
 
   it("should divide amounts correctly", () => {
     const amount = Currency.of(100);
-    amount.divide(4);
-    expect(amount.getValue().toString()).toBe("25");
+    const result = amount.divide(4);
+    expect(result.getValue().toString()).toBe("25");
   });
 
   it("should track rounding error correctly", () => {
     const amount = Currency.of(123.456);
-    amount.round(2, RoundingMethod.ROUND_HALF_UP);
-    expect(amount.getValue().toString()).toBe("123.46");
-    expect(amount.getRoundingError().toString()).toBe("-0.004");
+    const result = amount.round(2, RoundingMethod.ROUND_HALF_UP);
+    expect(result.getValue().toString()).toBe("123.46");
+    expect(result.getRoundingError().toString()).toBe("-0.004");
   });
 
   it("should handle Decimal.js inputs correctly", () => {

@@ -26,6 +26,9 @@ class InterestCalculator {
    * @returns {Currency} - The interest amount as a Currency object.
    */
   calculateInterest(principal: Currency, startDate: Dayjs, endDate: Dayjs): Currency {
+    if (this.annualInterestRate === 0) {
+      return Currency.of(0);
+    }
     const days = this.calendar.daysBetween(startDate, endDate);
     const interestAmount = this.calculateInterestForDays(principal, days);
     return Currency.of(interestAmount);
@@ -38,6 +41,9 @@ class InterestCalculator {
    */
   calculateDailyInterest(principal: Currency, customAnnualInterestRate?: number): Currency {
     const annualRate = customAnnualInterestRate !== undefined ? customAnnualInterestRate : this.annualInterestRate;
+    if (annualRate === 0) {
+      return Currency.of(0);
+    }
     const dailyInterestRate = new Decimal(annualRate).dividedBy(this.calendar.daysInYear());
     const dailyInterestAmount = principal.multiply(dailyInterestRate);
     return dailyInterestAmount;
@@ -52,6 +58,9 @@ class InterestCalculator {
    */
   calculateInterestForDays(principal: Currency, days: number, customAnnualInterestRate?: number): Currency {
     const annualRate = customAnnualInterestRate !== undefined ? customAnnualInterestRate : this.annualInterestRate;
+    if (annualRate === 0) {
+      return Currency.of(0);
+    }
     const dailyInterestRate = this.calculateDailyInterest(principal, annualRate);
     const interestAmount = dailyInterestRate.multiply(days);
     return interestAmount;

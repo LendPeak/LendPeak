@@ -8,13 +8,18 @@ import dayjs from "dayjs";
 import { Currency } from "./utils/Currency";
 import { CalendarType } from "./models/Calendar";
 
+const loanAmount = Currency.of(1); // 1 unit of currency
+const interestRate = 0.05; // 5% annual interest rate
+const term = 12; // 12 months
+const startDate = dayjs("2023-01-01");
+
 const loan: Loan = {
   id: "loan1",
-  loanAmount: Currency.of(1000),
-  interestRate: 0.26,
-  term: 12,
-  startDate: dayjs("2024-01-01"),
-  calendarType: CalendarType.THIRTY_360,
+  loanAmount: loanAmount,
+  interestRate: interestRate,
+  term: term,
+  startDate: startDate,
+  // calendarType: CalendarType.THIRTY_360,
 };
 
 // Generate Amortization Schedule

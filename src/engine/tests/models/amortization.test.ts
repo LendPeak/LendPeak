@@ -10,7 +10,7 @@ describe("Amortization", () => {
     const term = 12; // 12 months
     const startDate = dayjs("2023-01-01");
 
-    const amortization = new Amortization(loanAmount, interestRate, term, startDate);
+    const amortization = new Amortization({ loanAmount, interestRate, term, startDate });
     const schedule = amortization.generateSchedule();
 
     expect(schedule.length).toBe(term);
@@ -26,7 +26,7 @@ describe("Amortization", () => {
     const term = 6; // 6 months
     const startDate = dayjs("2023-01-01");
 
-    const amortization = new Amortization(loanAmount, interestRate, term, startDate);
+    const amortization = new Amortization({ loanAmount, interestRate, term, startDate });
     const schedule = amortization.generateSchedule();
 
     const discrepancyEntry = schedule.find((entry) => entry.metadata.roundingDiscrepancyAdjustment === true);
@@ -42,7 +42,7 @@ describe("Amortization", () => {
     const term = 12; // 12 months
     const startDate = dayjs("2023-01-01");
 
-    const amortization = new Amortization(loanAmount, interestRate, term, startDate);
+    const amortization = new Amortization({ loanAmount, interestRate, term, startDate });
     const schedule = amortization.generateSchedule();
 
     const lastPayment = schedule[schedule.length - 1];
@@ -60,7 +60,7 @@ describe("Amortization", () => {
     const roundingMethods = [RoundingMethod.ROUND_HALF_UP, RoundingMethod.ROUND_DOWN, RoundingMethod.ROUND_UP];
 
     roundingMethods.forEach((roundingMethod) => {
-      const amortization = new Amortization(loanAmount, interestRate, term, startDate, CalendarType.ACTUAL_ACTUAL, roundingMethod, true, 5);
+      const amortization = new Amortization({ loanAmount, interestRate, term, startDate, calendarType: CalendarType.ACTUAL_ACTUAL, roundingMethod, flushCumulativeRoundingErrorAtTheEnd: true, precision: 5 });
       const schedule = amortization.generateSchedule();
 
       expect(schedule.length).toBe(term);
@@ -77,7 +77,7 @@ describe("Amortization", () => {
     const term = 12; // 12 months
     const startDate = dayjs("2023-01-01");
 
-    const amortization = new Amortization(loanAmount, interestRate, term, startDate);
+    const amortization = new Amortization({ loanAmount, interestRate, term, startDate });
     const schedule = amortization.generateSchedule();
 
     expect(schedule.length).toBe(term);
@@ -103,7 +103,7 @@ describe("Amortization", () => {
     const term = 1; // 1 month
     const startDate = dayjs("2023-01-01");
 
-    const amortization = new Amortization(loanAmount, interestRate, term, startDate);
+    const amortization = new Amortization({ loanAmount, interestRate, term, startDate });
     const schedule = amortization.generateSchedule();
 
     expect(schedule.length).toBe(term);
@@ -119,7 +119,7 @@ describe("Amortization", () => {
     const term = 360; // 30 years
     const startDate = dayjs("2023-01-01");
 
-    const amortization = new Amortization(loanAmount, interestRate, term, startDate);
+    const amortization = new Amortization({ loanAmount, interestRate, term, startDate });
     const schedule = amortization.generateSchedule();
 
     expect(schedule.length).toBe(term);
@@ -135,7 +135,7 @@ describe("Amortization", () => {
     const term = 12; // 12 months
     const startDate = dayjs("2023-01-01");
 
-    const amortization = new Amortization(loanAmount, interestRate, term, startDate);
+    const amortization = new Amortization({ loanAmount, interestRate, term, startDate });
     const schedule = amortization.generateSchedule();
 
     const lastPayment = schedule[schedule.length - 1];
@@ -150,7 +150,7 @@ describe("Amortization", () => {
     const term = 12; // 12 months
     const startDate = dayjs("2023-01-01");
 
-    const amortization = new Amortization(loanAmount, interestRate, term, startDate);
+    const amortization = new Amortization({ loanAmount, interestRate, term, startDate });
     const schedule = amortization.generateSchedule();
 
     expect(schedule.length).toBe(term);
@@ -168,7 +168,7 @@ describe("Amortization", () => {
     const term = 12; // 12 months
     const startDate = dayjs("2023-01-01");
 
-    const amortization = new Amortization(loanAmount, interestRate, term, startDate);
+    const amortization = new Amortization({ loanAmount, interestRate, term, startDate });
     const schedule = amortization.generateSchedule();
 
     expect(schedule.length).toBe(term);
@@ -190,7 +190,7 @@ describe("Amortization", () => {
     const term = 12; // 12 months
     const startDate = dayjs("2023-01-01");
 
-    const amortization = new Amortization(loanAmount, interestRate, term, startDate);
+    const amortization = new Amortization({ loanAmount, interestRate, term, startDate });
     const schedule = amortization.generateSchedule();
 
     expect(schedule.length).toBe(term);
@@ -212,7 +212,16 @@ describe("Amortization", () => {
     const term = 12; // 12 months
     const startDate = dayjs("2023-01-01");
 
-    const amortization = new Amortization(loanAmount, interestRate, term, startDate, CalendarType.ACTUAL_ACTUAL, RoundingMethod.ROUND_HALF_UP, true, 5);
+    const amortization = new Amortization({
+      loanAmount,
+      interestRate,
+      term,
+      startDate,
+      calendarType: CalendarType.ACTUAL_ACTUAL,
+      roundingMethod: RoundingMethod.ROUND_HALF_UP,
+      flushCumulativeRoundingErrorAtTheEnd: true,
+      precision: 5,
+    });
     const schedule = amortization.generateSchedule();
 
     expect(schedule.length).toBe(term);
@@ -234,7 +243,7 @@ describe("Amortization", () => {
     const term = 1; // 1 month
     const startDate = dayjs("2023-01-01");
 
-    const amortization = new Amortization(loanAmount, interestRate, term, startDate);
+    const amortization = new Amortization({ loanAmount, interestRate, term, startDate });
     const schedule = amortization.generateSchedule();
 
     expect(schedule.length).toBe(term);
@@ -251,7 +260,7 @@ describe("Amortization", () => {
     const term = 360; // 30 years
     const startDate = dayjs("2023-01-01");
 
-    const amortization = new Amortization(loanAmount, interestRate, term, startDate);
+    const amortization = new Amortization({ loanAmount, interestRate, term, startDate });
     const schedule = amortization.generateSchedule();
 
     expect(schedule.length).toBe(term);
@@ -274,7 +283,7 @@ describe("Amortization", () => {
     const term = 1; // 1 month
     const startDate = dayjs("2023-01-01");
 
-    const amortization = new Amortization(loanAmount, interestRate, term, startDate);
+    const amortization = new Amortization({ loanAmount, interestRate, term, startDate });
     const schedule = amortization.generateSchedule();
 
     expect(schedule.length).toBe(term);
@@ -291,7 +300,7 @@ describe("Amortization", () => {
     const term = 12; // 12 months
     const startDate = dayjs("2023-01-01");
 
-    const amortization = new Amortization(loanAmount, interestRate, term, startDate);
+    const amortization = new Amortization({ loanAmount, interestRate, term, startDate });
     const schedule = amortization.generateSchedule();
 
     expect(schedule.length).toBe(term);
@@ -313,13 +322,22 @@ describe("Amortization", () => {
     const term = 12; // 12 months
     const startDate = dayjs("2023-01-01");
 
-    const amortization = new Amortization(loanAmount, interestRate, term, startDate, CalendarType.ACTUAL_ACTUAL, RoundingMethod.ROUND_HALF_UP, true, 10);
+    const amortization = new Amortization({
+      loanAmount,
+      interestRate,
+      term,
+      startDate,
+      calendarType: CalendarType.ACTUAL_ACTUAL,
+      roundingMethod: RoundingMethod.ROUND_HALF_UP,
+      flushCumulativeRoundingErrorAtTheEnd: true,
+      precision: 10,
+    });
     const schedule = amortization.generateSchedule();
 
     expect(schedule.length).toBe(term);
 
     // add debug
-    console.log("schedule", schedule);
+    //console.log("schedule", schedule);
     schedule.forEach((entry, index) => {
       expect(entry.principal.getValue().toNumber()).toBeGreaterThan(0);
       expect(entry.interest.getValue().toNumber()).toBeGreaterThan(0);

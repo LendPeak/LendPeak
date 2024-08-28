@@ -3,7 +3,7 @@ import { Amortization } from "../models/Amortization";
 
 export class AmortizationService {
   static createAmortizationSchedule(loan: Loan): Amortization {
-    const amortization = new Amortization(loan.loanAmount, loan.interestRate, loan.term, loan.startDate, loan.calendarType);
+    const amortization = new Amortization({ loanAmount: loan.loanAmount, interestRate: loan.interestRate, term: loan.term, startDate: loan.startDate, calendarType: loan.calendarType });
     return amortization;
   }
 }

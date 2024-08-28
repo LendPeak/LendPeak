@@ -39,29 +39,29 @@ export class Amortization {
   unbilledInterestDueToRounding: Currency; // New property to track unbilled interest due to rounding
   precision: number; // New property to track precision for rounding
 
-  constructor(
-    loanAmount: Currency,
-    interestRate: number,
-    term: number,
-    startDate: Dayjs,
-    calendarType: CalendarType = CalendarType.ACTUAL_ACTUAL,
-    roundingMethod: RoundingMethod = RoundingMethod.ROUND_HALF_UP,
-    flushCumulativeRoundingErrorAtTheEnd: boolean = false, // Default to false
-    precision: number = 2 // Default precision to 2
-  ) {
-    this.loanAmount = loanAmount;
-    this.interestRate = interestRate;
-    this.term = term;
-    this.startDate = startDate;
-    this.calendar = new Calendar(calendarType);
-    this.roundingMethod = roundingMethod;
-    this.interestCalculator = new InterestCalculator(interestRate, calendarType);
-    this.flushCumulativeRoundingErrorAtTheEnd = flushCumulativeRoundingErrorAtTheEnd; // Initialize the new property
-    this.cumulativeInterestWithoutRounding = Currency.of(0); // Initialize cumulative interest without rounding
-    this.totalChargedInterestRounded = Currency.of(0); // Initialize total charged interest (rounded)
-    this.totalChargedInterestUnrounded = Currency.of(0); // Initialize total charged interest (unrounded)
-    this.unbilledInterestDueToRounding = Currency.of(0); // Initialize unbilled interest due to rounding
-    this.precision = precision; // Initialize precision
+  constructor(params: {
+    loanAmount: Currency;
+    interestRate: number;
+    term: number;
+    startDate: Dayjs;
+    calendarType?: CalendarType;
+    roundingMethod?: RoundingMethod;
+    flushCumulativeRoundingErrorAtTheEnd?: boolean;
+    precision?: number;
+  }) {
+    this.loanAmount = params.loanAmount;
+    this.interestRate = params.interestRate;
+    this.term = params.term;
+    this.startDate = params.startDate;
+    this.calendar = new Calendar(params.calendarType || CalendarType.ACTUAL_ACTUAL);
+    this.roundingMethod = params.roundingMethod || RoundingMethod.ROUND_HALF_UP;
+    this.interestCalculator = new InterestCalculator(this.interestRate, params.calendarType || CalendarType.ACTUAL_ACTUAL);
+    this.flushCumulativeRoundingErrorAtTheEnd = params.flushCumulativeRoundingErrorAtTheEnd || false;
+    this.cumulativeInterestWithoutRounding = Currency.of(0);
+    this.totalChargedInterestRounded = Currency.of(0);
+    this.totalChargedInterestUnrounded = Currency.of(0);
+    this.unbilledInterestDueToRounding = Currency.of(0);
+    this.precision = params.precision || 2;
   }
 
   /**

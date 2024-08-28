@@ -22,6 +22,15 @@ export interface AmortizationSchedule {
 }
 
 /**
+ * Enum for flush cumulative rounding error types.
+ */
+export enum FlushCumulativeRoundingErrorType {
+  NONE = "none",
+  AT_END = "at_end",
+  AT_THRESHOLD = "at_threshold",
+}
+
+/**
  * Amortization class to generate an amortization schedule for a loan.
  */
 export class Amortization {
@@ -32,7 +41,7 @@ export class Amortization {
   calendar: Calendar;
   roundingMethod: RoundingMethod;
   interestCalculator: InterestCalculator;
-  flushCumulativeRoundingErrorAtTheEnd: boolean; // New property to control flushing of cumulative rounding error
+  flushCumulativeRoundingError: FlushCumulativeRoundingErrorType; // Updated property
   cumulativeInterestWithoutRounding: Currency; // New property to track cumulative interest without rounding
   totalChargedInterestRounded: Currency; // New property to track total charged interest (rounded)
   totalChargedInterestUnrounded: Currency; // New property to track total charged interest (unrounded)
@@ -46,7 +55,7 @@ export class Amortization {
     startDate: Dayjs;
     calendarType?: CalendarType;
     roundingMethod?: RoundingMethod;
-    flushCumulativeRoundingErrorAtTheEnd?: boolean;
+    flushCumulativeRoundingError?: FlushCumulativeRoundingErrorType;
     precision?: number;
   }) {
     this.loanAmount = params.loanAmount;
@@ -56,7 +65,7 @@ export class Amortization {
     this.calendar = new Calendar(params.calendarType || CalendarType.ACTUAL_ACTUAL);
     this.roundingMethod = params.roundingMethod || RoundingMethod.ROUND_HALF_UP;
     this.interestCalculator = new InterestCalculator(this.interestRate, params.calendarType || CalendarType.ACTUAL_ACTUAL);
-    this.flushCumulativeRoundingErrorAtTheEnd = params.flushCumulativeRoundingErrorAtTheEnd || false;
+    this.flushCumulativeRoundingError = params.flushCumulativeRoundingError || FlushCumulativeRoundingErrorType.NONE;
     this.cumulativeInterestWithoutRounding = Currency.of(0);
     this.totalChargedInterestRounded = Currency.of(0);
     this.totalChargedInterestUnrounded = Currency.of(0);
@@ -171,8 +180,8 @@ export class Amortization {
       lastPayment.metadata.finalAdjustment = true; // Track final adjustment in metadata
     }
 
-    // Flush cumulative rounding error to the last payment if the setting is enabled
-    if (this.flushCumulativeRoundingErrorAtTheEnd && cummulativeRoundError.getValue().toNumber() !== 0) {
+    // Flush cumulative rounding error based on the setting
+    if (this.flushCumulativeRoundingError === FlushCumulativeRoundingErrorType.AT_END && cummulativeRoundError.getValue().toNumber() !== 0) {
       const lastPayment = schedule[schedule.length - 1];
       lastPayment.interest = this.round(lastPayment.interest.add(cummulativeRoundError));
       lastPayment.totalPayment = this.round(lastPayment.principal.add(lastPayment.interest));

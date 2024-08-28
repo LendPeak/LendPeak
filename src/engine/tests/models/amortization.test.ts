@@ -1,6 +1,6 @@
 import dayjs from "dayjs";
 import { Currency, RoundingMethod } from "@utils/Currency";
-import { Amortization } from "@models/Amortization";
+import { Amortization, FlushCumulativeRoundingErrorType } from "@models/Amortization";
 import { CalendarType } from "@models/Calendar";
 
 describe("Amortization", () => {
@@ -60,7 +60,16 @@ describe("Amortization", () => {
     const roundingMethods = [RoundingMethod.ROUND_HALF_UP, RoundingMethod.ROUND_DOWN, RoundingMethod.ROUND_UP];
 
     roundingMethods.forEach((roundingMethod) => {
-      const amortization = new Amortization({ loanAmount, interestRate, term, startDate, calendarType: CalendarType.ACTUAL_ACTUAL, roundingMethod, flushCumulativeRoundingErrorAtTheEnd: true, precision: 5 });
+      const amortization = new Amortization({
+        loanAmount,
+        interestRate,
+        term,
+        startDate,
+        calendarType: CalendarType.ACTUAL_ACTUAL,
+        roundingMethod,
+        flushCumulativeRoundingError: FlushCumulativeRoundingErrorType.AT_END,
+        precision: 5,
+      });
       const schedule = amortization.generateSchedule();
 
       expect(schedule.length).toBe(term);
@@ -219,7 +228,7 @@ describe("Amortization", () => {
       startDate,
       calendarType: CalendarType.ACTUAL_ACTUAL,
       roundingMethod: RoundingMethod.ROUND_HALF_UP,
-      flushCumulativeRoundingErrorAtTheEnd: true,
+      flushCumulativeRoundingError: FlushCumulativeRoundingErrorType.AT_END,
       precision: 5,
     });
     const schedule = amortization.generateSchedule();
@@ -329,7 +338,7 @@ describe("Amortization", () => {
       startDate,
       calendarType: CalendarType.ACTUAL_ACTUAL,
       roundingMethod: RoundingMethod.ROUND_HALF_UP,
-      flushCumulativeRoundingErrorAtTheEnd: true,
+      flushCumulativeRoundingError: FlushCumulativeRoundingErrorType.AT_END,
       precision: 10,
     });
     const schedule = amortization.generateSchedule();

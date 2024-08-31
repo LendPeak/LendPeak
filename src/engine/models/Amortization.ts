@@ -257,17 +257,18 @@ export class Amortization {
       periodIndex++;
       const periodStartDate = period.startDate;
       const periodEndDate = period.endDate;
-      const metadata: Record<string, any> = {}; // Initialize metadata
       const periodRates = this.getInterestRatesBetweenDates(periodStartDate, periodEndDate);
 
       // each schedule period may have multiple rates
       // we will use same period index for inserted schedule line
       // but separate date ranges and separate calculations for each rate
       for (let interestRateForPeriod of periodRates) {
+        const metadata: Record<string, any> = {}; // Initialize metadata
+
         const daysInPeriod = this.calendar.daysBetween(interestRateForPeriod.startDate, interestRateForPeriod.endDate);
 
         let rawInterest: Currency;
-        if ( interestRateForPeriod.annualInterestRate === 0 ) {
+        if (interestRateForPeriod.annualInterestRate === 0) {
           rawInterest = Currency.of(0);
         } else {
           rawInterest = this.interestCalculator.calculateInterestForDays(startBalance, daysInPeriod);

@@ -1,11 +1,11 @@
 import { Payment } from "./models/Payment";
 import { Loan } from "./models/Loan";
-import { AmortizationService } from "./services/AmortizationService";
+import { Amortization, FlushCumulativeRoundingErrorType } from "./models/Amortization";
 import { LoanRestructureService } from "./services/RestructureService";
 import { PaymentService } from "./services/PaymentService";
 import { Restructure } from "./models/Restructure";
 import dayjs from "dayjs";
-import { Currency } from "./utils/Currency";
+import { Currency, RoundingMethod } from "./utils/Currency";
 import { CalendarType } from "./models/Calendar";
 
 const loanAmount = Currency.of(1); // 1 unit of currency
@@ -22,8 +22,38 @@ const loan: Loan = {
   // calendarType: CalendarType.THIRTY_360,
 };
 
-// Generate Amortization Schedule
-const amortization = AmortizationService.createAmortizationSchedule(loan);
+// Instantiate Amortization class
+const amortization = new Amortization({
+  loanAmount: loanAmount,
+  interestRate: interestRate,
+  term: term,
+  startDate: startDate,
+  calendarType: CalendarType.ACTUAL_ACTUAL,
+  //calendarType: CalendarType.THIRTY_360,
+  roundingMethod: RoundingMethod.ROUND_HALF_EVEN,
+  flushCumulativeRoundingError: FlushCumulativeRoundingErrorType.AT_THRESHOLD,
+  roundingPrecision: 2, // 5 decimal places
+  flushThreshold: Currency.of(0.01), // 1 cent threshold
+  // ratesSchedule: [
+  //   {
+  //     startDate: startDate,
+  //     endDate: startDate.add(10, "days"),
+  //     annualInterestRate: interestRate,
+  //   },
+  //   {
+  //     startDate: startDate.add(10, "days"),
+  //     endDate: startDate.add(1, "month"),
+  //     annualInterestRate: interestRate + 0.05,
+  //   },
+  //   {
+  //     startDate: startDate.add(1, "month"),
+  //     endDate: startDate.add(term, "month"),
+  //     annualInterestRate: interestRate,
+  //   },
+  // ],
+});
+
+// Generate and print Amortization Schedule
 amortization.printAmortizationSchedule();
 
 // Apply Loan Restructure

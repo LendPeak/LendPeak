@@ -68,7 +68,7 @@ describe("Amortization", () => {
         calendarType: CalendarType.ACTUAL_ACTUAL,
         roundingMethod,
         flushCumulativeRoundingError: FlushCumulativeRoundingErrorType.AT_END,
-        precision: 5,
+        roundingPrecision: 5,
       });
       const schedule = amortization.generateSchedule();
 
@@ -198,8 +198,9 @@ describe("Amortization", () => {
     const interestRate = 1.0; // 100% annual interest rate
     const term = 12; // 12 months
     const startDate = dayjs("2023-01-01");
+    const endDate = startDate.add(term, "month");
 
-    const amortization = new Amortization({ loanAmount, interestRate, term, startDate });
+    const amortization = new Amortization({ loanAmount, interestRate, term, startDate, endDate });
     const schedule = amortization.generateSchedule();
 
     expect(schedule.length).toBe(term);
@@ -220,16 +221,18 @@ describe("Amortization", () => {
     const interestRate = 0.0001; // 0.01% annual interest rate
     const term = 12; // 12 months
     const startDate = dayjs("2023-01-01");
+    const endDate = startDate.add(term, "month");
 
     const amortization = new Amortization({
       loanAmount,
       interestRate,
       term,
       startDate,
+      endDate,
       calendarType: CalendarType.ACTUAL_ACTUAL,
       roundingMethod: RoundingMethod.ROUND_HALF_UP,
       flushCumulativeRoundingError: FlushCumulativeRoundingErrorType.AT_END,
-      precision: 5,
+      roundingPrecision: 5,
     });
     const schedule = amortization.generateSchedule();
 
@@ -339,7 +342,7 @@ describe("Amortization", () => {
       calendarType: CalendarType.ACTUAL_ACTUAL,
       roundingMethod: RoundingMethod.ROUND_HALF_UP,
       flushCumulativeRoundingError: FlushCumulativeRoundingErrorType.AT_END,
-      precision: 10,
+      roundingPrecision: 10,
     });
     const schedule = amortization.generateSchedule();
 

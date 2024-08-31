@@ -9,9 +9,15 @@ interface PaymentSplit {
   remainingDeferredInterest: Currency;
 }
 
+interface rateScheduleRow {
+  startDate: Dayjs;
+  endDate: Dayjs;
+  annualInterestRate: number;
+}
+
 class InterestCalculator {
-  private annualInterestRate: number; // Annual interest rate as a percentage
   private calendar: Calendar;
+  private annualInterestRate: number;
 
   constructor(annualInterestRate: number, calendarType: CalendarType = CalendarType.ACTUAL_ACTUAL) {
     this.annualInterestRate = annualInterestRate;

@@ -1,7 +1,12 @@
 import dayjs, { Dayjs } from "dayjs";
 import isLeapYear from "dayjs/plugin/isLeapYear";
+import isSameOrAfter from "dayjs/plugin/isSameOrAfter";
+import isSameOrBefore from "dayjs/plugin/isSameOrBefore";
 
 dayjs.extend(isLeapYear);
+dayjs.extend(isSameOrAfter);
+dayjs.extend(isSameOrBefore);
+
 /**
  * Enum representing different calendar types.
  *
@@ -198,6 +203,18 @@ class Calendar {
   private adjustDate30_360(date: Dayjs): Dayjs {
     const day = date.date() === 31 ? 30 : date.date();
     return date.date(day);
+  }
+
+  /**
+   * Checks if a date is between two other dates.
+   *
+   * @param date - The date to check.
+   * @param startDate - The start date.
+   * @param endDate - The end date.
+   * @returns {boolean} - `true` if the date is between the two dates, `false` otherwise.
+   */
+  isDateBetween(date: Dayjs, startDate: Dayjs, endDate: Dayjs): boolean {
+    return date.isSameOrAfter(startDate) && date.isSameOrBefore(endDate);
   }
 }
 

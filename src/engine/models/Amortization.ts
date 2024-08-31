@@ -2,13 +2,14 @@ import dayjs, { Dayjs } from "dayjs";
 import { Currency, RoundingMethod } from "../utils/Currency";
 import { Calendar, CalendarType } from "./Calendar";
 import { InterestCalculator } from "./InterestCalculator";
-
 /**
  * Represents a single entry in the amortization schedule.
  */
 export interface AmortizationSchedule {
   period: number;
-  paymentDate: Dayjs;
+  periodStartDate: Dayjs;
+  periodEndDate: Dayjs;
+  periodInterestRate: number;
   principal: Currency;
   interest: Currency;
   totalPayment: Currency;
@@ -18,7 +19,19 @@ export interface AmortizationSchedule {
   daysInPeriod: number;
   roundingError: Currency;
   cummulativeRoundError: Currency;
+  unbilledInterestDueToRounding: Currency; // New property to track unbilled interest due to rounding
   metadata: Record<string, any>; // Metadata to track any adjustments or corrections
+}
+
+export interface PeriodSchedule {
+  startDate: Dayjs;
+  endDate: Dayjs;
+}
+
+export interface RateSchedule {
+  annualInterestRate: number;
+  startDate: Dayjs;
+  endDate: Dayjs;
 }
 
 /**
@@ -35,9 +48,10 @@ export enum FlushCumulativeRoundingErrorType {
  */
 export class Amortization {
   loanAmount: Currency;
-  interestRate: number;
+  annualInterestRate: number;
   term: number; // in months
   startDate: Dayjs;
+  endDate: Dayjs;
   calendar: Calendar;
   roundingMethod: RoundingMethod;
   interestCalculator: InterestCalculator;
@@ -46,31 +60,129 @@ export class Amortization {
   totalChargedInterestRounded: Currency; // New property to track total charged interest (rounded)
   totalChargedInterestUnrounded: Currency; // New property to track total charged interest (unrounded)
   unbilledInterestDueToRounding: Currency; // New property to track unbilled interest due to rounding
-  precision: number; // New property to track precision for rounding
+  roundingPrecision: number; // New property to track precision for rounding
+  flushThreshold: Currency; // New property to track the threshold for flushing cumulative rounding error
+  periodsSchedule: PeriodSchedule[] = [];
+  rateSchedules: RateSchedule[] = [];
 
   constructor(params: {
     loanAmount: Currency;
     interestRate: number;
     term: number;
     startDate: Dayjs;
+    endDate?: Dayjs;
     calendarType?: CalendarType;
     roundingMethod?: RoundingMethod;
     flushCumulativeRoundingError?: FlushCumulativeRoundingErrorType;
-    precision?: number;
+    roundingPrecision?: number;
+    flushThreshold?: Currency;
+    periodsSchedule?: PeriodSchedule[];
+    ratesSchedule?: RateSchedule[];
   }) {
     this.loanAmount = params.loanAmount;
-    this.interestRate = params.interestRate;
+    this.annualInterestRate = params.interestRate;
     this.term = params.term;
     this.startDate = params.startDate;
+    this.endDate = params.endDate || this.startDate.add(this.term, "month");
     this.calendar = new Calendar(params.calendarType || CalendarType.ACTUAL_ACTUAL);
     this.roundingMethod = params.roundingMethod || RoundingMethod.ROUND_HALF_UP;
-    this.interestCalculator = new InterestCalculator(this.interestRate, params.calendarType || CalendarType.ACTUAL_ACTUAL);
     this.flushCumulativeRoundingError = params.flushCumulativeRoundingError || FlushCumulativeRoundingErrorType.NONE;
     this.cumulativeInterestWithoutRounding = Currency.of(0);
     this.totalChargedInterestRounded = Currency.of(0);
     this.totalChargedInterestUnrounded = Currency.of(0);
     this.unbilledInterestDueToRounding = Currency.of(0);
-    this.precision = params.precision || 2;
+    this.roundingPrecision = params.roundingPrecision || 2;
+    this.flushThreshold = params.flushThreshold || Currency.of(0.01); // Default threshold is 1 cent
+
+    // Initialize the schedule periods and rates
+    if (!params.periodsSchedule) {
+      this.generatePeriodicSchedule();
+    } else {
+      this.periodsSchedule = params.periodsSchedule;
+    }
+
+    if (!params.ratesSchedule) {
+      this.generateRatesSchedule();
+    } else {
+      this.rateSchedules = params.ratesSchedule;
+    }
+
+    // validate the schedule periods and rates
+    this.verifySchedulePeriods();
+    this.validateRatesSchedule();
+
+    this.interestCalculator = new InterestCalculator(this.annualInterestRate, params.calendarType || CalendarType.ACTUAL_ACTUAL);
+  }
+
+  /**
+   * Validate the schedule rates.
+   */
+
+  validateRatesSchedule(): void {
+    if (this.rateSchedules.length < 1) {
+      throw new Error("Invalid schedule rates, at least one rate is required");
+    }
+    // Check if the start date of the first period is the same as the loan start date
+    if (!this.startDate.isSame(this.rateSchedules[0].startDate, "day")) {
+      throw new Error("Invalid schedule rates");
+    }
+
+    // Check if the end date of the last period is the same as the loan end date
+    if (!this.endDate.isSame(this.rateSchedules[this.rateSchedules.length - 1].endDate, "day")) {
+      throw new Error("Invalid schedule rates");
+    }
+  }
+
+  /**
+   * Validate the schedule periods.
+   */
+  verifySchedulePeriods(): void {
+    if (this.periodsSchedule.length !== this.term) {
+      throw new Error("Invalid schedule periods");
+    }
+    // Check if the start date of the first period is the same as the loan start date
+    if (!this.startDate.isSame(this.periodsSchedule[0].startDate, "day")) {
+      throw new Error("Invalid schedule periods");
+    }
+
+    // Check if the end date of the last period is the same as the loan end date
+    if (!this.endDate.isSame(this.periodsSchedule[this.periodsSchedule.length - 1].endDate, "day")) {
+      throw new Error("Invalid schedule periods");
+    }
+
+    for (let i = 0; i < this.periodsSchedule.length - 1; i++) {
+      // Check if the periods are in ascending order
+      if (!this.periodsSchedule[i].endDate.isSame(this.periodsSchedule[i + 1].startDate, "day")) {
+        throw new Error("Invalid schedule periods");
+      }
+      // Check if the periods are non-overlapping
+      if (this.periodsSchedule[i].endDate.isAfter(this.periodsSchedule[i + 1].startDate, "day")) {
+        throw new Error("Invalid schedule periods");
+      }
+    }
+  }
+
+  /**
+   * Generate schedule periods based on the term and start date.
+   */
+
+  generatePeriodicSchedule(): void {
+    let startDate = this.startDate;
+    for (let i = 0; i < this.term; i++) {
+      const endDate = this.calendar.addMonths(startDate, 1);
+      this.periodsSchedule.push({ startDate, endDate });
+      startDate = endDate;
+    }
+  }
+
+  /**
+   * Generate schedule rates based on the term and start date.
+   */
+
+  generateRatesSchedule(): void {
+    let startDate = this.startDate;
+    const endDate = this.calendar.addMonths(startDate, this.term);
+    this.rateSchedules.push({ annualInterestRate: this.annualInterestRate, startDate, endDate });
   }
 
   /**
@@ -82,20 +194,51 @@ export class Amortization {
       amortization.map((row) => {
         return {
           period: row.period,
-          paymentDate: row.paymentDate.format("YYYY-MM-DD"),
-          principal: row.principal.getRoundedValue().toNumber(),
-          interest: row.interest.getRoundedValue().toNumber(),
-          totalPayment: row.totalPayment.getRoundedValue().toNumber(),
-          perDiem: row.perDiem.getRoundedValue().toNumber(),
+          periodStartDate: row.periodStartDate.format("YYYY-MM-DD"),
+          periodEndDate: row.periodEndDate.format("YYYY-MM-DD"),
+          periodInterestRate: row.periodInterestRate,
+          principal: row.principal.getRoundedValue(this.roundingPrecision).toNumber(),
+          interest: row.interest.getRoundedValue(this.roundingPrecision).toNumber(),
+          totalPayment: row.totalPayment.getRoundedValue(this.roundingPrecision).toNumber(),
+          perDiem: row.perDiem.getRoundedValue(this.roundingPrecision).toNumber(),
           daysInPeriod: row.daysInPeriod,
-          startBalance: row.startBalance.getRoundedValue().toNumber(),
-          endBalance: row.endBalance.getRoundedValue().toNumber(),
+          startBalance: row.startBalance.getRoundedValue(this.roundingPrecision).toNumber(),
+          endBalance: row.endBalance.getRoundedValue(this.roundingPrecision).toNumber(),
           roundingError: row.roundingError.getValue().toNumber(),
           cummulativeRoundError: row.cummulativeRoundError.getValue().toNumber(),
+          unbilledInterestDueToRounding: row.unbilledInterestDueToRounding.getValue().toNumber(), // Include unbilled interest due to rounding in the printed table
           metadata: JSON.stringify(row.metadata), // Include metadata in the printed table
         };
       })
     );
+  }
+
+  /**
+   * Get interest rates between the specified start and end dates.
+   *
+   * Passed start and end date not necessarily spawn a single rate schedule row,
+   * so we will return new rate schedules for this range of dates.
+   * For example, if the passed start date is 01-13-2023 and the end date is 02-13-2023,
+   * and we have rate schedules for 01-01-2023 to 01-31-2023 at 5% and 02-01-2023 to 02-28-2023 at 6%,
+   * then we will return two rate schedules for the passed range of dates:
+   * 01-13-2023 to 01-31-2023 at 5% and 02-01-2023 to 02-13-2023 at 6%.
+   *
+   * @param startDate The start date of the range.
+   * @param endDate The end date of the range.
+   * @returns An array of rate schedules within the specified date range.
+   */
+  getInterestRatesBetweenDates(startDate: Dayjs, endDate: Dayjs): RateSchedule[] {
+    const rates: RateSchedule[] = [];
+
+    for (let rate of this.rateSchedules) {
+      if (startDate.isBefore(rate.endDate) && endDate.isAfter(rate.startDate)) {
+        const effectiveStartDate = startDate.isAfter(rate.startDate) ? startDate : rate.startDate;
+        const effectiveEndDate = endDate.isBefore(rate.endDate) ? endDate : rate.endDate;
+        rates.push({ annualInterestRate: rate.annualInterestRate, startDate: effectiveStartDate, endDate: effectiveEndDate });
+      }
+    }
+
+    return rates;
   }
 
   /**
@@ -109,63 +252,104 @@ export class Amortization {
 
     let cummulativeRoundError = Currency.of(0);
 
-    for (let period = 1; period <= this.term; period++) {
-      const paymentDate = this.calendar.addMonths(this.startDate, period);
-      const daysInMonth = this.calendar.daysInMonth(paymentDate);
-
-      let rawInterest = this.interestRate === 0 ? Currency.of(0) : this.interestCalculator.calculateInterestForDays(startBalance, daysInMonth);
-      let rawPrincipal = fixedMonthlyPayment.subtract(rawInterest);
-
-      const roundedInterest = this.round(rawInterest);
-      let roundedPrincipal = this.round(rawPrincipal);
-
+    let periodIndex = 0;
+    for (let period of this.periodsSchedule) {
+      periodIndex++;
+      const periodStartDate = period.startDate;
+      const periodEndDate = period.endDate;
       const metadata: Record<string, any> = {}; // Initialize metadata
+      const periodRates = this.getInterestRatesBetweenDates(periodStartDate, periodEndDate);
 
-      // Check for rounding discrepancy
-      const totalRoundedPayment = roundedInterest.add(roundedPrincipal);
-      if (totalRoundedPayment.getValue().comparedTo(fixedMonthlyPayment.getValue()) !== 0) {
-        const discrepancy = fixedMonthlyPayment.subtract(totalRoundedPayment);
-        rawPrincipal = rawPrincipal.add(discrepancy);
-        roundedPrincipal = this.round(rawPrincipal);
-        metadata.roundingDiscrepancyAdjustment = true; // Track adjustment in metadata
-        metadata.discrepancyAmount = discrepancy.getValue().toNumber(); // Track the amount of discrepancy
+      // each schedule period may have multiple rates
+      // we will use same period index for inserted schedule line
+      // but separate date ranges and separate calculations for each rate
+      for (let interestRateForPeriod of periodRates) {
+        const daysInPeriod = this.calendar.daysBetween(interestRateForPeriod.startDate, interestRateForPeriod.endDate);
+
+        let rawInterest: Currency;
+        if ( interestRateForPeriod.annualInterestRate === 0 ) {
+          rawInterest = Currency.of(0);
+        } else {
+          rawInterest = this.interestCalculator.calculateInterestForDays(startBalance, daysInPeriod);
+        }
+        // lets check if we have unbilledInterestDueToRounding that is greater than or equal to flushThreshold
+        if (this.unbilledInterestDueToRounding.getValue().greaterThanOrEqualTo(this.flushThreshold.getValue())) {
+          rawInterest = rawInterest.add(this.unbilledInterestDueToRounding);
+          // add metadata to track the unbilled interest applied
+          metadata.unbilledInterestApplied = true;
+          metadata.unbilledInterestAppliedAmount = this.unbilledInterestDueToRounding.getValue().toNumber();
+          this.unbilledInterestDueToRounding = Currency.of(0); // Reset unbilled interest here, it will be recalculated below
+        }
+
+        let rawPrincipal = fixedMonthlyPayment.subtract(rawInterest);
+
+        let roundedInterest = this.round(rawInterest);
+        let roundedPrincipal = this.round(rawPrincipal);
+
+        // Check for rounding discrepancy
+        const totalRoundedPayment = roundedInterest.add(roundedPrincipal);
+        if (!totalRoundedPayment.getValue().equals(fixedMonthlyPayment.getValue())) {
+          const discrepancy = fixedMonthlyPayment.subtract(totalRoundedPayment);
+          rawPrincipal = rawPrincipal.add(discrepancy);
+          roundedPrincipal = this.round(rawPrincipal);
+          metadata.roundingDiscrepancyAdjustment = true; // Track adjustment in metadata
+          metadata.discrepancyAmount = discrepancy.getValue().toNumber(); // Track the amount of discrepancy
+        }
+
+        const balanceBeforePayment = Currency.of(startBalance);
+        const balanceAfterPayment = startBalance.subtract(rawPrincipal);
+        const roundedBalanceAfterPayment = startBalance.subtract(roundedPrincipal);
+        const perDiem = this.round(rawInterest.divide(daysInPeriod));
+
+        let roundingError: Currency;
+        // Track cumulative interest without rounding
+        this.cumulativeInterestWithoutRounding = this.cumulativeInterestWithoutRounding.add(rawInterest);
+        this.totalChargedInterestRounded = this.totalChargedInterestRounded.add(roundedInterest);
+        this.totalChargedInterestUnrounded = this.totalChargedInterestUnrounded.add(rawInterest);
+
+        if (roundedInterest.getValue().toNumber() === 0 && rawInterest.getValue().toNumber() > 0) {
+          metadata.interestLessThanOneCent = true; // Track when interest is less than one cent
+          metadata.actualInterestValue = rawInterest.getValue().toNumber(); // Store the actual interest value
+          this.unbilledInterestDueToRounding = this.unbilledInterestDueToRounding.add(rawInterest); // Add unrounded interest to unbilled interest due to rounding
+          roundingError = Currency.of(0);
+        } else {
+          roundingError = roundedBalanceAfterPayment.subtract(balanceAfterPayment);
+          cummulativeRoundError = cummulativeRoundError.add(roundingError);
+        }
+
+        // Flush cumulative rounding error if it exceeds the threshold
+        if (this.flushCumulativeRoundingError === FlushCumulativeRoundingErrorType.AT_THRESHOLD && cummulativeRoundError.getValue().abs().comparedTo(this.flushThreshold.getValue()) >= 0) {
+          const flushAmount = cummulativeRoundError;
+          const adjustedInterest = this.round(roundedInterest.add(flushAmount));
+          if (adjustedInterest.getValue().greaterThanOrEqualTo(0)) {
+            roundedInterest = adjustedInterest;
+            cummulativeRoundError = cummulativeRoundError.subtract(flushAmount);
+            this.unbilledInterestDueToRounding = this.unbilledInterestDueToRounding.subtract(flushAmount); // Update unbilled interest due to rounding
+            metadata.cumulativeRoundingErrorFlushed = true; // Track cumulative rounding error flush in metadata
+            metadata.cumulativeRoundingErrorAmount = flushAmount.getValue().toNumber(); // Track the amount of cumulative rounding error
+          }
+        }
+
+        startBalance = roundedBalanceAfterPayment;
+
+        schedule.push({
+          period: periodIndex,
+          periodStartDate: interestRateForPeriod.startDate,
+          periodEndDate: interestRateForPeriod.endDate,
+          periodInterestRate: interestRateForPeriod.annualInterestRate,
+          principal: roundedPrincipal,
+          interest: roundedInterest,
+          endBalance: roundedBalanceAfterPayment,
+          startBalance: balanceBeforePayment,
+          totalPayment: fixedMonthlyPayment,
+          perDiem,
+          daysInPeriod: daysInPeriod,
+          roundingError,
+          cummulativeRoundError,
+          unbilledInterestDueToRounding: this.unbilledInterestDueToRounding, // Track unbilled interest due to rounding
+          metadata, // Include metadata in the schedule entry
+        });
       }
-
-      const balanceBeforePayment = Currency.of(startBalance);
-      const balanceAfterPayment = startBalance.subtract(rawPrincipal);
-      const roundedBalanceAfterPayment = startBalance.subtract(roundedPrincipal);
-      const perDiem = this.round(rawInterest.divide(daysInMonth));
-
-      const roundingError = roundedBalanceAfterPayment.subtract(balanceAfterPayment);
-      cummulativeRoundError = cummulativeRoundError.add(roundingError);
-
-      // Track cumulative interest without rounding
-      this.cumulativeInterestWithoutRounding = this.cumulativeInterestWithoutRounding.add(rawInterest);
-      this.totalChargedInterestRounded = this.totalChargedInterestRounded.add(roundedInterest);
-      this.totalChargedInterestUnrounded = this.totalChargedInterestUnrounded.add(rawInterest);
-
-      if (roundedInterest.getValue().toNumber() === 0 && rawInterest.getValue().toNumber() > 0) {
-        metadata.interestLessThanOneCent = true; // Track when interest is less than one cent
-        metadata.actualInterestValue = rawInterest.getValue().toNumber(); // Store the actual interest value
-        this.unbilledInterestDueToRounding = this.unbilledInterestDueToRounding.add(rawInterest); // Add unrounded interest to unbilled interest due to rounding
-      }
-
-      startBalance = roundedBalanceAfterPayment;
-
-      schedule.push({
-        period,
-        paymentDate,
-        principal: roundedPrincipal,
-        interest: roundedInterest,
-        endBalance: roundedBalanceAfterPayment,
-        startBalance: balanceBeforePayment,
-        totalPayment: fixedMonthlyPayment,
-        perDiem,
-        daysInPeriod: daysInMonth,
-        roundingError,
-        cummulativeRoundError,
-        metadata, // Include metadata in the schedule entry
-      });
     }
 
     // Adjust the last payment to ensure the balance is zero and incorporate rounding error
@@ -183,19 +367,28 @@ export class Amortization {
     // Flush cumulative rounding error based on the setting
     if (this.flushCumulativeRoundingError === FlushCumulativeRoundingErrorType.AT_END && cummulativeRoundError.getValue().toNumber() !== 0) {
       const lastPayment = schedule[schedule.length - 1];
-      lastPayment.interest = this.round(lastPayment.interest.add(cummulativeRoundError));
-      lastPayment.totalPayment = this.round(lastPayment.principal.add(lastPayment.interest));
-      lastPayment.metadata.cumulativeRoundingErrorFlushed = true; // Track cumulative rounding error flush in metadata
-      lastPayment.metadata.cumulativeRoundingErrorAmount = cummulativeRoundError.getValue().toNumber(); // Track the amount of cumulative rounding error
+      const flushAmount = cummulativeRoundError;
+      const adjustedInterest = this.round(lastPayment.interest.add(flushAmount));
+      if (adjustedInterest.getValue().greaterThanOrEqualTo(0)) {
+        lastPayment.interest = adjustedInterest;
+        lastPayment.totalPayment = this.round(lastPayment.principal.add(lastPayment.interest));
+        cummulativeRoundError = cummulativeRoundError.subtract(flushAmount);
+        this.unbilledInterestDueToRounding = this.unbilledInterestDueToRounding.subtract(flushAmount); // Update unbilled interest due to rounding
+        lastPayment.metadata.cumulativeRoundingErrorFlushed = true; // Track cumulative rounding error flush in metadata
+        lastPayment.metadata.cumulativeRoundingErrorAmount = flushAmount.getValue().toNumber(); // Track the amount of cumulative rounding error
+      }
     }
 
     // Check if unbilledInterestDueToRounding is greater than one cent and apply it to the last payment
-    if (this.unbilledInterestDueToRounding.getValue().comparedTo(0.01) > 0) {
+    if (this.unbilledInterestDueToRounding.getValue().greaterThanOrEqualTo(0.01)) {
       const lastPayment = schedule[schedule.length - 1];
-      lastPayment.interest = this.round(lastPayment.interest.add(this.unbilledInterestDueToRounding));
-      lastPayment.totalPayment = this.round(lastPayment.principal.add(lastPayment.interest));
-      lastPayment.metadata.unbilledInterestApplied = true; // Track unbilled interest application in metadata
-      lastPayment.metadata.unbilledInterestAmount = this.unbilledInterestDueToRounding.getValue().toNumber(); // Track the amount of unbilled interest applied
+      const adjustedInterest = this.round(lastPayment.interest.add(this.unbilledInterestDueToRounding));
+      if (adjustedInterest.getValue().greaterThanOrEqualTo(0)) {
+        lastPayment.interest = adjustedInterest;
+        lastPayment.totalPayment = this.round(lastPayment.principal.add(lastPayment.interest));
+        lastPayment.metadata.unbilledInterestApplied = true; // Track unbilled interest application in metadata
+        lastPayment.metadata.unbilledInterestAmount = this.unbilledInterestDueToRounding.getValue().toNumber(); // Track the amount of unbilled interest applied
+      }
     }
 
     return schedule;
@@ -206,10 +399,10 @@ export class Amortization {
    * @returns The fixed monthly payment as a Currency object.
    */
   private calculateFixedMonthlyPayment(): Currency {
-    if (this.interestRate === 0) {
+    if (this.annualInterestRate === 0) {
       return this.round(this.loanAmount.divide(this.term));
     }
-    const monthlyRate = this.interestRate / 12;
+    const monthlyRate = this.annualInterestRate / 12;
     const numerator = this.loanAmount.multiply(monthlyRate);
     const denominator = Currency.of(1).subtract(Currency.of(1).divide((1 + monthlyRate) ** this.term));
     return this.round(numerator.divide(denominator));
@@ -221,6 +414,6 @@ export class Amortization {
    * @returns The rounded Currency value.
    */
   private round(value: Currency): Currency {
-    return value.round(this.precision, this.roundingMethod);
+    return value.round(this.roundingPrecision, this.roundingMethod);
   }
 }

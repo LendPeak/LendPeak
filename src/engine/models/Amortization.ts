@@ -14,6 +14,7 @@ export interface AmortizationSchedule {
   periodInterestRate: Decimal;
   principal: Currency;
   interest: Currency;
+  realInterest: Currency; // New property to track real interest value
   totalInterestForPeriod: Currency; // New property to track total interest for the period
   totalPayment: Currency;
   endBalance: Currency;
@@ -199,13 +200,14 @@ export class Amortization {
           periodInterestRate: row.periodInterestRate,
           principal: row.principal.getRoundedValue(this.roundingPrecision).toNumber(),
           interest: row.interest.getRoundedValue(this.roundingPrecision).toNumber(),
+          realInterest: row.realInterest.toNumber(), // Include real interest value in the printed table
+          roundingError: row.roundingError.toNumber(),
+          cummulativeRoundError: row.cummulativeRoundError.toNumber(),
           totalPayment: row.totalPayment.getRoundedValue(this.roundingPrecision).toNumber(),
           perDiem: row.perDiem.getRoundedValue(this.roundingPrecision).toNumber(),
           daysInPeriod: row.daysInPeriod,
           startBalance: row.startBalance.getRoundedValue(this.roundingPrecision).toNumber(),
           endBalance: row.endBalance.getRoundedValue(this.roundingPrecision).toNumber(),
-          roundingError: row.roundingError.toNumber(),
-          cummulativeRoundError: row.cummulativeRoundError.toNumber(),
           unbilledInterestDueToRounding: row.unbilledInterestDueToRounding.toNumber(), // Include unbilled interest due to rounding in the printed table
           metadata: JSON.stringify(row.metadata), // Include metadata in the printed table
         };
@@ -307,6 +309,7 @@ export class Amortization {
             periodInterestRate: interestRateForPeriod.annualInterestRate,
             principal: Currency.of(0),
             interest: roundedInterest,
+            realInterest: rawInterest, // Track real interest value
             totalInterestForPeriod,
             endBalance: Currency.of(startBalance),
             startBalance: Currency.of(startBalance),
@@ -379,6 +382,7 @@ export class Amortization {
           periodInterestRate: interestRateForPeriod.annualInterestRate,
           principal: roundedPrincipal,
           interest: roundedInterest,
+          realInterest: rawInterest, // Track real interest value
           totalInterestForPeriod,
           endBalance: roundedBalanceAfterPayment,
           startBalance: balanceBeforePayment,

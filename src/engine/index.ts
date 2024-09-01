@@ -36,26 +36,26 @@ const amortization = new Amortization({
   //calendarType: CalendarType.ACTUAL_ACTUAL,
   //calendarType: CalendarType.THIRTY_360,
   //roundingMethod: RoundingMethod.ROUND_HALF_EVEN,
-  flushCumulativeRoundingError: FlushCumulativeRoundingErrorType.AT_THRESHOLD,
+  // flushCumulativeRoundingError: FlushCumulativeRoundingErrorType.AT_THRESHOLD,
   // roundingPrecision: 2, // 5 decimal places
-  flushThreshold: Currency.of(0.01), // 1 cent threshold
-  // ratesSchedule: [
-  //   {
-  //     startDate: startDate,
-  //     endDate: startDate.add(10, "days"),
-  //     annualInterestRate: interestRate,
-  //   },
-  //   {
-  //     startDate: startDate.add(10, "days"),
-  //     endDate: startDate.add(1, "month"),
-  //     annualInterestRate: interestRate.add(0.05),
-  //   },
-  //   {
-  //     startDate: startDate.add(1, "month"),
-  //     endDate: startDate.add(term, "month"),
-  //     annualInterestRate: interestRate,
-  //   },
-  // ],
+  //flushThreshold: Currency.of(0.01), // 1 cent threshold
+  ratesSchedule: [
+    {
+      startDate: startDate,
+      endDate: startDate.add(10, "days"),
+      annualInterestRate: interestRate,
+    },
+    {
+      startDate: startDate.add(10, "days"),
+      endDate: startDate.add(1, "month"),
+      annualInterestRate: interestRate.add(0.05),
+    },
+    {
+      startDate: startDate.add(1, "month"),
+      endDate: startDate.add(term, "month"),
+      annualInterestRate: interestRate,
+    },
+  ],
 });
 
 // Generate and print Amortization Schedule

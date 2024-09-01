@@ -16,7 +16,7 @@ dayjs.extend(isSameOrBefore);
  * - `THIRTY_360`: Assumes 30 days per month and 360 days per year.
  * - `THIRTY_ACTUAL`: Uses 30 days per month when over 30 days, otherwise actual days.
  */
-enum CalendarType {
+export enum CalendarType {
   ACTUAL_ACTUAL,
   ACTUAL_360,
   ACTUAL_365,
@@ -30,8 +30,8 @@ enum CalendarType {
  * This class uses dayjs for date manipulations and can calculate the number of days between two dates
  * according to various calendar types like 30/360, 30/Actual, etc.
  */
-class Calendar {
-  private calendarType: CalendarType;
+export class Calendar {
+  calendarType: CalendarType;
 
   /**
    * Creates an instance of the Calendar class with a specified calendar type.
@@ -217,5 +217,3 @@ class Calendar {
     return date.isSameOrAfter(startDate) && date.isSameOrBefore(endDate);
   }
 }
-
-export { Calendar, CalendarType };

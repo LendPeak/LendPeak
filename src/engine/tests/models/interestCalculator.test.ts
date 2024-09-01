@@ -2,10 +2,11 @@ import dayjs from "dayjs";
 import { InterestCalculator, PaymentSplit } from "@models/InterestCalculator";
 import { CalendarType } from "@models/Calendar";
 import { Currency } from "@utils/Currency";
+import Decimal from "decimal.js";
 
 describe("InterestCalculator", () => {
   const principal = Currency.of(100_000); // $100,000 principal
-  const annualInterestRate = 0.05; // 5% annual interest rate
+  const annualInterestRate = new Decimal(0.05); // 5% annual interest rate
   const startDate = dayjs("2024-01-01");
   const endDate = dayjs("2024-02-01");
 

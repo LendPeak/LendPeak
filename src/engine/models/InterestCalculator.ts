@@ -17,9 +17,9 @@ interface rateScheduleRow {
 
 class InterestCalculator {
   private calendar: Calendar;
-  private annualInterestRate: number;
+  private annualInterestRate: Decimal;
 
-  constructor(annualInterestRate: number, calendarType: CalendarType = CalendarType.ACTUAL_ACTUAL) {
+  constructor(annualInterestRate: Decimal, calendarType: CalendarType = CalendarType.ACTUAL_ACTUAL) {
     this.annualInterestRate = annualInterestRate;
     this.calendar = new Calendar(calendarType);
   }
@@ -32,7 +32,7 @@ class InterestCalculator {
    * @returns {Currency} - The interest amount as a Currency object.
    */
   calculateInterest(principal: Currency, startDate: Dayjs, endDate: Dayjs): Currency {
-    if (this.annualInterestRate === 0) {
+    if (this.annualInterestRate.equals(0)) {
       return Currency.of(0);
     }
     const days = this.calendar.daysBetween(startDate, endDate);
@@ -45,9 +45,9 @@ class InterestCalculator {
    * @param principal - The principal amount on which daily interest is calculated (Currency).
    * @returns {Currency} - The daily interest amount as a Currency object.
    */
-  calculateDailyInterest(principal: Currency, customAnnualInterestRate?: number): Currency {
+  calculateDailyInterest(principal: Currency, customAnnualInterestRate?: Decimal): Currency {
     const annualRate = customAnnualInterestRate !== undefined ? customAnnualInterestRate : this.annualInterestRate;
-    if (annualRate === 0) {
+    if (annualRate.isZero()) {
       return Currency.of(0);
     }
     const dailyInterestRate = new Decimal(annualRate).dividedBy(this.calendar.daysInYear());
@@ -62,9 +62,9 @@ class InterestCalculator {
    * @param customAnnualInterestRate - (Optional) A custom annual interest rate to use for the calculation.
    * @returns {Currency} - The interest amount as a Currency object.
    */
-  calculateInterestForDays(principal: Currency, days: number, customAnnualInterestRate?: number): Currency {
+  calculateInterestForDays(principal: Currency, days: number, customAnnualInterestRate?: Decimal): Currency {
     const annualRate = customAnnualInterestRate !== undefined ? customAnnualInterestRate : this.annualInterestRate;
-    if (annualRate === 0) {
+    if (annualRate.isZero()) {
       return Currency.of(0);
     }
     const dailyInterestRate = this.calculateDailyInterest(principal, annualRate);

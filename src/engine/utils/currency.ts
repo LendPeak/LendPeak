@@ -38,12 +38,20 @@ export class Currency {
     return new Currency(amount);
   }
 
+  toNumber(): number {
+    return this.value.toNumber();
+  }
+
   getValue(): Decimal {
     return this.value;
   }
 
   getRoundingError(): Decimal {
     return this.roundingError;
+  }
+
+  getRoundingErrorAsCurrency(): Currency {
+    return Currency.of(this.roundingError);
   }
 
   round(decimalPlaces: number = 2, method: RoundingMethod = RoundingMethod.ROUND_HALF_UP): Currency {

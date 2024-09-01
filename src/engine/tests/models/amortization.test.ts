@@ -2,11 +2,12 @@ import dayjs from "dayjs";
 import { Currency, RoundingMethod } from "@utils/Currency";
 import { Amortization, FlushCumulativeRoundingErrorType } from "@models/Amortization";
 import { CalendarType } from "@models/Calendar";
+import Decimal from "decimal.js";
 
 describe("Amortization", () => {
   it("should generate a correct amortization schedule for a simple case", () => {
     const loanAmount = Currency.of(1000);
-    const interestRate = 0.05; // 5% annual interest rate
+    const interestRate = new Decimal(0.05); // 5% annual interest rate
     const term = 12; // 12 months
     const startDate = dayjs("2023-01-01");
 
@@ -21,9 +22,9 @@ describe("Amortization", () => {
   });
 
   it("should handle rounding discrepancies correctly", () => {
-    const loanAmount = Currency.of(1500);
-    const interestRate = 0.05; // 5% annual interest rate
-    const term = 6; // 6 months
+    const loanAmount = Currency.of(3000);
+    const interestRate = new Decimal(0.07); // 5% annual interest rate
+    const term = 24; // 6 months
     const startDate = dayjs("2023-01-01");
 
     const amortization = new Amortization({ loanAmount, interestRate, term, startDate });
@@ -38,7 +39,7 @@ describe("Amortization", () => {
 
   it("should adjust the final payment to ensure the balance is zero", () => {
     const loanAmount = Currency.of(1000);
-    const interestRate = 0.05; // 5% annual interest rate
+    const interestRate = new Decimal(0.05); // 5% annual interest rate
     const term = 12; // 12 months
     const startDate = dayjs("2023-01-01");
 
@@ -53,7 +54,7 @@ describe("Amortization", () => {
 
   it("should generate a correct amortization schedule with different rounding methods", () => {
     const loanAmount = Currency.of(1000);
-    const interestRate = 0.05; // 5% annual interest rate
+    const interestRate = new Decimal(0.05); // 5% annual interest rate
     const term = 12; // 12 months
     const startDate = dayjs("2023-01-01");
 
@@ -82,7 +83,7 @@ describe("Amortization", () => {
 
   it("should handle edge cases with zero interest rate", () => {
     const loanAmount = Currency.of(1000);
-    const interestRate = 0.0; // 0% annual interest rate
+    const interestRate = new Decimal(0); // 0% annual interest rate
     const term = 12; // 12 months
     const startDate = dayjs("2023-01-01");
 
@@ -108,7 +109,7 @@ describe("Amortization", () => {
 
   it("should handle edge cases with very short terms", () => {
     const loanAmount = Currency.of(1000);
-    const interestRate = 0.05; // 5% annual interest rate
+    const interestRate = new Decimal(0.05); // 5% annual interest rate
     const term = 1; // 1 month
     const startDate = dayjs("2023-01-01");
 
@@ -124,7 +125,7 @@ describe("Amortization", () => {
 
   it("should handle edge cases with very long terms", () => {
     const loanAmount = Currency.of(1000);
-    const interestRate = 0.05; // 5% annual interest rate
+    const interestRate = new Decimal(0.05); // 5% annual interest rate
     const term = 360; // 30 years
     const startDate = dayjs("2023-01-01");
 
@@ -140,7 +141,7 @@ describe("Amortization", () => {
 
   it("should set finalAdjustment to true for the last payment if necessary", () => {
     const loanAmount = Currency.of(1000);
-    const interestRate = 0.05; // 5% annual interest rate
+    const interestRate = new Decimal(0.05); // 5% annual interest rate
     const term = 12; // 12 months
     const startDate = dayjs("2023-01-01");
 
@@ -155,7 +156,7 @@ describe("Amortization", () => {
 
   it("should handle a zero loan amount", () => {
     const loanAmount = Currency.of(0);
-    const interestRate = 0.05; // 5% annual interest rate
+    const interestRate = new Decimal(0.05); // 5% annual interest rate
     const term = 12; // 12 months
     const startDate = dayjs("2023-01-01");
 
@@ -173,7 +174,7 @@ describe("Amortization", () => {
 
   it("should handle a negative loan amount", () => {
     const loanAmount = Currency.of(-1000);
-    const interestRate = 0.05; // 5% annual interest rate
+    const interestRate = new Decimal(0.05); // 5% annual interest rate
     const term = 12; // 12 months
     const startDate = dayjs("2023-01-01");
 
@@ -195,7 +196,7 @@ describe("Amortization", () => {
 
   it("should handle a very high interest rate", () => {
     const loanAmount = Currency.of(1000);
-    const interestRate = 1.0; // 100% annual interest rate
+    const interestRate = new Decimal(1.0); // 100% annual interest rate
     const term = 12; // 12 months
     const startDate = dayjs("2023-01-01");
     const endDate = startDate.add(term, "month");
@@ -218,7 +219,7 @@ describe("Amortization", () => {
 
   it("should handle a very low interest rate", () => {
     const loanAmount = Currency.of(1000);
-    const interestRate = 0.0001; // 0.01% annual interest rate
+    const interestRate = new Decimal(0.0001); // 0.01% annual interest rate
     const term = 12; // 12 months
     const startDate = dayjs("2023-01-01");
     const endDate = startDate.add(term, "month");
@@ -251,7 +252,7 @@ describe("Amortization", () => {
 
   it("should handle a single payment term", () => {
     const loanAmount = Currency.of(1000);
-    const interestRate = 0.05; // 5% annual interest rate
+    const interestRate = new Decimal(0.05); // 5% annual interest rate
     const term = 1; // 1 month
     const startDate = dayjs("2023-01-01");
 
@@ -268,7 +269,7 @@ describe("Amortization", () => {
 
   it("should handle a very long term with zero interest rate", () => {
     const loanAmount = Currency.of(1000);
-    const interestRate = 0.0; // 0% annual interest rate
+    const interestRate = new Decimal(0); // 0% annual interest rate
     const term = 360; // 30 years
     const startDate = dayjs("2023-01-01");
 
@@ -291,7 +292,7 @@ describe("Amortization", () => {
 
   it("should handle a very short term with zero interest rate", () => {
     const loanAmount = Currency.of(1000);
-    const interestRate = 0.0; // 0% annual interest rate
+    const interestRate = new Decimal(0); // 0% annual interest rate
     const term = 1; // 1 month
     const startDate = dayjs("2023-01-01");
 
@@ -308,7 +309,7 @@ describe("Amortization", () => {
 
   it("should handle a very high loan amount", () => {
     const loanAmount = Currency.of(1000000000); // 1 billion
-    const interestRate = 0.05; // 5% annual interest rate
+    const interestRate = new Decimal(0.05); // 5% annual interest rate
     const term = 12; // 12 months
     const startDate = dayjs("2023-01-01");
 
@@ -330,7 +331,7 @@ describe("Amortization", () => {
 
   it("should handle a very low loan amount", () => {
     const loanAmount = Currency.of(1); // 1 unit of currency
-    const interestRate = 0.05; // 5% annual interest rate
+    const interestRate = new Decimal(0.05); // 5% annual interest rate
     const term = 12; // 12 months
     const startDate = dayjs("2023-01-01");
 

@@ -1,6 +1,6 @@
 import dayjs from "dayjs";
 import { Currency, RoundingMethod } from "@utils/Currency";
-import { Amortization, FlushCumulativeRoundingErrorType } from "@models/Amortization";
+import { Amortization, FlushUnbilledInterestDueToRoundingErrorType } from "@models/Amortization";
 import { CalendarType } from "@models/Calendar";
 import Decimal from "decimal.js";
 
@@ -19,22 +19,6 @@ describe("Amortization", () => {
     expect(schedule[0].interest).toBeDefined();
     expect(schedule[0].totalPayment).toBeDefined();
     expect(schedule[0].endBalance).toBeDefined();
-  });
-
-  it("should handle rounding discrepancies correctly", () => {
-    const loanAmount = Currency.of(3000);
-    const interestRate = new Decimal(0.07); // 5% annual interest rate
-    const term = 24; // 6 months
-    const startDate = dayjs("2023-01-01");
-
-    const amortization = new Amortization({ loanAmount, interestRate, term, startDate });
-    const schedule = amortization.generateSchedule();
-
-    const discrepancyEntry = schedule.find((entry) => entry.metadata.roundingDiscrepancyAdjustment === true);
-
-    expect(discrepancyEntry).toBeDefined();
-    expect(discrepancyEntry?.metadata.roundingDiscrepancyAdjustment).toBe(true);
-    expect(discrepancyEntry?.metadata.discrepancyAmount).toBeDefined();
   });
 
   it("should adjust the final payment to ensure the balance is zero", () => {
@@ -68,7 +52,7 @@ describe("Amortization", () => {
         startDate,
         calendarType: CalendarType.ACTUAL_ACTUAL,
         roundingMethod,
-        flushCumulativeRoundingError: FlushCumulativeRoundingErrorType.AT_END,
+        flushUnbilledInterestRoundingErrorMethod: FlushUnbilledInterestDueToRoundingErrorType.AT_END,
         roundingPrecision: 5,
       });
       const schedule = amortization.generateSchedule();
@@ -232,7 +216,7 @@ describe("Amortization", () => {
       endDate,
       calendarType: CalendarType.ACTUAL_ACTUAL,
       roundingMethod: RoundingMethod.ROUND_HALF_UP,
-      flushCumulativeRoundingError: FlushCumulativeRoundingErrorType.AT_END,
+      flushUnbilledInterestRoundingErrorMethod: FlushUnbilledInterestDueToRoundingErrorType.AT_END,
       roundingPrecision: 5,
     });
     const schedule = amortization.generateSchedule();
@@ -342,7 +326,7 @@ describe("Amortization", () => {
       startDate,
       calendarType: CalendarType.ACTUAL_ACTUAL,
       roundingMethod: RoundingMethod.ROUND_HALF_UP,
-      flushCumulativeRoundingError: FlushCumulativeRoundingErrorType.AT_END,
+      flushUnbilledInterestRoundingErrorMethod: FlushUnbilledInterestDueToRoundingErrorType.AT_END,
       roundingPrecision: 10,
     });
     const schedule = amortization.generateSchedule();

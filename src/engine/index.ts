@@ -1,6 +1,6 @@
 import { Payment } from "./models/Payment";
 import { Loan } from "./models/Loan";
-import { Amortization, FlushCumulativeRoundingErrorType } from "./models/Amortization";
+import { Amortization, FlushUnbilledInterestDueToRoundingErrorType } from "./models/Amortization";
 import { LoanRestructureService } from "./services/RestructureService";
 import { PaymentService } from "./services/PaymentService";
 import { Restructure } from "./models/Restructure";
@@ -37,6 +37,7 @@ const amortization = new Amortization({
   //calendarType: CalendarType.THIRTY_360,
   //roundingMethod: RoundingMethod.ROUND_HALF_EVEN,
   // flushCumulativeRoundingError: FlushCumulativeRoundingErrorType.AT_THRESHOLD,
+  flushUnbilledInterestRoundingErrorMethod: FlushUnbilledInterestDueToRoundingErrorType.AT_THRESHOLD,
   // roundingPrecision: 2, // 5 decimal places
   //flushThreshold: Currency.of(0.01), // 1 cent threshold
   ratesSchedule: [

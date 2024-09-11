@@ -21,8 +21,7 @@ export interface AmortizationSchedule {
   startBalance: Currency;
   perDiem: Currency;
   daysInPeriod: number;
-  roundingError: Currency;
-  cummulativeRoundError: Currency;
+  interestRoundingError: Currency;
   unbilledInterestDueToRounding: Currency; // New property to track unbilled interest due to rounding
   metadata: Record<string, any>; // Metadata to track any adjustments or corrections
 }
@@ -41,7 +40,7 @@ export interface RateSchedule {
 /**
  * Enum for flush cumulative rounding error types.
  */
-export enum FlushCumulativeRoundingErrorType {
+export enum FlushUnbilledInterestDueToRoundingErrorType {
   NONE = "none",
   AT_END = "at_end",
   AT_THRESHOLD = "at_threshold",
@@ -58,7 +57,7 @@ export class Amortization {
   endDate: Dayjs;
   calendar: Calendar;
   roundingMethod: RoundingMethod;
-  flushCumulativeRoundingError: FlushCumulativeRoundingErrorType; // Updated property
+  flushUnbilledInterestRoundingErrorMethod: FlushUnbilledInterestDueToRoundingErrorType; // Updated property
   cumulativeInterestWithoutRounding: Currency; // New property to track cumulative interest without rounding
   totalChargedInterestRounded: Currency; // New property to track total charged interest (rounded)
   totalChargedInterestUnrounded: Currency; // New property to track total charged interest (unrounded)
@@ -76,7 +75,7 @@ export class Amortization {
     endDate?: Dayjs;
     calendarType?: CalendarType;
     roundingMethod?: RoundingMethod;
-    flushCumulativeRoundingError?: FlushCumulativeRoundingErrorType;
+    flushUnbilledInterestRoundingErrorMethod?: FlushUnbilledInterestDueToRoundingErrorType;
     roundingPrecision?: number;
     flushThreshold?: Currency;
     periodsSchedule?: PeriodSchedule[];
@@ -89,7 +88,7 @@ export class Amortization {
     this.endDate = params.endDate || this.startDate.add(this.term, "month");
     this.calendar = new Calendar(params.calendarType || CalendarType.ACTUAL_ACTUAL);
     this.roundingMethod = params.roundingMethod || RoundingMethod.ROUND_HALF_UP;
-    this.flushCumulativeRoundingError = params.flushCumulativeRoundingError || FlushCumulativeRoundingErrorType.NONE;
+    this.flushUnbilledInterestRoundingErrorMethod = params.flushUnbilledInterestRoundingErrorMethod || FlushUnbilledInterestDueToRoundingErrorType.NONE;
     this.cumulativeInterestWithoutRounding = Currency.of(0);
     this.totalChargedInterestRounded = Currency.of(0);
     this.totalChargedInterestUnrounded = Currency.of(0);
@@ -199,10 +198,10 @@ export class Amortization {
           periodEndDate: row.periodEndDate.format("YYYY-MM-DD"),
           periodInterestRate: row.periodInterestRate,
           principal: row.principal.getRoundedValue(this.roundingPrecision).toNumber(),
+          totalInterestForPeriod: row.totalInterestForPeriod.toNumber(), // Include total interest for the period in the printed table
           interest: row.interest.getRoundedValue(this.roundingPrecision).toNumber(),
           realInterest: row.realInterest.toNumber(), // Include real interest value in the printed table
-          roundingError: row.roundingError.toNumber(),
-          cummulativeRoundError: row.cummulativeRoundError.toNumber(),
+          interestRoundingError: row.interestRoundingError.toNumber(),
           totalPayment: row.totalPayment.getRoundedValue(this.roundingPrecision).toNumber(),
           perDiem: row.perDiem.getRoundedValue(this.roundingPrecision).toNumber(),
           daysInPeriod: row.daysInPeriod,
@@ -252,8 +251,6 @@ export class Amortization {
     let startBalance = this.loanAmount;
     const fixedMonthlyPayment = this.calculateFixedMonthlyPayment();
 
-    let cummulativeRoundError = Currency.of(0);
-
     let periodIndex = 0;
     for (let period of this.periodsSchedule) {
       periodIndex++;
@@ -289,14 +286,25 @@ export class Amortization {
           rawInterest = interestCalculator.calculateInterestForDays(startBalance, daysInPeriod);
         }
         // lets check if we have unbilledInterestDueToRounding that is greater than or equal to flushThreshold
-        if (this.unbilledInterestDueToRounding.getValue().greaterThanOrEqualTo(this.flushThreshold.getValue())) {
-          rawInterest = rawInterest.add(this.unbilledInterestDueToRounding);
-          // add metadata to track the unbilled interest applied
-          metadata.unbilledInterestApplied = true;
-          metadata.unbilledInterestAppliedAmount = this.unbilledInterestDueToRounding.toNumber();
-          this.unbilledInterestDueToRounding = Currency.Zero(); // Reset unbilled interest here, it will be recalculated below
+        if (this.flushUnbilledInterestRoundingErrorMethod === FlushUnbilledInterestDueToRoundingErrorType.AT_THRESHOLD) {
+          if (this.unbilledInterestDueToRounding.getValue().abs().greaterThanOrEqualTo(this.flushThreshold.getValue())) {
+            rawInterest = rawInterest.add(this.unbilledInterestDueToRounding);
+            // add metadata to track the unbilled interest applied
+            metadata.unbilledInterestApplied = true;
+            metadata.unbilledInterestAppliedAmount = this.unbilledInterestDueToRounding.toNumber();
+            this.unbilledInterestDueToRounding = Currency.Zero(); // Reset unbilled interest here, it will be recalculated below
+          }
         }
+
         let roundedInterest = this.round(rawInterest);
+
+        let interestRoundingError = roundedInterest.getRoundingErrorAsCurrency();
+
+        if (!interestRoundingError.getValue().isZero()) {
+          metadata.unbilledInterestAmount = interestRoundingError.toNumber();
+          this.unbilledInterestDueToRounding = this.unbilledInterestDueToRounding.add(interestRoundingError);
+        }
+
         const perDiem = this.round(rawInterest.divide(daysInPeriod));
         totalInterestForPeriod = totalInterestForPeriod.add(rawInterest);
 
@@ -311,38 +319,24 @@ export class Amortization {
             interest: roundedInterest,
             realInterest: rawInterest, // Track real interest value
             totalInterestForPeriod,
+            interestRoundingError: roundedInterest.getRoundingErrorAsCurrency(),
+
             endBalance: Currency.of(startBalance),
             startBalance: Currency.of(startBalance),
             totalPayment: Currency.of(0),
             perDiem,
             daysInPeriod: daysInPeriod,
-            roundingError: roundedInterest.getRoundingErrorAsCurrency(),
-            cummulativeRoundError,
             unbilledInterestDueToRounding: this.unbilledInterestDueToRounding, // Track unbilled interest due to rounding
             metadata, // Include metadata in the schedule entry
           });
           continue;
         }
 
-        let rawPrincipal = fixedMonthlyPayment.subtract(totalInterestForPeriod);
-
-        let roundedPrincipal = this.round(rawPrincipal);
-
         let totalInterestForPeriodRounded = this.round(totalInterestForPeriod);
-
-        // Check for rounding discrepancy
-        const totalRoundedPayment = totalInterestForPeriodRounded.add(roundedPrincipal);
-        if (!totalRoundedPayment.getValue().equals(fixedMonthlyPayment.getValue())) {
-          const discrepancy = fixedMonthlyPayment.subtract(totalRoundedPayment);
-          rawPrincipal = rawPrincipal.add(discrepancy);
-          roundedPrincipal = this.round(rawPrincipal);
-          metadata.roundingDiscrepancyAdjustment = true; // Track adjustment in metadata
-          metadata.discrepancyAmount = discrepancy.toNumber(); // Track the amount of discrepancy
-        }
+        let principal = fixedMonthlyPayment.subtract(totalInterestForPeriodRounded);
 
         const balanceBeforePayment = Currency.of(startBalance);
-        const balanceAfterPayment = startBalance.subtract(rawPrincipal);
-        const roundedBalanceAfterPayment = startBalance.subtract(roundedPrincipal);
+        const balanceAfterPayment = startBalance.subtract(principal);
 
         let roundingError: Currency;
         // Track cumulative interest without rounding
@@ -355,42 +349,25 @@ export class Amortization {
           metadata.actualInterestValue = totalInterestForPeriod.toNumber(); // Store the actual interest value
           this.unbilledInterestDueToRounding = this.unbilledInterestDueToRounding.add(totalInterestForPeriod); // Add unrounded interest to unbilled interest due to rounding
           roundingError = Currency.of(0);
-        } else {
-          roundingError = roundedBalanceAfterPayment.subtract(balanceAfterPayment);
-          cummulativeRoundError = cummulativeRoundError.add(roundingError);
         }
 
-        // Flush cumulative rounding error if it exceeds the threshold
-        if (this.flushCumulativeRoundingError === FlushCumulativeRoundingErrorType.AT_THRESHOLD && cummulativeRoundError.getValue().abs().comparedTo(this.flushThreshold.getValue()) >= 0) {
-          const flushAmount = cummulativeRoundError;
-          const adjustedInterest = this.round(totalInterestForPeriodRounded.add(flushAmount));
-          if (adjustedInterest.getValue().greaterThanOrEqualTo(0)) {
-            totalInterestForPeriodRounded = adjustedInterest;
-            cummulativeRoundError = cummulativeRoundError.subtract(flushAmount);
-            this.unbilledInterestDueToRounding = this.unbilledInterestDueToRounding.subtract(flushAmount); // Update unbilled interest due to rounding
-            metadata.cumulativeRoundingErrorFlushed = true; // Track cumulative rounding error flush in metadata
-            metadata.cumulativeRoundingErrorAmount = flushAmount.toNumber(); // Track the amount of cumulative rounding error
-          }
-        }
-
-        startBalance = roundedBalanceAfterPayment;
+        startBalance = balanceAfterPayment;
 
         schedule.push({
           period: periodIndex,
           periodStartDate: interestRateForPeriod.startDate,
           periodEndDate: interestRateForPeriod.endDate,
           periodInterestRate: interestRateForPeriod.annualInterestRate,
-          principal: roundedPrincipal,
+          principal: principal,
           interest: roundedInterest,
           realInterest: rawInterest, // Track real interest value
           totalInterestForPeriod,
-          endBalance: roundedBalanceAfterPayment,
+          endBalance: balanceAfterPayment,
           startBalance: balanceBeforePayment,
           totalPayment: fixedMonthlyPayment,
           perDiem,
           daysInPeriod: daysInPeriod,
-          roundingError,
-          cummulativeRoundError,
+          interestRoundingError: roundedInterest.getRoundingErrorAsCurrency(),
           unbilledInterestDueToRounding: this.unbilledInterestDueToRounding, // Track unbilled interest due to rounding
           metadata, // Include metadata in the schedule entry
         });
@@ -400,39 +377,29 @@ export class Amortization {
     // Adjust the last payment to ensure the balance is zero and incorporate rounding error
     if (startBalance.toNumber() !== 0) {
       const lastPayment = schedule[schedule.length - 1];
-      lastPayment.principal = this.round(lastPayment.principal.add(startBalance));
-      lastPayment.totalPayment = this.round(lastPayment.principal.add(lastPayment.interest));
+      lastPayment.principal = lastPayment.principal.add(startBalance);
+      lastPayment.totalPayment = lastPayment.principal.add(lastPayment.interest);
       lastPayment.endBalance = Currency.of(0);
       lastPayment.perDiem = this.round(lastPayment.interest.divide(this.calendar.daysInMonth(this.calendar.addMonths(this.startDate, this.term))));
       lastPayment.daysInPeriod = this.calendar.daysInMonth(this.calendar.addMonths(this.startDate, this.term));
-      lastPayment.roundingError = this.round(lastPayment.totalPayment.subtract(lastPayment.principal.add(lastPayment.interest)));
+      lastPayment.interestRoundingError = lastPayment.interest.getRoundingErrorAsCurrency();
       lastPayment.metadata.finalAdjustment = true; // Track final adjustment in metadata
     }
 
-    // Flush cumulative rounding error based on the setting
-    if (this.flushCumulativeRoundingError === FlushCumulativeRoundingErrorType.AT_END && cummulativeRoundError.toNumber() !== 0) {
-      const lastPayment = schedule[schedule.length - 1];
-      const flushAmount = cummulativeRoundError;
-      const adjustedInterest = this.round(lastPayment.interest.add(flushAmount));
-      if (adjustedInterest.getValue().greaterThanOrEqualTo(0)) {
-        lastPayment.interest = adjustedInterest;
-        lastPayment.totalPayment = this.round(lastPayment.principal.add(lastPayment.interest));
-        cummulativeRoundError = cummulativeRoundError.subtract(flushAmount);
-        this.unbilledInterestDueToRounding = this.unbilledInterestDueToRounding.subtract(flushAmount); // Update unbilled interest due to rounding
-        lastPayment.metadata.cumulativeRoundingErrorFlushed = true; // Track cumulative rounding error flush in metadata
-        lastPayment.metadata.cumulativeRoundingErrorAmount = flushAmount.toNumber(); // Track the amount of cumulative rounding error
-      }
-    }
-
     // Check if unbilledInterestDueToRounding is greater than one cent and apply it to the last payment
-    if (this.unbilledInterestDueToRounding.getValue().greaterThanOrEqualTo(0.01)) {
-      const lastPayment = schedule[schedule.length - 1];
-      const adjustedInterest = this.round(lastPayment.interest.add(this.unbilledInterestDueToRounding));
-      if (adjustedInterest.getValue().greaterThanOrEqualTo(0)) {
-        lastPayment.interest = adjustedInterest;
-        lastPayment.totalPayment = this.round(lastPayment.principal.add(lastPayment.interest));
-        lastPayment.metadata.unbilledInterestApplied = true; // Track unbilled interest application in metadata
-        lastPayment.metadata.unbilledInterestAmount = this.unbilledInterestDueToRounding.toNumber(); // Track the amount of unbilled interest applied
+    if (this.flushUnbilledInterestRoundingErrorMethod === FlushUnbilledInterestDueToRoundingErrorType.AT_END) {
+      if (this.unbilledInterestDueToRounding.getValue().abs().greaterThanOrEqualTo(this.flushThreshold.getValue())) {
+        const lastPayment = schedule[schedule.length - 1];
+        const adjustedInterest = lastPayment.interest.add(this.unbilledInterestDueToRounding);
+        const adjustedInterestRounded = this.round(adjustedInterest);
+        if (adjustedInterest.getValue().greaterThanOrEqualTo(0)) {
+          lastPayment.interest = adjustedInterestRounded;
+          lastPayment.realInterest = adjustedInterest;
+          lastPayment.interestRoundingError = adjustedInterestRounded.getRoundingErrorAsCurrency();
+          lastPayment.totalPayment = this.round(lastPayment.principal.add(lastPayment.interest));
+          lastPayment.metadata.unbilledInterestApplied = true; // Track unbilled interest application in metadata
+          lastPayment.metadata.unbilledInterestAmount = this.unbilledInterestDueToRounding.toNumber(); // Track the amount of unbilled interest applied
+        }
       }
     }
 

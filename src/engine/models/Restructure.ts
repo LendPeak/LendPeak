@@ -1,5 +1,6 @@
 import { Loan } from "./Loan";
 import { Currency } from "@utils/Currency";
+import Decimal from "decimal.js";
 
 export interface Restructure {
   type: "rateModification" | "termExtension" | "paymentReduction" | "rateSuspension";
@@ -22,7 +23,7 @@ export class RestructureService {
     }
   }
 
-  private static modifyRate(loan: Loan, newRate: number): Loan {
+  private static modifyRate(loan: Loan, newRate: Decimal): Loan {
     return { ...loan, interestRate: newRate };
   }
 

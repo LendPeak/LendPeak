@@ -3,19 +3,19 @@ import { Currency } from "../utils/Currency";
 import { Calendar, CalendarType } from "./Calendar";
 import Decimal from "decimal.js";
 
-interface PaymentSplit {
+export interface PaymentSplit {
   principal: Currency;
   interest: Currency;
   remainingDeferredInterest: Currency;
 }
 
-interface rateScheduleRow {
+export interface rateScheduleRow {
   startDate: Dayjs;
   endDate: Dayjs;
   annualInterestRate: number;
 }
 
-class InterestCalculator {
+export class InterestCalculator {
   private calendar: Calendar;
   private annualInterestRate: Decimal;
 
@@ -106,5 +106,3 @@ class InterestCalculator {
     }
   }
 }
-
-export { InterestCalculator, PaymentSplit };

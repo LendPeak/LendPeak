@@ -4,6 +4,15 @@ import { Calendar, CalendarType } from "./Calendar";
 import { InterestCalculator } from "./InterestCalculator";
 import Decimal from "decimal.js";
 
+export interface AmortizationScheduleMetadata {
+  splitInterestPeriod?: boolean;
+  unbilledInterestApplied?: boolean;
+  unbilledInterestAppliedAmount?: number;
+  interestLessThanOneCent?: boolean;
+  unbilledInterestAmount?: number;
+  actualInterestValue?: number;
+  finalAdjustment?: boolean;
+}
 /**
  * Represents a single entry in the amortization schedule.
  */
@@ -23,7 +32,7 @@ export interface AmortizationSchedule {
   daysInPeriod: number;
   interestRoundingError: Currency;
   unbilledInterestDueToRounding: Currency; // New property to track unbilled interest due to rounding
-  metadata: Record<string, any>; // Metadata to track any adjustments or corrections
+  metadata: AmortizationScheduleMetadata; // Metadata to track any adjustments or corrections
 }
 
 export interface PeriodSchedule {
@@ -58,7 +67,6 @@ export class Amortization {
   calendar: Calendar;
   roundingMethod: RoundingMethod;
   flushUnbilledInterestRoundingErrorMethod: FlushUnbilledInterestDueToRoundingErrorType; // Updated property
-  cumulativeInterestWithoutRounding: Currency; // New property to track cumulative interest without rounding
   totalChargedInterestRounded: Currency; // New property to track total charged interest (rounded)
   totalChargedInterestUnrounded: Currency; // New property to track total charged interest (unrounded)
   unbilledInterestDueToRounding: Currency; // New property to track unbilled interest due to rounding
@@ -66,10 +74,11 @@ export class Amortization {
   flushThreshold: Currency; // New property to track the threshold for flushing cumulative rounding error
   periodsSchedule: PeriodSchedule[] = [];
   rateSchedules: RateSchedule[] = [];
+  allowRateAbove100: boolean = false;
 
   constructor(params: {
     loanAmount: Currency;
-    interestRate: Decimal;
+    annualInterestRate: Decimal;
     term: number;
     startDate: Dayjs;
     endDate?: Dayjs;
@@ -80,16 +89,29 @@ export class Amortization {
     flushThreshold?: Currency;
     periodsSchedule?: PeriodSchedule[];
     ratesSchedule?: RateSchedule[];
+    allowRateAbove100?: boolean;
   }) {
+    // validate that loan amount is greater than zero
+    if (params.loanAmount.getValue().isZero() || params.loanAmount.getValue().isNegative()) {
+      throw new Error("Invalid loan amount, must be greater than zero");
+    }
     this.loanAmount = params.loanAmount;
-    this.annualInterestRate = params.interestRate;
+
+    // validate annual interest rate, it should not be negative or greater than 100%
+    if (params.annualInterestRate.isNegative()) {
+      throw new Error("Invalid annual interest rate, value cannot be negative");
+    }
+
+    if (params.annualInterestRate.greaterThan(1) && !params.allowRateAbove100) {
+      throw new Error("Invalid annual interest rate, value cannot be greater than or equal to 100%, unless explicitly allowed by setting allowRateAbove100 to true");
+    }
+    this.annualInterestRate = params.annualInterestRate;
     this.term = params.term;
     this.startDate = params.startDate;
     this.endDate = params.endDate || this.startDate.add(this.term, "month");
     this.calendar = new Calendar(params.calendarType || CalendarType.ACTUAL_ACTUAL);
     this.roundingMethod = params.roundingMethod || RoundingMethod.ROUND_HALF_UP;
     this.flushUnbilledInterestRoundingErrorMethod = params.flushUnbilledInterestRoundingErrorMethod || FlushUnbilledInterestDueToRoundingErrorType.NONE;
-    this.cumulativeInterestWithoutRounding = Currency.of(0);
     this.totalChargedInterestRounded = Currency.of(0);
     this.totalChargedInterestUnrounded = Currency.of(0);
     this.unbilledInterestDueToRounding = Currency.of(0);
@@ -270,7 +292,7 @@ export class Amortization {
       let currentRate = 0;
       for (let interestRateForPeriod of periodRates) {
         currentRate++;
-        const metadata: Record<string, any> = {}; // Initialize metadata
+        const metadata: AmortizationScheduleMetadata = {}; // Initialize metadata
 
         if (periodRates.length > 1) {
           metadata.splitInterestPeriod = true; // Track split interest period in metadata
@@ -338,9 +360,7 @@ export class Amortization {
         const balanceBeforePayment = Currency.of(startBalance);
         const balanceAfterPayment = startBalance.subtract(principal);
 
-        let roundingError: Currency;
         // Track cumulative interest without rounding
-        this.cumulativeInterestWithoutRounding = this.cumulativeInterestWithoutRounding.add(totalInterestForPeriod);
         this.totalChargedInterestRounded = this.totalChargedInterestRounded.add(totalInterestForPeriodRounded);
         this.totalChargedInterestUnrounded = this.totalChargedInterestUnrounded.add(totalInterestForPeriod);
 
@@ -348,7 +368,6 @@ export class Amortization {
           metadata.interestLessThanOneCent = true; // Track when interest is less than one cent
           metadata.actualInterestValue = totalInterestForPeriod.toNumber(); // Store the actual interest value
           this.unbilledInterestDueToRounding = this.unbilledInterestDueToRounding.add(totalInterestForPeriod); // Add unrounded interest to unbilled interest due to rounding
-          roundingError = Currency.of(0);
         }
 
         startBalance = balanceAfterPayment;

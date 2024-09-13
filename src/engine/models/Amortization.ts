@@ -97,18 +97,33 @@ export class Amortization {
     }
     this.loanAmount = params.loanAmount;
 
+    if (params.allowRateAbove100 !== undefined) {
+      this.allowRateAbove100 = params.allowRateAbove100;
+    }
+
     // validate annual interest rate, it should not be negative or greater than 100%
     if (params.annualInterestRate.isNegative()) {
       throw new Error("Invalid annual interest rate, value cannot be negative");
     }
 
-    if (params.annualInterestRate.greaterThan(1) && !params.allowRateAbove100) {
+    if (params.annualInterestRate.greaterThan(1) && !this.allowRateAbove100) {
       throw new Error("Invalid annual interest rate, value cannot be greater than or equal to 100%, unless explicitly allowed by setting allowRateAbove100 to true");
     }
     this.annualInterestRate = params.annualInterestRate;
+
+    // validate term, it should be greater than zero
+    if (params.term <= 0) {
+      throw new Error("Invalid term, must be greater than zero");
+    }
     this.term = params.term;
     this.startDate = params.startDate;
     this.endDate = params.endDate || this.startDate.add(this.term, "month");
+
+    // validate that the end date is after the start date
+    if (this.endDate.isBefore(this.startDate)) {
+      throw new Error("Invalid end date, must be after the start date");
+    }
+
     this.calendar = new Calendar(params.calendarType || CalendarType.ACTUAL_ACTUAL);
     this.roundingMethod = params.roundingMethod || RoundingMethod.ROUND_HALF_UP;
     this.flushUnbilledInterestRoundingErrorMethod = params.flushUnbilledInterestRoundingErrorMethod || FlushUnbilledInterestDueToRoundingErrorType.NONE;
@@ -116,6 +131,10 @@ export class Amortization {
     this.totalChargedInterestUnrounded = Currency.of(0);
     this.unbilledInterestDueToRounding = Currency.of(0);
     this.roundingPrecision = params.roundingPrecision || 2;
+    // validate that the rounding precision is greater than or equal to zero
+    if (this.roundingPrecision < 0) {
+      throw new Error("Invalid rounding precision, must be greater than or equal to zero, number represents decimal places");
+    }
     this.flushThreshold = params.flushThreshold || Currency.of(0.01); // Default threshold is 1 cent
 
     // Initialize the schedule periods and rates
@@ -152,6 +171,20 @@ export class Amortization {
     // Check if the end date of the last period is the same as the loan end date
     if (!this.endDate.isSame(this.rateSchedules[this.rateSchedules.length - 1].endDate, "day")) {
       throw new Error("Invalid schedule rates");
+    }
+
+    // verify that rate is not negative
+    for (let rate of this.rateSchedules) {
+      if (rate.annualInterestRate.isNegative()) {
+        throw new Error("Invalid annual interest rate, value cannot be negative");
+      }
+    }
+
+    // verify that rate is not greater than 100% unless explicitly allowed
+    for (let rate of this.rateSchedules) {
+      if (rate.annualInterestRate.greaterThan(1) && !this.allowRateAbove100) {
+        throw new Error("Invalid annual interest rate, value cannot be greater than or equal to 100%, unless explicitly allowed by setting allowRateAbove100 to true");
+      }
     }
   }
 

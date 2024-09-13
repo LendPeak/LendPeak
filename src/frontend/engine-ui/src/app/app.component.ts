@@ -27,7 +27,13 @@ export class AppComponent {
   };
 
   showTable = false;
+  showAdvancedTable: boolean = false; // Default is simple view
+
   showAdvancedOptions = false;
+
+  toggleAdvancedTable() {
+    this.showAdvancedTable = !this.showAdvancedTable;
+  }
 
   calendarTypes = [
     { label: 'Actual/Actual', value: 'ACTUAL_ACTUAL' },
@@ -173,7 +179,7 @@ export class AppComponent {
         period: index + 1,
         periodStartDate: entry.periodStartDate.format('YYYY-MM-DD'),
         periodEndDate: entry.periodEndDate.format('YYYY-MM-DD'),
-        periodInterestRate: entry.periodInterestRate.toNumber(),
+        periodInterestRate: entry.periodInterestRate.toNumber() * 100,
         principal: entry.principal.toNumber(),
         totalInterestForPeriod: entry.totalInterestForPeriod.toNumber(),
         interest: entry.interest.toNumber(),
@@ -186,7 +192,7 @@ export class AppComponent {
         endBalance: entry.endBalance.toNumber(),
         unbilledInterestDueToRounding:
           entry.unbilledInterestDueToRounding.toNumber(),
-        metadata: JSON.stringify(entry.metadata),
+        metadata: entry.metadata,
       };
     });
 

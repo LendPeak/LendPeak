@@ -8,6 +8,8 @@ import { InputTextModule } from 'primeng/inputtext';
 import { CalendarModule } from 'primeng/calendar';
 import { DropdownModule } from 'primeng/dropdown';
 import { TableModule } from 'primeng/table';
+import { FieldsetModule } from 'primeng/fieldset';
+import { CardModule } from 'primeng/card';
 
 @NgModule({
   declarations: [AppComponent],
@@ -20,6 +22,8 @@ import { TableModule } from 'primeng/table';
     CalendarModule,
     DropdownModule,
     TableModule,
+    FieldsetModule,
+    CardModule,
   ],
   providers: [],
   bootstrap: [AppComponent],

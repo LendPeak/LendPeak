@@ -13,10 +13,10 @@ import Decimal from "decimal.js";
 // const term = 12; // 12 months
 // const startDate = dayjs("2023-01-01");
 
-const loanAmount = Currency.of(3000); // 1 unit of currency
-const interestRate = new Decimal(0.07); // 5% annual interest rate
-const term = 24; // 12 months
-const startDate = dayjs("2023-01-01");
+const loanAmount = Currency.of(10000); // 1 unit of currency
+const interestRate = new Decimal(0.1); // 5% annual interest rate
+const term = 12; // 12 months
+const startDate = dayjs("2024-09-13");
 
 const loan: Loan = {
   id: "loan1",
@@ -34,7 +34,7 @@ const amortization = new Amortization({
   term: term,
   startDate: startDate,
   //calendarType: CalendarType.ACTUAL_ACTUAL,
-  //calendarType: CalendarType.THIRTY_360,
+  calendarType: CalendarType.THIRTY_360,
   //roundingMethod: RoundingMethod.ROUND_HALF_EVEN,
   // flushCumulativeRoundingError: FlushCumulativeRoundingErrorType.AT_THRESHOLD,
   flushUnbilledInterestRoundingErrorMethod: FlushUnbilledInterestDueToRoundingErrorType.AT_THRESHOLD,
@@ -57,6 +57,10 @@ const amortization = new Amortization({
   //     annualInterestRate: interestRate,
   //   },
   // ],
+  ratesSchedule: [
+    { startDate: dayjs("2024-09-13"), endDate: dayjs("2024-10-13"), annualInterestRate: new Decimal(0.12) },
+    //{ annualInterestRate: "0.1", startDate: "2024-10-14T02:26:21.870Z", endDate: "2025-09-14T02:26:14.078Z" },
+  ],
 });
 
 // Generate and print Amortization Schedule

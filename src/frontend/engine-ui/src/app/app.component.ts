@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import {
   Amortization,
+  AmortizationParams,
   FlushUnbilledInterestDueToRoundingErrorType,
 } from 'lendpeak-engine/models/Amortization';
 import { Currency, RoundingMethod } from 'lendpeak-engine/utils/Currency';
@@ -14,7 +15,22 @@ import { CalendarType } from 'lendpeak-engine/models/Calendar';
   styleUrls: ['./app.component.css'],
 })
 export class AppComponent {
-  loan = {
+  loan: {
+    principal: number;
+    interestRate: number;
+    term: number;
+    startDate: Date;
+    calendarType: string;
+    roundingMethod: string;
+    flushMethod: string;
+    roundingPrecision: number;
+    flushThreshold: number;
+    ratesSchedule: {
+      startDate: Date;
+      endDate: Date;
+      annualInterestRate: number;
+    }[];
+  } = {
     principal: 10000,
     interestRate: 0.1,
     term: 12,
@@ -24,6 +40,7 @@ export class AppComponent {
     flushMethod: 'at_threshold', // Default value
     roundingPrecision: 2,
     flushThreshold: 0.01,
+    ratesSchedule: [],
   };
 
   showTable = false;
@@ -83,6 +100,37 @@ export class AppComponent {
 
   toggleAdvancedOptions() {
     this.showAdvancedOptions = !this.showAdvancedOptions;
+  }
+
+  // Add new rate override
+  addRateOverride() {
+    const ratesSchedule = this.loan.ratesSchedule;
+    let startDate: Date;
+    let endDate: Date;
+
+    if (ratesSchedule.length === 0) {
+      // First entry: use loan's start date
+      startDate = this.loan.startDate;
+    } else {
+      // Following entries: use end date from previous row as start date
+      startDate = ratesSchedule[ratesSchedule.length - 1].endDate;
+    }
+
+    // End date is 1 month from start date
+    endDate = dayjs(startDate).add(1, 'month').toDate();
+
+    ratesSchedule.push({
+      startDate: startDate,
+      endDate: endDate,
+      annualInterestRate: 0.1,
+    });
+  }
+
+  // Remove rate override by index
+  removeRateOverride(index: number) {
+    if (this.loan.ratesSchedule.length > 0) {
+      this.loan.ratesSchedule.splice(index, 1);
+    }
   }
 
   submitLoan() {
@@ -161,9 +209,9 @@ export class AppComponent {
       flushThreshold: this.loan.flushThreshold,
     });
 
-    const amortization = new Amortization({
+    const amortizationParams: AmortizationParams = {
       loanAmount: Currency.of(this.loan.principal),
-      interestRate: new Decimal(this.loan.interestRate),
+      annualInterestRate: new Decimal(this.loan.interestRate),
       term: this.loan.term,
       startDate: dayjs(this.loan.startDate),
       calendarType: calendarType,
@@ -171,12 +219,24 @@ export class AppComponent {
       flushUnbilledInterestRoundingErrorMethod: flushMethod,
       roundingPrecision: this.loan.roundingPrecision,
       flushThreshold: Currency.of(this.loan.flushThreshold),
-    });
+    };
+
+    if (this.loan.ratesSchedule.length > 0) {
+      amortizationParams.ratesSchedule = this.loan.ratesSchedule.map((rate) => {
+        return {
+          startDate: dayjs(rate.startDate),
+          endDate: dayjs(rate.endDate),
+          annualInterestRate: new Decimal(rate.annualInterestRate),
+        };
+      });
+    }
+
+    const amortization = new Amortization(amortizationParams);
 
     const repaymentPlan = amortization.generateSchedule();
     this.repaymentPlan = repaymentPlan.map((entry, index) => {
       return {
-        period: index + 1,
+        period: entry.period,
         periodStartDate: entry.periodStartDate.format('YYYY-MM-DD'),
         periodEndDate: entry.periodEndDate.format('YYYY-MM-DD'),
         periodInterestRate: entry.periodInterestRate.toNumber() * 100,

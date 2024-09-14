@@ -55,6 +55,22 @@ export enum FlushUnbilledInterestDueToRoundingErrorType {
   AT_THRESHOLD = "at_threshold",
 }
 
+export interface AmortizationParams {
+  loanAmount: Currency;
+  annualInterestRate: Decimal;
+  term: number;
+  startDate: Dayjs;
+  endDate?: Dayjs;
+  calendarType?: CalendarType;
+  roundingMethod?: RoundingMethod;
+  flushUnbilledInterestRoundingErrorMethod?: FlushUnbilledInterestDueToRoundingErrorType;
+  roundingPrecision?: number;
+  flushThreshold?: Currency;
+  periodsSchedule?: PeriodSchedule[];
+  ratesSchedule?: RateSchedule[];
+  allowRateAbove100?: boolean;
+}
+
 /**
  * Amortization class to generate an amortization schedule for a loan.
  */
@@ -76,21 +92,7 @@ export class Amortization {
   rateSchedules: RateSchedule[] = [];
   allowRateAbove100: boolean = false;
 
-  constructor(params: {
-    loanAmount: Currency;
-    annualInterestRate: Decimal;
-    term: number;
-    startDate: Dayjs;
-    endDate?: Dayjs;
-    calendarType?: CalendarType;
-    roundingMethod?: RoundingMethod;
-    flushUnbilledInterestRoundingErrorMethod?: FlushUnbilledInterestDueToRoundingErrorType;
-    roundingPrecision?: number;
-    flushThreshold?: Currency;
-    periodsSchedule?: PeriodSchedule[];
-    ratesSchedule?: RateSchedule[];
-    allowRateAbove100?: boolean;
-  }) {
+  constructor(params: AmortizationParams) {
     // validate that loan amount is greater than zero
     if (params.loanAmount.getValue().isZero() || params.loanAmount.getValue().isNegative()) {
       throw new Error("Invalid loan amount, must be greater than zero");
@@ -116,8 +118,8 @@ export class Amortization {
       throw new Error("Invalid term, must be greater than zero");
     }
     this.term = params.term;
-    this.startDate = params.startDate;
-    this.endDate = params.endDate || this.startDate.add(this.term, "month");
+    this.startDate = dayjs(params.startDate).startOf("day");
+    this.endDate = params.endDate ? dayjs(params.endDate).startOf("day") : this.startDate.add(this.term, "month");
 
     // validate that the end date is after the start date
     if (this.endDate.isBefore(this.startDate)) {
@@ -148,7 +150,43 @@ export class Amortization {
       this.generateRatesSchedule();
     } else {
       this.rateSchedules = params.ratesSchedule;
+
+      // all start and end dates must be at the start of the day, we dont want to count hours
+      // at least not just yet... maybe in the future
+      for (let rate of this.rateSchedules) {
+        rate.startDate = rate.startDate.startOf("day");
+        rate.endDate = rate.endDate.startOf("day");
+      }
+
+      // rate schedule might be partial and not necesserily aligns with billing periods
+      // if first period is not equal to start date, we need to backfill
+      // original start date and rate to the first period
+      // same goes for in-between periods, if first period end date is not equal to next period start date
+      // we need to backfill the rate and start date to the next period
+      // finally same goes for the last period, if end date is not equal to the end date of the term
+      // we need to backfill the rate and end date to the last period
+
+      if (!this.startDate.isSame(this.rateSchedules[0].startDate, "day")) {
+        console.log(`adding rate schedule at the start ${this.startDate.format("YYYY-MM-DD")} and ${this.rateSchedules[0].startDate.format("YYYY-MM-DD")}`);
+        this.rateSchedules.unshift({ annualInterestRate: this.annualInterestRate, startDate: this.startDate, endDate: this.rateSchedules[0].startDate });
+      }
+
+      for (let i = 0; i < this.rateSchedules.length - 1; i++) {
+        if (!this.rateSchedules[i].endDate.isSame(this.rateSchedules[i + 1].startDate, "day")) {
+          console.log(`adding rate schedule between ${this.rateSchedules[i].endDate.format("YYYY-MM-DD")} and ${this.rateSchedules[i + 1].startDate.format("YYYY-MM-DD")}`);
+          this.rateSchedules.splice(i + 1, 0, { annualInterestRate: this.annualInterestRate, startDate: this.rateSchedules[i].endDate, endDate: this.rateSchedules[i + 1].startDate });
+        }
+      }
+
+      if (!this.endDate.isSame(this.rateSchedules[this.rateSchedules.length - 1].endDate, "day")) {
+        console.log(`adding rate schedule for the end between ${this.rateSchedules[this.rateSchedules.length - 1].endDate.format("YYYY-MM-DD")} and ${this.endDate.format("YYYY-MM-DD")}`);
+        this.rateSchedules.push({ annualInterestRate: this.annualInterestRate, startDate: this.rateSchedules[this.rateSchedules.length - 1].endDate, endDate: this.endDate });
+      }
+
+      console.log(`final rate schedule ${JSON.stringify(this.rateSchedules)}`);
     }
+
+    console.log(`start date ${this.startDate.format("YYYY-MM-DD")}`);
 
     // validate the schedule periods and rates
     this.verifySchedulePeriods();
@@ -165,12 +203,14 @@ export class Amortization {
     }
     // Check if the start date of the first period is the same as the loan start date
     if (!this.startDate.isSame(this.rateSchedules[0].startDate, "day")) {
-      throw new Error("Invalid schedule rates");
+      throw new Error(`Invalid schedule rates: The start date (${this.startDate.format("YYYY-MM-DD")}) does not match the first rate schedule start date (${this.rateSchedules[0].startDate.format("YYYY-MM-DD")}).`);
     }
 
     // Check if the end date of the last period is the same as the loan end date
     if (!this.endDate.isSame(this.rateSchedules[this.rateSchedules.length - 1].endDate, "day")) {
-      throw new Error("Invalid schedule rates");
+      throw new Error(
+        `Invalid schedule rates: The end date (${this.endDate.format("YYYY-MM-DD")}) does not match the last rate schedule end date (${this.rateSchedules[this.rateSchedules.length - 1].endDate.format("YYYY-MM-DD")}).`
+      );
     }
 
     // verify that rate is not negative

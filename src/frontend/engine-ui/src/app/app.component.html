@@ -67,88 +67,177 @@
               </div>
             </div>
 
-            <!-- Calendar Type -->
-            <div class="p-col-12 p-md-6">
-              <div class="p-field">
-                <label for="calendarType">Calendar Type</label>
-                <p-dropdown
-                  [(ngModel)]="loan.calendarType"
-                  name="calendarType"
-                  [options]="calendarTypes"
-                  placeholder="Select a calendar type"
-                ></p-dropdown>
-              </div>
+            <!-- Interest Rate Overrides -->
+            <div class="p-col-12">
+              <p-card class="p-mt-3">
+                <p-fieldset
+                  legend="Interest Rate Override"
+                  [toggleable]="true"
+                  [collapsed]="true"
+                >
+                  <table
+                    *ngIf="loan.ratesSchedule.length > 0"
+                    class="p-datatable p-component"
+                  >
+                    <thead>
+                      <tr>
+                        <th>Start Date</th>
+                        <th>End Date</th>
+                        <th>Interest Rate (%)</th>
+                        <th>Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr
+                        *ngFor="let rate of loan.ratesSchedule; let i = index"
+                      >
+                        <!-- Start Date -->
+                        <td>
+                          <p-calendar
+                            [(ngModel)]="rate.startDate"
+                            name="overrideStartDate-{{ i }}"
+                            dateFormat="mm/dd/yy"
+                            showIcon
+                          ></p-calendar>
+                        </td>
+
+                        <!-- End Date -->
+                        <td>
+                          <p-calendar
+                            [(ngModel)]="rate.endDate"
+                            name="overrideEndDate-{{ i }}"
+                            dateFormat="mm/dd/yy"
+                            showIcon
+                          ></p-calendar>
+                        </td>
+
+                        <!-- Interest Rate -->
+                        <td>
+                          <input
+                            id="overrideInterestRate-{{ i }}"
+                            type="number"
+                            pInputText
+                            [(ngModel)]="rate.annualInterestRate"
+                            name="overrideInterestRate-{{ i }}"
+                            placeholder="Enter interest rate"
+                          />
+                        </td>
+
+                        <!-- Remove Button -->
+                        <td class="p-text-center">
+                          <button
+                            type="button"
+                            pButton
+                            icon="pi pi-minus"
+                            class="p-button-rounded p-button-danger"
+                            (click)="removeRateOverride(i)"
+                          ></button>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                  <div class="p-text-right p-mb-2">
+                    <button
+                      type="button"
+                      pButton
+                      icon="pi pi-plus"
+                      label="Add New Rate Row"
+                      class="p-button-rounded p-button-success"
+                      (click)="addRateOverride()"
+                    ></button>
+                  </div>
+                </p-fieldset>
+              </p-card>
+            </div>
+
+            <!-- Advanced Options Card -->
+            <div class="p-col-12">
+              <p-card class="p-mt-3">
+                <p-fieldset
+                  legend="Advanced Settings"
+                  [toggleable]="true"
+                  [collapsed]="true"
+                >
+                  <!-- Calendar Type -->
+                  <div class="p-col-12 p-md-6">
+                    <div class="p-field">
+                      <label for="calendarType">Calendar Type</label>
+                      <p-dropdown
+                        [(ngModel)]="loan.calendarType"
+                        name="calendarType"
+                        [options]="calendarTypes"
+                        placeholder="Select a calendar type"
+                      ></p-dropdown>
+                    </div>
+                  </div>
+                  <div class="p-grid p-fluid">
+                    <!-- Rounding Method -->
+                    <div class="p-col-12 p-md-4">
+                      <div class="p-field">
+                        <label for="roundingMethod">Rounding Method</label>
+                        <p-dropdown
+                          [(ngModel)]="loan.roundingMethod"
+                          name="roundingMethod"
+                          [options]="roundingMethods"
+                          placeholder="Select a rounding method"
+                        ></p-dropdown>
+                      </div>
+                    </div>
+
+                    <!-- Flush Unbilled Interest Method -->
+                    <div class="p-col-12 p-md-4">
+                      <div class="p-field">
+                        <label for="flushMethod"
+                          >Flush Unbilled Interest Method</label
+                        >
+                        <p-dropdown
+                          [(ngModel)]="loan.flushMethod"
+                          name="flushMethod"
+                          [options]="flushMethods"
+                          placeholder="Select a flush method"
+                        ></p-dropdown>
+                      </div>
+                    </div>
+
+                    <!-- Rounding Precision -->
+                    <div class="p-col-12 p-md-4">
+                      <div class="p-field">
+                        <label for="roundingPrecision"
+                          >Rounding Precision</label
+                        >
+                        <input
+                          id="roundingPrecision"
+                          type="number"
+                          pInputText
+                          [(ngModel)]="loan.roundingPrecision"
+                          name="roundingPrecision"
+                          placeholder="Enter rounding precision"
+                        />
+                      </div>
+                    </div>
+
+                    <!-- Flush Threshold (only if flush method is not 'none') -->
+                    <div
+                      class="p-col-12 p-md-6"
+                      *ngIf="loan.flushMethod !== 'none'"
+                    >
+                      <div class="p-field">
+                        <label for="flushThreshold">Flush Threshold</label>
+                        <input
+                          id="flushThreshold"
+                          type="number"
+                          pInputText
+                          [(ngModel)]="loan.flushThreshold"
+                          name="flushThreshold"
+                          placeholder="Enter flush threshold"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </p-fieldset>
+              </p-card>
             </div>
           </div>
-        </p-card>
-
-        <!-- Advanced Options Card -->
-        <p-card header="Advanced Options" class="p-mt-3">
-          <p-fieldset
-            legend="Advanced Settings"
-            [toggleable]="true"
-            [collapsed]="true"
-          >
-            <div class="p-grid p-fluid">
-              <!-- Rounding Method -->
-              <div class="p-col-12 p-md-4">
-                <div class="p-field">
-                  <label for="roundingMethod">Rounding Method</label>
-                  <p-dropdown
-                    [(ngModel)]="loan.roundingMethod"
-                    name="roundingMethod"
-                    [options]="roundingMethods"
-                    placeholder="Select a rounding method"
-                  ></p-dropdown>
-                </div>
-              </div>
-
-              <!-- Flush Unbilled Interest Method -->
-              <div class="p-col-12 p-md-4">
-                <div class="p-field">
-                  <label for="flushMethod"
-                    >Flush Unbilled Interest Method</label
-                  >
-                  <p-dropdown
-                    [(ngModel)]="loan.flushMethod"
-                    name="flushMethod"
-                    [options]="flushMethods"
-                    placeholder="Select a flush method"
-                  ></p-dropdown>
-                </div>
-              </div>
-
-              <!-- Rounding Precision -->
-              <div class="p-col-12 p-md-4">
-                <div class="p-field">
-                  <label for="roundingPrecision">Rounding Precision</label>
-                  <input
-                    id="roundingPrecision"
-                    type="number"
-                    pInputText
-                    [(ngModel)]="loan.roundingPrecision"
-                    name="roundingPrecision"
-                    placeholder="Enter rounding precision"
-                  />
-                </div>
-              </div>
-
-              <!-- Flush Threshold (only if flush method is not 'none') -->
-              <div class="p-col-12 p-md-6" *ngIf="loan.flushMethod !== 'none'">
-                <div class="p-field">
-                  <label for="flushThreshold">Flush Threshold</label>
-                  <input
-                    id="flushThreshold"
-                    type="number"
-                    pInputText
-                    [(ngModel)]="loan.flushThreshold"
-                    name="flushThreshold"
-                    placeholder="Enter flush threshold"
-                  />
-                </div>
-              </div>
-            </div>
-          </p-fieldset>
         </p-card>
 
         <!-- Submit Button -->
@@ -163,16 +252,16 @@
 
       <!-- Repayment Plan Table -->
       <div *ngIf="showTable" class="p-mt-4">
-        <!-- Table Toggle Button -->
-        <div class="p-text-center p-mt-3">
-          <p-button
-            label="Show {{ showAdvancedTable ? 'Simple' : 'Advanced' }} Table"
-            icon="pi pi-table"
-            (onClick)="toggleAdvancedTable()"
-          ></p-button>
-        </div>
         <!-- Repayment Plan Card -->
         <p-card header="Repayment Plan" class="p-mt-3">
+          <!-- Table Toggle Button -->
+          <div class="p-text-center p-mt-3">
+            <p-button
+              label="Show {{ showAdvancedTable ? 'Simple' : 'Advanced' }} Table"
+              icon="pi pi-table"
+              (onClick)="toggleAdvancedTable()"
+            ></p-button>
+          </div>
           <p-table [value]="repaymentPlan">
             <ng-template pTemplate="header">
               <tr>
@@ -209,10 +298,10 @@
                   {{ plan.interest | currency }}
                 </td>
                 <td *ngIf="showAdvancedTable">
-                  {{ plan.realInterest | currency }}
+                  {{ plan.realInterest }}
                 </td>
                 <td *ngIf="showAdvancedTable">
-                  {{ plan.interestRoundingError | currency }}
+                  {{ plan.interestRoundingError }}
                 </td>
                 <td *ngIf="showAdvancedTable">
                   {{ plan.perDiem | currency }}
@@ -225,7 +314,7 @@
                   {{ plan.endBalance | currency }}
                 </td>
                 <td *ngIf="showAdvancedTable">
-                  {{ plan.unbilledInterestDueToRounding | currency }}
+                  {{ plan.unbilledInterestDueToRounding }}
                 </td>
                 <td *ngIf="showAdvancedTable">
                   <table class="metadata-table">

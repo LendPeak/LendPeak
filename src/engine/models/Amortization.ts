@@ -80,6 +80,7 @@ export interface AmortizationParams {
   ratesSchedule?: RateSchedule[];
   allowRateAbove100?: boolean;
   termPaymentAmountOverride?: TermPaymentAmount[];
+  termPaymentAmount?: Currency; // allows one to specify EMI manually instead of calculating it
 }
 
 /**
@@ -202,7 +203,11 @@ export class Amortization {
       }
     }
 
-    this.equitedMonthlyPayment = this.calculateFixedMonthlyPayment();
+    if (params.termPaymentAmount !== undefined) {
+      this.equitedMonthlyPayment = params.termPaymentAmount;
+    } else {
+      this.equitedMonthlyPayment = this.calculateFixedMonthlyPayment();
+    }
 
     this.unbilledDeferredInterest = Currency.of(0);
 

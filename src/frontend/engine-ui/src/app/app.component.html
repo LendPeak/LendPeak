@@ -22,6 +22,7 @@
                     [(ngModel)]="loan.principal"
                     name="principal"
                     placeholder="Enter principal amount"
+                    (ngModelChange)="submitLoan()"
                   />
                 </p-inputGroup>
               </div>
@@ -40,6 +41,7 @@
                     [(ngModel)]="loan.interestRate"
                     name="interestRate"
                     placeholder="Enter interest rate"
+                    (ngModelChange)="submitLoan()"
                   />
                 </p-inputGroup>
               </div>
@@ -60,6 +62,7 @@
                     [(ngModel)]="loan.term"
                     name="term"
                     placeholder="Enter loan term in months"
+                    (ngModelChange)="submitLoan()"
                   />
                 </p-inputGroup>
               </div>
@@ -75,6 +78,7 @@
                   </p-inputGroupAddon>
                   <p-calendar
                     [(ngModel)]="loan.startDate"
+                    (ngModelChange)="submitLoan()"
                     name="startDate"
                     dateFormat="mm/dd/yy"
                     showIcon
@@ -111,6 +115,7 @@
                         <td>
                           <p-calendar
                             [(ngModel)]="rate.startDate"
+                            (ngModelChange)="submitLoan()"
                             name="overrideStartDate-{{ i }}"
                             dateFormat="mm/dd/yy"
                             showIcon
@@ -121,6 +126,7 @@
                         <td>
                           <p-calendar
                             [(ngModel)]="rate.endDate"
+                            (ngModelChange)="submitLoan()"
                             name="overrideEndDate-{{ i }}"
                             dateFormat="mm/dd/yy"
                             showIcon
@@ -135,6 +141,7 @@
                               type="number"
                               pInputText
                               [(ngModel)]="rate.annualInterestRate"
+                              (ngModelChange)="submitLoan()"
                               name="overrideInterestRate-{{ i }}"
                               placeholder="Enter interest rate"
                             />
@@ -207,6 +214,7 @@
                               [(ngModel)]="paymentConfiguration.termNumber"
                               name="overrideTermPayment-term{{ i }}"
                               placeholder="Enter Term Number"
+                              (ngModelChange)="submitLoan()"
                             />
                           </p-inputGroup>
                         </td>
@@ -221,6 +229,7 @@
                               type="number"
                               pInputText
                               [(ngModel)]="paymentConfiguration.paymentAmount"
+                              (ngModelChange)="submitLoan()"
                               name="overrideTermPaymentAmount-{{ i }}"
                               placeholder="Enter Payment Amount"
                             />
@@ -247,6 +256,7 @@
                       icon="pi pi-plus"
                       label="Add New Term Row"
                       class="p-button-rounded p-button-success"
+                      (ngModelChange)="submitLoan()"
                       (click)="addTermPaymentAmountOverride()"
                     ></button>
                   </div>
@@ -262,6 +272,22 @@
                   [toggleable]="true"
                   [collapsed]="true"
                 >
+                  <!-- Term Payment Amount-->
+                  <div class="p-col-12 p-md-4">
+                    <div class="p-field">
+                      <label for="termPaymentAmount">Term Payment Amount</label>
+                      <input
+                        id="termPaymentAmount"
+                        type="number"
+                        pInputText
+                        [(ngModel)]="loan.termPaymentAmount"
+                        name="termPaymentAmount"
+                        placeholder="Enter Term Payment Amount"
+                        (ngModelChange)="submitLoan()"
+                      />
+                    </div>
+                  </div>
+
                   <!-- Calendar Type -->
                   <div class="p-col-12 p-md-6">
                     <div class="p-field">
@@ -271,6 +297,7 @@
                         name="calendarType"
                         [options]="calendarTypes"
                         placeholder="Select a calendar type"
+                        (ngModelChange)="submitLoan()"
                       ></p-dropdown>
                     </div>
                   </div>
@@ -284,6 +311,7 @@
                           name="roundingMethod"
                           [options]="roundingMethods"
                           placeholder="Select a rounding method"
+                          (ngModelChange)="submitLoan()"
                         ></p-dropdown>
                       </div>
                     </div>
@@ -299,6 +327,7 @@
                           name="flushMethod"
                           [options]="flushMethods"
                           placeholder="Select a flush method"
+                          (ngModelChange)="submitLoan()"
                         ></p-dropdown>
                       </div>
                     </div>
@@ -316,6 +345,7 @@
                           [(ngModel)]="loan.roundingPrecision"
                           name="roundingPrecision"
                           placeholder="Enter rounding precision"
+                          (ngModelChange)="submitLoan()"
                         />
                       </div>
                     </div>
@@ -334,6 +364,7 @@
                           [(ngModel)]="loan.flushThreshold"
                           name="flushThreshold"
                           placeholder="Enter flush threshold"
+                          (ngModelChange)="submitLoan()"
                         />
                       </div>
                     </div>

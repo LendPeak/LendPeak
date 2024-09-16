@@ -10,6 +10,7 @@ import { Currency, RoundingMethod } from 'lendpeak-engine/utils/Currency';
 import Decimal from 'decimal.js';
 import dayjs from 'dayjs';
 import { CalendarType } from 'lendpeak-engine/models/Calendar';
+import { FormBuilder, FormGroup } from '@angular/forms';
 
 @Component({
   selector: 'app-root',
@@ -27,6 +28,7 @@ export class AppComponent implements OnChanges {
     flushMethod: string;
     roundingPrecision: number;
     flushThreshold: number;
+    termPaymentAmount: number | undefined;
     ratesSchedule: {
       startDate: Date;
       endDate: Date;
@@ -45,13 +47,8 @@ export class AppComponent implements OnChanges {
     flushThreshold: 0.01,
     ratesSchedule: [],
     termPaymentAmountOverride: [],
+    termPaymentAmount: undefined,
   };
-
-  ngOnChanges(changes: SimpleChanges) {
-    // if (changes['loan']) {
-    this.submitLoan();
-    // }
-  }
 
   showTable = false;
   showAdvancedTable: boolean = false; // Default is simple view
@@ -60,6 +57,10 @@ export class AppComponent implements OnChanges {
 
   toggleAdvancedTable() {
     this.showAdvancedTable = !this.showAdvancedTable;
+  }
+
+  ngOnChanges(changes: SimpleChanges) {
+    console.log('Changes detected:', changes);
   }
 
   calendarTypes = [
@@ -134,12 +135,14 @@ export class AppComponent implements OnChanges {
       termNumber: termNumber,
       paymentAmount: paymentAmount,
     });
+    this.submitLoan();
   }
 
   removeTermPaymentAmountOverride(index: number) {
     if (this.loan.termPaymentAmountOverride.length > 0) {
       this.loan.termPaymentAmountOverride.splice(index, 1);
     }
+    this.submitLoan();
   }
 
   // Add new rate override
@@ -164,6 +167,7 @@ export class AppComponent implements OnChanges {
       endDate: endDate,
       annualInterestRate: 10,
     });
+    this.submitLoan();
   }
 
   // Remove rate override by index
@@ -171,6 +175,7 @@ export class AppComponent implements OnChanges {
     if (this.loan.ratesSchedule.length > 0) {
       this.loan.ratesSchedule.splice(index, 1);
     }
+    this.submitLoan();
   }
 
   submitLoan() {
@@ -237,7 +242,7 @@ export class AppComponent implements OnChanges {
         flushMethod = FlushUnbilledInterestDueToRoundingErrorType.AT_THRESHOLD;
     }
 
-    const interestRateAsDecimal = new Decimal(this.loan.interestRate / 100);
+    const interestRateAsDecimal = new Decimal(this.loan.interestRate);
 
     console.log({
       loanAmount: this.loan.principal,
@@ -251,9 +256,9 @@ export class AppComponent implements OnChanges {
       flushThreshold: this.loan.flushThreshold,
     });
 
-    const amortizationParams: AmortizationParams = {
+    let amortizationParams: AmortizationParams = {
       loanAmount: Currency.of(this.loan.principal),
-      annualInterestRate: interestRateAsDecimal,
+      annualInterestRate: interestRateAsDecimal.dividedBy(100),
       term: this.loan.term,
       startDate: dayjs(this.loan.startDate),
       calendarType: calendarType,
@@ -263,12 +268,20 @@ export class AppComponent implements OnChanges {
       flushThreshold: Currency.of(this.loan.flushThreshold),
     };
 
+    if (this.loan.termPaymentAmount !== undefined) {
+      console.log('Term payment amount:', this.loan.termPaymentAmount);
+      amortizationParams.termPaymentAmount = Currency.of(
+        this.loan.termPaymentAmount
+      );
+    }
+
     if (this.loan.ratesSchedule.length > 0) {
       amortizationParams.ratesSchedule = this.loan.ratesSchedule.map((rate) => {
+        const interestAsDecimal = new Decimal(rate.annualInterestRate);
         return {
           startDate: dayjs(rate.startDate),
           endDate: dayjs(rate.endDate),
-          annualInterestRate: new Decimal(rate.annualInterestRate / 100),
+          annualInterestRate: interestAsDecimal.dividedBy(100),
         };
       });
     }
@@ -295,7 +308,7 @@ export class AppComponent implements OnChanges {
         period: entry.period,
         periodStartDate: entry.periodStartDate.format('YYYY-MM-DD'),
         periodEndDate: entry.periodEndDate.format('YYYY-MM-DD'),
-        periodInterestRate: entry.periodInterestRate.toNumber() * 100,
+        periodInterestRate: entry.periodInterestRate.times(100).toNumber(),
         principal: entry.principal.toNumber(),
         totalInterestForPeriod: entry.totalInterestForPeriod.toNumber(),
         interest: entry.interest.toNumber(),

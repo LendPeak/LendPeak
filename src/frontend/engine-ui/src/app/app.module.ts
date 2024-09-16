@@ -10,6 +10,8 @@ import { DropdownModule } from 'primeng/dropdown';
 import { TableModule } from 'primeng/table';
 import { FieldsetModule } from 'primeng/fieldset';
 import { CardModule } from 'primeng/card';
+import { InputGroupModule } from 'primeng/inputgroup';
+import { InputGroupAddonModule } from 'primeng/inputgroupaddon';
 
 @NgModule({
   declarations: [AppComponent],
@@ -24,6 +26,8 @@ import { CardModule } from 'primeng/card';
     TableModule,
     FieldsetModule,
     CardModule,
+    InputGroupModule,
+    InputGroupAddonModule,
   ],
   providers: [],
   bootstrap: [AppComponent],

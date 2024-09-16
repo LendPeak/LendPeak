@@ -1,8 +1,10 @@
-import { Component } from '@angular/core';
+import { Component, OnChanges, SimpleChanges } from '@angular/core';
 import {
   Amortization,
   AmortizationParams,
   FlushUnbilledInterestDueToRoundingErrorType,
+  TermPaymentAmount,
+  AmortizationSchedule,
 } from 'lendpeak-engine/models/Amortization';
 import { Currency, RoundingMethod } from 'lendpeak-engine/utils/Currency';
 import Decimal from 'decimal.js';
@@ -14,7 +16,7 @@ import { CalendarType } from 'lendpeak-engine/models/Calendar';
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.css'],
 })
-export class AppComponent {
+export class AppComponent implements OnChanges {
   loan: {
     principal: number;
     interestRate: number;
@@ -30,9 +32,10 @@ export class AppComponent {
       endDate: Date;
       annualInterestRate: number;
     }[];
+    termPaymentAmountOverride: { termNumber: number; paymentAmount: number }[];
   } = {
     principal: 10000,
-    interestRate: 0.1,
+    interestRate: 10,
     term: 12,
     startDate: new Date(),
     calendarType: 'THIRTY_360', // Default value
@@ -41,7 +44,14 @@ export class AppComponent {
     roundingPrecision: 2,
     flushThreshold: 0.01,
     ratesSchedule: [],
+    termPaymentAmountOverride: [],
   };
+
+  ngOnChanges(changes: SimpleChanges) {
+    // if (changes['loan']) {
+    this.submitLoan();
+    // }
+  }
 
   showTable = false;
   showAdvancedTable: boolean = false; // Default is simple view
@@ -76,30 +86,60 @@ export class AppComponent {
     { label: 'At Threshold', value: 'at_threshold' },
   ];
 
-  repaymentPlan = [
-    {
-      period: 1,
-      periodStartDate: '2023-01-01',
-      periodEndDate: '2023-02-01',
-      periodInterestRate: 0.07,
-      principal: 116.48,
-      totalInterestForPeriod: 17.835616438356166,
-      interest: 17.84,
-      realInterest: 17.835616438356166,
-      interestRoundingError: -0.004383561643835616,
-      totalPayment: 134.32,
-      perDiem: 0.58,
-      daysInPeriod: 31,
-      startBalance: 3000,
-      endBalance: 2883.52,
-      unbilledInterestDueToRounding: -0.004383561643835616,
-      //    metadata: '{"unbilledInterestAmount":-0.004383561643835616}',
-    },
-    // Add more rows as needed
+  repaymentPlan: any[] = [
+    // {
+    //   period: 1,
+    //   periodStartDate: '2023-01-01',
+    //   periodEndDate: '2023-02-01',
+    //   periodInterestRate: 7,
+    //   principal: 116.48,
+    //   totalInterestForPeriod: 17.835616438356166,
+    //   interest: 17.84,
+    //   realInterest: 17.835616438356166,
+    //   interestRoundingError: -0.004383561643835616,
+    //   totalPayment: 134.32,
+    //   perDiem: 0.58,
+    //   daysInPeriod: 31,
+    //   startBalance: 3000,
+    //   endBalance: 2883.52,
+    //   unbilledInterestDueToRounding: -0.004383561643835616,
+    //   //    metadata: '{"unbilledInterestAmount":-0.004383561643835616}',
+    // }
   ];
 
   toggleAdvancedOptions() {
     this.showAdvancedOptions = !this.showAdvancedOptions;
+  }
+
+  addTermPaymentAmountOverride() {
+    const termPaymentAmountOveride = this.loan.termPaymentAmountOverride;
+    let termNumber: number;
+    let paymentAmount: number;
+
+    if (termPaymentAmountOveride.length === 0) {
+      // First entry: use loan's start date
+      termNumber = 1;
+      paymentAmount = 0;
+    } else {
+      // Following entries: use end date from previous row as start date
+      termNumber =
+        termPaymentAmountOveride[termPaymentAmountOveride.length - 1]
+          .termNumber + 1;
+      paymentAmount =
+        termPaymentAmountOveride[termPaymentAmountOveride.length - 1]
+          .paymentAmount;
+    }
+
+    termPaymentAmountOveride.push({
+      termNumber: termNumber,
+      paymentAmount: paymentAmount,
+    });
+  }
+
+  removeTermPaymentAmountOverride(index: number) {
+    if (this.loan.termPaymentAmountOverride.length > 0) {
+      this.loan.termPaymentAmountOverride.splice(index, 1);
+    }
   }
 
   // Add new rate override
@@ -122,7 +162,7 @@ export class AppComponent {
     ratesSchedule.push({
       startDate: startDate,
       endDate: endDate,
-      annualInterestRate: 0.1,
+      annualInterestRate: 10,
     });
   }
 
@@ -197,9 +237,11 @@ export class AppComponent {
         flushMethod = FlushUnbilledInterestDueToRoundingErrorType.AT_THRESHOLD;
     }
 
+    const interestRateAsDecimal = new Decimal(this.loan.interestRate / 100);
+
     console.log({
       loanAmount: this.loan.principal,
-      interestRate: this.loan.interestRate,
+      interestRate: interestRateAsDecimal.toNumber(),
       term: this.loan.term,
       startDate: this.loan.startDate,
       calendarType: this.loan.calendarType,
@@ -211,7 +253,7 @@ export class AppComponent {
 
     const amortizationParams: AmortizationParams = {
       loanAmount: Currency.of(this.loan.principal),
-      annualInterestRate: new Decimal(this.loan.interestRate),
+      annualInterestRate: interestRateAsDecimal,
       term: this.loan.term,
       startDate: dayjs(this.loan.startDate),
       calendarType: calendarType,
@@ -226,9 +268,23 @@ export class AppComponent {
         return {
           startDate: dayjs(rate.startDate),
           endDate: dayjs(rate.endDate),
-          annualInterestRate: new Decimal(rate.annualInterestRate),
+          annualInterestRate: new Decimal(rate.annualInterestRate / 100),
         };
       });
+    }
+
+    if (this.loan.termPaymentAmountOverride.length > 0) {
+      amortizationParams.termPaymentAmountOverride =
+        this.loan.termPaymentAmountOverride.map(
+          (termPaymentAmountConfiguration) => {
+            return {
+              termNumber: termPaymentAmountConfiguration.termNumber,
+              paymentAmount: Currency.of(
+                termPaymentAmountConfiguration.paymentAmount
+              ),
+            };
+          }
+        );
     }
 
     const amortization = new Amortization(amortizationParams);
@@ -243,6 +299,7 @@ export class AppComponent {
         principal: entry.principal.toNumber(),
         totalInterestForPeriod: entry.totalInterestForPeriod.toNumber(),
         interest: entry.interest.toNumber(),
+        billedDeferredInterest: entry.billedDeferredInterest.toNumber(),
         realInterest: entry.realInterest.toNumber(),
         interestRoundingError: entry.interestRoundingError.toNumber(),
         totalPayment: entry.totalPayment.toNumber(),
@@ -252,6 +309,9 @@ export class AppComponent {
         endBalance: entry.endBalance.toNumber(),
         unbilledInterestDueToRounding:
           entry.unbilledInterestDueToRounding.toNumber(),
+        totalDeferredInterest: entry.unbilledTotalDeferredInterest.toNumber(),
+        deferredInterestFromCurrentPeriod:
+          entry.unbilledDeferredInterestFromCurrentPeriod.toNumber(),
         metadata: entry.metadata,
       };
     });

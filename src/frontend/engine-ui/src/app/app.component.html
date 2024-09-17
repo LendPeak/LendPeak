@@ -1,281 +1,338 @@
-<div class="p-grid p-justify-center p-mt-4">
-  <div class="p-col-12 p-md-10">
-    <!-- Main Card Wrapper -->
-    <div class="card">
-      <h2 class="p-text-center p-mb-4">Loan Parameters</h2>
+<p-toolbar>
+  <div class="p-toolbar-group-start"></div>
+  <div class="p-toolbar-group-center"></div>
 
-      <!-- Loan Parameters Form -->
-      <form class="p-fluid">
-        <!-- Loan Details Card -->
-        <p-card header="Loan Details">
-          <div class="p-grid p-fluid">
-            <!-- Principal Amount -->
-            <div class="p-col-12 p-md-4">
-              <div class="p-field">
-                <label for="principal">Principal Amount</label>
-                <p-inputGroup>
-                  <p-inputGroupAddon>$</p-inputGroupAddon>
-                  <input
-                    id="principal"
-                    type="number"
-                    pInputText
-                    [(ngModel)]="loan.principal"
-                    name="principal"
-                    placeholder="Enter principal amount"
-                    (ngModelChange)="submitLoan()"
-                  />
-                </p-inputGroup>
-              </div>
+  <div class="p-toolbar-group-end">
+    <p-button
+      severity="success"
+      label="Save UI"
+      icon="pi pi-check"
+      iconPos="right"
+      class="mr-2"
+      (onClick)="saveUIState()"
+    />
+    <p-button
+      severity="danger"
+      label="Reset UI"
+      icon="pi pi-trash"
+      iconPos="right"
+      class="mr-2"
+      (onClick)="resetUIState()"
+    />
+  </div>
+</p-toolbar>
+
+<form>
+  <div class="grid">
+    <div class="col-6">
+      <div class="p-3 border-round-sm font-bold">
+        <div class="grid">
+          <div class="col-12">
+            <div class="p-3 border-round-sm font-bold">
+              <!-- Principal Amount -->
+              <label for="principal">Principal Amount</label>
+              <p-inputGroup>
+                <p-inputGroupAddon>$</p-inputGroupAddon>
+                <input
+                  id="principal"
+                  type="number"
+                  pInputText
+                  [(ngModel)]="loan.principal"
+                  name="principal"
+                  placeholder="Enter principal amount"
+                  (ngModelChange)="submitLoan()"
+                />
+              </p-inputGroup>
             </div>
+          </div>
 
-            <!-- Interest Rate (%) -->
-            <div class="p-col-12 p-md-4">
-              <div class="p-field">
-                <label for="interestRate">Interest Rate (%)</label>
-                <p-inputGroup>
-                  <p-inputGroupAddon>%</p-inputGroupAddon>
-                  <input
-                    id="interestRate"
-                    type="number"
-                    pInputText
-                    [(ngModel)]="loan.interestRate"
-                    name="interestRate"
-                    placeholder="Enter interest rate"
-                    (ngModelChange)="submitLoan()"
-                  />
-                </p-inputGroup>
-              </div>
+          <div class="col-12">
+            <div class="p-3 border-round-sm font-bold">
+              <!-- Interest Rate (%) -->
+              <label for="interestRate">Interest Rate (%)</label>
+              <p-inputGroup>
+                <p-inputGroupAddon>%</p-inputGroupAddon>
+                <input
+                  id="interestRate"
+                  type="number"
+                  pInputText
+                  [(ngModel)]="loan.interestRate"
+                  name="interestRate"
+                  placeholder="Enter interest rate"
+                  (ngModelChange)="submitLoan()"
+                />
+              </p-inputGroup>
             </div>
+          </div>
 
-            <!-- Term (Months) -->
-            <div class="p-col-12 p-md-4">
-              <div class="p-field">
-                <label for="term">Term (Months)</label>
-                <p-inputGroup>
-                  <p-inputGroupAddon>
-                    <i class="pi pi-calendar-times"></i>
-                  </p-inputGroupAddon>
-                  <input
-                    id="term"
-                    type="number"
-                    pInputText
-                    [(ngModel)]="loan.term"
-                    name="term"
-                    placeholder="Enter loan term in months"
-                    (ngModelChange)="submitLoan()"
-                  />
-                </p-inputGroup>
-              </div>
+          <div class="col-12">
+            <div class="p-3 border-round-sm font-bold">
+              <!-- Term (Months) -->
+              <label for="term">Term (Months)</label>
+              <p-inputGroup>
+                <p-inputGroupAddon>
+                  <i class="pi pi-calendar-times"></i>
+                </p-inputGroupAddon>
+                <input
+                  id="term"
+                  type="number"
+                  pInputText
+                  [(ngModel)]="loan.term"
+                  name="term"
+                  placeholder="Enter loan term in months"
+                  (ngModelChange)="updateTerm()"
+                />
+              </p-inputGroup>
             </div>
+          </div>
 
-            <!-- Start Date -->
-            <div class="p-col-12 p-md-6">
-              <div class="p-field">
-                <label for="startDate">Start Date</label>
-                <p-inputGroup>
-                  <p-inputGroupAddon>
-                    <i class="pi pi-calendar"></i>
-                  </p-inputGroupAddon>
-                  <p-calendar
-                    [(ngModel)]="loan.startDate"
-                    (ngModelChange)="submitLoan()"
-                    name="startDate"
-                    dateFormat="mm/dd/yy"
-                    showIcon
-                  ></p-calendar>
-                </p-inputGroup>
-              </div>
+          <div class="col-4">
+            <div class="p-3 border-round-sm font-bold">
+              <!-- Start Date -->
+              <label for="startDate">Start Date</label>
+              <p-inputGroup>
+                <p-inputGroupAddon>
+                  <i class="pi pi-calendar"></i>
+                </p-inputGroupAddon>
+                <p-calendar
+                  [(ngModel)]="loan.startDate"
+                  (ngModelChange)="submitLoan()"
+                  name="startDate"
+                  dateFormat="mm/dd/yy"
+                  showIcon
+                ></p-calendar>
+              </p-inputGroup>
             </div>
-
-            <!-- Interest Rate Overrides -->
-            <div class="p-col-12">
-              <p-card class="p-mt-3">
-                <p-fieldset
-                  legend="Interest Rate Override"
-                  [toggleable]="true"
-                  [collapsed]="true"
+          </div>
+          <div class="col-4">
+            <div class="p-3 border-round-sm font-bold">
+              <!-- Start Date -->
+              <label for="startDate">First Payment Date</label>
+              <p-inputGroup>
+                <p-inputGroupAddon>
+                  <i class="pi pi-calendar"></i>
+                </p-inputGroupAddon>
+                <p-calendar
+                  [(ngModel)]="loan.firstPaymentDate"
+                  (ngModelChange)="submitLoan()"
+                  name="firstPaymentDate"
+                  dateFormat="mm/dd/yy"
+                  showIcon
+                ></p-calendar>
+              </p-inputGroup>
+            </div>
+          </div>
+          <div class="col-4">
+            <div class="p-3 border-round-sm font-bold">
+              <!-- Start Date -->
+              <label for="endDate">End Date</label>
+              <p-inputGroup>
+                <p-inputGroupAddon>
+                  <i class="pi pi-calendar"></i>
+                </p-inputGroupAddon>
+                <p-calendar
+                  [(ngModel)]="loan.endDate"
+                  (ngModelChange)="submitLoan()"
+                  name="endDate"
+                  dateFormat="mm/dd/yy"
+                  showIcon
+                ></p-calendar>
+              </p-inputGroup>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-6">
+      <div class="p-3 border-round-sm font-bold">
+        <div class="grid">
+          <div class="col-12">
+            <div class="p-3 border-round-sm font-bold">
+              <!-- Interest Rate Overrides -->
+              <p-fieldset
+                legend="Interest Rate Override"
+                [toggleable]="true"
+                [(collapsed)]="rateOverrideCollapsed"
+              >
+                <table
+                  *ngIf="loan.ratesSchedule.length > 0"
+                  class="p-datatable p-component"
                 >
-                  <table
-                    *ngIf="loan.ratesSchedule.length > 0"
-                    class="p-datatable p-component"
-                  >
-                    <thead>
-                      <tr>
-                        <th>Start Date</th>
-                        <th>End Date</th>
-                        <th>Interest Rate (%)</th>
-                        <th>Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr
-                        *ngFor="let rate of loan.ratesSchedule; let i = index"
-                      >
-                        <!-- Start Date -->
-                        <td>
-                          <p-calendar
-                            [(ngModel)]="rate.startDate"
+                  <thead>
+                    <tr>
+                      <th>Start Date</th>
+                      <th>End Date</th>
+                      <th>Interest Rate (%)</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngFor="let rate of loan.ratesSchedule; let i = index">
+                      <!-- Start Date -->
+                      <td>
+                        <p-calendar
+                          [(ngModel)]="rate.startDate"
+                          (ngModelChange)="submitLoan()"
+                          name="overrideStartDate-{{ i }}"
+                          dateFormat="mm/dd/yy"
+                          showIcon
+                        ></p-calendar>
+                      </td>
+
+                      <!-- End Date -->
+                      <td>
+                        <p-calendar
+                          [(ngModel)]="rate.endDate"
+                          (ngModelChange)="submitLoan()"
+                          name="overrideEndDate-{{ i }}"
+                          dateFormat="mm/dd/yy"
+                          showIcon
+                        ></p-calendar>
+                      </td>
+
+                      <!-- Interest Rate -->
+                      <td>
+                        <p-inputGroup>
+                          <input
+                            id="overrideInterestRate-{{ i }}"
+                            type="number"
+                            pInputText
+                            [(ngModel)]="rate.annualInterestRate"
                             (ngModelChange)="submitLoan()"
-                            name="overrideStartDate-{{ i }}"
-                            dateFormat="mm/dd/yy"
-                            showIcon
-                          ></p-calendar>
-                        </td>
+                            name="overrideInterestRate-{{ i }}"
+                            placeholder="Enter interest rate"
+                          />
+                          <p-inputGroupAddon> % </p-inputGroupAddon>
+                        </p-inputGroup>
+                      </td>
 
-                        <!-- End Date -->
-                        <td>
-                          <p-calendar
-                            [(ngModel)]="rate.endDate"
+                      <!-- Remove Button -->
+                      <td class="p-text-center">
+                        <button
+                          type="button"
+                          pButton
+                          icon="pi pi-minus"
+                          class="p-button-rounded p-button-danger"
+                          (click)="removeRateOverride(i)"
+                        ></button>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+                <div class="p-text-right p-mb-2">
+                  <button
+                    type="button"
+                    pButton
+                    icon="pi pi-plus"
+                    label="Add New Rate Row"
+                    class="p-button-rounded p-button-success"
+                    (click)="addRateOverride()"
+                  ></button>
+                </div>
+              </p-fieldset>
+            </div>
+          </div>
+
+          <div class="col-12">
+            <div class="p-3 border-round-sm font-bold">
+              <p-fieldset
+                legend="Term Payment Amount Override"
+                [toggleable]="true"
+                [(collapsed)]="termPaymentAmountOverrideCollapsed"
+              >
+                <table
+                  *ngIf="loan.termPaymentAmountOverride.length > 0"
+                  class="p-datatable p-component"
+                >
+                  <thead>
+                    <tr>
+                      <th>Term Number</th>
+                      <th>Payment Amount</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr
+                      *ngFor="
+                        let paymentConfiguration of loan.termPaymentAmountOverride;
+                        let i = index
+                      "
+                    >
+                      <!-- Term Number -->
+                      <td>
+                        <p-inputGroup>
+                          <p-inputGroupAddon> # </p-inputGroupAddon>
+
+                          <input
+                            id="overrideTermPaymentTerm-{{ i }}"
+                            type="number"
+                            pInputText
+                            [(ngModel)]="paymentConfiguration.termNumber"
+                            name="overrideTermPayment-term{{ i }}"
+                            placeholder="Enter Term Number"
                             (ngModelChange)="submitLoan()"
-                            name="overrideEndDate-{{ i }}"
-                            dateFormat="mm/dd/yy"
-                            showIcon
-                          ></p-calendar>
-                        </td>
+                          />
+                        </p-inputGroup>
+                      </td>
 
-                        <!-- Interest Rate -->
-                        <td>
-                          <p-inputGroup>
-                            <input
-                              id="overrideInterestRate-{{ i }}"
-                              type="number"
-                              pInputText
-                              [(ngModel)]="rate.annualInterestRate"
-                              (ngModelChange)="submitLoan()"
-                              name="overrideInterestRate-{{ i }}"
-                              placeholder="Enter interest rate"
-                            />
-                            <p-inputGroupAddon> % </p-inputGroupAddon>
-                          </p-inputGroup>
-                        </td>
+                      <!-- Payment Amount -->
+                      <td>
+                        <p-inputGroup>
+                          <p-inputGroupAddon> $ </p-inputGroupAddon>
 
-                        <!-- Remove Button -->
-                        <td class="p-text-center">
-                          <button
-                            type="button"
-                            pButton
-                            icon="pi pi-minus"
-                            class="p-button-rounded p-button-danger"
-                            (click)="removeRateOverride(i)"
-                          ></button>
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-                  <div class="p-text-right p-mb-2">
-                    <button
-                      type="button"
-                      pButton
-                      icon="pi pi-plus"
-                      label="Add New Rate Row"
-                      class="p-button-rounded p-button-success"
-                      (click)="addRateOverride()"
-                    ></button>
-                  </div>
-                </p-fieldset>
-              </p-card>
+                          <input
+                            id="overrideTermPaymentAmount-{{ i }}"
+                            type="number"
+                            pInputText
+                            [(ngModel)]="paymentConfiguration.paymentAmount"
+                            (ngModelChange)="submitLoan()"
+                            name="overrideTermPaymentAmount-{{ i }}"
+                            placeholder="Enter Payment Amount"
+                          />
+                        </p-inputGroup>
+                      </td>
+
+                      <!-- Remove Button -->
+                      <td class="p-text-center">
+                        <button
+                          type="button"
+                          pButton
+                          icon="pi pi-minus"
+                          class="p-button-rounded p-button-danger"
+                          (click)="removeTermPaymentAmountOverride(i)"
+                        ></button>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+                <div class="p-text-right p-mb-2">
+                  <button
+                    type="button"
+                    pButton
+                    icon="pi pi-plus"
+                    label="Add New Term Row"
+                    class="p-button-rounded p-button-success"
+                    (ngModelChange)="submitLoan()"
+                    (click)="addTermPaymentAmountOverride()"
+                  ></button>
+                </div>
+              </p-fieldset>
             </div>
+          </div>
 
-            <!-- Term Payment Amount Override -->
-            <div class="p-col-12">
-              <p-card class="p-mt-3">
-                <p-fieldset
-                  legend="Term Payment Amount Override"
-                  [toggleable]="true"
-                  [collapsed]="true"
-                >
-                  <table
-                    *ngIf="loan.termPaymentAmountOverride.length > 0"
-                    class="p-datatable p-component"
-                  >
-                    <thead>
-                      <tr>
-                        <th>Term Number</th>
-                        <th>Payment Amount</th>
-                        <th>Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr
-                        *ngFor="
-                          let paymentConfiguration of loan.termPaymentAmountOverride;
-                          let i = index
-                        "
-                      >
-                        <!-- Term Number -->
-                        <td>
-                          <p-inputGroup>
-                            <p-inputGroupAddon> # </p-inputGroupAddon>
-
-                            <input
-                              id="overrideTermPaymentTerm-{{ i }}"
-                              type="number"
-                              pInputText
-                              [(ngModel)]="paymentConfiguration.termNumber"
-                              name="overrideTermPayment-term{{ i }}"
-                              placeholder="Enter Term Number"
-                              (ngModelChange)="submitLoan()"
-                            />
-                          </p-inputGroup>
-                        </td>
-
-                        <!-- Payment Amount -->
-                        <td>
-                          <p-inputGroup>
-                            <p-inputGroupAddon> $ </p-inputGroupAddon>
-
-                            <input
-                              id="overrideTermPaymentAmount-{{ i }}"
-                              type="number"
-                              pInputText
-                              [(ngModel)]="paymentConfiguration.paymentAmount"
-                              (ngModelChange)="submitLoan()"
-                              name="overrideTermPaymentAmount-{{ i }}"
-                              placeholder="Enter Payment Amount"
-                            />
-                          </p-inputGroup>
-                        </td>
-
-                        <!-- Remove Button -->
-                        <td class="p-text-center">
-                          <button
-                            type="button"
-                            pButton
-                            icon="pi pi-minus"
-                            class="p-button-rounded p-button-danger"
-                            (click)="removeTermPaymentAmountOverride(i)"
-                          ></button>
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-                  <div class="p-text-right p-mb-2">
-                    <button
-                      type="button"
-                      pButton
-                      icon="pi pi-plus"
-                      label="Add New Term Row"
-                      class="p-button-rounded p-button-success"
-                      (ngModelChange)="submitLoan()"
-                      (click)="addTermPaymentAmountOverride()"
-                    ></button>
-                  </div>
-                </p-fieldset>
-              </p-card>
-            </div>
-
-            <!-- Advanced Options Card -->
-            <div class="p-col-12">
-              <p-card class="p-mt-3">
-                <p-fieldset
-                  legend="Advanced Settings"
-                  [toggleable]="true"
-                  [collapsed]="true"
-                >
-                  <!-- Term Payment Amount-->
-                  <div class="p-col-12 p-md-4">
-                    <div class="p-field">
-                      <label for="termPaymentAmount">Term Payment Amount</label>
+          <div class="col-12">
+            <div class="p-3 border-round-sm font-bold">
+              <p-fieldset
+                legend="Advanced Settings"
+                [toggleable]="true"
+                [(collapsed)]="advancedSettingsCollapsed"
+              >
+                <!-- Term Payment Amount-->
+                <div class="formgrid grid">
+                  <div class="field col">
+                    <label for="termPaymentAmount">Term Payment Amount</label>
+                    <p-inputGroup>
+                      <p-inputGroupAddon>$</p-inputGroupAddon>
                       <input
                         id="termPaymentAmount"
                         type="number"
@@ -285,59 +342,65 @@
                         placeholder="Enter Term Payment Amount"
                         (ngModelChange)="submitLoan()"
                       />
+                    </p-inputGroup>
+                  </div>
+                </div>
+
+                <!-- Calendar Type -->
+                <div class="formgrid grid">
+                  <div class="field col">
+                    <label for="calendarType">Calendar Type</label>
+                    <p-dropdown
+                      [(ngModel)]="loan.calendarType"
+                      name="calendarType"
+                      [options]="calendarTypes"
+                      placeholder="Select a calendar type"
+                      (ngModelChange)="submitLoan()"
+                      styleClass="full-width"
+                    ></p-dropdown>
+                  </div>
+                </div>
+
+                <p-card>
+                  <div class="formgrid grid">
+                    <div class="field-checkbox col">
+                      <p-checkbox
+                        [(ngModel)]="loan.allowRateAbove100"
+                        name="allowRateAbove100"
+                        [binary]="true"
+                        (ngModelChange)="submitLoan()"
+                      ></p-checkbox>
+                      <label for="allowRateAbove100"
+                        >Allow rates above 100%</label
+                      >
                     </div>
                   </div>
+                </p-card>
 
-                  <!-- Calendar Type -->
-                  <div class="p-col-12 p-md-6">
-                    <div class="p-field">
-                      <label for="calendarType">Calendar Type</label>
+                <p-divider />
+
+                <p-card>
+                  <!-- Rounding Method -->
+                  <div class="formgrid grid">
+                    <div class="field col">
+                      <label for="roundingMethod">Rounding Method</label>
                       <p-dropdown
-                        [(ngModel)]="loan.calendarType"
-                        name="calendarType"
-                        [options]="calendarTypes"
-                        placeholder="Select a calendar type"
+                        [(ngModel)]="loan.roundingMethod"
+                        name="roundingMethod"
+                        [options]="roundingMethods"
+                        placeholder="Select a rounding method"
                         (ngModelChange)="submitLoan()"
                       ></p-dropdown>
                     </div>
                   </div>
-                  <div class="p-grid p-fluid">
-                    <!-- Rounding Method -->
-                    <div class="p-col-12 p-md-4">
-                      <div class="p-field">
-                        <label for="roundingMethod">Rounding Method</label>
-                        <p-dropdown
-                          [(ngModel)]="loan.roundingMethod"
-                          name="roundingMethod"
-                          [options]="roundingMethods"
-                          placeholder="Select a rounding method"
-                          (ngModelChange)="submitLoan()"
-                        ></p-dropdown>
-                      </div>
-                    </div>
 
-                    <!-- Flush Unbilled Interest Method -->
-                    <div class="p-col-12 p-md-4">
-                      <div class="p-field">
-                        <label for="flushMethod"
-                          >Flush Unbilled Interest Method</label
-                        >
-                        <p-dropdown
-                          [(ngModel)]="loan.flushMethod"
-                          name="flushMethod"
-                          [options]="flushMethods"
-                          placeholder="Select a flush method"
-                          (ngModelChange)="submitLoan()"
-                        ></p-dropdown>
-                      </div>
-                    </div>
-
-                    <!-- Rounding Precision -->
-                    <div class="p-col-12 p-md-4">
-                      <div class="p-field">
-                        <label for="roundingPrecision"
-                          >Rounding Precision</label
-                        >
+                  <!-- Rounding Precision -->
+                  <div class="formgrid grid">
+                    <div class="field col">
+                      <!-- Rounding Precision -->
+                      <label for="roundingPrecision">Rounding Precision</label>
+                      <p-inputGroup>
+                        <p-inputGroupAddon>#</p-inputGroupAddon>
                         <input
                           id="roundingPrecision"
                           type="number"
@@ -347,16 +410,33 @@
                           placeholder="Enter rounding precision"
                           (ngModelChange)="submitLoan()"
                         />
-                      </div>
+                      </p-inputGroup>
                     </div>
+                  </div>
+                </p-card>
+                <p-divider />
+                <p-card>
+                  <div class="formgrid grid">
+                    <div class="field col">
+                      <label for="flushMethod"
+                        >Flush Unbilled Interest Method</label
+                      >
+                      <p-dropdown
+                        [(ngModel)]="loan.flushMethod"
+                        name="flushMethod"
+                        [options]="flushMethods"
+                        placeholder="Select a flush method"
+                        (ngModelChange)="submitLoan()"
+                      ></p-dropdown>
+                    </div>
+                  </div>
 
-                    <!-- Flush Threshold (only if flush method is not 'none') -->
-                    <div
-                      class="p-col-12 p-md-6"
-                      *ngIf="loan.flushMethod !== 'none'"
-                    >
-                      <div class="p-field">
-                        <label for="flushThreshold">Flush Threshold</label>
+                  <!-- Flush Threshold (only if flush method is not 'none') -->
+                  <div class="formgrid grid">
+                    <div class="field col">
+                      <label for="flushThreshold">Flush Threshold</label>
+                      <p-inputGroup>
+                        <p-inputGroupAddon>$</p-inputGroupAddon>
                         <input
                           id="flushThreshold"
                           type="number"
@@ -366,126 +446,122 @@
                           placeholder="Enter flush threshold"
                           (ngModelChange)="submitLoan()"
                         />
-                      </div>
+                      </p-inputGroup>
                     </div>
                   </div>
-                </p-fieldset>
-              </p-card>
+                </p-card>
+              </p-fieldset>
             </div>
           </div>
-        </p-card>
-
-        <!-- Submit Button -->
-        <div class="p-field p-col-12 p-text-center p-mt-3">
-          <p-button
-            label="Submit"
-            icon="pi pi-check"
-            (onClick)="submitLoan()"
-          ></p-button>
         </div>
-      </form>
-
-      <!-- Repayment Plan Table -->
-      <div *ngIf="showTable" class="p-mt-4">
-        <!-- Repayment Plan Card -->
-        <p-card header="Repayment Plan" class="p-mt-3">
-          <!-- Table Toggle Button -->
-          <div class="p-text-center p-mt-3">
-            <p-button
-              label="Show {{ showAdvancedTable ? 'Simple' : 'Advanced' }} Table"
-              icon="pi pi-table"
-              (onClick)="toggleAdvancedTable()"
-            ></p-button>
-          </div>
-          <p-table [value]="repaymentPlan">
-            <ng-template pTemplate="header">
-              <tr>
-                <th>Period</th>
-                <th>Start Date</th>
-                <th>End Date</th>
-                <th>Interest Rate</th>
-                <th>Total Interest</th>
-                <th>Principal</th>
-                <th>Total Payment</th>
-                <!-- Advanced Columns -->
-                <th *ngIf="showAdvancedTable">Interest</th>
-                <th *ngIf="showAdvancedTable">Billed Deferred Interest</th>
-                <th *ngIf="showAdvancedTable">Real Interest</th>
-                <th *ngIf="showAdvancedTable">Rounding Error</th>
-                <th *ngIf="showAdvancedTable">Per Diem</th>
-                <th *ngIf="showAdvancedTable">Days</th>
-                <th *ngIf="showAdvancedTable">Start Balance</th>
-                <th *ngIf="showAdvancedTable">End Balance</th>
-                <th *ngIf="showAdvancedTable">Unbilled Interest</th>
-                <th *ngIf="showAdvancedTable">Tota Deferred Interest</th>
-                <th *ngIf="showAdvancedTable">
-                  Deferred Interest For Current Period
-                </th>
-                <th *ngIf="showAdvancedTable">Metadata</th>
-              </tr>
-            </ng-template>
-            <ng-template pTemplate="body" let-plan>
-              <tr>
-                <td>{{ plan.period }}</td>
-                <td>{{ plan.periodStartDate | date : "MM/dd/yyyy" }}</td>
-                <td>{{ plan.periodEndDate | date : "MM/dd/yyyy" }}</td>
-                <td>{{ plan.periodInterestRate }}%</td>
-                <td>{{ plan.totalInterestForPeriod | currency }}</td>
-                <td>{{ plan.principal | currency }}</td>
-                <td>{{ plan.totalPayment | currency }}</td>
-                <!-- Advanced Columns -->
-                <td *ngIf="showAdvancedTable">
-                  {{ plan.interest | currency }}
-                </td>
-                <td *ngIf="showAdvancedTable">
-                  {{ plan.billedDeferredInterest | currency }}
-                </td>
-                <td *ngIf="showAdvancedTable">
-                  {{ plan.realInterest }}
-                </td>
-                <td *ngIf="showAdvancedTable">
-                  {{ plan.interestRoundingError }}
-                </td>
-                <td *ngIf="showAdvancedTable">
-                  {{ plan.perDiem | currency }}
-                </td>
-                <td *ngIf="showAdvancedTable">{{ plan.daysInPeriod }}</td>
-                <td *ngIf="showAdvancedTable">
-                  {{ plan.startBalance | currency }}
-                </td>
-                <td *ngIf="showAdvancedTable">
-                  {{ plan.endBalance | currency }}
-                </td>
-                <td *ngIf="showAdvancedTable">
-                  {{ plan.unbilledInterestDueToRounding }}
-                </td>
-                <td *ngIf="showAdvancedTable">
-                  {{ plan.totalDeferredInterest }}
-                </td>
-                <td *ngIf="showAdvancedTable">
-                  {{ plan.deferredInterestFromCurrentPeriod }}
-                </td>
-                <td *ngIf="showAdvancedTable">
-                  <table class="metadata-table">
-                    <thead>
-                      <tr>
-                        <th>Key</th>
-                        <th>Value</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr *ngFor="let item of plan.metadata | keyvalue">
-                        <td>{{ item.key }}</td>
-                        <td>{{ item.value }}</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </td>
-              </tr>
-            </ng-template>
-          </p-table>
-        </p-card>
       </div>
     </div>
   </div>
+</form>
+
+<!-- end of form -->
+<p-divider />
+
+<!-- start of table-->
+<!-- Repayment Plan Table -->
+<div *ngIf="showTable" class="p-mt-4">
+  <!-- Repayment Plan Card -->
+  <p-card header="Repayment Plan" class="p-mt-3">
+    <!-- Table Toggle Button -->
+    <div class="p-text-center p-mt-3">
+      <p-button
+        label="Show {{ showAdvancedTable ? 'Simple' : 'Advanced' }} Table"
+        icon="pi pi-table"
+        (onClick)="toggleAdvancedTable()"
+      ></p-button>
+    </div>
+    <p-table [value]="repaymentPlan">
+      <ng-template pTemplate="header">
+        <tr>
+          <th>Period</th>
+          <th>Start Date</th>
+          <th>End Date</th>
+          <th>Interest Rate</th>
+          <th>Total Interest</th>
+          <th>Principal</th>
+          <th>Total Payment</th>
+          <!-- Advanced Columns -->
+          <th *ngIf="showAdvancedTable">Interest</th>
+          <th *ngIf="showAdvancedTable">Billed Deferred Interest</th>
+          <th *ngIf="showAdvancedTable">Real Interest</th>
+          <th *ngIf="showAdvancedTable">Rounding Error</th>
+          <th *ngIf="showAdvancedTable">Per Diem</th>
+          <th *ngIf="showAdvancedTable">Days</th>
+          <th *ngIf="showAdvancedTable">Start Balance</th>
+          <th *ngIf="showAdvancedTable">End Balance</th>
+          <th *ngIf="showAdvancedTable">Unbilled Interest</th>
+          <th *ngIf="showAdvancedTable">Total Deferred Interest</th>
+          <th *ngIf="showAdvancedTable">
+            Deferred Interest For Current Period
+          </th>
+          <th *ngIf="showAdvancedTable">Metadata</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-plan>
+        <tr>
+          <td>{{ plan.period }}</td>
+          <td>{{ plan.periodStartDate | date : "MM/dd/yyyy" }}</td>
+          <td>{{ plan.periodEndDate | date : "MM/dd/yyyy" }}</td>
+          <td>{{ plan.periodInterestRate }}%</td>
+          <td>{{ plan.totalInterestForPeriod | currency }}</td>
+          <td>{{ plan.principal | currency }}</td>
+          <td>{{ plan.totalPayment | currency }}</td>
+          <!-- Advanced Columns -->
+          <td *ngIf="showAdvancedTable">
+            {{ plan.interest | currency }}
+          </td>
+          <td *ngIf="showAdvancedTable">
+            {{ plan.billedDeferredInterest | currency }}
+          </td>
+          <td *ngIf="showAdvancedTable">
+            {{ plan.realInterest }}
+          </td>
+          <td *ngIf="showAdvancedTable">
+            {{ plan.interestRoundingError }}
+          </td>
+          <td *ngIf="showAdvancedTable">
+            {{ plan.perDiem | currency }}
+          </td>
+          <td *ngIf="showAdvancedTable">{{ plan.daysInPeriod }}</td>
+          <td *ngIf="showAdvancedTable">
+            {{ plan.startBalance | currency }}
+          </td>
+          <td *ngIf="showAdvancedTable">
+            {{ plan.endBalance | currency }}
+          </td>
+          <td *ngIf="showAdvancedTable">
+            {{ plan.unbilledInterestDueToRounding }}
+          </td>
+          <td *ngIf="showAdvancedTable">
+            {{ plan.totalDeferredInterest }}
+          </td>
+          <td *ngIf="showAdvancedTable">
+            {{ plan.deferredInterestFromCurrentPeriod }}
+          </td>
+          <td *ngIf="showAdvancedTable">
+            <table class="metadata-table">
+              <thead>
+                <tr>
+                  <th>Key</th>
+                  <th>Value</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let item of plan.metadata | keyvalue">
+                  <td>{{ item.key }}</td>
+                  <td>{{ item.value }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </p-card>
 </div>
+<!-- end of table-->

@@ -12,6 +12,11 @@ import { FieldsetModule } from 'primeng/fieldset';
 import { CardModule } from 'primeng/card';
 import { InputGroupModule } from 'primeng/inputgroup';
 import { InputGroupAddonModule } from 'primeng/inputgroupaddon';
+import { TabMenuModule } from 'primeng/tabmenu';
+import { InputSwitchModule } from 'primeng/inputswitch';
+import { DividerModule } from 'primeng/divider';
+import { ToolbarModule } from 'primeng/toolbar';
+import { CheckboxModule } from 'primeng/checkbox';
 
 @NgModule({
   declarations: [AppComponent],
@@ -28,6 +33,11 @@ import { InputGroupAddonModule } from 'primeng/inputgroupaddon';
     CardModule,
     InputGroupModule,
     InputGroupAddonModule,
+    TabMenuModule,
+    InputSwitchModule,
+    DividerModule,
+    ToolbarModule,
+    CheckboxModule,
   ],
   providers: [],
   bootstrap: [AppComponent],

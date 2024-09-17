@@ -177,7 +177,9 @@ export class Calendar {
   private daysBetween30_360(date1: Dayjs, date2: Dayjs): number {
     const d1 = this.adjustDate30_360(date1);
     const d2 = this.adjustDate30_360(date2);
-    return (d2.year() - d1.year()) * 360 + (d2.month() - d1.month()) * 30 + (d2.date() - d1.date());
+    const result = (d2.year() - d1.year()) * 360 + (d2.month() - d1.month()) * 30 + (d2.date() - d1.date());
+    //console.log(`d1: ${d1.format("YYYY-MM-DD")}, d2: ${d2.format("YYYY-MM-DD")}, result: ${result}`);
+    return result;
   }
 
   /**

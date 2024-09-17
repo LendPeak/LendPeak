@@ -23,12 +23,15 @@ export class AppComponent implements OnChanges {
     interestRate: number;
     term: number;
     startDate: Date;
+    firstPaymentDate: Date;
+    endDate: Date;
     calendarType: string;
     roundingMethod: string;
     flushMethod: string;
     roundingPrecision: number;
     flushThreshold: number;
     termPaymentAmount: number | undefined;
+    allowRateAbove100: boolean;
     ratesSchedule: {
       startDate: Date;
       endDate: Date;
@@ -40,6 +43,8 @@ export class AppComponent implements OnChanges {
     interestRate: 10,
     term: 12,
     startDate: new Date(),
+    firstPaymentDate: dayjs().add(1, 'month').toDate(),
+    endDate: dayjs().add(12, 'month').toDate(),
     calendarType: 'THIRTY_360', // Default value
     roundingMethod: 'ROUND_HALF_EVEN', // Default value
     flushMethod: 'at_threshold', // Default value
@@ -48,8 +53,65 @@ export class AppComponent implements OnChanges {
     ratesSchedule: [],
     termPaymentAmountOverride: [],
     termPaymentAmount: undefined,
+    allowRateAbove100: false,
   };
 
+  advancedSettingsCollapsed = true;
+  termPaymentAmountOverrideCollapsed = true;
+  rateOverrideCollapsed = true;
+
+  saveUIState() {
+    // store UI state in the local storage that captures the state of the advanced options, rate overrides, and term payment amount overrides
+    localStorage.setItem(
+      'uiState',
+      JSON.stringify({
+        advancedSettingsCollapsed: this.advancedSettingsCollapsed,
+        termPaymentAmountOverrideCollapsed:
+          this.termPaymentAmountOverrideCollapsed,
+        rateOverrideCollapsed: this.rateOverrideCollapsed,
+      })
+    );
+
+    // store this.loan in local storage
+    localStorage.setItem('loan', JSON.stringify(this.loan));
+  }
+
+  resetUIState() {
+    // remove loacal storage
+    localStorage.removeItem('uiState');
+    localStorage.removeItem('loan');
+    // refresh the page
+    window.location.reload();
+  }
+
+  ngOnInit(): void {
+    // Retrieve loan from local storage if exists
+    const loan = localStorage.getItem('loan');
+    if (loan) {
+      this.loan = JSON.parse(loan);
+      this.loan.startDate = new Date(this.loan.startDate);
+      this.loan.firstPaymentDate = new Date(this.loan.firstPaymentDate);
+      this.loan.endDate = new Date(this.loan.endDate);
+      this.loan.ratesSchedule = this.loan.ratesSchedule.map((rate) => {
+        return {
+          startDate: new Date(rate.startDate),
+          endDate: new Date(rate.endDate),
+          annualInterestRate: rate.annualInterestRate,
+        };
+      });
+    }
+
+    // Retrieve UI state from local storage if exists
+    const uiState = localStorage.getItem('uiState');
+    if (uiState) {
+      const uiStateParsed = JSON.parse(uiState);
+      this.advancedSettingsCollapsed = uiStateParsed.advancedSettingsCollapsed;
+      this.termPaymentAmountOverrideCollapsed =
+        uiStateParsed.termPaymentAmountOverrideCollapsed;
+      this.rateOverrideCollapsed = uiStateParsed.rateOverrideCollapsed;
+    }
+    this.submitLoan();
+  }
   showTable = false;
   showAdvancedTable: boolean = false; // Default is simple view
 
@@ -57,6 +119,13 @@ export class AppComponent implements OnChanges {
 
   toggleAdvancedTable() {
     this.showAdvancedTable = !this.showAdvancedTable;
+  }
+
+  updateTerm() {
+    this.loan.endDate = dayjs(this.loan.startDate)
+      .add(this.loan.term, 'month')
+      .toDate();
+    this.submitLoan();
   }
 
   ngOnChanges(changes: SimpleChanges) {
@@ -254,6 +323,8 @@ export class AppComponent implements OnChanges {
       flushUnbilledInterestRoundingErrorMethod: this.loan.flushMethod,
       roundingPrecision: this.loan.roundingPrecision,
       flushThreshold: this.loan.flushThreshold,
+      firstPaymentDate: this.loan.firstPaymentDate,
+      endDate: this.loan.endDate,
     });
 
     let amortizationParams: AmortizationParams = {
@@ -261,6 +332,8 @@ export class AppComponent implements OnChanges {
       annualInterestRate: interestRateAsDecimal.dividedBy(100),
       term: this.loan.term,
       startDate: dayjs(this.loan.startDate),
+      endDate: dayjs(this.loan.endDate),
+      firstPaymentDate: dayjs(this.loan.firstPaymentDate),
       calendarType: calendarType,
       roundingMethod: roundingMethod,
       flushUnbilledInterestRoundingErrorMethod: flushMethod,
@@ -330,5 +403,7 @@ export class AppComponent implements OnChanges {
     });
 
     this.showTable = true;
+
+    this.saveUIState();
   }
 }

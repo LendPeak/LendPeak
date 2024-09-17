@@ -81,6 +81,7 @@ export interface AmortizationParams {
   allowRateAbove100?: boolean;
   termPaymentAmountOverride?: TermPaymentAmount[];
   termPaymentAmount?: Currency; // allows one to specify EMI manually instead of calculating it
+  firstPaymentDate?: Dayjs;
 }
 
 /**
@@ -106,6 +107,7 @@ export class Amortization {
   allowRateAbove100: boolean = false;
   termPaymentAmountOverride: TermPaymentAmount[] = [];
   equitedMonthlyPayment: Currency;
+  firstPaymentDate?: Dayjs;
 
   constructor(params: AmortizationParams) {
     // validate that loan amount is greater than zero
@@ -116,6 +118,12 @@ export class Amortization {
 
     if (params.allowRateAbove100 !== undefined) {
       this.allowRateAbove100 = params.allowRateAbove100;
+    }
+
+    if (params.firstPaymentDate) {
+      this.firstPaymentDate = params.firstPaymentDate;
+    } else {
+      this.firstPaymentDate = params.startDate.add(1, "month");
     }
 
     // validate annual interest rate, it should not be negative or greater than 100%
@@ -134,7 +142,12 @@ export class Amortization {
     }
     this.term = params.term;
     this.startDate = dayjs(params.startDate).startOf("day");
-    this.endDate = params.endDate ? dayjs(params.endDate).startOf("day") : this.startDate.add(this.term, "month");
+
+    if (params.endDate) {
+      this.endDate = dayjs(params.endDate).startOf("day");
+    } else {
+      this.endDate = params.endDate ? dayjs(params.endDate).startOf("day") : this.startDate.add(this.term, "month");
+    }
 
     // validate that the end date is after the start date
     if (this.endDate.isBefore(this.startDate)) {
@@ -256,26 +269,26 @@ export class Amortization {
    */
   verifySchedulePeriods(): void {
     if (this.periodsSchedule.length !== this.term) {
-      throw new Error("Invalid schedule periods");
+      throw new Error("Invalid schedule periods, number of periods must match the term");
     }
     // Check if the start date of the first period is the same as the loan start date
     if (!this.startDate.isSame(this.periodsSchedule[0].startDate, "day")) {
-      throw new Error("Invalid schedule periods");
+      throw new Error("Invalid schedule periods, start date does not match the loan start date");
     }
 
     // Check if the end date of the last period is the same as the loan end date
     if (!this.endDate.isSame(this.periodsSchedule[this.periodsSchedule.length - 1].endDate, "day")) {
-      throw new Error("Invalid schedule periods");
+      throw new Error("Invalid schedule periods, end date does not match the loan end date");
     }
 
     for (let i = 0; i < this.periodsSchedule.length - 1; i++) {
       // Check if the periods are in ascending order
       if (!this.periodsSchedule[i].endDate.isSame(this.periodsSchedule[i + 1].startDate, "day")) {
-        throw new Error("Invalid schedule periods");
+        throw new Error("Invalid schedule periods, periods are not in ascending order");
       }
       // Check if the periods are non-overlapping
       if (this.periodsSchedule[i].endDate.isAfter(this.periodsSchedule[i + 1].startDate, "day")) {
-        throw new Error("Invalid schedule periods");
+        throw new Error("Invalid schedule periods, periods are overlapping");
       }
     }
   }
@@ -287,10 +300,18 @@ export class Amortization {
   generatePeriodicSchedule(): void {
     let startDate = this.startDate;
     for (let i = 0; i < this.term; i++) {
-      const endDate = this.calendar.addMonths(startDate, 1);
+      let endDate: Dayjs;
+      if (i === 0 && this.firstPaymentDate) {
+        endDate = this.firstPaymentDate;
+      } else {
+        endDate = this.calendar.addMonths(startDate, 1);
+      }
       this.periodsSchedule.push({ startDate, endDate });
       startDate = endDate;
     }
+
+    // final period should end at the end date
+    this.periodsSchedule[this.periodsSchedule.length - 1].endDate = this.endDate;
   }
 
   /**
@@ -299,7 +320,7 @@ export class Amortization {
 
   generateRatesSchedule(): void {
     let startDate = this.startDate;
-    const endDate = this.calendar.addMonths(startDate, this.term);
+    const endDate = this.endDate;
     this.rateSchedules.push({ annualInterestRate: this.annualInterestRate, startDate, endDate });
   }
 
@@ -543,7 +564,7 @@ export class Amortization {
       lastPayment.totalPayment = lastPayment.principal.add(lastPayment.interest);
       lastPayment.endBalance = Currency.of(0);
       lastPayment.perDiem = this.round(lastPayment.interest.divide(this.calendar.daysInMonth(this.calendar.addMonths(this.startDate, this.term))));
-      lastPayment.daysInPeriod = this.calendar.daysInMonth(this.calendar.addMonths(this.startDate, this.term));
+      //  lastPayment.daysInPeriod = this.calendar.daysInMonth(this.calendar.addMonths(this.startDate, this.term));
       lastPayment.interestRoundingError = lastPayment.interest.getRoundingErrorAsCurrency();
       lastPayment.metadata.finalAdjustment = true; // Track final adjustment in metadata
     }

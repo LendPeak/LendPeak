@@ -1,5 +1,7 @@
 <p-toolbar>
-  <div class="p-toolbar-group-start"></div>
+  <div class="p-toolbar-group-start">
+    <img src="horizontal-logo.png" style="width: 160px" />
+  </div>
   <div class="p-toolbar-group-center"></div>
 
   <div class="p-toolbar-group-end">
@@ -475,6 +477,7 @@
         (onClick)="toggleAdvancedTable()"
       ></p-button>
     </div>
+    <p-divider />
     <p-table [value]="repaymentPlan">
       <ng-template pTemplate="header">
         <tr>

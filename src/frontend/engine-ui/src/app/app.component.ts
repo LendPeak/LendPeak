@@ -121,6 +121,15 @@ export class AppComponent implements OnChanges {
     this.showAdvancedTable = !this.showAdvancedTable;
   }
 
+  onTermPaymentAmountChange(value: string) {
+    if (!value) {
+      this.loan.termPaymentAmount = undefined;
+    } else {
+      this.loan.termPaymentAmount = parseFloat(value);
+    }
+    this.submitLoan();
+  }
+
   updateTerm() {
     this.loan.endDate = dayjs(this.loan.startDate)
       .add(this.loan.term, 'month')
@@ -341,7 +350,7 @@ export class AppComponent implements OnChanges {
       flushThreshold: Currency.of(this.loan.flushThreshold),
     };
 
-    if (this.loan.termPaymentAmount !== undefined) {
+    if (this.loan.termPaymentAmount) {
       console.log('Term payment amount:', this.loan.termPaymentAmount);
       amortizationParams.termPaymentAmount = Currency.of(
         this.loan.termPaymentAmount

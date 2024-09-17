@@ -340,7 +340,7 @@
                         [(ngModel)]="loan.termPaymentAmount"
                         name="termPaymentAmount"
                         placeholder="Enter Term Payment Amount"
-                        (ngModelChange)="submitLoan()"
+                        (ngModelChange)="onTermPaymentAmountChange($event)"
                       />
                     </p-inputGroup>
                   </div>

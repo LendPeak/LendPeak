@@ -514,7 +514,7 @@
                 <td>
                   <p-calendar
                     [(ngModel)]="plan.endDate"
-                    (ngModelChange)="submitLoan()"
+                    (ngModelChange)="repaymentPlanEndDateChange( i)"
                     dateFormat="mm/dd/yy"
                     name="periodEndDate-{{ i }}"
                     showIcon

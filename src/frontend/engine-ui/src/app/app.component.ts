@@ -235,6 +235,15 @@ export class AppComponent implements OnChanges {
     console.log('Plan deleted at index:', index);
   }
 
+  repaymentPlanEndDateChange(index: number) {
+    // when end date is changed following start date should be updated
+    const selectedRow = this.loan.periodsSchedule[index];
+    const endDate = dayjs(selectedRow.endDate);
+    const startDate = endDate;
+    this.loan.periodsSchedule[index + 1].startDate = selectedRow.endDate;
+    this.submitLoan();
+  }
+
   toggleAdvancedOptions() {
     this.showAdvancedOptions = !this.showAdvancedOptions;
   }

@@ -20,15 +20,19 @@ jobs:
         with:
           node-version: "22"
 
-      # Navigate to the correct directory and install dependencies
-      - name: Install dependencies
-        working-directory: src/frontend/engine-ui
-        run: npm install
+      # Install dependencies and build the engine in src/engine
+      - name: Install dependencies for engine and build
+        working-directory: src/engine
+        run: |
+          npm install
+          npm run build
 
-      # Build the Angular project
-      - name: Build Angular app
+      # Install dependencies and build the Angular project in src/frontend/engine-ui
+      - name: Install dependencies and build Angular app
         working-directory: src/frontend/engine-ui
-        run: npm run build --prod
+        run: |
+          npm install
+          npm run build --prod
 
       # Deploy to S3
       - name: Deploy to S3

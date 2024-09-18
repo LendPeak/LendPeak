@@ -60,6 +60,11 @@ export enum FlushUnbilledInterestDueToRoundingErrorType {
   AT_THRESHOLD = "at_threshold",
 }
 
+export interface TermPeriodDefinition {
+  unit: "year" | "month" | "week" | "day";
+  count: number;
+}
+
 export interface TermPaymentAmount {
   termNumber: number;
   paymentAmount: Currency;
@@ -82,6 +87,7 @@ export interface AmortizationParams {
   termPaymentAmountOverride?: TermPaymentAmount[];
   termPaymentAmount?: Currency; // allows one to specify EMI manually instead of calculating it
   firstPaymentDate?: Dayjs;
+  termPeriodDefinition?: TermPeriodDefinition;
 }
 
 /**
@@ -108,6 +114,7 @@ export class Amortization {
   termPaymentAmountOverride: TermPaymentAmount[] = [];
   equitedMonthlyPayment: Currency;
   firstPaymentDate?: Dayjs;
+  termPeriodDefinition: TermPeriodDefinition;
 
   constructor(params: AmortizationParams) {
     // validate that loan amount is greater than zero
@@ -115,6 +122,12 @@ export class Amortization {
       throw new Error("Invalid loan amount, must be greater than zero");
     }
     this.loanAmount = params.loanAmount;
+
+    if (params.termPeriodDefinition) {
+      this.termPeriodDefinition = params.termPeriodDefinition;
+    } else {
+      this.termPeriodDefinition = { unit: "month", count: 1 };
+    }
 
     if (params.allowRateAbove100 !== undefined) {
       this.allowRateAbove100 = params.allowRateAbove100;
@@ -146,7 +159,7 @@ export class Amortization {
     if (params.endDate) {
       this.endDate = dayjs(params.endDate).startOf("day");
     } else {
-      this.endDate = params.endDate ? dayjs(params.endDate).startOf("day") : this.startDate.add(this.term, "month");
+      this.endDate = params.endDate ? dayjs(params.endDate).startOf("day") : this.startDate.add(this.term * this.termPeriodDefinition.count, this.termPeriodDefinition.unit);
     }
 
     // validate that the end date is after the start date
@@ -307,9 +320,9 @@ export class Amortization {
     for (let i = 0; i < this.term; i++) {
       let endDate: Dayjs;
       if (i === 0 && this.firstPaymentDate) {
-        endDate = this.firstPaymentDate;
+        endDate = this.firstPaymentDate.startOf("day");
       } else {
-        endDate = this.calendar.addMonths(startDate, 1);
+        endDate = startDate.add(this.termPeriodDefinition.count, this.termPeriodDefinition.unit).startOf("day");
       }
       this.periodsSchedule.push({ startDate, endDate });
       startDate = endDate;

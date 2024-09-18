@@ -87,7 +87,47 @@
               </p-inputGroup>
             </div>
           </div>
-
+          <!-- start of term period definition -->
+          <div class="col-6">
+            <div class="p-3 border-round-sm font-bold">
+              <!-- Start Date -->
+              <label for="startDate">Term Period Unit</label>
+              <p-inputGroup>
+                <p-inputGroupAddon>
+                  <i class="pi pi-calendar"></i>
+                </p-inputGroupAddon>
+                <p-dropdown
+                  [(ngModel)]="loan.termPeriodDefinition.unit"
+                  name="termPeriodUnit"
+                  [options]="termPeriodUnits"
+                  placeholder="Select a term period unit"
+                  (ngModelChange)="termPeriodDefinitionChange()"
+                  styleClass="full-width"
+                ></p-dropdown>
+              </p-inputGroup>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="p-3 border-round-sm font-bold">
+              <!-- Start Date -->
+              <label for="startDate">Term Period Count</label>
+              <p-inputGroup>
+                <p-inputGroupAddon>
+                  <i class="pi pi-calendar"></i>
+                </p-inputGroupAddon>
+                <input
+                  id="termPeriodCount"
+                  type="number"
+                  pInputText
+                  [(ngModel)]="loan.termPeriodDefinition.count"
+                  name="termPeriodCount"
+                  placeholder="Select a term period count"
+                  (ngModelChange)="termPeriodDefinitionChange()"
+                />
+              </p-inputGroup>
+            </div>
+          </div>
+          <!-- end of term period definition -->
           <div class="col-4">
             <div class="p-3 border-round-sm font-bold">
               <!-- Start Date -->
@@ -145,6 +185,7 @@
         </div>
       </div>
     </div>
+
     <div class="col-6">
       <div class="p-3 border-round-sm font-bold">
         <div class="grid">
@@ -470,20 +511,24 @@
           [toggleable]="true"
           [(collapsed)]="customPeriodsScheduleCollapsed"
         >
-          <div class="p-mb-3">
-            <p-button
-              label="Create Custom Schedule"
-              icon="pi pi-plus"
-              (onClick)="createLoanRepaymentPlan()"
-              class="p-mr-2"
-            ></p-button>
-            <p-button
-              label="Remove Schedule Override"
-              icon="pi pi-minus"
-              (onClick)="removeLoanRepaymentPlan()"
-              class="p-button-danger"
-            ></p-button>
+          <div class="grid">
+            <div class="col-fixed" style="width: 18em">
+              <p-button
+                label="Create Custom Schedule"
+                icon="pi pi-plus"
+                (onClick)="createLoanRepaymentPlan()"
+              ></p-button>
+            </div>
+            <div class="col-fixed" style="width: 18em">
+              <p-button
+                label="Remove Schedule Override"
+                icon="pi pi-minus"
+                (onClick)="removeLoanRepaymentPlan()"
+                class="p-button-danger"
+              ></p-button>
+            </div>
           </div>
+          <div class="p-mb-3"></div>
           <p-divider />
           <table
             *ngIf="loan.periodsSchedule.length > 0"
@@ -514,7 +559,7 @@
                 <td>
                   <p-calendar
                     [(ngModel)]="plan.endDate"
-                    (ngModelChange)="repaymentPlanEndDateChange( i)"
+                    (ngModelChange)="repaymentPlanEndDateChange(i)"
                     dateFormat="mm/dd/yy"
                     name="periodEndDate-{{ i }}"
                     showIcon

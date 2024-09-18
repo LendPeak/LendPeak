@@ -5,12 +5,12 @@ import {
   FlushUnbilledInterestDueToRoundingErrorType,
   TermPaymentAmount,
   AmortizationSchedule,
+  TermPeriodDefinition,
 } from 'lendpeak-engine/models/Amortization';
 import { Currency, RoundingMethod } from 'lendpeak-engine/utils/Currency';
 import Decimal from 'decimal.js';
 import dayjs from 'dayjs';
 import { CalendarType } from 'lendpeak-engine/models/Calendar';
-import { FormBuilder, FormGroup } from '@angular/forms';
 
 @Component({
   selector: 'app-root',
@@ -18,7 +18,9 @@ import { FormBuilder, FormGroup } from '@angular/forms';
   styleUrls: ['./app.component.css'],
 })
 export class AppComponent implements OnChanges {
+  CURRENT_OBJECT_VERSION = 1;
   loan: {
+    objectVersion: number;
     principal: number;
     interestRate: number;
     term: number;
@@ -45,7 +47,9 @@ export class AppComponent implements OnChanges {
       interestRate: number;
       paymentAmount: number;
     }[];
+    termPeriodDefinition: TermPeriodDefinition;
   } = {
+    objectVersion: 1,
     principal: 10000,
     interestRate: 10,
     term: 12,
@@ -62,6 +66,10 @@ export class AppComponent implements OnChanges {
     termPaymentAmount: undefined,
     allowRateAbove100: false,
     periodsSchedule: [],
+    termPeriodDefinition: {
+      unit: 'month',
+      count: 1,
+    },
   };
 
   advancedSettingsCollapsed = true;
@@ -96,42 +104,52 @@ export class AppComponent implements OnChanges {
 
   ngOnInit(): void {
     // Retrieve loan from local storage if exists
-    const loan = localStorage.getItem('loan');
-    if (loan) {
-      this.loan = JSON.parse(loan);
-      this.loan.startDate = new Date(this.loan.startDate);
-      this.loan.firstPaymentDate = new Date(this.loan.firstPaymentDate);
-      this.loan.endDate = new Date(this.loan.endDate);
-      this.loan.ratesSchedule = this.loan.ratesSchedule.map((rate) => {
-        return {
-          startDate: new Date(rate.startDate),
-          endDate: new Date(rate.endDate),
-          annualInterestRate: rate.annualInterestRate,
-        };
-      });
-      this.loan.periodsSchedule = this.loan.periodsSchedule.map((period) => {
-        return {
-          period: period.period,
-          startDate: new Date(period.startDate),
-          endDate: new Date(period.endDate),
-          interestRate: period.interestRate,
-          paymentAmount: period.paymentAmount,
-        };
-      });
-    }
+    try {
+      const loan = localStorage.getItem('loan');
+      if (loan) {
+        this.loan = JSON.parse(loan);
+        if (this.loan.objectVersion !== this.CURRENT_OBJECT_VERSION) {
+          // we have outdated cached object, lets just clear it and start fresh
+          return this.resetUIState();
+        }
+        this.loan.startDate = new Date(this.loan.startDate);
+        this.loan.firstPaymentDate = new Date(this.loan.firstPaymentDate);
+        this.loan.endDate = new Date(this.loan.endDate);
+        this.loan.ratesSchedule = this.loan.ratesSchedule.map((rate) => {
+          return {
+            startDate: new Date(rate.startDate),
+            endDate: new Date(rate.endDate),
+            annualInterestRate: rate.annualInterestRate,
+          };
+        });
+        this.loan.periodsSchedule = this.loan.periodsSchedule.map((period) => {
+          return {
+            period: period.period,
+            startDate: new Date(period.startDate),
+            endDate: new Date(period.endDate),
+            interestRate: period.interestRate,
+            paymentAmount: period.paymentAmount,
+          };
+        });
+      }
 
-    // Retrieve UI state from local storage if exists
-    const uiState = localStorage.getItem('uiState');
-    if (uiState) {
-      const uiStateParsed = JSON.parse(uiState);
-      this.advancedSettingsCollapsed = uiStateParsed.advancedSettingsCollapsed;
-      this.termPaymentAmountOverrideCollapsed =
-        uiStateParsed.termPaymentAmountOverrideCollapsed;
-      this.rateOverrideCollapsed = uiStateParsed.rateOverrideCollapsed;
-      this.customPeriodsScheduleCollapsed =
-        uiStateParsed.customPeriodsScheduleCollapsed;
+      // Retrieve UI state from local storage if exists
+      const uiState = localStorage.getItem('uiState');
+      if (uiState) {
+        const uiStateParsed = JSON.parse(uiState);
+        this.advancedSettingsCollapsed =
+          uiStateParsed.advancedSettingsCollapsed;
+        this.termPaymentAmountOverrideCollapsed =
+          uiStateParsed.termPaymentAmountOverrideCollapsed;
+        this.rateOverrideCollapsed = uiStateParsed.rateOverrideCollapsed;
+        this.customPeriodsScheduleCollapsed =
+          uiStateParsed.customPeriodsScheduleCollapsed;
+      }
+      this.submitLoan();
+    } catch (e) {
+      console.error('Error while loading loan from local storage:', e);
+      this.resetUIState();
     }
-    this.submitLoan();
   }
   showTable = false;
   showAdvancedTable: boolean = false; // Default is simple view
@@ -151,16 +169,37 @@ export class AppComponent implements OnChanges {
     this.submitLoan();
   }
 
-  updateTerm() {
+  termPeriodDefinitionChange() {
     this.loan.endDate = dayjs(this.loan.startDate)
-      .add(this.loan.term, 'month')
+      .add(
+        this.loan.term * this.loan.termPeriodDefinition.count,
+        this.loan.termPeriodDefinition.unit
+      )
+      .toDate();
+
+    this.loan.firstPaymentDate = dayjs(this.loan.startDate)
+      .add(
+        this.loan.termPeriodDefinition.count,
+        this.loan.termPeriodDefinition.unit
+      )
       .toDate();
     this.submitLoan();
+  }
+
+  updateTerm() {
+    this.termPeriodDefinitionChange();
   }
 
   ngOnChanges(changes: SimpleChanges) {
     console.log('Changes detected:', changes);
   }
+
+  termPeriodUnits = [
+    { label: 'Year', value: 'year' },
+    { label: 'Month', value: 'month' },
+    { label: 'Week', value: 'week' },
+    { label: 'Day', value: 'day' },
+  ];
 
   calendarTypes = [
     { label: 'Actual/Actual', value: 'ACTUAL_ACTUAL' },
@@ -406,6 +445,7 @@ export class AppComponent implements OnChanges {
       flushUnbilledInterestRoundingErrorMethod: flushMethod,
       roundingPrecision: this.loan.roundingPrecision,
       flushThreshold: Currency.of(this.loan.flushThreshold),
+      termPeriodDefinition: this.loan.termPeriodDefinition,
     };
 
     if (this.loan.termPaymentAmount) {

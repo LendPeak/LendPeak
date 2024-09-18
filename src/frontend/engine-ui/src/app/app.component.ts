@@ -38,6 +38,12 @@ export class AppComponent implements OnChanges {
       annualInterestRate: number;
     }[];
     termPaymentAmountOverride: { termNumber: number; paymentAmount: number }[];
+    periodsSchedule: {
+      startDate: Date;
+      endDate: Date;
+      interestRate: number;
+      paymentAmount: number;
+    }[];
   } = {
     principal: 10000,
     interestRate: 10,
@@ -54,6 +60,7 @@ export class AppComponent implements OnChanges {
     termPaymentAmountOverride: [],
     termPaymentAmount: undefined,
     allowRateAbove100: false,
+    periodsSchedule: [],
   };
 
   advancedSettingsCollapsed = true;
@@ -185,6 +192,33 @@ export class AppComponent implements OnChanges {
     //   //    metadata: '{"unbilledInterestAmount":-0.004383561643835616}',
     // }
   ];
+  loanRepaymentPlan: AmortizationSchedule[] = [];
+
+  refreshLoanRepaymentPlan() {
+    // we will reset current schedule and
+    // copy over this.loanRepaymentPlan values to this.loan.periodsSchedule
+    // which will become a base for user to modify values
+    this.loan.periodsSchedule = this.loanRepaymentPlan.map((entry) => {
+      return {
+        startDate: entry.periodStartDate.toDate(),
+        endDate: entry.periodEndDate.toDate(),
+        interestRate: entry.periodInterestRate.toNumber(),
+        paymentAmount: entry.totalPayment.toNumber(),
+      };
+    });
+
+    console.log('Loan repayment plan refreshed', this.loan.periodsSchedule);
+  }
+
+  removeScheduleOverride() {
+    // Logic to remove schedule override
+    this.loan.periodsSchedule = [];
+  }
+
+  deletePlan(index: number) {
+    this.loan.periodsSchedule.splice(index, 1);
+    console.log('Plan deleted at index:', index);
+  }
 
   toggleAdvancedOptions() {
     this.showAdvancedOptions = !this.showAdvancedOptions;
@@ -384,8 +418,8 @@ export class AppComponent implements OnChanges {
 
     const amortization = new Amortization(amortizationParams);
 
-    const repaymentPlan = amortization.generateSchedule();
-    this.repaymentPlan = repaymentPlan.map((entry, index) => {
+    this.loanRepaymentPlan = amortization.generateSchedule();
+    this.repaymentPlan = this.loanRepaymentPlan.map((entry, index) => {
       return {
         period: entry.period,
         periodStartDate: entry.periodStartDate.format('YYYY-MM-DD'),

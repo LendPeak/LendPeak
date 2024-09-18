@@ -39,6 +39,7 @@ export class AppComponent implements OnChanges {
     }[];
     termPaymentAmountOverride: { termNumber: number; paymentAmount: number }[];
     periodsSchedule: {
+      period: number;
       startDate: Date;
       endDate: Date;
       interestRate: number;
@@ -66,6 +67,7 @@ export class AppComponent implements OnChanges {
   advancedSettingsCollapsed = true;
   termPaymentAmountOverrideCollapsed = true;
   rateOverrideCollapsed = true;
+  customPeriodsScheduleCollapsed = true;
 
   saveUIState() {
     // store UI state in the local storage that captures the state of the advanced options, rate overrides, and term payment amount overrides
@@ -76,6 +78,7 @@ export class AppComponent implements OnChanges {
         termPaymentAmountOverrideCollapsed:
           this.termPaymentAmountOverrideCollapsed,
         rateOverrideCollapsed: this.rateOverrideCollapsed,
+        customPeriodsScheduleCollapsed: this.customPeriodsScheduleCollapsed,
       })
     );
 
@@ -106,6 +109,15 @@ export class AppComponent implements OnChanges {
           annualInterestRate: rate.annualInterestRate,
         };
       });
+      this.loan.periodsSchedule = this.loan.periodsSchedule.map((period) => {
+        return {
+          period: period.period,
+          startDate: new Date(period.startDate),
+          endDate: new Date(period.endDate),
+          interestRate: period.interestRate,
+          paymentAmount: period.paymentAmount,
+        };
+      });
     }
 
     // Retrieve UI state from local storage if exists
@@ -116,6 +128,8 @@ export class AppComponent implements OnChanges {
       this.termPaymentAmountOverrideCollapsed =
         uiStateParsed.termPaymentAmountOverrideCollapsed;
       this.rateOverrideCollapsed = uiStateParsed.rateOverrideCollapsed;
+      this.customPeriodsScheduleCollapsed =
+        uiStateParsed.customPeriodsScheduleCollapsed;
     }
     this.submitLoan();
   }
@@ -194,15 +208,16 @@ export class AppComponent implements OnChanges {
   ];
   loanRepaymentPlan: AmortizationSchedule[] = [];
 
-  refreshLoanRepaymentPlan() {
+  createLoanRepaymentPlan() {
     // we will reset current schedule and
     // copy over this.loanRepaymentPlan values to this.loan.periodsSchedule
     // which will become a base for user to modify values
     this.loan.periodsSchedule = this.loanRepaymentPlan.map((entry) => {
       return {
+        period: entry.period,
         startDate: entry.periodStartDate.toDate(),
         endDate: entry.periodEndDate.toDate(),
-        interestRate: entry.periodInterestRate.toNumber(),
+        interestRate: entry.periodInterestRate.times(100).toNumber(),
         paymentAmount: entry.totalPayment.toNumber(),
       };
     });
@@ -210,7 +225,7 @@ export class AppComponent implements OnChanges {
     console.log('Loan repayment plan refreshed', this.loan.periodsSchedule);
   }
 
-  removeScheduleOverride() {
+  removeLoanRepaymentPlan() {
     // Logic to remove schedule override
     this.loan.periodsSchedule = [];
   }
@@ -414,6 +429,21 @@ export class AppComponent implements OnChanges {
             };
           }
         );
+    }
+
+    if (this.loan.periodsSchedule.length > 0) {
+      amortizationParams.periodsSchedule = this.loan.periodsSchedule.map(
+        (period) => {
+          const interestAsDecimal = new Decimal(period.interestRate);
+          return {
+            period: period.period,
+            startDate: dayjs(period.startDate),
+            endDate: dayjs(period.endDate),
+            interestRate: interestAsDecimal.dividedBy(100),
+            paymentAmount: Currency.of(period.paymentAmount),
+          };
+        }
+      );
     }
 
     const amortization = new Amortization(amortizationParams);

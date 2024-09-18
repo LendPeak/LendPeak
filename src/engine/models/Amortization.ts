@@ -176,6 +176,11 @@ export class Amortization {
       this.generatePeriodicSchedule();
     } else {
       this.periodsSchedule = params.periodsSchedule;
+
+      for (let period of this.periodsSchedule) {
+        period.startDate = period.startDate.startOf("day");
+        period.endDate = period.endDate.startOf("day");
+      }
     }
 
     if (!params.ratesSchedule) {

@@ -73,6 +73,7 @@ export interface TermPaymentAmount {
 export interface ChangePaymentDate {
   termNumber: number;
   newDate: Dayjs;
+  oneTimeChange?: boolean;
 }
 
 export interface AmortizationParams {

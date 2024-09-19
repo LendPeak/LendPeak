@@ -91,7 +91,7 @@
           <div class="col-6">
             <div class="p-3 border-round-sm font-bold">
               <!-- Start Date -->
-              <label for="startDate">Term Period Unit</label>
+              <label>Term Period Unit</label>
               <p-inputGroup>
                 <p-inputGroupAddon>
                   <i class="pi pi-calendar"></i>
@@ -99,6 +99,7 @@
                 <p-dropdown
                   [(ngModel)]="loan.termPeriodDefinition.unit"
                   name="termPeriodUnit"
+                  id="termPeriodUnit"
                   [options]="termPeriodUnits"
                   placeholder="Select a term period unit"
                   (ngModelChange)="termPeriodDefinitionChange()"
@@ -110,7 +111,7 @@
           <div class="col-6">
             <div class="p-3 border-round-sm font-bold">
               <!-- Start Date -->
-              <label for="startDate">Term Period Count</label>
+              <label>Term Period Count</label>
               <p-inputGroup>
                 <p-inputGroupAddon>
                   <i class="pi pi-calendar"></i>
@@ -131,7 +132,7 @@
           <div class="col-4">
             <div class="p-3 border-round-sm font-bold">
               <!-- Start Date -->
-              <label for="startDate">Start Date</label>
+              <label>Start Date</label>
               <p-inputGroup>
                 <p-inputGroupAddon>
                   <i class="pi pi-calendar"></i>
@@ -149,7 +150,7 @@
           <div class="col-4">
             <div class="p-3 border-round-sm font-bold">
               <!-- Start Date -->
-              <label for="startDate">First Payment Date</label>
+              <label>First Payment Date</label>
               <p-inputGroup>
                 <p-inputGroupAddon>
                   <i class="pi pi-calendar"></i>
@@ -167,7 +168,7 @@
           <div class="col-4">
             <div class="p-3 border-round-sm font-bold">
               <!-- Start Date -->
-              <label for="endDate">End Date</label>
+              <label>End Date</label>
               <p-inputGroup>
                 <p-inputGroupAddon>
                   <i class="pi pi-calendar"></i>
@@ -478,10 +479,11 @@
                 <!-- Calendar Type -->
                 <div class="formgrid grid">
                   <div class="field col">
-                    <label for="calendarType">Calendar Type</label>
+                    <label>Calendar Type</label>
                     <p-dropdown
                       [(ngModel)]="loan.calendarType"
                       name="calendarType"
+                      id="calendarType"
                       [options]="calendarTypes"
                       placeholder="Select a calendar type"
                       (ngModelChange)="submitLoan()"
@@ -496,12 +498,11 @@
                       <p-checkbox
                         [(ngModel)]="loan.allowRateAbove100"
                         name="allowRateAbove100"
+                        id="allowRateAbove100"
                         [binary]="true"
                         (ngModelChange)="submitLoan()"
                       ></p-checkbox>
-                      <label for="allowRateAbove100"
-                        >Allow rates above 100%</label
-                      >
+                      <label>Allow rates above 100%</label>
                     </div>
                   </div>
                 </p-card>
@@ -512,10 +513,11 @@
                   <!-- Rounding Method -->
                   <div class="formgrid grid">
                     <div class="field col">
-                      <label for="roundingMethod">Rounding Method</label>
+                      <label>Rounding Method</label>
                       <p-dropdown
                         [(ngModel)]="loan.roundingMethod"
                         name="roundingMethod"
+                        id="roundingMethod"
                         [options]="roundingMethods"
                         placeholder="Select a rounding method"
                         (ngModelChange)="submitLoan()"
@@ -549,12 +551,11 @@
                 <p-card>
                   <div class="formgrid grid">
                     <div class="field col">
-                      <label for="flushMethod"
-                        >Unbilled Interest Flush Method</label
-                      >
+                      <label>Unbilled Interest Flush Method</label>
                       <p-dropdown
                         [(ngModel)]="loan.flushMethod"
                         name="flushMethod"
+                        id="flushMethod"
                         [options]="flushMethods"
                         placeholder="Select a flush method"
                         (ngModelChange)="submitLoan()"

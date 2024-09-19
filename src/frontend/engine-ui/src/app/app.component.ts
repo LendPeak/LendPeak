@@ -18,7 +18,7 @@ import { CalendarType } from 'lendpeak-engine/models/Calendar';
   styleUrls: ['./app.component.css'],
 })
 export class AppComponent implements OnChanges {
-  CURRENT_OBJECT_VERSION = 1;
+  CURRENT_OBJECT_VERSION = 2;
   loan: {
     objectVersion: number;
     principal: number;
@@ -34,6 +34,10 @@ export class AppComponent implements OnChanges {
     flushThreshold: number;
     termPaymentAmount: number | undefined;
     allowRateAbove100: boolean;
+    changePaymentDates: {
+      termNumber: number;
+      newDate: Date;
+    }[];
     ratesSchedule: {
       startDate: Date;
       endDate: Date;
@@ -49,7 +53,7 @@ export class AppComponent implements OnChanges {
     }[];
     termPeriodDefinition: TermPeriodDefinition;
   } = {
-    objectVersion: 1,
+    objectVersion: this.CURRENT_OBJECT_VERSION,
     principal: 10000,
     interestRate: 10,
     term: 12,
@@ -66,9 +70,10 @@ export class AppComponent implements OnChanges {
     termPaymentAmount: undefined,
     allowRateAbove100: false,
     periodsSchedule: [],
+    changePaymentDates: [],
     termPeriodDefinition: {
       unit: 'month',
-      count: 1,
+      count: [1],
     },
   };
 
@@ -76,6 +81,7 @@ export class AppComponent implements OnChanges {
   termPaymentAmountOverrideCollapsed = true;
   rateOverrideCollapsed = true;
   customPeriodsScheduleCollapsed = true;
+  changePaymentDateCollapsed = true;
 
   saveUIState() {
     // store UI state in the local storage that captures the state of the advanced options, rate overrides, and term payment amount overrides
@@ -87,6 +93,7 @@ export class AppComponent implements OnChanges {
           this.termPaymentAmountOverrideCollapsed,
         rateOverrideCollapsed: this.rateOverrideCollapsed,
         customPeriodsScheduleCollapsed: this.customPeriodsScheduleCollapsed,
+        changePaymentDateCollapsed: this.changePaymentDateCollapsed,
       })
     );
 
@@ -144,6 +151,8 @@ export class AppComponent implements OnChanges {
         this.rateOverrideCollapsed = uiStateParsed.rateOverrideCollapsed;
         this.customPeriodsScheduleCollapsed =
           uiStateParsed.customPeriodsScheduleCollapsed;
+        this.changePaymentDateCollapsed =
+          uiStateParsed.changePaymentDateCollapsed;
       }
       this.submitLoan();
     } catch (e) {
@@ -170,18 +179,16 @@ export class AppComponent implements OnChanges {
   }
 
   termPeriodDefinitionChange() {
+    const termUnit =
+      this.loan.termPeriodDefinition.unit === 'complex'
+        ? 'day'
+        : this.loan.termPeriodDefinition.unit;
     this.loan.endDate = dayjs(this.loan.startDate)
-      .add(
-        this.loan.term * this.loan.termPeriodDefinition.count,
-        this.loan.termPeriodDefinition.unit
-      )
+      .add(this.loan.term * this.loan.termPeriodDefinition.count[0], termUnit)
       .toDate();
 
     this.loan.firstPaymentDate = dayjs(this.loan.startDate)
-      .add(
-        this.loan.termPeriodDefinition.count,
-        this.loan.termPeriodDefinition.unit
-      )
+      .add(this.loan.termPeriodDefinition.count[0], termUnit)
       .toDate();
     this.submitLoan();
   }
@@ -246,6 +253,7 @@ export class AppComponent implements OnChanges {
     // }
   ];
   loanRepaymentPlan: AmortizationSchedule[] = [];
+  repaymentPlanEndDates: string[] = [];
 
   createLoanRepaymentPlan() {
     // we will reset current schedule and
@@ -287,6 +295,29 @@ export class AppComponent implements OnChanges {
     this.showAdvancedOptions = !this.showAdvancedOptions;
   }
 
+  addNewChangePaymentTermRow() {
+    const changePaymentDates = this.loan.changePaymentDates;
+
+    if (changePaymentDates.length === 0) {
+      // First entry: use loan's start date
+      changePaymentDates.push({
+        termNumber: 1,
+        newDate: this.loanRepaymentPlan[0].periodEndDate.toDate(),
+      });
+    } else {
+      // Following entries: use end date from previous row as start date
+      const termNumber =
+        changePaymentDates[changePaymentDates.length - 1].termNumber + 1;
+      changePaymentDates.push({
+        termNumber: termNumber,
+        newDate: this.loanRepaymentPlan[termNumber].periodEndDate.toDate(),
+      });
+    }
+
+    this.loan.changePaymentDates = changePaymentDates;
+    this.submitLoan();
+  }
+
   addTermPaymentAmountOverride() {
     const termPaymentAmountOveride = this.loan.termPaymentAmountOverride;
     let termNumber: number;
@@ -313,11 +344,24 @@ export class AppComponent implements OnChanges {
     this.submitLoan();
   }
 
+  removeChangePaymentDate(index: number) {
+    if (this.loan.changePaymentDates.length > 0) {
+      this.loan.changePaymentDates.splice(index, 1);
+    }
+    this.submitLoan();
+  }
+
   removeTermPaymentAmountOverride(index: number) {
     if (this.loan.termPaymentAmountOverride.length > 0) {
       this.loan.termPaymentAmountOverride.splice(index, 1);
     }
     this.submitLoan();
+  }
+
+  updateTermForCPD(index: number, termNumber: number) {
+    this.loan.changePaymentDates[index].newDate =
+      this.loanRepaymentPlan[termNumber - 1].periodEndDate.toDate();
+    //this.submitLoan();
   }
 
   // Add new rate override
@@ -455,6 +499,17 @@ export class AppComponent implements OnChanges {
       );
     }
 
+    if (this.loan.changePaymentDates.length > 0) {
+      amortizationParams.changePaymentDates = this.loan.changePaymentDates.map(
+        (changePaymentDate) => {
+          return {
+            termNumber: changePaymentDate.termNumber,
+            newDate: dayjs(changePaymentDate.newDate),
+          };
+        }
+      );
+    }
+
     if (this.loan.ratesSchedule.length > 0) {
       amortizationParams.ratesSchedule = this.loan.ratesSchedule.map((rate) => {
         const interestAsDecimal = new Decimal(rate.annualInterestRate);
@@ -498,6 +553,10 @@ export class AppComponent implements OnChanges {
     const amortization = new Amortization(amortizationParams);
 
     this.loanRepaymentPlan = amortization.generateSchedule();
+    this.repaymentPlanEndDates = this.loanRepaymentPlan.map((entry) => {
+      // mm/dd/yy
+      return entry.periodEndDate.format('MM/DD/YY');
+    });
     this.repaymentPlan = this.loanRepaymentPlan.map((entry, index) => {
       return {
         period: entry.period,

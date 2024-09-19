@@ -61,13 +61,18 @@ export enum FlushUnbilledInterestDueToRoundingErrorType {
 }
 
 export interface TermPeriodDefinition {
-  unit: "year" | "month" | "week" | "day";
-  count: number;
+  unit: "year" | "month" | "week" | "day" | "complex";
+  count: number[];
 }
 
 export interface TermPaymentAmount {
   termNumber: number;
   paymentAmount: Currency;
+}
+
+export interface ChangePaymentDate {
+  termNumber: number;
+  newDate: Dayjs;
 }
 
 export interface AmortizationParams {
@@ -88,6 +93,7 @@ export interface AmortizationParams {
   termPaymentAmount?: Currency; // allows one to specify EMI manually instead of calculating it
   firstPaymentDate?: Dayjs;
   termPeriodDefinition?: TermPeriodDefinition;
+  changePaymentDates?: ChangePaymentDate[];
 }
 
 /**
@@ -115,6 +121,7 @@ export class Amortization {
   equitedMonthlyPayment: Currency;
   firstPaymentDate?: Dayjs;
   termPeriodDefinition: TermPeriodDefinition;
+  changePaymentDates: ChangePaymentDate[] = [];
 
   constructor(params: AmortizationParams) {
     // validate that loan amount is greater than zero
@@ -126,7 +133,14 @@ export class Amortization {
     if (params.termPeriodDefinition) {
       this.termPeriodDefinition = params.termPeriodDefinition;
     } else {
-      this.termPeriodDefinition = { unit: "month", count: 1 };
+      this.termPeriodDefinition = { unit: "month", count: [1] };
+    }
+
+    if (params.changePaymentDates) {
+      this.changePaymentDates = params.changePaymentDates;
+      this.changePaymentDates = this.changePaymentDates.map((changePaymentDate) => {
+        return { termNumber: changePaymentDate.termNumber, newDate: changePaymentDate.newDate.startOf("day") };
+      });
     }
 
     if (params.allowRateAbove100 !== undefined) {
@@ -159,7 +173,8 @@ export class Amortization {
     if (params.endDate) {
       this.endDate = dayjs(params.endDate).startOf("day");
     } else {
-      this.endDate = params.endDate ? dayjs(params.endDate).startOf("day") : this.startDate.add(this.term * this.termPeriodDefinition.count, this.termPeriodDefinition.unit);
+      const termUnit = this.termPeriodDefinition.unit === "complex" ? "day" : this.termPeriodDefinition.unit;
+      this.endDate = params.endDate ? dayjs(params.endDate).startOf("day") : this.startDate.add(this.term * this.termPeriodDefinition.count[0], termUnit);
     }
 
     // validate that the end date is after the start date
@@ -322,7 +337,16 @@ export class Amortization {
       if (i === 0 && this.firstPaymentDate) {
         endDate = this.firstPaymentDate.startOf("day");
       } else {
-        endDate = startDate.add(this.termPeriodDefinition.count, this.termPeriodDefinition.unit).startOf("day");
+        const termUnit = this.termPeriodDefinition.unit === "complex" ? "day" : this.termPeriodDefinition.unit;
+        endDate = startDate.add(this.termPeriodDefinition.count[0], termUnit).startOf("day");
+      }
+
+      // check for change payment date
+      if (this.changePaymentDates.length > 0) {
+        const changePaymentDate = this.changePaymentDates.find((changePaymentDate) => changePaymentDate.termNumber === i + 1);
+        if (changePaymentDate) {
+          endDate = changePaymentDate.newDate.startOf("day");
+        }
       }
       this.periodsSchedule.push({ startDate, endDate });
       startDate = endDate;

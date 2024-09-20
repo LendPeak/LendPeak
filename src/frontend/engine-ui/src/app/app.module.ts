@@ -17,6 +17,7 @@ import { InputSwitchModule } from 'primeng/inputswitch';
 import { DividerModule } from 'primeng/divider';
 import { ToolbarModule } from 'primeng/toolbar';
 import { CheckboxModule } from 'primeng/checkbox';
+import { TagModule } from 'primeng/tag';
 
 @NgModule({
   declarations: [AppComponent],
@@ -38,6 +39,7 @@ import { CheckboxModule } from 'primeng/checkbox';
     DividerModule,
     ToolbarModule,
     CheckboxModule,
+    TagModule,
   ],
   providers: [],
   bootstrap: [AppComponent],

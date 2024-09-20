@@ -15,6 +15,18 @@ export interface rateScheduleRow {
   annualInterestRate: number;
 }
 
+export interface AmortizationTerm {
+  principal: Decimal;
+  interest: Decimal;
+  paymentDate: Date;
+}
+
+export interface APRInputs {
+  loanAmount: Decimal;
+  originationFee: Decimal;
+  terms: AmortizationTerm[];
+}
+
 export class InterestCalculator {
   private calendar: Calendar;
   private annualInterestRate: Decimal;
@@ -22,6 +34,56 @@ export class InterestCalculator {
   constructor(annualInterestRate: Decimal, calendarType: CalendarType = CalendarType.ACTUAL_ACTUAL) {
     this.annualInterestRate = annualInterestRate;
     this.calendar = new Calendar(calendarType);
+  }
+
+  static yearFraction(startDate: Date, endDate: Date): number {
+    const millisPerYear = 1000 * 60 * 60 * 24 * 365.25;
+    return (endDate.getTime() - startDate.getTime()) / millisPerYear;
+  }
+
+  static calculateRealAPR({ loanAmount, originationFee, terms }: APRInputs, precision: number = 10): Decimal {
+    const maxIterations = 100;
+    const tolerance = 1e-9;
+
+    const totalLoan = loanAmount.minus(originationFee);
+
+    // Function to calculate present value for a given monthly interest rate
+    const presentValue = (monthlyRate: Decimal): Decimal => {
+      return terms.reduce((sum, term, index) => {
+        const payment = term.principal.plus(term.interest);
+        const discountFactor = new Decimal(1).plus(monthlyRate).pow(index + 1); // Monthly compounding
+        return sum.plus(payment.div(discountFactor));
+      }, new Decimal(0));
+    };
+
+    // Newton-Raphson method to find the APR that solves the present value equation
+    let monthlyRate = new Decimal(0.01 / 12); // Initial guess for monthly rate, 1% annually divided by 12
+    let iteration = 0;
+
+    while (iteration < maxIterations) {
+      const pv = presentValue(monthlyRate);
+      const derivative = terms.reduce((sum, term, index) => {
+        const payment = term.principal.plus(term.interest);
+        const discountFactor = new Decimal(1).plus(monthlyRate).pow(index + 1);
+        const factorDerivative = new Decimal(index + 1).times(payment).div(discountFactor.pow(2));
+        return sum.minus(factorDerivative);
+      }, new Decimal(0));
+
+      const newRate = monthlyRate.minus(pv.minus(totalLoan).div(derivative));
+
+      if (newRate.minus(monthlyRate).abs().lessThan(tolerance)) {
+        break;
+      }
+
+      monthlyRate = newRate;
+      iteration++;
+    }
+
+    // Convert monthly rate to annual rate (APR)
+    const annualRate = monthlyRate.times(12);
+
+    // Return APR in percentage format with the desired precision
+    return annualRate.times(100).toDecimalPlaces(precision);
   }
 
   /**

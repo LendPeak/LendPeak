@@ -8,6 +8,7 @@ import dayjs from "dayjs";
 import { Currency, RoundingMethod } from "./utils/Currency";
 import { CalendarType } from "./models/Calendar";
 import Decimal from "decimal.js";
+
 // const loanAmount = Currency.of(1); // 1 unit of currency
 // const interestRate = 0.05; // 5% annual interest rate
 // const term = 12; // 12 months
@@ -57,30 +58,34 @@ const amortization = new Amortization({
   //     annualInterestRate: interestRate,
   //   },
   // ],
-  ratesSchedule: [
-    { startDate: dayjs("2024-09-13"), endDate: dayjs("2024-10-13"), annualInterestRate: new Decimal(0.12) },
-    //{ annualInterestRate: "0.1", startDate: "2024-10-14T02:26:21.870Z", endDate: "2025-09-14T02:26:14.078Z" },
-  ],
+  // ratesSchedule: [
+  //   { startDate: dayjs("2024-09-13"), endDate: dayjs("2024-10-13"), annualInterestRate: new Decimal(0.12) },
+  //{ annualInterestRate: "0.1", startDate: "2024-10-14T02:26:21.870Z", endDate: "2025-09-14T02:26:14.078Z" },
+  // ],
 });
 
 // Generate and print Amortization Schedule
-amortization.printAmortizationSchedule();
+//amortization.printAmortizationSchedule();
 
-// Apply Loan Restructure
-const restructure: Restructure = {
-  type: "rateModification",
-  details: { newRate: 0.03 },
-};
+amortization.generateSchedule();
 
-const restructuredLoan = LoanRestructureService.applyRestructureToLoan(loan, restructure);
-//console.log(restructuredLoan);
+console.log(amortization.apr);
 
-// Process Payment
-const payment: Payment = {
-  amount: 5000,
-  paymentDate: dayjs(),
-  type: "prepayment",
-};
+// // Apply Loan Restructure
+// const restructure: Restructure = {
+//   type: "rateModification",
+//   details: { newRate: 0.03 },
+// };
 
-const updatedLoan = PaymentService.processPayment(restructuredLoan, payment);
+// const restructuredLoan = LoanRestructureService.applyRestructureToLoan(loan, restructure);
+// //console.log(restructuredLoan);
+
+// // Process Payment
+// const payment: Payment = {
+//   amount: 5000,
+//   paymentDate: dayjs(),
+//   type: "prepayment",
+// };
+
+// const updatedLoan = PaymentService.processPayment(restructuredLoan, payment);
 //console.log(updatedLoan);

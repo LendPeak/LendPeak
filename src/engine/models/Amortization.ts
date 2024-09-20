@@ -78,6 +78,7 @@ export interface ChangePaymentDate {
 
 export interface AmortizationParams {
   loanAmount: Currency;
+  originationFee?: Currency;
   annualInterestRate: Decimal;
   term: number;
   startDate: Dayjs;
@@ -102,6 +103,8 @@ export interface AmortizationParams {
  */
 export class Amortization {
   loanAmount: Currency;
+  originationFee: Currency;
+  totalLoanAmount: Currency;
   annualInterestRate: Decimal;
   term: number; // in months
   startDate: Dayjs;
@@ -123,6 +126,8 @@ export class Amortization {
   firstPaymentDate?: Dayjs;
   termPeriodDefinition: TermPeriodDefinition;
   changePaymentDates: ChangePaymentDate[] = [];
+  repaymentSchedule: AmortizationSchedule[] = [];
+  _arp?: Decimal;
 
   constructor(params: AmortizationParams) {
     // validate that loan amount is greater than zero
@@ -130,6 +135,14 @@ export class Amortization {
       throw new Error("Invalid loan amount, must be greater than zero");
     }
     this.loanAmount = params.loanAmount;
+
+    if (params.originationFee) {
+      this.originationFee = params.originationFee;
+    } else {
+      this.originationFee = Currency.of(0);
+    }
+
+    this.totalLoanAmount = this.loanAmount.add(this.originationFee);
 
     if (params.termPeriodDefinition) {
       this.termPeriodDefinition = params.termPeriodDefinition;
@@ -261,6 +274,47 @@ export class Amortization {
     // validate the schedule periods and rates
     this.verifySchedulePeriods();
     this.validateRatesSchedule();
+  }
+
+  get apr(): Decimal {
+    if (!this._arp) {
+      this._arp = this.calculateAPR();
+    }
+    return this._arp;
+  }
+
+  get loanTermInMonths(): number {
+    const startDate = this.startDate;
+    const endDate = this.endDate;
+    return endDate.diff(startDate, "month");
+  }
+
+  calculateAPR(): Decimal {
+    // APR = ((Interest + Fees / Loan amount) / Number of days in loan term) x 365 x 100
+
+    // using dayjs calculate the number of months between start date and end date
+    // then convert to days
+    const payments = this.repaymentSchedule.map((schedule) => {
+      return {
+        principal: schedule.principal.getValue(),
+        interest: schedule.interest.getValue(),
+        paymentDate: schedule.periodEndDate.toDate(),
+      };
+    });
+    // console.log("apr inpit", {
+    //   loanAmount: this.loanAmount.getValue(),
+    //   originationFee: new Decimal(0),
+    //   terms: payments,
+    // });
+    const apr = InterestCalculator.calculateRealAPR(
+      {
+        loanAmount: this.loanAmount.getValue(),
+        originationFee: this.originationFee.getValue(),
+        terms: payments,
+      },
+      10
+    );
+    return apr;
   }
 
   /**
@@ -440,7 +494,7 @@ export class Amortization {
    */
   generateSchedule(): AmortizationSchedule[] {
     const schedule: AmortizationSchedule[] = [];
-    let startBalance = this.loanAmount;
+    let startBalance = this.totalLoanAmount;
 
     let periodIndex = 0;
     for (let period of this.periodsSchedule) {
@@ -629,6 +683,7 @@ export class Amortization {
       }
     }
 
+    this.repaymentSchedule = schedule;
     return schedule;
   }
 
@@ -638,10 +693,10 @@ export class Amortization {
    */
   private calculateFixedMonthlyPayment(): Currency {
     if (this.annualInterestRate.isZero()) {
-      return this.round(this.loanAmount.divide(this.term));
+      return this.round(this.totalLoanAmount.divide(this.term));
     }
     const monthlyRate = this.annualInterestRate.dividedBy(12);
-    const numerator = this.loanAmount.multiply(monthlyRate);
+    const numerator = this.totalLoanAmount.multiply(monthlyRate);
     const denominator = Currency.of(1).subtract(Currency.of(1).divide(new Decimal(1).plus(monthlyRate).pow(this.term)));
     return this.round(numerator.divide(denominator));
   }

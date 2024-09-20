@@ -22,6 +22,7 @@ export class AppComponent implements OnChanges {
   loan: {
     objectVersion: number;
     principal: number;
+    originationFee: number;
     interestRate: number;
     term: number;
     startDate: Date;
@@ -55,6 +56,7 @@ export class AppComponent implements OnChanges {
   } = {
     objectVersion: this.CURRENT_OBJECT_VERSION,
     principal: 10000,
+    originationFee: 0,
     interestRate: 10,
     term: 12,
     startDate: new Date(),
@@ -254,6 +256,7 @@ export class AppComponent implements OnChanges {
   ];
   loanRepaymentPlan: AmortizationSchedule[] = [];
   repaymentPlanEndDates: string[] = [];
+  amortization: Amortization | undefined = undefined;
 
   createLoanRepaymentPlan() {
     // we will reset current schedule and
@@ -479,6 +482,7 @@ export class AppComponent implements OnChanges {
 
     let amortizationParams: AmortizationParams = {
       loanAmount: Currency.of(this.loan.principal),
+      originationFee: Currency.of(this.loan.originationFee),
       annualInterestRate: interestRateAsDecimal.dividedBy(100),
       term: this.loan.term,
       startDate: dayjs(this.loan.startDate),
@@ -551,6 +555,7 @@ export class AppComponent implements OnChanges {
     }
 
     const amortization = new Amortization(amortizationParams);
+    this.amortization = amortization;
 
     this.loanRepaymentPlan = amortization.generateSchedule();
     this.repaymentPlanEndDates = this.loanRepaymentPlan.map((entry) => {

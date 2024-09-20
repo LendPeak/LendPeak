@@ -50,6 +50,25 @@
 
           <div class="col-12">
             <div class="p-3 border-round-sm font-bold">
+              <!-- Origination Fee -->
+              <label for="originationFee">Origination Fee</label>
+              <p-inputGroup>
+                <p-inputGroupAddon>$</p-inputGroupAddon>
+                <input
+                  id="originationFee"
+                  type="number"
+                  pInputText
+                  [(ngModel)]="loan.originationFee"
+                  name="originationFee"
+                  placeholder="Enter origination fee amount"
+                  (ngModelChange)="submitLoan()"
+                />
+              </p-inputGroup>
+            </div>
+          </div>
+
+          <div class="col-12">
+            <div class="p-3 border-round-sm font-bold">
               <!-- Interest Rate (%) -->
               <label for="interestRate">Interest Rate (%)</label>
               <p-inputGroup>
@@ -70,7 +89,9 @@
           <div class="col-12">
             <div class="p-3 border-round-sm font-bold">
               <!-- Term (Months) -->
-              <label for="term">Term (Months)</label>
+              <label for="term"
+                >Term ({{ amortization?.loanTermInMonths }} months)</label
+              >
               <p-inputGroup>
                 <p-inputGroupAddon>
                   <i class="pi pi-calendar-times"></i>
@@ -700,6 +721,37 @@
 <div *ngIf="showTable" class="p-mt-4">
   <!-- Repayment Plan Card -->
   <p-card header="Repayment Plan" class="p-mt-3">
+    <p-card>
+      <div class="grid">
+        <div class="col">
+          <div class="text-center p-1 border-round-sm font-bold">
+            <p-tag
+              severity="success"
+              value="Term In Months: {{ amortization?.loanTermInMonths }}"
+            />
+          </div>
+        </div>
+        <div class="col">
+          <div class="text-center p-1 border-round-sm font-bold">
+            <p-tag
+              severity="success"
+              value="APR: {{ amortization?.apr?.toDecimalPlaces(4) }}%"
+            />
+          </div>
+        </div>
+        <div class="col">
+          <div class="text-center p-1 border-round-sm font-bold">
+            <p-tag
+              severity="success"
+              value="Total Charged Interest: ${{
+                amortization?.totalChargedInterestRounded?.toNumber()
+              }}"
+            />
+          </div>
+        </div>
+      </div>
+    </p-card>
+    <p-divider />
     <!-- Table Toggle Button -->
     <div class="p-text-center p-mt-3">
       <p-button

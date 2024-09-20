@@ -83,7 +83,21 @@ export class Calendar {
     }
   }
 
-  
+  monthsBetween(date1: Dayjs, date2: Dayjs): number {
+    switch (this.calendarType) {
+      case CalendarType.THIRTY_360:
+        return this.daysBetween30_360(date1, date2) / 30;
+      case CalendarType.THIRTY_ACTUAL:
+        return this.daysBetween30_Actual(date1, date2) / 30;
+      case CalendarType.ACTUAL_360:
+        return this.daysBetweenActual_360(date1, date2) / 30;
+      case CalendarType.ACTUAL_365:
+        return this.daysBetweenActual_365(date1, date2) / 30;
+      case CalendarType.ACTUAL_ACTUAL:
+      default:
+        return this.daysBetweenActual_Actual(date1, date2) / 30;
+    }
+  }
 
   /**
    * Adds a specified number of months to a date.

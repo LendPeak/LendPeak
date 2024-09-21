@@ -178,8 +178,26 @@ export class Calendar {
    * @param date2 - The end date.
    * @returns {number} - The actual number of days between the two dates, assuming a 365-day year.
    */
-  private daysBetweenActual_365(date1: Dayjs, date2: Dayjs): number {
-    return date2.diff(date1, "day");
+  private daysBetweenActual_365(startDate: Dayjs, endDate: Dayjs): number {
+    // Calculate total number of days between the two dates
+    const totalDaysDiff = endDate.diff(startDate, "day");
+
+    // Count leap days (Feb 29) between start and end dates
+    let leapDays = 0;
+    for (let year = startDate.year(); year <= endDate.year(); year++) {
+      if (dayjs(`${year}`).isLeapYear()) {
+        // Check if Feb 29 is between the start and end date
+        const leapDay = dayjs(`${year}-02-29`);
+        if (leapDay.isAfter(startDate) && leapDay.isBefore(endDate)) {
+          leapDays += 1;
+        }
+      }
+    }
+
+    // Subtract leap days to ignore them in Actual/365 convention
+    const adjustedDaysDiff = totalDaysDiff - leapDays;
+
+    return adjustedDaysDiff;
   }
 
   /**

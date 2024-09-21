@@ -65,11 +65,11 @@ const amortization = new Amortization({
 });
 
 // Generate and print Amortization Schedule
-//amortization.printAmortizationSchedule();
+amortization.printAmortizationSchedule();
 
-amortization.generateSchedule();
+// amortization.generateSchedule();
 
-console.log(amortization.apr);
+// console.log(amortization.apr);
 
 // // Apply Loan Restructure
 // const restructure: Restructure = {

@@ -22,6 +22,11 @@ export interface AmortizationSchedule {
   period: number;
   periodStartDate: Dayjs;
   periodEndDate: Dayjs;
+  prebillDaysConfiguration: number;
+  billDueDaysAfterPeriodEndConfiguration: number;
+  billablePeriod: boolean;
+  periodBillOpenDate: Dayjs;
+  periodBillDueDate: Dayjs;
   periodInterestRate: Decimal;
   principal: Currency;
   interest: Currency;
@@ -76,11 +81,26 @@ export interface ChangePaymentDate {
   oneTimeChange?: boolean;
 }
 
+export interface PreBillDaysConfiguration {
+  termNumber: number;
+  preBillDays: number;
+}
+
+export interface BillDueDaysConfiguration {
+  termNumber: number;
+  daysDueAfterPeriodEnd: number;
+}
+
 export interface AmortizationParams {
   loanAmount: Currency;
   originationFee?: Currency;
   annualInterestRate: Decimal;
   term: number;
+  preBillDays?: PreBillDaysConfiguration[];
+  dueBillDays?: BillDueDaysConfiguration[];
+  billDueDaysAfterPeriodEnd?: BillDueDaysConfiguration[];
+  defaultPreBillDaysConfiguration?: number;
+  defaultBillDueDaysAfterPeriodEndConfiguration?: number;
   startDate: Dayjs;
   endDate?: Dayjs;
   calendarType?: CalendarType;
@@ -98,6 +118,9 @@ export interface AmortizationParams {
   changePaymentDates?: ChangePaymentDate[];
 }
 
+const DEFAULT_PRE_BILL_DAYS_CONFIGURATION = 0;
+const DEFAULT_BILL_DUE_DAYS_AFTER_PERIO_END_CONFIGURATION = 0;
+
 /**
  * Amortization class to generate an amortization schedule for a loan.
  */
@@ -106,7 +129,11 @@ export class Amortization {
   originationFee: Currency;
   totalLoanAmount: Currency;
   annualInterestRate: Decimal;
-  term: number; // in months
+  term: number;
+  preBillDays: PreBillDaysConfiguration[];
+  dueBillDays: BillDueDaysConfiguration[];
+  defaultPreBillDaysConfiguration: number;
+  defaultBillDueDaysAfterPeriodEndConfiguration: number;
   startDate: Dayjs;
   endDate: Dayjs;
   calendar: Calendar;
@@ -269,6 +296,33 @@ export class Amortization {
       this.equitedMonthlyPayment = this.calculateFixedMonthlyPayment();
     }
 
+    if (params.defaultPreBillDaysConfiguration !== undefined) {
+      this.defaultPreBillDaysConfiguration = params.defaultPreBillDaysConfiguration;
+    } else {
+      this.defaultPreBillDaysConfiguration = DEFAULT_PRE_BILL_DAYS_CONFIGURATION;
+    }
+
+    if (params.preBillDays && params.preBillDays.length > 0) {
+      this.preBillDays = params.preBillDays;
+    } else {
+      this.preBillDays = [{ preBillDays: this.defaultPreBillDaysConfiguration, termNumber: 1 }];
+    }
+
+    if (params.defaultBillDueDaysAfterPeriodEndConfiguration !== undefined) {
+      this.defaultBillDueDaysAfterPeriodEndConfiguration = params.defaultBillDueDaysAfterPeriodEndConfiguration;
+    } else {
+      this.defaultBillDueDaysAfterPeriodEndConfiguration = DEFAULT_BILL_DUE_DAYS_AFTER_PERIO_END_CONFIGURATION;
+    }
+
+    if (params.dueBillDays && params.dueBillDays.length > 0) {
+      this.dueBillDays = params.dueBillDays;
+    } else {
+      this.dueBillDays = [{ daysDueAfterPeriodEnd: this.defaultBillDueDaysAfterPeriodEndConfiguration, termNumber: 1 }];
+    }
+
+    this.generatePreBillDaysForAllTerms();
+    this.generateDueBillDaysForAllTerms();
+
     this.unbilledDeferredInterest = Currency.of(0);
 
     // validate the schedule periods and rates
@@ -287,6 +341,60 @@ export class Amortization {
     const startDate = this.startDate;
     const endDate = this.endDate;
     return endDate.diff(startDate, "month");
+  }
+
+  generatePreBillDaysForAllTerms(): void {
+    // we need to fill the gaps between the periods with pre-bill days
+    // anything that is defined before first term will use default pre-bill days
+    // any gaps between terms will use previously defined pre-bill days
+
+    const completedPreBillDays: PreBillDaysConfiguration[] = [];
+    for (let preBillDay of this.preBillDays) {
+      completedPreBillDays[preBillDay.termNumber - 1] = preBillDay;
+    }
+
+    let lastUserDefinedTerm = this.preBillDays[0];
+    for (let i = 0; i < this.term; i++) {
+      if (!completedPreBillDays[i]) {
+        if (lastUserDefinedTerm.termNumber - 1 > i) {
+          completedPreBillDays[i] = { termNumber: i + 1, preBillDays: this.defaultPreBillDaysConfiguration };
+        } else {
+          completedPreBillDays[i] = { termNumber: i + 1, preBillDays: lastUserDefinedTerm.preBillDays };
+        }
+      }
+      lastUserDefinedTerm = completedPreBillDays[i];
+    }
+
+    //console.log("completedPreBillDays", completedPreBillDays);
+
+    this.preBillDays = completedPreBillDays;
+  }
+
+  generateDueBillDaysForAllTerms(): void {
+    // we need to fill the gaps between the periods with due-bill days
+    // anything that is defined before first term will use default due-bill days
+    // any gaps between terms will use previously defined due-bill days
+
+    const completedDueDayBillDays: BillDueDaysConfiguration[] = [];
+    for (let dueBillDay of this.dueBillDays) {
+      completedDueDayBillDays[dueBillDay.termNumber - 1] = dueBillDay;
+    }
+
+    let lastUserDefinedTerm = this.dueBillDays[0];
+    for (let i = 0; i < this.term; i++) {
+      if (!completedDueDayBillDays[i]) {
+        if (lastUserDefinedTerm.termNumber - 1 > i) {
+          completedDueDayBillDays[i] = { termNumber: i + 1, daysDueAfterPeriodEnd: this.defaultBillDueDaysAfterPeriodEndConfiguration };
+        } else {
+          completedDueDayBillDays[i] = { termNumber: i + 1, daysDueAfterPeriodEnd: lastUserDefinedTerm.daysDueAfterPeriodEnd };
+        }
+      }
+      lastUserDefinedTerm = completedDueDayBillDays[i];
+    }
+
+    // console.log("completedDueBillDays", completedDueDayBillDays);
+
+    this.dueBillDays = completedDueDayBillDays;
   }
 
   calculateAPR(): Decimal {
@@ -501,6 +609,10 @@ export class Amortization {
       periodIndex++;
       const periodStartDate = period.startDate;
       const periodEndDate = period.endDate;
+      const preBillDaysConfiguration = this.preBillDays[periodIndex - 1].preBillDays;
+      const dueBillDaysConfiguration = this.dueBillDays[periodIndex - 1].daysDueAfterPeriodEnd;
+      const billOpenDate = periodEndDate.subtract(preBillDaysConfiguration, "day");
+      const billDueDate = periodEndDate.add(dueBillDaysConfiguration, "day");
       const periodRates = this.getInterestRatesBetweenDates(periodStartDate, periodEndDate);
       const fixedMonthlyPayment = this.getTermPaymentAmount(periodIndex);
 
@@ -569,15 +681,23 @@ export class Amortization {
 
         if (currentRate !== lastRateInPeriod) {
           // we will just create a line for interest portion and move to the next part of the loop
+          // these periods are not billable, they are here for auditability and
+          // transparance on how the interest is calculated
+          // and to document clearly periods that have multiple rates
+          // or balance is being accrued on different principal balance
           schedule.push({
             period: periodIndex,
+            billablePeriod: false,
             periodStartDate: interestRateForPeriod.startDate,
             periodEndDate: interestRateForPeriod.endDate,
             periodInterestRate: interestRateForPeriod.annualInterestRate,
             principal: Currency.of(0),
             interest: roundedInterestForPeriod,
             billedDeferredInterest: appliedDeferredIneterest,
-
+            periodBillOpenDate: billOpenDate,
+            periodBillDueDate: billDueDate,
+            billDueDaysAfterPeriodEndConfiguration: dueBillDaysConfiguration,
+            prebillDaysConfiguration: preBillDaysConfiguration,
             realInterest: rawInterestForPeriod, // Track real interest value
             totalInterestForPeriod,
             interestRoundingError: roundedInterest.getRoundingErrorAsCurrency(),
@@ -632,8 +752,13 @@ export class Amortization {
 
         schedule.push({
           period: periodIndex,
+          billablePeriod: true,
           periodStartDate: interestRateForPeriod.startDate,
           periodEndDate: interestRateForPeriod.endDate,
+          periodBillOpenDate: billOpenDate,
+          periodBillDueDate: billDueDate,
+          billDueDaysAfterPeriodEndConfiguration: dueBillDaysConfiguration,
+          prebillDaysConfiguration: preBillDaysConfiguration,
           periodInterestRate: interestRateForPeriod.annualInterestRate,
           principal: principal,
           interest: roundedInterestForPeriod,

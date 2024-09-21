@@ -150,6 +150,7 @@
             </div>
           </div>
           <!-- end of term period definition -->
+
           <div class="col-4">
             <div class="p-3 border-round-sm font-bold">
               <!-- Start Date -->
@@ -160,7 +161,7 @@
                 </p-inputGroupAddon>
                 <p-calendar
                   [(ngModel)]="loan.startDate"
-                  (ngModelChange)="submitLoan()"
+                  (ngModelChange)="updateStartDate()"
                   name="startDate"
                   dateFormat="mm/dd/yy"
                   showIcon
@@ -204,6 +205,50 @@
               </p-inputGroup>
             </div>
           </div>
+          <!-- pre bill days config and due bill config -->
+          <div class="col-6">
+            <div class="p-3 border-round-sm font-bold">
+              <!-- Start Date -->
+              <label>Default Pre Bill Days</label>
+              <p-inputGroup>
+                <p-inputGroupAddon>
+                  <i class="pi pi-calendar"></i>
+                </p-inputGroupAddon>
+                <input
+                  id="defaultPreBillDaysConfiguration"
+                  type="number"
+                  pInputText
+                  [(ngModel)]="loan.defaultPreBillDaysConfiguration"
+                  name="defaultPreBillDaysConfiguration"
+                  placeholder="Enter default pre bill days"
+                  (ngModelChange)="submitLoan()"
+                />
+              </p-inputGroup>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="p-3 border-round-sm font-bold">
+              <!-- Start Date -->
+              <label>Default Due Date Days</label>
+              <p-inputGroup>
+                <p-inputGroupAddon>
+                  <i class="pi pi-calendar"></i>
+                </p-inputGroupAddon>
+                <input
+                  id="defaultBillDueDaysAfterPeriodEndConfiguration"
+                  type="number"
+                  pInputText
+                  [(ngModel)]="
+                    loan.defaultBillDueDaysAfterPeriodEndConfiguration
+                  "
+                  name="defaultBillDueDaysAfterPeriodEndConfiguration"
+                  placeholder="Enter default due date days"
+                  (ngModelChange)="submitLoan()"
+                />
+              </p-inputGroup>
+            </div>
+          </div>
+          <!-- end of pre bill and due day configurations-->
         </div>
       </div>
     </div>
@@ -471,6 +516,179 @@
               </p-fieldset>
             </div>
           </div>
+
+          <!-- pre bill day configuration override -->
+          <div class="col-12">
+            <div class="p-3 border-round-sm font-bold">
+              <p-fieldset
+                legend="Pre Bill Day Term Override"
+                [toggleable]="true"
+                [(collapsed)]="preBillDayTermOverrideCollapsed"
+              >
+                <table
+                  *ngIf="loan.preBillDays.length > 0"
+                  class="p-datatable p-component"
+                >
+                  <thead>
+                    <tr>
+                      <th>Term Number</th>
+                      <th>Days</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr
+                      *ngFor="let preBillDay of loan.preBillDays; let i = index"
+                    >
+                      <!-- Term Number -->
+                      <td>
+                        <p-inputGroup>
+                          <p-inputGroupAddon> # </p-inputGroupAddon>
+
+                          <input
+                            id="preBillDayConfiguration-term{{ i }}"
+                            type="number"
+                            pInputText
+                            [(ngModel)]="preBillDay.termNumber"
+                            name="preBillDayConfiguration-term{{ i }}"
+                            placeholder="Enter Term Number"
+                            (ngModelChange)="submitLoan()"
+                          />
+                        </p-inputGroup>
+                      </td>
+
+                      <!-- Number of Days -->
+                      <td>
+                        <p-inputGroup>
+                          <p-inputGroupAddon> # </p-inputGroupAddon>
+
+                          <input
+                            id="prebillDays-day-{{ i }}"
+                            type="number"
+                            pInputText
+                            [(ngModel)]="preBillDay.preBillDays"
+                            (ngModelChange)="submitLoan()"
+                            name="prebillDays-day-{{ i }}"
+                            placeholder="Enter Number Of Days"
+                          />
+                        </p-inputGroup>
+                      </td>
+
+                      <!-- Remove Button -->
+                      <td class="p-text-center">
+                        <button
+                          type="button"
+                          pButton
+                          icon="pi pi-minus"
+                          class="p-button p-button-danger"
+                          (click)="removePreBillDayTerm(i)"
+                        ></button>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+                <div class="p-text-right p-mb-2">
+                  <button
+                    type="button"
+                    pButton
+                    icon="pi pi-plus"
+                    label="Add New Term Row"
+                    class="p-button p-button-success"
+                    (ngModelChange)="submitLoan()"
+                    (click)="addPrebillDayTermRow()"
+                  ></button>
+                </div>
+              </p-fieldset>
+            </div>
+          </div>
+          <!-- end of pre bill day configuration override -->
+
+          <!-- due bill day configuration override -->
+          <div class="col-12">
+            <div class="p-3 border-round-sm font-bold">
+              <p-fieldset
+                legend="Due Bill Day Term Override"
+                [toggleable]="true"
+                [(collapsed)]="dueBillDayTermOverrideCollapsed"
+              >
+                <table
+                  *ngIf="loan.dueBillDays.length > 0"
+                  class="p-datatable p-component"
+                >
+                  <thead>
+                    <tr>
+                      <th>Term Number</th>
+                      <th>Days</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr
+                      *ngFor="let dueBillDay of loan.dueBillDays; let i = index"
+                    >
+                      <!-- Term Number -->
+                      <td>
+                        <p-inputGroup>
+                          <p-inputGroupAddon> # </p-inputGroupAddon>
+
+                          <input
+                            id="dueBillDayConfiguration-term{{ i }}"
+                            type="number"
+                            pInputText
+                            [(ngModel)]="dueBillDay.termNumber"
+                            name="dueBillDayConfiguration-term{{ i }}"
+                            placeholder="Enter Term Number"
+                            (ngModelChange)="submitLoan()"
+                          />
+                        </p-inputGroup>
+                      </td>
+
+                      <!-- Number of Days -->
+                      <td>
+                        <p-inputGroup>
+                          <p-inputGroupAddon> # </p-inputGroupAddon>
+
+                          <input
+                            id="duebillDays-day-{{ i }}"
+                            type="number"
+                            pInputText
+                            [(ngModel)]="dueBillDay.daysDueAfterPeriodEnd"
+                            (ngModelChange)="submitLoan()"
+                            name="duebillDays-day-{{ i }}"
+                            placeholder="Enter Number Of Days"
+                          />
+                        </p-inputGroup>
+                      </td>
+
+                      <!-- Remove Button -->
+                      <td class="p-text-center">
+                        <button
+                          type="button"
+                          pButton
+                          icon="pi pi-minus"
+                          class="p-button p-button-danger"
+                          (click)="removeDueBillDayTerm(i)"
+                        ></button>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+                <div class="p-text-right p-mb-2">
+                  <button
+                    type="button"
+                    pButton
+                    icon="pi pi-plus"
+                    label="Add New Term Row"
+                    class="p-button p-button-success"
+                    (ngModelChange)="submitLoan()"
+                    (click)="addDueBillDayTermRow()"
+                  ></button>
+                </div>
+              </p-fieldset>
+            </div>
+          </div>
+          <!-- end of due bill day configuration override -->
+
           <div class="col-12">
             <div class="p-3 border-round-sm font-bold">
               <p-fieldset
@@ -767,6 +985,8 @@
           <th>Period</th>
           <th>Start Date</th>
           <th>End Date</th>
+          <th>Bill Open Date</th>
+          <th>Bill Due Date</th>
           <th>Interest Rate</th>
           <th>Total Interest</th>
           <th>Principal</th>
@@ -785,6 +1005,8 @@
           <th *ngIf="showAdvancedTable">
             Deferred Interest For Current Period
           </th>
+          <th *ngIf="showAdvancedTable">Pre Bill Days</th>
+          <th *ngIf="showAdvancedTable">Due Day Days</th>
           <th *ngIf="showAdvancedTable">Metadata</th>
         </tr>
       </ng-template>
@@ -793,6 +1015,8 @@
           <td>{{ plan.period }}</td>
           <td>{{ plan.periodStartDate | date : "MM/dd/yyyy" }}</td>
           <td>{{ plan.periodEndDate | date : "MM/dd/yyyy" }}</td>
+          <td>{{ plan.periodBillOpenDate | date : "MM/dd/yyyy" }}</td>
+          <td>{{ plan.periodBillDueDate | date : "MM/dd/yyyy" }}</td>
           <td>{{ plan.periodInterestRate }}%</td>
           <td>{{ plan.totalInterestForPeriod | currency }}</td>
           <td>{{ plan.principal | currency }}</td>
@@ -828,6 +1052,12 @@
           </td>
           <td *ngIf="showAdvancedTable">
             {{ plan.deferredInterestFromCurrentPeriod }}
+          </td>
+          <td *ngIf="showAdvancedTable">
+            {{ plan.prebillDaysConfiguration }}
+          </td>
+          <td *ngIf="showAdvancedTable">
+            {{ plan.billDueDaysAfterPeriodEndConfiguration }}
           </td>
           <td *ngIf="showAdvancedTable">
             <table class="metadata-table">

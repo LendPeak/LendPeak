@@ -6,6 +6,8 @@ import {
   TermPaymentAmount,
   AmortizationSchedule,
   TermPeriodDefinition,
+  PreBillDaysConfiguration,
+  BillDueDaysConfiguration,
 } from 'lendpeak-engine/models/Amortization';
 import { Currency, RoundingMethod } from 'lendpeak-engine/utils/Currency';
 import Decimal from 'decimal.js';
@@ -18,7 +20,7 @@ import { CalendarType } from 'lendpeak-engine/models/Calendar';
   styleUrls: ['./app.component.css'],
 })
 export class AppComponent implements OnChanges {
-  CURRENT_OBJECT_VERSION = 2;
+  CURRENT_OBJECT_VERSION = 5;
   loan: {
     objectVersion: number;
     principal: number;
@@ -35,6 +37,10 @@ export class AppComponent implements OnChanges {
     flushThreshold: number;
     termPaymentAmount: number | undefined;
     allowRateAbove100: boolean;
+    defaultPreBillDaysConfiguration: number;
+    defaultBillDueDaysAfterPeriodEndConfiguration: number;
+    dueBillDays: BillDueDaysConfiguration[];
+    preBillDays: PreBillDaysConfiguration[];
     changePaymentDates: {
       termNumber: number;
       newDate: Date;
@@ -70,9 +76,13 @@ export class AppComponent implements OnChanges {
     ratesSchedule: [],
     termPaymentAmountOverride: [],
     termPaymentAmount: undefined,
+    defaultBillDueDaysAfterPeriodEndConfiguration: 3,
+    defaultPreBillDaysConfiguration: 5,
     allowRateAbove100: false,
     periodsSchedule: [],
     changePaymentDates: [],
+    dueBillDays: [],
+    preBillDays: [],
     termPeriodDefinition: {
       unit: 'month',
       count: [1],
@@ -84,6 +94,8 @@ export class AppComponent implements OnChanges {
   rateOverrideCollapsed = true;
   customPeriodsScheduleCollapsed = true;
   changePaymentDateCollapsed = true;
+  preBillDayTermOverrideCollapsed = true;
+  dueBillDayTermOverrideCollapsed = true;
 
   saveUIState() {
     // store UI state in the local storage that captures the state of the advanced options, rate overrides, and term payment amount overrides
@@ -96,6 +108,8 @@ export class AppComponent implements OnChanges {
         rateOverrideCollapsed: this.rateOverrideCollapsed,
         customPeriodsScheduleCollapsed: this.customPeriodsScheduleCollapsed,
         changePaymentDateCollapsed: this.changePaymentDateCollapsed,
+        preBillDayTermOverrideCollapsed: this.preBillDayTermOverrideCollapsed,
+        dueBillDayTermOverrideCollapsed: this.dueBillDayTermOverrideCollapsed,
       })
     );
 
@@ -155,6 +169,10 @@ export class AppComponent implements OnChanges {
           uiStateParsed.customPeriodsScheduleCollapsed;
         this.changePaymentDateCollapsed =
           uiStateParsed.changePaymentDateCollapsed;
+        this.preBillDayTermOverrideCollapsed =
+          uiStateParsed.preBillDayTermOverrideCollapsed;
+        this.dueBillDayTermOverrideCollapsed =
+          uiStateParsed.dueBillDayTermOverrideCollapsed;
       }
       this.submitLoan();
     } catch (e) {
@@ -294,6 +312,27 @@ export class AppComponent implements OnChanges {
     this.submitLoan();
   }
 
+  updateStartDate() {
+    // find days in a period
+    const daysInAPeriod = this.loan.termPeriodDefinition.count[0];
+    const periodUnit =
+      this.loan.termPeriodDefinition.unit === 'complex'
+        ? 'day'
+        : this.loan.termPeriodDefinition.unit;
+
+    // adjust first payment date based on start date
+    this.loan.firstPaymentDate = dayjs(this.loan.startDate)
+      .add(daysInAPeriod, periodUnit)
+      .toDate();
+
+    // adjust end date based on start date and term
+    this.loan.endDate = dayjs(this.loan.startDate)
+      .add(this.loan.term * daysInAPeriod, periodUnit)
+      .toDate();
+
+    this.submitLoan();
+  }
+
   toggleAdvancedOptions() {
     this.showAdvancedOptions = !this.showAdvancedOptions;
   }
@@ -344,6 +383,65 @@ export class AppComponent implements OnChanges {
       termNumber: termNumber,
       paymentAmount: paymentAmount,
     });
+
+    this.loan.termPaymentAmountOverride = termPaymentAmountOveride;
+    this.submitLoan();
+  }
+
+  addPrebillDayTermRow() {
+    const preBillDaysConfiguration = this.loan.preBillDays;
+    let termNumber: number;
+    let preBillDays: number;
+
+    if (preBillDaysConfiguration.length === 0) {
+      // First entry: use loan's start date
+      termNumber = 1;
+      preBillDays = this.loan.defaultPreBillDaysConfiguration;
+    } else {
+      // Following entries: use end date from previous row as start date
+      termNumber =
+        preBillDaysConfiguration[preBillDaysConfiguration.length - 1]
+          .termNumber + 1;
+      preBillDays =
+        preBillDaysConfiguration[preBillDaysConfiguration.length - 1]
+          .preBillDays;
+    }
+
+    preBillDaysConfiguration.push({
+      termNumber: termNumber,
+      preBillDays: preBillDays,
+    });
+
+    this.loan.preBillDays = preBillDaysConfiguration;
+    this.submitLoan();
+  }
+
+  addDueBillDayTermRow() {
+    const dueBillDaysConfiguration = this.loan.dueBillDays;
+    let termNumber: number;
+    let daysDueAfterPeriodEnd: number;
+
+    if (dueBillDaysConfiguration.length === 0) {
+      // First entry: use loan's start date
+      termNumber = 1;
+      daysDueAfterPeriodEnd =
+        this.loan.defaultBillDueDaysAfterPeriodEndConfiguration;
+    } else {
+      // Following entries: use end date from previous row as start date
+      termNumber =
+        dueBillDaysConfiguration[dueBillDaysConfiguration.length - 1]
+          .termNumber + 1;
+      daysDueAfterPeriodEnd =
+        dueBillDaysConfiguration[dueBillDaysConfiguration.length - 1]
+          .daysDueAfterPeriodEnd;
+    }
+
+    dueBillDaysConfiguration.push({
+      termNumber: termNumber,
+      daysDueAfterPeriodEnd: daysDueAfterPeriodEnd,
+    });
+
+    this.loan.dueBillDays = dueBillDaysConfiguration;
     this.submitLoan();
   }
 
@@ -354,6 +452,19 @@ export class AppComponent implements OnChanges {
     this.submitLoan();
   }
 
+  removePreBillDayTerm(index: number) {
+    if (this.loan.preBillDays.length > 0) {
+      this.loan.preBillDays.splice(index, 1);
+    }
+    this.submitLoan();
+  }
+
+  removeDueBillDayTerm(index: number) {
+    if (this.loan.dueBillDays.length > 0) {
+      this.loan.dueBillDays.splice(index, 1);
+    }
+    this.submitLoan();
+  }
   removeTermPaymentAmountOverride(index: number) {
     if (this.loan.termPaymentAmountOverride.length > 0) {
       this.loan.termPaymentAmountOverride.splice(index, 1);
@@ -494,6 +605,12 @@ export class AppComponent implements OnChanges {
       roundingPrecision: this.loan.roundingPrecision,
       flushThreshold: Currency.of(this.loan.flushThreshold),
       termPeriodDefinition: this.loan.termPeriodDefinition,
+      defaultPreBillDaysConfiguration:
+        this.loan.defaultPreBillDaysConfiguration,
+      defaultBillDueDaysAfterPeriodEndConfiguration:
+        this.loan.defaultBillDueDaysAfterPeriodEndConfiguration,
+      preBillDays: this.loan.preBillDays,
+      dueBillDays: this.loan.dueBillDays,
     };
 
     if (this.loan.termPaymentAmount) {
@@ -567,6 +684,11 @@ export class AppComponent implements OnChanges {
         period: entry.period,
         periodStartDate: entry.periodStartDate.format('YYYY-MM-DD'),
         periodEndDate: entry.periodEndDate.format('YYYY-MM-DD'),
+        prebillDaysConfiguration: entry.prebillDaysConfiguration,
+        billDueDaysAfterPeriodEndConfiguration:
+          entry.billDueDaysAfterPeriodEndConfiguration,
+        periodBillOpenDate: entry.periodBillOpenDate.format('YYYY-MM-DD'),
+        periodBillDueDate: entry.periodBillDueDate.format('YYYY-MM-DD'),
         periodInterestRate: entry.periodInterestRate.times(100).toNumber(),
         principal: entry.principal.toNumber(),
         totalInterestForPeriod: entry.totalInterestForPeriod.toNumber(),

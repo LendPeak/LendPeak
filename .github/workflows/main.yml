@@ -25,18 +25,26 @@ jobs:
         working-directory: src/engine
         run: |
           npm install
-          npm run build:all
+          npm run build
+
+      # Check if Currency.js exists in the correct directory
+      - name: Check build output
+        run: |
+          if [ ! -f ./src/engine/dist/esm/utils/Currency.js ]; then
+            echo "Currency.js not found!"
+            exit 1
+          fi
 
       # Install dependencies and build the Angular project in src/frontend/engine-ui
       - name: Install dependencies and build Angular app
         working-directory: src/frontend/engine-ui
         run: |
           npm install
-          npm run build
+          npm run build --prod
 
       # Deploy to S3
       - name: Deploy to S3
-        run: aws s3 sync ./src/frontend/engine-ui/dist/engine-ui/ s3://my-angular-app --delete
+        run: aws s3 sync ./src/frontend/engine-ui/dist/engine-ui/ s3://engine-ui-app --delete
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}

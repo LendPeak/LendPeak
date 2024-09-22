@@ -170,6 +170,7 @@ export class Amortization {
     }
 
     this.totalLoanAmount = this.loanAmount.add(this.originationFee);
+    console.log(this.loanAmount.toNumber());
 
     if (params.termPeriodDefinition) {
       this.termPeriodDefinition = params.termPeriodDefinition;
@@ -409,6 +410,18 @@ export class Amortization {
         paymentDate: schedule.periodEndDate.toDate(),
       };
     });
+
+    // print payments object to log for debugging but i want new Decimal, etc.. so i can copy
+    // paste this from debug into some test
+    // const formattedPayments = payments
+    //   .map((payment) => {
+    //     return `{ principal: new Decimal(${payment.principal}), interest: new Decimal(${payment.interest}), paymentDate: new Date("${payment.paymentDate.toISOString().split("T")[0]}") }`;
+    //   })
+    //   .join(",\n  ");
+    // console.log(`const terms = [\n  ${formattedPayments}\n];`);
+
+    // console.log(`loanAmount: Currency.of(${this.loanAmount.getValue()}),`);
+    // console.log(`originationFee: Currency.of(${this.originationFee.getValue()}),`);
     // console.log("apr inpit", {
     //   loanAmount: this.loanAmount.getValue(),
     //   originationFee: new Decimal(0),
@@ -416,7 +429,7 @@ export class Amortization {
     // });
     const apr = InterestCalculator.calculateRealAPR(
       {
-        loanAmount: this.loanAmount.getValue(),
+        loanAmount: this.totalLoanAmount.getValue(),
         originationFee: this.originationFee.getValue(),
         terms: payments,
       },

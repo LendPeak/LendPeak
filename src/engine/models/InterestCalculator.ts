@@ -45,38 +45,60 @@ export class InterestCalculator {
     const maxIterations = 100;
     const tolerance = 1e-9;
 
-    const totalLoan = loanAmount.minus(originationFee);
+    // Build cash flows
+    const netLoanAmount = loanAmount.minus(originationFee);
+    const cashFlows: Decimal[] = [netLoanAmount]; // Cash inflow at time zero
 
-    // Function to calculate present value for a given monthly interest rate
-    const presentValue = (monthlyRate: Decimal): Decimal => {
-      return terms.reduce((sum, term, index) => {
-        const payment = term.principal.plus(term.interest);
-        const discountFactor = new Decimal(1).plus(monthlyRate).pow(index + 1); // Monthly compounding
-        return sum.plus(payment.div(discountFactor));
+    terms.forEach((term) => {
+      const payment = term.principal.plus(term.interest).negated(); // Negative cash outflow
+      cashFlows.push(payment);
+    });
+
+    // Function to calculate NPV for a given monthly interest rate
+    const npv = (monthlyRate: Decimal): Decimal => {
+      return cashFlows.reduce((sum, cashFlow, index) => {
+        const discountFactor = new Decimal(1).plus(monthlyRate).pow(index);
+        return sum.plus(cashFlow.div(discountFactor));
       }, new Decimal(0));
     };
 
-    // Newton-Raphson method to find the APR that solves the present value equation
-    let monthlyRate = new Decimal(0.01 / 12); // Initial guess for monthly rate, 1% annually divided by 12
+    // Function to calculate derivative of NPV with respect to monthlyRate
+    const npvDerivative = (monthlyRate: Decimal): Decimal => {
+      return cashFlows.reduce((sum, cashFlow, index) => {
+        if (index === 0) {
+          return sum; // No derivative at time zero
+        }
+        const discountFactor = new Decimal(1).plus(monthlyRate).pow(index + 1);
+        const termDerivative = cashFlow.times(-index).div(discountFactor);
+        return sum.plus(termDerivative);
+      }, new Decimal(0));
+    };
+
+    // Newton-Raphson method to find the APR that solves the NPV equation
+    let monthlyRate = new Decimal(0.01 / 12); // Initial guess for monthly rate
     let iteration = 0;
 
     while (iteration < maxIterations) {
-      const pv = presentValue(monthlyRate);
-      const derivative = terms.reduce((sum, term, index) => {
-        const payment = term.principal.plus(term.interest);
-        const discountFactor = new Decimal(1).plus(monthlyRate).pow(index + 1);
-        const factorDerivative = new Decimal(index + 1).times(payment).div(discountFactor.pow(2));
-        return sum.minus(factorDerivative);
-      }, new Decimal(0));
+      const currentNPV = npv(monthlyRate);
+      const derivative = npvDerivative(monthlyRate);
 
-      const newRate = monthlyRate.minus(pv.minus(totalLoan).div(derivative));
+      if (derivative.abs().lessThan(tolerance)) {
+        throw new Error("Derivative too small; cannot continue iteration.");
+      }
+
+      const newRate = monthlyRate.minus(currentNPV.div(derivative));
 
       if (newRate.minus(monthlyRate).abs().lessThan(tolerance)) {
+        monthlyRate = newRate;
         break;
       }
 
       monthlyRate = newRate;
       iteration++;
+    }
+
+    if (iteration === maxIterations) {
+      throw new Error("Failed to converge to a solution within the maximum number of iterations.");
     }
 
     // Convert monthly rate to annual rate (APR)

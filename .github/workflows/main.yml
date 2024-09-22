@@ -25,14 +25,14 @@ jobs:
         working-directory: src/engine
         run: |
           npm install
-          npm run build
+          npm run build:all
 
       # Install dependencies and build the Angular project in src/frontend/engine-ui
       - name: Install dependencies and build Angular app
         working-directory: src/frontend/engine-ui
         run: |
           npm install
-          npm run build --prod
+          npm run build
 
       # Deploy to S3
       - name: Deploy to S3

@@ -8,6 +8,7 @@ import {
   TermPeriodDefinition,
   PreBillDaysConfiguration,
   BillDueDaysConfiguration,
+  TILADisclosures,
 } from 'lendpeak-engine/models/Amortization';
 import { Currency, RoundingMethod } from 'lendpeak-engine/utils/Currency';
 import Decimal from 'decimal.js';
@@ -88,6 +89,25 @@ export class AppComponent implements OnChanges {
       count: [1],
     },
   };
+  tilaDisclosures: TILADisclosures = {
+    amountFinanced: Currency.of(0),
+    financeCharge: Currency.of(0),
+    totalOfPayments: Currency.of(0),
+    annualPercentageRate: new Decimal(0),
+    paymentSchedule: [],
+  };
+
+  lenderName = 'Your Bank Name';
+  borrowerName = 'John Doe';
+  loanDate = new Date();
+  loanNumber = 'LN123456789';
+  collateralDescription = '2008 Toyota Camry';
+
+  // Terms and conditions
+  prepaymentPenalty = false;
+  latePaymentGracePeriod = 15; // Days
+  latePaymentFee = Currency.of(25);
+  assumable = false;
 
   advancedSettingsCollapsed = true;
   termPaymentAmountOverrideCollapsed = true;
@@ -96,6 +116,8 @@ export class AppComponent implements OnChanges {
   changePaymentDateCollapsed = true;
   preBillDayTermOverrideCollapsed = true;
   dueBillDayTermOverrideCollapsed = true;
+
+  // Generate the TILA disclosures
 
   saveUIState() {
     // store UI state in the local storage that captures the state of the advanced options, rate overrides, and term payment amount overrides
@@ -182,7 +204,11 @@ export class AppComponent implements OnChanges {
   }
   showTable = false;
   showAdvancedTable: boolean = false; // Default is simple view
+  showTilaDialog: boolean = false;
 
+  showTilaDialogButton() {
+    this.showTilaDialog = true;
+  }
   showAdvancedOptions = false;
 
   toggleAdvancedTable() {
@@ -673,8 +699,9 @@ export class AppComponent implements OnChanges {
 
     const amortization = new Amortization(amortizationParams);
     this.amortization = amortization;
-
+    this.tilaDisclosures = amortization.generateTILADisclosures();
     this.loanRepaymentPlan = amortization.generateSchedule();
+
     this.repaymentPlanEndDates = this.loanRepaymentPlan.map((entry) => {
       // mm/dd/yy
       return entry.periodEndDate.format('MM/DD/YY');

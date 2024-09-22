@@ -18,9 +18,12 @@ import { DividerModule } from 'primeng/divider';
 import { ToolbarModule } from 'primeng/toolbar';
 import { CheckboxModule } from 'primeng/checkbox';
 import { TagModule } from 'primeng/tag';
+import { DialogModule } from 'primeng/dialog';
+import { TilaDisclosureComponent } from './tila-disclosure.component';
+import { PanelModule } from 'primeng/panel';
 
 @NgModule({
-  declarations: [AppComponent],
+  declarations: [AppComponent, TilaDisclosureComponent],
   imports: [
     BrowserModule,
     BrowserAnimationsModule, // Add this to enable animations
@@ -40,6 +43,8 @@ import { TagModule } from 'primeng/tag';
     ToolbarModule,
     CheckboxModule,
     TagModule,
+    DialogModule,
+    PanelModule,
   ],
   providers: [],
   bootstrap: [AppComponent],

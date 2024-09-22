@@ -928,10 +928,42 @@
         </p-fieldset>
       </div>
     </div>
+
+    <!-- add payments -->
+
+    <!-- end of add payments-->
   </div>
 </form>
 
 <!-- end of form -->
+<p-divider />
+
+<p-card>
+  <p-button
+    (onClick)="showTilaDialogButton()"
+    label="Truth in Lending Disclosure Statement"
+  />
+  <p-dialog
+    header="Truth in Lending Disclosure Statement"
+    [modal]="true"
+    [(visible)]="showTilaDialog"
+    [style]="{ width: '90%' }"
+  >
+    <app-tila-disclosure
+      [showTitle]="false"
+      [tilaDisclosures]="tilaDisclosures"
+      [lenderName]="lenderName"
+      [borrowerName]="borrowerName"
+      [loanDate]="loanDate"
+      [loanNumber]="loanNumber"
+      [collateralDescription]="collateralDescription"
+      [prepaymentPenalty]="prepaymentPenalty"
+      [latePaymentGracePeriod]="latePaymentGracePeriod"
+      [latePaymentFee]="latePaymentFee"
+      [assumable]="assumable"
+    ></app-tila-disclosure>
+  </p-dialog>
+</p-card>
 <p-divider />
 
 <!-- start of table-->

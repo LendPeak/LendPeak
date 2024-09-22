@@ -8,6 +8,7 @@
     "outDir": "./dist/esm",                      // Output directory for ESM build
     "rootDir": "./",                             // Root directory of your source files
     "baseUrl": "./",                             // Base directory for module resolution
+    "allowSyntheticDefaultImports": true,        // Allow default imports from modules with no default export
     "paths": {
       "@models/*": ["models/*"],
       "@services/*": ["services/*"],

@@ -25,7 +25,15 @@ jobs:
         working-directory: src/engine
         run: |
           npm install
+          echo "Building engine..."
           npm run build
+          echo "Engine build completed!"
+
+      # List the contents of the dist directory to check if files were generated
+      - name: List dist directory
+        run: |
+          ls -alh src/engine/dist/
+          ls -alh src/engine/dist/esm/utils/
 
       # Check if Currency.js exists in the correct directory
       - name: Check build output
@@ -33,6 +41,8 @@ jobs:
           if [ ! -f ./src/engine/dist/esm/utils/Currency.js ]; then
             echo "Currency.js not found!"
             exit 1
+          else
+            echo "Currency.js found!"
           fi
 
       # Install dependencies and build the Angular project in src/frontend/engine-ui

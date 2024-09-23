@@ -62,7 +62,7 @@ jobs:
 
       # Deploy to S3
       - name: Deploy to S3
-        run: aws s3 sync ./src/frontend/engine-ui/dist/engine-ui/ s3://engine-ui-app --delete
+        run: aws s3 sync ./src/frontend/engine-ui/dist/engine-ui/browser s3://engine-ui-app --delete
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}

@@ -22,7 +22,7 @@ import { CalendarType } from 'lendpeak-engine/models/Calendar';
   styleUrls: ['./app.component.css'],
 })
 export class AppComponent implements OnChanges {
-  CURRENT_OBJECT_VERSION = 5;
+  CURRENT_OBJECT_VERSION = 6;
   loan: {
     objectVersion: number;
     principal: number;

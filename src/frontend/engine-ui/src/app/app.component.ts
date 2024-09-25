@@ -336,6 +336,40 @@ export class AppComponent implements OnChanges {
     console.log('Changes detected:', changes);
   }
 
+  toolbarActions = [
+    {
+      label: 'Export Data',
+      icon: 'pi pi-file-export',
+      command: () => this.exportData(),
+    },
+    {
+      label: 'Import Data',
+      icon: 'pi pi-file-import',
+      command: () => this.importData(),
+    },
+    {
+      label: 'Help',
+      icon: 'pi pi-question',
+      command: () => this.openHelpDialog(),
+    },
+  ];
+
+  exportData() {
+    // Code to export data
+  }
+
+  importData() {
+    // Code to import data
+  }
+
+  openHelpDialog() {
+    // Code to open a help dialog
+  }
+
+  openSettingsDialog() {
+    // Code to open a settings dialog
+  }
+
   balanceIncreaseType = [
     { label: 'Increase', value: 'increase' },
     { label: 'Decrease', value: 'decrease' },

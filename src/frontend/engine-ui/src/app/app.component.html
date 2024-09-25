@@ -1,25 +1,48 @@
-<!-- Toolbar -->
-<p-toolbar>
+<!--  Toolbar -->
+<p-toolbar class="custom-toolbar">
   <div class="p-toolbar-group-start">
     <img src="horizontal-logo.png" style="width: 160px" />
   </div>
   <div class="p-toolbar-group-end">
+    <!-- Save UI Button -->
     <p-button
-      severity="success"
-      label="Save UI"
-      icon="pi pi-check"
-      iconPos="right"
-      class="mr-2"
+      label="Save"
+      icon="pi pi-save"
+      class="p-button-success toolbar-button"
       (onClick)="saveUIState()"
+      pTooltip="Save the current UI state"
+      tooltipPosition="bottom"
     ></p-button>
+
+    <!-- Reset UI Button -->
     <p-button
-      severity="danger"
-      label="Reset UI"
-      icon="pi pi-trash"
-      iconPos="right"
-      class="mr-2"
+      label="Reset"
+      icon="pi pi-refresh"
+      class="p-button-warning toolbar-button"
       (onClick)="resetUIState()"
+      pTooltip="Reset the UI to default settings"
+      tooltipPosition="bottom"
     ></p-button>
+
+    <!-- Settings Button -->
+    <!-- <p-button
+      label="Settings"
+      icon="pi pi-cog"
+      class="p-button-secondary toolbar-button"
+      (onClick)="openSettingsDialog()"
+      pTooltip="Open settings"
+      tooltipPosition="bottom"
+    ></p-button> -->
+
+    <!-- Actions SplitButton -->
+    <p-splitButton
+      label="More"
+      icon="pi pi-ellipsis-v"
+      [model]="toolbarActions"
+      class="p-button-secondary toolbar-button"
+      pTooltip="More actions"
+      tooltipPosition="bottom"
+    ></p-splitButton>
   </div>
 </p-toolbar>
 

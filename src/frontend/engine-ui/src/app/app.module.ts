@@ -24,6 +24,7 @@ import { TilaDisclosureComponent } from './tila-disclosure.component';
 import { PanelModule } from 'primeng/panel';
 import { TabViewModule } from 'primeng/tabview';
 import { AccordionModule } from 'primeng/accordion';
+import { OverlayPanelModule } from 'primeng/overlaypanel';
 
 @NgModule({
   declarations: [AppComponent, TilaDisclosureComponent],
@@ -51,6 +52,7 @@ import { AccordionModule } from 'primeng/accordion';
     TabViewModule,
     AccordionModule,
     InputNumberModule,
+    OverlayPanelModule,
   ],
   providers: [],
   bootstrap: [AppComponent],

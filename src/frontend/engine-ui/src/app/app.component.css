@@ -67,3 +67,28 @@ p-fieldset>.p-fieldset-legend {
 .p-mb-3 {
     margin-bottom: 1.5rem !important;
 }
+
+
+/* Tooltip icon next to labels */
+.tooltip-icon {
+    font-size: 1rem;
+    color: #007ad9;
+    margin-left: 0.5rem;
+    cursor: pointer;
+}
+
+.tooltip-icon:hover {
+    color: #005999;
+}
+
+/* Adjust field labels to align with icons */
+.field label {
+    display: flex;
+    align-items: center;
+}
+
+/* Optional: Adjust the overlay panel styling */
+.p-overlaypanel {
+    max-width: 250px;
+    word-wrap: break-word;
+}

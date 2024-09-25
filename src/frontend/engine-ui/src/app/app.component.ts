@@ -1,4 +1,6 @@
 import { Component, OnChanges, SimpleChanges } from '@angular/core';
+import { OverlayPanel } from 'primeng/overlaypanel';
+
 import {
   Amortization,
   AmortizationParams,
@@ -162,6 +164,10 @@ export class AppComponent implements OnChanges {
     localStorage.removeItem('loan');
     // refresh the page
     window.location.reload();
+  }
+
+  showTooltip(event: Event, tooltipRef: OverlayPanel) {
+    tooltipRef.toggle(event);
   }
 
   ngOnInit(): void {

@@ -802,7 +802,7 @@ export class AppComponent implements OnChanges {
     const amortization = new Amortization(amortizationParams);
     this.amortization = amortization;
     this.tilaDisclosures = amortization.generateTILADisclosures();
-    this.loanRepaymentPlan = amortization.generateSchedule();
+    this.loanRepaymentPlan = amortization.repaymentSchedule;
 
     this.repaymentPlanEndDates = this.loanRepaymentPlan.map((entry) => {
       // mm/dd/yy

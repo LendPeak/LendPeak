@@ -1063,7 +1063,11 @@ export class Amortization {
    */
   generateTILADisclosures(): TILADisclosures {
     // Ensure the amortization schedule is generated
-    const schedule = this.repaymentSchedule.length > 0 ? this.repaymentSchedule : this.generateSchedule();
+    const schedule = this.repaymentSchedule;
+
+    if (schedule.length === 0) {
+      throw new Error("Amortization schedule is empty. Please generate the amortization schedule before generating TILA disclosures.");
+    }
 
     // Amount Financed: The net amount of credit provided to the borrower
     const amountFinanced = this.loanAmount.subtract(this.originationFee);

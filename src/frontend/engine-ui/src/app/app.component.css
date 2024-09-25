@@ -116,22 +116,26 @@ tr.selected-row {
     /* Darker gray */
 }
 
-/* Tooltip Content Styles */
-.tooltip-content {
-    max-width: 300px;
-    font-size: 0.95rem;
-}
+
 
 .tooltip-content p {
     margin-top: 0;
 }
 
 .tooltip-content ul {
-    padding-left: 1rem;
+    padding-left: 1.2rem;
 }
 
 .tooltip-content li {
     margin-bottom: 1rem;
+}
+
+.tooltip-content li ul {
+    margin-top: 0.5rem;
+}
+
+.tooltip-content li ul li {
+    margin-bottom: 0.5rem;
 }
 
 .tooltip-content strong {

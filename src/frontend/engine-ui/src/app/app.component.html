@@ -890,30 +890,70 @@
                 <!-- Tooltip Overlay -->
                 <p-overlayPanel #roundingMethodTooltip>
                   <div class="tooltip-content">
-    <p>Specifies how to round calculated amounts. Options include:</p>
-    <ul>
-      <li>
-        <strong>Round Up:</strong> Always rounds the number up to the nearest specified precision.<br />
-        <em>Example:</em> 2.301 becomes 2.31; 2.375 becomes 2.38.
-      </li>
-      <li>
-        <strong>Round Down:</strong> Always rounds the number down to the nearest specified precision.<br />
-        <em>Example:</em> 2.399 becomes 2.39; 2.372 becomes 2.37.
-      </li>
-      <li>
-        <strong>Round Half Up:</strong> Rounds towards the nearest neighbor; if equidistant, rounds away from zero.<br />
-        <em>Example:</em> 2.345 becomes 2.35; 2.344 becomes 2.34.
-      </li>
-      <li>
-        <strong>Round Half Down:</strong> Rounds towards the nearest neighbor; if equidistant, rounds towards zero.<br />
-        <em>Example:</em> 2.345 becomes 2.34; 2.346 becomes 2.35.
-      </li>
-      <li>
-        <strong>Round Half Even (Bankers' Rounding):</strong> Rounds towards the nearest neighbor; if equidistant, rounds towards the even number.<br />
-        <em>Example:</em> 2.345 becomes 2.34; 2.355 becomes 2.36.
-      </li>
-    </ul>
-  </div>
+                    <p>
+                      Specifies how to round calculated amounts. Options
+                      include:
+                    </p>
+                    <ul>
+                      <li>
+                        <strong>Round Up:</strong> Always rounds the number up
+                        to the nearest specified precision.<br />
+                        <em>Example:</em> If rounding to 2 decimal places:
+                        <ul>
+                          <li>2.301 becomes <strong>2.31</strong></li>
+                          <li>2.374 becomes <strong>2.38</strong></li>
+                          <li>-2.301 becomes <strong>-2.30</strong></li>
+                        </ul>
+                      </li>
+                      <li>
+                        <strong>Round Down:</strong> Always rounds the number
+                        down to the nearest specified precision.<br />
+                        <em>Example:</em> If rounding to 2 decimal places:
+                        <ul>
+                          <li>2.399 becomes <strong>2.39</strong></li>
+                          <li>2.376 becomes <strong>2.37</strong></li>
+                          <li>-2.399 becomes <strong>-2.40</strong></li>
+                        </ul>
+                      </li>
+                      <li>
+                        <strong>Round Half Up:</strong> Rounds to the nearest
+                        neighbor; if equidistant, rounds away from zero.<br />
+                        <em>Example:</em> If rounding to 2 decimal places:
+                        <ul>
+                          <li>2.345 becomes <strong>2.35</strong></li>
+                          <li>2.344 becomes <strong>2.34</strong></li>
+                          <li>-2.345 becomes <strong>-2.35</strong></li>
+                        </ul>
+                      </li>
+                      <li>
+                        <strong>Round Half Down:</strong> Rounds to the nearest
+                        neighbor; if equidistant, rounds towards zero.<br />
+                        <em>Example:</em> If rounding to 2 decimal places:
+                        <ul>
+                          <li>2.345 becomes <strong>2.34</strong></li>
+                          <li>2.346 becomes <strong>2.35</strong></li>
+                          <li>-2.345 becomes <strong>-2.34</strong></li>
+                        </ul>
+                      </li>
+                      <li>
+                        <strong>Round Half Even (Bankers' Rounding):</strong>
+                        Rounds to the nearest neighbor; if equidistant, rounds
+                        towards the nearest even number.<br />
+                        <em>Example:</em> If rounding to 2 decimal places:
+                        <ul>
+                          <li>
+                            2.345 becomes <strong>2.34</strong> (since 4 is
+                            even)
+                          </li>
+                          <li>
+                            2.355 becomes <strong>2.36</strong> (since 6 is
+                            even)
+                          </li>
+                          <li>-2.345 becomes <strong>-2.34</strong></li>
+                        </ul>
+                      </li>
+                    </ul>
+                  </div>
                 </p-overlayPanel>
               </div>
 

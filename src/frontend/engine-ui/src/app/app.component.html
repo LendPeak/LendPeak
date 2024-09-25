@@ -929,6 +929,103 @@
       </div>
     </div>
 
+    <!-- start balance modifications -->
+    <div class="col-12">
+      <div class="p-3 border-round-sm font-bold">
+        <p-fieldset
+          legend="Balance Modifications"
+          [toggleable]="true"
+          [(collapsed)]="balanceModificationsCollapsed"
+        >
+          <div class="p-mb-3"></div>
+          <p-divider />
+          <table
+            *ngIf="loan.balanceModifications.length > 0"
+            class="p-datatable p-component"
+          >
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Type</th>
+                <th>Amount</th>
+                <!-- <th>Payment Amount</th>
+                <th>Interest Rate</th> -->
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                *ngFor="
+                  let balanceModification of loan.balanceModifications;
+                  let i = index
+                "
+              >
+                <td>
+                  <p-calendar
+                    [(ngModel)]="balanceModification.date"
+                    (ngModelChange)="submitLoan()"
+                    dateFormat="mm/dd/yy"
+                    name="balanceModificationDate-{{ i }}"
+                    showIcon
+                  ></p-calendar>
+                </td>
+                <td>
+                  <p-dropdown
+                    [(ngModel)]="balanceModification.type"
+                    name="balanceModificationType={{ i }}"
+                    id="balanceModificationType={{ i }}"
+                    [options]="balanceIncreaseType"
+                    placeholder="Select a balance increase type"
+                    (ngModelChange)="submitLoan()"
+                    styleClass="full-width"
+                  ></p-dropdown>
+                </td>
+                <td>
+                  <input
+                    type="number"
+                    pInputText
+                    [(ngModel)]="balanceModification.amount"
+                    name="balanceModificationAmount-{{ i }}"
+                    (ngModelChange)="submitLoan()"
+                  />
+                </td>
+                <!--
+                <td>
+                  <input
+                    type="number"
+                    pInputText
+                    [(ngModel)]="plan.interestRate"
+                    name="periodRate-{{ i }}"
+                    (ngModelChange)="submitLoan()"
+                  />
+                </td> -->
+                <td>
+                  <p-button
+                    icon="pi pi-trash"
+                    class="p-button-rounded p-button-danger p-mr-2"
+                    (onClick)="deleteBalanceModificationRow(i)"
+                  ></p-button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+
+          <p-divider />
+
+          <div class="grid">
+            <div class="col-fixed">
+              <p-button
+                label="Add Balance Modification Row"
+                icon="pi pi-plus"
+                (onClick)="addBalanceModificationRow()"
+              ></p-button>
+            </div>
+          </div>
+        </p-fieldset>
+      </div>
+    </div>
+    <!-- end balance modifications -->
+
     <!-- add payments -->
 
     <!-- end of add payments-->
@@ -1023,7 +1120,10 @@
           <th>Total Interest</th>
           <th>Principal</th>
           <th>Total Payment</th>
+          <th>End Balance</th>
           <!-- Advanced Columns -->
+          <th *ngIf="showAdvancedTable">Start Balance</th>
+          <th *ngIf="showAdvancedTable">Balance Modification Amount</th>
           <th *ngIf="showAdvancedTable">Interest</th>
           <th *ngIf="showAdvancedTable">Billed Deferred Interest</th>
           <th *ngIf="showAdvancedTable">Real Interest</th>
@@ -1053,7 +1153,14 @@
           <td>{{ plan.totalInterestForPeriod | currency }}</td>
           <td>{{ plan.principal | currency }}</td>
           <td>{{ plan.totalPayment | currency }}</td>
+          <td>{{ plan.endBalance | currency }}</td>
           <!-- Advanced Columns -->
+          <td *ngIf="showAdvancedTable">
+            {{ plan.startBalance | currency }}
+          </td>
+          <td *ngIf="showAdvancedTable">
+            {{ plan.balanceModificationAmount | currency }}
+          </td>
           <td *ngIf="showAdvancedTable">
             {{ plan.interest | currency }}
           </td>

@@ -37,8 +37,20 @@ const amortization = new Amortization({
   //calendarType: CalendarType.ACTUAL_ACTUAL,
   calendarType: CalendarType.THIRTY_360,
   //roundingMethod: RoundingMethod.ROUND_HALF_EVEN,
-  // flushCumulativeRoundingError: FlushCumulativeRoundingErrorType.AT_THRESHOLD,
-  flushUnbilledInterestRoundingErrorMethod: FlushUnbilledInterestDueToRoundingErrorType.AT_THRESHOLD,
+  flushUnbilledInterestRoundingErrorMethod: FlushUnbilledInterestDueToRoundingErrorType.NONE,
+  balanceModifications: [
+    {
+      amount: Currency.of(200),
+      date: dayjs("2024-09-27"),
+      type: "decrease",
+    },
+    {
+      amount: Currency.of(1000),
+      date: dayjs("2024-09-25"),
+      type: "decrease",
+    },
+  ],
+  // flushUnbilledInterestRoundingErrorMethod: FlushUnbilledInterestDueToRoundingErrorType.AT_THRESHOLD,
   // roundingPrecision: 2, // 5 decimal places
   //flushThreshold: Currency.of(0.01), // 1 cent threshold
   // ratesSchedule: [
@@ -65,7 +77,8 @@ const amortization = new Amortization({
 });
 
 // Generate and print Amortization Schedule
-amortization.printAmortizationSchedule();
+//amortization.printAmortizationSchedule();
+amortization.printShortAmortizationSchedule();
 
 // amortization.generateSchedule();
 

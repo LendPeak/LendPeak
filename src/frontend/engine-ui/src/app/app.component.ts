@@ -3,6 +3,7 @@ import {
   Amortization,
   AmortizationParams,
   FlushUnbilledInterestDueToRoundingErrorType,
+  BalanceModification,
   TermPaymentAmount,
   AmortizationSchedule,
   TermPeriodDefinition,
@@ -42,6 +43,13 @@ export class AppComponent implements OnChanges {
     defaultBillDueDaysAfterPeriodEndConfiguration: number;
     dueBillDays: BillDueDaysConfiguration[];
     preBillDays: PreBillDaysConfiguration[];
+    balanceModifications: {
+      amount: number;
+      date: Date;
+      type: 'increase' | 'decrease';
+      description?: string;
+      metadata?: any;
+    }[];
     changePaymentDates: {
       termNumber: number;
       newDate: Date;
@@ -88,6 +96,7 @@ export class AppComponent implements OnChanges {
       unit: 'month',
       count: [1],
     },
+    balanceModifications: [],
   };
   tilaDisclosures: TILADisclosures = {
     amountFinanced: Currency.of(0),
@@ -116,6 +125,7 @@ export class AppComponent implements OnChanges {
   changePaymentDateCollapsed = true;
   preBillDayTermOverrideCollapsed = true;
   dueBillDayTermOverrideCollapsed = true;
+  balanceModificationsCollapsed = true;
 
   // Generate the TILA disclosures
 
@@ -132,6 +142,7 @@ export class AppComponent implements OnChanges {
         changePaymentDateCollapsed: this.changePaymentDateCollapsed,
         preBillDayTermOverrideCollapsed: this.preBillDayTermOverrideCollapsed,
         dueBillDayTermOverrideCollapsed: this.dueBillDayTermOverrideCollapsed,
+        balanceModificationsCollapsed: this.balanceModificationsCollapsed,
       })
     );
 
@@ -176,6 +187,46 @@ export class AppComponent implements OnChanges {
             paymentAmount: period.paymentAmount,
           };
         });
+        this.loan.changePaymentDates = this.loan.changePaymentDates.map(
+          (changePaymentDate) => {
+            return {
+              termNumber: changePaymentDate.termNumber,
+              newDate: new Date(changePaymentDate.newDate),
+            };
+          }
+        );
+        this.loan.termPaymentAmountOverride =
+          this.loan.termPaymentAmountOverride.map(
+            (termPaymentAmountOverride) => {
+              return {
+                termNumber: termPaymentAmountOverride.termNumber,
+                paymentAmount: termPaymentAmountOverride.paymentAmount,
+              };
+            }
+          );
+        this.loan.preBillDays = this.loan.preBillDays.map((preBillDay) => {
+          return {
+            termNumber: preBillDay.termNumber,
+            preBillDays: preBillDay.preBillDays,
+          };
+        });
+        this.loan.dueBillDays = this.loan.dueBillDays.map((dueBillDay) => {
+          return {
+            termNumber: dueBillDay.termNumber,
+            daysDueAfterPeriodEnd: dueBillDay.daysDueAfterPeriodEnd,
+          };
+        });
+        this.loan.balanceModifications = this.loan.balanceModifications.map(
+          (balanceModification) => {
+            return {
+              amount: balanceModification.amount,
+              date: new Date(balanceModification.date),
+              type: balanceModification.type,
+              description: balanceModification.description,
+              metadata: balanceModification.metadata,
+            };
+          }
+        );
       }
 
       // Retrieve UI state from local storage if exists
@@ -195,6 +246,8 @@ export class AppComponent implements OnChanges {
           uiStateParsed.preBillDayTermOverrideCollapsed;
         this.dueBillDayTermOverrideCollapsed =
           uiStateParsed.dueBillDayTermOverrideCollapsed;
+        this.balanceModificationsCollapsed =
+          uiStateParsed.balanceModificationsCollapsed;
       }
       this.submitLoan();
     } catch (e) {
@@ -246,6 +299,11 @@ export class AppComponent implements OnChanges {
   ngOnChanges(changes: SimpleChanges) {
     console.log('Changes detected:', changes);
   }
+
+  balanceIncreaseType = [
+    { label: 'Increase', value: 'increase' },
+    { label: 'Decrease', value: 'decrease' },
+  ];
 
   termPeriodUnits = [
     { label: 'Year', value: 'year' },
@@ -383,6 +441,28 @@ export class AppComponent implements OnChanges {
     }
 
     this.loan.changePaymentDates = changePaymentDates;
+    this.submitLoan();
+  }
+
+  addBalanceModificationRow() {
+    const balanceModifications = this.loan.balanceModifications;
+
+    balanceModifications.push({
+      amount: 0,
+      date: new Date(),
+      type: 'decrease',
+    });
+
+    this.loan.balanceModifications = balanceModifications;
+    this.submitLoan();
+  }
+
+  deleteBalanceModificationRow(index: number) {
+    this.loan.balanceModifications.splice(index, 1);
+    this.submitLoan();
+  }
+
+  balanceModificationChanged() {
     this.submitLoan();
   }
 
@@ -697,6 +777,19 @@ export class AppComponent implements OnChanges {
       );
     }
 
+    if (this.loan.balanceModifications.length > 0) {
+      amortizationParams.balanceModifications =
+        this.loan.balanceModifications.map((balanceModification) => {
+          return {
+            amount: Currency.of(balanceModification.amount),
+            date: dayjs(balanceModification.date),
+            type: balanceModification.type,
+            description: balanceModification.description,
+            metadata: balanceModification.metadata,
+          };
+        });
+    }
+
     const amortization = new Amortization(amortizationParams);
     this.amortization = amortization;
     this.tilaDisclosures = amortization.generateTILADisclosures();
@@ -728,6 +821,7 @@ export class AppComponent implements OnChanges {
         daysInPeriod: entry.daysInPeriod,
         startBalance: entry.startBalance.toNumber(),
         endBalance: entry.endBalance.toNumber(),
+        balanceModificationAmount: entry.balanceModificationAmount.toNumber(),
         unbilledInterestDueToRounding:
           entry.unbilledInterestDueToRounding.toNumber(),
         totalDeferredInterest: entry.unbilledTotalDeferredInterest.toNumber(),

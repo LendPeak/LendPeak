@@ -38,6 +38,10 @@ export class Currency {
     return new Currency(amount);
   }
 
+  negated(): Currency {
+    return Currency.of(this.value.negated());
+  }
+
   toNumber(): number {
     return this.value.toNumber();
   }

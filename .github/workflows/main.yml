@@ -50,7 +50,7 @@ jobs:
         working-directory: src/frontend/engine-ui
         run: |
           npm install
-          npm run build
+          npm run build --prod
 
       # Verify AWS Credentials
       - name: Verify AWS Credentials

@@ -724,6 +724,7 @@ export class Amortization {
     let balanceToModify = Currency.of(balance);
     for (let modification of this.balanceModifications) {
       // see if there are any modifications in the range
+      console.log(`Checking modification ${modification.date.format("YYYY-MM-DD")} and comparing it to ${startDate.format("YYYY-MM-DD")} and ${endDate.format("YYYY-MM-DD")}`);
       if (modification.date.isSameOrAfter(startDate) && modification.date.isSameOrBefore(endDate)) {
         // we found a modification, lets get its start date
         let modificationStartDate = balances.length > 0 ? balances[balances.length - 1].endDate : startDate;

@@ -42,7 +42,7 @@
                   mode="currency"
                   currency="USD"
                   locale="en-US"
-                  (onChange)="submitLoan()"
+                  (ngModelChange)="submitLoan()"
                   pTooltip="The initial amount of the loan. E.g., $100,000"
                   tooltipPosition="top"
                 ></p-inputNumber>
@@ -58,7 +58,7 @@
                   mode="currency"
                   currency="USD"
                   locale="en-US"
-                  (onChange)="submitLoan()"
+                  (ngModelChange)="submitLoan()"
                   pTooltip="The fee charged by the lender for processing the loan. E.g., $1,000"
                   tooltipPosition="top"
                 ></p-inputNumber>
@@ -74,7 +74,7 @@
                   mode="decimal"
                   minFractionDigits="2"
                   suffix="%"
-                  (onChange)="submitLoan()"
+                  (ngModelChange)="submitLoan()"
                   pTooltip="Annual interest rate for the loan. E.g., 5%"
                   tooltipPosition="top"
                 ></p-inputNumber>
@@ -89,7 +89,7 @@
                   id="term"
                   [(ngModel)]="loan.term"
                   name="term"
-                  (onChange)="updateTerm()"
+                  (ngModelChange)="updateTerm()"
                   pTooltip="Number of periods for the loan term. E.g., 12"
                   tooltipPosition="top"
                 ></p-inputNumber>
@@ -200,7 +200,7 @@
                         mode="decimal"
                         minFractionDigits="2"
                         suffix="%"
-                        (onChange)="submitLoan()"
+                        (ngModelChange)="submitLoan()"
                         pTooltip="Override annual interest rate. E.g., 6%"
                         tooltipPosition="top"
                       ></p-inputNumber>
@@ -257,7 +257,7 @@
                       <p-inputNumber
                         [(ngModel)]="paymentConfiguration.termNumber"
                         name="overrideTermPayment-term{{ i }}"
-                        (onChange)="submitLoan()"
+                        (ngModelChange)="submitLoan()"
                         pTooltip="The term number to override. E.g., 1"
                         tooltipPosition="top"
                       ></p-inputNumber>
@@ -270,7 +270,7 @@
                         mode="currency"
                         currency="USD"
                         locale="en-US"
-                        (onChange)="submitLoan()"
+                        (ngModelChange)="submitLoan()"
                         pTooltip="Override payment amount for this term. E.g., $1,000"
                         tooltipPosition="top"
                       ></p-inputNumber>
@@ -327,7 +327,7 @@
                       <p-inputNumber
                         [(ngModel)]="changePaymentDate.termNumber"
                         name="changePaymentDate-term{{ i }}"
-                        (onChange)="
+                        (ngModelChange)="
                           updateTermForCPD(i, changePaymentDate.termNumber)
                         "
                         pTooltip="The term number to change the payment date for. E.g., 1"
@@ -395,7 +395,7 @@
                       <p-inputNumber
                         [(ngModel)]="preBillDay.termNumber"
                         name="preBillDayConfiguration-term{{ i }}"
-                        (onChange)="submitLoan()"
+                        (ngModelChange)="submitLoan()"
                         pTooltip="The term number to override pre-bill days for. E.g., 1"
                         tooltipPosition="top"
                       ></p-inputNumber>
@@ -405,7 +405,7 @@
                       <p-inputNumber
                         [(ngModel)]="preBillDay.preBillDays"
                         name="prebillDays-day-{{ i }}"
-                        (onChange)="submitLoan()"
+                        (ngModelChange)="submitLoan()"
                         pTooltip="Number of days before the period end to open the bill. E.g., 5"
                         tooltipPosition="top"
                       ></p-inputNumber>
@@ -459,7 +459,7 @@
                       <p-inputNumber
                         [(ngModel)]="dueBillDay.termNumber"
                         name="dueBillDayConfiguration-term{{ i }}"
-                        (onChange)="submitLoan()"
+                        (ngModelChange)="submitLoan()"
                         pTooltip="The term number to override due bill days for. E.g., 1"
                         tooltipPosition="top"
                       ></p-inputNumber>
@@ -469,7 +469,7 @@
                       <p-inputNumber
                         [(ngModel)]="dueBillDay.daysDueAfterPeriodEnd"
                         name="duebillDays-day-{{ i }}"
-                        (onChange)="submitLoan()"
+                        (ngModelChange)="submitLoan()"
                         pTooltip="Number of days after the period end when the payment is due. E.g., 30"
                         tooltipPosition="top"
                       ></p-inputNumber>
@@ -522,7 +522,7 @@
                     name="termPeriodUnit"
                     [options]="termPeriodUnits"
                     placeholder="Select a term period unit"
-                    (onChange)="termPeriodDefinitionChange()"
+                    (ngModelChange)="termPeriodDefinitionChange()"
                     pTooltip="Defines the unit of time for each term period. E.g., 'Month'"
                     tooltipPosition="top"
                   ></p-dropdown>
@@ -535,7 +535,7 @@
                     id="termPeriodCount"
                     [(ngModel)]="loan.termPeriodDefinition.count[0]"
                     name="termPeriodCount"
-                    (onChange)="termPeriodDefinitionChange()"
+                    (ngModelChange)="termPeriodDefinitionChange()"
                     pTooltip="Number of units per term period. E.g., '1' for monthly payments"
                     tooltipPosition="top"
                   ></p-inputNumber>
@@ -550,7 +550,7 @@
                     name="calendarType"
                     [options]="calendarTypes"
                     placeholder="Select a calendar type"
-                    (onChange)="submitLoan()"
+                    (ngModelChange)="submitLoan()"
                     pTooltip="Determines the calendar system used for the loan schedule."
                     tooltipPosition="top"
                   ></p-dropdown>
@@ -570,7 +570,7 @@
                   mode="currency"
                   currency="USD"
                   locale="en-US"
-                  (onChange)="onTermPaymentAmountChange($event)"
+                  (ngModelChange)="onTermPaymentAmountChange($event)"
                   pTooltip="Override the calculated payment amount per term. E.g., $1,200"
                   tooltipPosition="top"
                 ></p-inputNumber>
@@ -588,7 +588,7 @@
                   id="defaultPreBillDaysConfiguration"
                   [(ngModel)]="loan.defaultPreBillDaysConfiguration"
                   name="defaultPreBillDaysConfiguration"
-                  (onChange)="submitLoan()"
+                  (ngModelChange)="submitLoan()"
                   pTooltip="Number of days before the period end to open the bill by default. E.g., 5"
                   tooltipPosition="top"
                 ></p-inputNumber>
@@ -605,7 +605,7 @@
                     loan.defaultBillDueDaysAfterPeriodEndConfiguration
                   "
                   name="defaultBillDueDaysAfterPeriodEndConfiguration"
-                  (onChange)="submitLoan()"
+                  (ngModelChange)="submitLoan()"
                   pTooltip="Number of days after the period end when the payment is due by default. E.g., 30"
                   tooltipPosition="top"
                 ></p-inputNumber>
@@ -620,7 +620,7 @@
                   [(ngModel)]="loan.allowRateAbove100"
                   name="allowRateAbove100"
                   binary="true"
-                  (onChange)="submitLoan()"
+                  (ngModelChange)="submitLoan()"
                   pTooltip="Allow setting interest rates above 100%."
                   tooltipPosition="top"
                 ></p-checkbox>
@@ -636,7 +636,7 @@
                   name="flushMethod"
                   [options]="flushMethods"
                   placeholder="Select a flush method"
-                  (onChange)="submitLoan()"
+                  (ngModelChange)="submitLoan()"
                   pTooltip="Determines how unbilled interest is handled."
                   tooltipPosition="top"
                 ></p-dropdown>
@@ -654,7 +654,7 @@
                   mode="currency"
                   currency="USD"
                   locale="en-US"
-                  (onChange)="submitLoan()"
+                  (ngModelChange)="submitLoan()"
                   pTooltip="The threshold amount for flushing unbilled interest. E.g., $0.01"
                   tooltipPosition="top"
                 ></p-inputNumber>
@@ -672,7 +672,7 @@
                   name="roundingMethod"
                   [options]="roundingMethods"
                   placeholder="Select a rounding method"
-                  (onChange)="submitLoan()"
+                  (ngModelChange)="submitLoan()"
                   pTooltip="Specifies how to round calculated amounts."
                   tooltipPosition="top"
                 ></p-dropdown>
@@ -687,7 +687,7 @@
                   id="roundingPrecision"
                   [(ngModel)]="loan.roundingPrecision"
                   name="roundingPrecision"
-                  (onChange)="submitLoan()"
+                  (ngModelChange)="submitLoan()"
                   pTooltip="Number of decimal places to round to. E.g., 2"
                   tooltipPosition="top"
                 ></p-inputNumber>
@@ -813,7 +813,7 @@
                       name="balanceModificationType-{{ i }}"
                       [options]="balanceIncreaseType"
                       placeholder="Select a type"
-                      (onChange)="balanceModificationChanged()"
+                      (ngModelChange)="balanceModificationChanged()"
                       pTooltip="Type of balance modification. E.g., 'Increase', 'Decrease'"
                       tooltipPosition="top"
                     ></p-dropdown>
@@ -826,7 +826,7 @@
                       mode="currency"
                       currency="USD"
                       locale="en-US"
-                      (onChange)="balanceModificationChanged()"
+                      (ngModelChange)="balanceModificationChanged()"
                       pTooltip="Amount of the balance modification. E.g., $500"
                       tooltipPosition="top"
                     ></p-inputNumber>

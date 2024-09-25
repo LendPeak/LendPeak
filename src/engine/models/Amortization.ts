@@ -722,20 +722,20 @@ export class Amortization {
     }[] = [];
 
     let balanceToModify = Currency.of(balance);
-    console.log(
-      this.balanceModifications,
-      "balance modifications:",
-      this.balanceModifications.map((modification) => {
-        return {
-          date: modification.date.format("YYYY-MM-DD"),
-          type: modification.type,
-          amount: modification.amount.toNumber(),
-        };
-      })
-    );
+    // console.log(
+    //   this.balanceModifications,
+    //   "balance modifications:",
+    //   this.balanceModifications.map((modification) => {
+    //     return {
+    //       date: modification.date.format("YYYY-MM-DD"),
+    //       type: modification.type,
+    //       amount: modification.amount.toNumber(),
+    //     };
+    //   })
+    // );
     for (let modification of this.balanceModifications) {
       // see if there are any modifications in the range
-      console.log(`Checking modification ${modification.date.format("YYYY-MM-DD")} and comparing it to ${startDate.format("YYYY-MM-DD")} and ${endDate.format("YYYY-MM-DD")}`);
+      // console.log(`Checking modification ${modification.date.format("YYYY-MM-DD")} and comparing it to ${startDate.format("YYYY-MM-DD")} and ${endDate.format("YYYY-MM-DD")}`);
 
       if (modification.date.isSameOrAfter(startDate) && modification.date.isSameOrBefore(endDate)) {
         // we found a modification, lets get its start date
@@ -765,16 +765,16 @@ export class Amortization {
       // if we have modifications, we will add the last balance to the end of the range
       balances.push({ balance: balances[balances.length - 1].balance, startDate: balances[balances.length - 1].endDate, endDate, modificationAmount: Currency.Zero() });
     }
-    console.log(
-      balances.map((balance) => {
-        return {
-          startDate: balance.startDate.format("YYYY-MM-DD"),
-          endDate: balance.endDate.format("YYYY-MM-DD"),
-          balance: balance.balance.toNumber(),
-          modificationAmount: balance.modificationAmount.toNumber(),
-        };
-      })
-    );
+    // console.log(
+    //   balances.map((balance) => {
+    //     return {
+    //       startDate: balance.startDate.format("YYYY-MM-DD"),
+    //       endDate: balance.endDate.format("YYYY-MM-DD"),
+    //       balance: balance.balance.toNumber(),
+    //       modificationAmount: balance.modificationAmount.toNumber(),
+    //     };
+    //   })
+    // );
 
     return balances;
   }

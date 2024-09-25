@@ -195,7 +195,7 @@ export class Amortization {
   firstPaymentDate?: Dayjs;
   termPeriodDefinition: TermPeriodDefinition;
   changePaymentDates: ChangePaymentDate[] = [];
-  repaymentSchedule: AmortizationSchedule[] = [];
+  repaymentSchedule: AmortizationSchedule[];
   balanceModifications: BalanceModification[] = [];
   _arp?: Decimal;
 
@@ -387,6 +387,8 @@ export class Amortization {
     // validate the schedule periods and rates
     this.verifySchedulePeriods();
     this.validateRatesSchedule();
+
+    this.repaymentSchedule = this.generateSchedule();
   }
 
   get apr(): Decimal {
@@ -1059,7 +1061,7 @@ export class Amortization {
    * Generates the TILA disclosures for the loan.
    * @returns An object containing all the TILA-required fields.
    */
-  public generateTILADisclosures(): TILADisclosures {
+  generateTILADisclosures(): TILADisclosures {
     // Ensure the amortization schedule is generated
     const schedule = this.repaymentSchedule.length > 0 ? this.repaymentSchedule : this.generateSchedule();
 
@@ -1106,7 +1108,7 @@ export class Amortization {
    * Generates a formatted TILA disclosure document as a string.
    * @returns A string containing the formatted TILA disclosure document.
    */
-  public printTILADocument(): string {
+  printTILADocument(): string {
     const tilaDisclosures = this.generateTILADisclosures();
 
     // Format numbers and dates

@@ -1,8 +1,14 @@
-import dayjs, { Dayjs } from "dayjs";
 import { Currency, RoundingMethod } from "../utils/Currency";
 import { Calendar, CalendarType } from "./Calendar";
 import { InterestCalculator } from "./InterestCalculator";
 import Decimal from "decimal.js";
+
+import dayjs, { Dayjs } from "dayjs";
+import isSameOrAfter from "dayjs/plugin/isSameOrAfter";
+import isSameOrBefore from "dayjs/plugin/isSameOrBefore";
+
+dayjs.extend(isSameOrAfter);
+dayjs.extend(isSameOrBefore);
 
 export interface AmortizationScheduleMetadata {
   splitInterestPeriod?: boolean;

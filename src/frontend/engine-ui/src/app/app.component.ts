@@ -170,6 +170,30 @@ export class AppComponent implements OnChanges {
     tooltipRef.toggle(event);
   }
 
+  selectedPeriods: number[] = [];
+
+  onRowClick(plan: any, event: Event) {
+    const target = event.target as HTMLElement;
+    if (target.closest('button, a, input, select, textarea')) {
+      return; // Ignore clicks on interactive elements
+    }
+
+    const period = plan.period;
+    const index = this.selectedPeriods.indexOf(period);
+    if (index === -1) {
+      this.selectedPeriods.push(period);
+    } else {
+      this.selectedPeriods.splice(index, 1);
+    }
+  }
+
+  onRowKeyDown(event: KeyboardEvent, plan: any) {
+    if (event.key === 'Enter' || event.key === ' ') {
+      this.onRowClick(plan, event);
+      event.preventDefault(); // Prevent default scrolling behavior
+    }
+  }
+
   ngOnInit(): void {
     // Retrieve loan from local storage if exists
     try {

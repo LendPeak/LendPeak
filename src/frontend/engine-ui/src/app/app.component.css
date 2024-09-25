@@ -92,3 +92,27 @@ p-fieldset>.p-fieldset-legend {
     max-width: 250px;
     word-wrap: break-word;
 }
+
+/* Zebra striping based on period number */
+tr.even-row {
+    background-color: #f9f9f9;
+    /* Light gray */
+}
+
+tr.odd-row {
+    background-color: #ffffff;
+    /* White */
+}
+
+/* Row hover effect */
+tr:hover {
+    background-color: #e0e0e0;
+    /* Slightly darker gray */
+}
+
+/* Selected row highlighting */
+tr.selected-row {
+    background-color: #c0c0c0 !important;
+    /* Darker gray */
+}
+

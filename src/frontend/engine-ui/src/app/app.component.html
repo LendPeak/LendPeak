@@ -940,7 +940,16 @@
         </tr>
       </ng-template>
       <ng-template pTemplate="body" let-plan>
-        <tr>
+        <tr
+          role="row"
+          [attr.aria-selected]="selectedPeriods.includes(plan.period)"
+          [class.even-row]="plan.period % 2 === 0"
+          [class.odd-row]="plan.period % 2 !== 0"
+          [class.selected-row]="selectedPeriods.includes(plan.period)"
+          (click)="onRowClick(plan, $event)"
+          tabindex="0"
+          (keydown)="onRowKeyDown($event, plan)"
+        >
           <td>{{ plan.period }}</td>
           <td>{{ plan.periodStartDate | date : "MM/dd/yyyy" }}</td>
           <td>{{ plan.periodEndDate | date : "MM/dd/yyyy" }}</td>
@@ -963,7 +972,7 @@
             {{ plan.billedDeferredInterest | currency }}
           </td>
           <td *ngIf="showAdvancedTable">
-            {{ plan.realInterest | currency }}
+            {{ plan.realInterest }}
           </td>
           <td *ngIf="showAdvancedTable">
             {{ plan.interestRoundingError }}

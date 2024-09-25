@@ -116,3 +116,29 @@ tr.selected-row {
     /* Darker gray */
 }
 
+/* Tooltip Content Styles */
+.tooltip-content {
+    max-width: 300px;
+    font-size: 0.95rem;
+}
+
+.tooltip-content p {
+    margin-top: 0;
+}
+
+.tooltip-content ul {
+    padding-left: 1rem;
+}
+
+.tooltip-content li {
+    margin-bottom: 1rem;
+}
+
+.tooltip-content strong {
+    color: #007ad9;
+}
+
+.tooltip-content em {
+    font-style: italic;
+    color: #555;
+}

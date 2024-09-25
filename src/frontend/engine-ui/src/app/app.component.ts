@@ -274,12 +274,12 @@ export class AppComponent implements OnChanges {
     this.showAdvancedTable = !this.showAdvancedTable;
   }
 
-  onTermPaymentAmountChange(value: string) {
-    if (!value) {
-      this.loan.termPaymentAmount = undefined;
-    } else {
-      this.loan.termPaymentAmount = parseFloat(value);
-    }
+  onTermPaymentAmountChange(value: any) {
+    // if (!value) {
+    //   this.loan.termPaymentAmount = undefined;
+    // } else {
+    //   this.loan.termPaymentAmount = parseFloat(this.loan.termPaymentAmount);
+    // }
     this.submitLoan();
   }
 

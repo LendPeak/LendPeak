@@ -5,6 +5,7 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations'; 
 import { AppComponent } from './app.component';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
+import { InputNumberModule } from 'primeng/inputnumber';
 import { CalendarModule } from 'primeng/calendar';
 import { DropdownModule } from 'primeng/dropdown';
 import { TableModule } from 'primeng/table';
@@ -21,6 +22,8 @@ import { TagModule } from 'primeng/tag';
 import { DialogModule } from 'primeng/dialog';
 import { TilaDisclosureComponent } from './tila-disclosure.component';
 import { PanelModule } from 'primeng/panel';
+import { TabViewModule } from 'primeng/tabview';
+import { AccordionModule } from 'primeng/accordion';
 
 @NgModule({
   declarations: [AppComponent, TilaDisclosureComponent],
@@ -45,6 +48,9 @@ import { PanelModule } from 'primeng/panel';
     TagModule,
     DialogModule,
     PanelModule,
+    TabViewModule,
+    AccordionModule,
+    InputNumberModule,
   ],
   providers: [],
   bootstrap: [AppComponent],

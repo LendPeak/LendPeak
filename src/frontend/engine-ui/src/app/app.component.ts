@@ -447,9 +447,13 @@ export class AppComponent implements OnChanges {
   addBalanceModificationRow() {
     const balanceModifications = this.loan.balanceModifications;
 
+    const dateOfTheModificaiton =
+      balanceModifications.length === 0
+        ? this.loan.startDate
+        : balanceModifications[balanceModifications.length - 1].date;
     balanceModifications.push({
       amount: 0,
-      date: new Date(),
+      date: dateOfTheModificaiton,
       type: 'decrease',
     });
 
@@ -463,6 +467,11 @@ export class AppComponent implements OnChanges {
   }
 
   balanceModificationChanged() {
+    // order the balance modifications by date and refresh the table
+    // this.loan.balanceModifications.sort((a, b) => {
+    //   return dayjs(a.date).diff(dayjs(b.date));
+    // });
+
     this.submitLoan();
   }
 

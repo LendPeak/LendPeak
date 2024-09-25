@@ -182,7 +182,6 @@
                   (ngModelChange)="submitLoan()"
                   name="firstPaymentDate"
                   dateFormat="mm/dd/yy"
-                  showIcon
                 ></p-calendar>
               </p-inputGroup>
             </div>
@@ -840,6 +839,7 @@
           <div class="grid">
             <div class="col-fixed" style="width: 18em">
               <p-button
+                severity="success"
                 label="Create Custom Schedule"
                 icon="pi pi-plus"
                 (onClick)="createLoanRepaymentPlan()"
@@ -847,6 +847,7 @@
             </div>
             <div class="col-fixed" style="width: 18em">
               <p-button
+                severity="danger"
                 label="Remove Schedule Override"
                 icon="pi pi-minus"
                 (onClick)="removeLoanRepaymentPlan()"
@@ -937,7 +938,6 @@
           [toggleable]="true"
           [(collapsed)]="balanceModificationsCollapsed"
         >
-          <div class="p-mb-3"></div>
           <p-divider />
           <table
             *ngIf="loan.balanceModifications.length > 0"
@@ -961,13 +961,19 @@
                 "
               >
                 <td>
-                  <p-calendar
-                    [(ngModel)]="balanceModification.date"
-                    (ngModelChange)="submitLoan()"
-                    dateFormat="mm/dd/yy"
-                    name="balanceModificationDate-{{ i }}"
-                    showIcon
-                  ></p-calendar>
+                  <p-inputGroup>
+                    <p-inputGroupAddon
+                      ><i class="pi pi-calendar"></i
+                    ></p-inputGroupAddon>
+
+                    <p-calendar
+                      [(ngModel)]="balanceModification.date"
+                      (ngModelChange)="balanceModificationChanged()"
+                      dateFormat="mm/dd/yy"
+                      name="balanceModificationDate-{{ i }}"
+                      showIcon
+                    ></p-calendar>
+                  </p-inputGroup>
                 </td>
                 <td>
                   <p-dropdown
@@ -976,18 +982,21 @@
                     id="balanceModificationType={{ i }}"
                     [options]="balanceIncreaseType"
                     placeholder="Select a balance increase type"
-                    (ngModelChange)="submitLoan()"
+                    (ngModelChange)="balanceModificationChanged()"
                     styleClass="full-width"
                   ></p-dropdown>
                 </td>
                 <td>
-                  <input
-                    type="number"
-                    pInputText
-                    [(ngModel)]="balanceModification.amount"
-                    name="balanceModificationAmount-{{ i }}"
-                    (ngModelChange)="submitLoan()"
-                  />
+                  <p-inputGroup>
+                    <p-inputGroupAddon>$</p-inputGroupAddon>
+                    <input
+                      type="number"
+                      pInputText
+                      [(ngModel)]="balanceModification.amount"
+                      name="balanceModificationAmount-{{ i }}"
+                      (ngModelChange)="balanceModificationChanged()"
+                    />
+                  </p-inputGroup>
                 </td>
                 <!--
                 <td>
@@ -1001,7 +1010,8 @@
                 </td> -->
                 <td>
                   <p-button
-                    icon="pi pi-trash"
+                    severity="danger"
+                    icon="pi pi-minus"
                     class="p-button-rounded p-button-danger p-mr-2"
                     (onClick)="deleteBalanceModificationRow(i)"
                   ></p-button>
@@ -1015,6 +1025,7 @@
           <div class="grid">
             <div class="col-fixed">
               <p-button
+                severity="success"
                 label="Add Balance Modification Row"
                 icon="pi pi-plus"
                 (onClick)="addBalanceModificationRow()"

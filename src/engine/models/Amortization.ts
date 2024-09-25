@@ -720,14 +720,16 @@ export class Amortization {
         // we found a modification, lets get its start date
         let modificationStartDate = balances.length > 0 ? balances[balances.length - 1].endDate : startDate;
         let modificationEndDate = modification.date;
-        let modificationAmount = modification.amount;
+        let modificationAmount: Currency;
         let modifiedBalance: Currency;
         switch (modification.type) {
           case "increase":
-            modifiedBalance = balanceToModify.add(modificationAmount);
+            modifiedBalance = balanceToModify.add(modification.amount);
+            modificationAmount = modification.amount;
             break;
           case "decrease":
-            modifiedBalance = balanceToModify.subtract(modificationAmount);
+            modifiedBalance = balanceToModify.subtract(modification.amount);
+            modificationAmount = modification.amount.negated();
             break;
           default:
             throw new Error("Invalid balance modification type");

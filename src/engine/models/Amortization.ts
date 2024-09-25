@@ -219,7 +219,7 @@ export class Amortization {
       this.balanceModifications = params.balanceModifications;
       // fix dates to start at the beginning of the day
       this.balanceModifications = this.balanceModifications.map((balanceModification) => {
-        return { amount: balanceModification.amount, date: dayjs(balanceModification.date).startOf("day"), type: balanceModification.type, description: balanceModification.description };
+        return { amount: balanceModification.amount, date: balanceModification.date.startOf("day"), type: balanceModification.type, description: balanceModification.description };
       });
 
       // sort balance modifications by date
@@ -723,6 +723,7 @@ export class Amortization {
 
     let balanceToModify = Currency.of(balance);
     console.log(
+      this.balanceModifications,
       "balance modifications:",
       this.balanceModifications.map((modification) => {
         return {

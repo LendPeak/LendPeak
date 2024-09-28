@@ -445,16 +445,20 @@ export class AppComponent implements OnChanges {
     });
 
     console.log('Loan repayment plan refreshed', this.loan.periodsSchedule);
+    this.submitLoan();
   }
 
   removeLoanRepaymentPlan() {
     // Logic to remove schedule override
     this.loan.periodsSchedule = [];
+    console.log('Loan repayment plan removed');
+    this.submitLoan();
   }
 
   deletePlan(index: number) {
     this.loan.periodsSchedule.splice(index, 1);
     console.log('Plan deleted at index:', index);
+    this.submitLoan();
   }
 
   repaymentPlanEndDateChange(index: number) {

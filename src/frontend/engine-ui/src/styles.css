@@ -3,3 +3,8 @@
 @import "primeng/resources/primeng.min.css";
 @import "primeicons/primeicons.css";
 @import "primeflex/primeflex.css";
+
+html {
+    font-size: 80%;
+    /* Reduce base font size to 80% of default */
+}

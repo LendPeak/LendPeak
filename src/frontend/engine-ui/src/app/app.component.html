@@ -1,9 +1,42 @@
-<!--  Toolbar -->
+<!-- Toolbar -->
 <p-toolbar class="custom-toolbar">
   <div class="p-toolbar-group-start">
     <img src="horizontal-logo.png" style="width: 160px" />
   </div>
+
+  <div class="p-toolbar-group-center">
+    <!-- Snapshot Date Picker -->
+    <div
+      class="snapshot-date-container"
+      [ngClass]="{ 'time-machine-active': !isToday(snapshotDate) }"
+    >
+      <label for="snapshotDate" class="snapshot-date-label">
+        <i class="pi pi-calendar"></i>
+        Snapshot Date:
+      </label>
+      <p-calendar
+        id="snapshotDate"
+        [(ngModel)]="snapshotDate"
+        [showIcon]="true"
+        dateFormat="mm/dd/yy"
+        (ngModelChange)="onSnapshotDateChange($event)"
+      ></p-calendar>
+      <p-overlayPanel #startDateTooltip>
+        Select a date to view the loan as of that day
+      </p-overlayPanel>
+    </div>
+  </div>
+
   <div class="p-toolbar-group-end">
+    <!-- Time Machine Indicator -->
+    <p-chip
+      *ngIf="!isToday(snapshotDate)"
+      label="Time Travel Mode"
+      icon="pi pi-clock"
+      class="p-mr-2 time-machine-chip"
+      [style]="{ 'background-color': '#ff9800', color: '#ffffff' }"
+    ></p-chip>
+
     <!-- Save UI Button -->
     <p-button
       label="Save"
@@ -23,16 +56,6 @@
       pTooltip="Reset the UI to default settings"
       tooltipPosition="bottom"
     ></p-button>
-
-    <!-- Settings Button -->
-    <!-- <p-button
-      label="Settings"
-      icon="pi pi-cog"
-      class="p-button-secondary toolbar-button"
-      (onClick)="openSettingsDialog()"
-      pTooltip="Open settings"
-      tooltipPosition="bottom"
-    ></p-button> -->
 
     <!-- Actions SplitButton -->
     <p-splitButton
@@ -611,6 +634,204 @@
               </div>
             </div>
           </p-accordionTab>
+
+          <!-- Fees That Apply to All Terms -->
+          <p-accordionTab header="Fees That Apply to All Terms">
+            <div class="p-fluid">
+              <table
+                *ngIf="loan.feesForAllTerms.length > 0"
+                class="p-datatable p-component"
+              >
+                <thead>
+                  <tr>
+                    <th>Type</th>
+                    <th>Amount / Percentage</th>
+                    <th>Based On</th>
+                    <th>Description</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let fee of loan.feesForAllTerms; let i = index">
+                    <!-- Fee Type -->
+                    <td>
+                      <p-dropdown
+                        [(ngModel)]="fee.type"
+                        [options]="[
+                          { label: 'Fixed', value: 'fixed' },
+                          { label: 'Percentage', value: 'percentage' }
+                        ]"
+                        (ngModelChange)="submitLoan()"
+                      ></p-dropdown>
+                    </td>
+                    <!-- Amount or Percentage -->
+                    <td>
+                      <ng-container *ngIf="fee.type === 'fixed'">
+                        <p-inputNumber
+                          [(ngModel)]="fee.amount"
+                          mode="currency"
+                          currency="USD"
+                          locale="en-US"
+                          (ngModelChange)="submitLoan()"
+                        ></p-inputNumber>
+                      </ng-container>
+                      <ng-container *ngIf="fee.type === 'percentage'">
+                        <p-inputNumber
+                          [(ngModel)]="fee.percentage"
+                          mode="decimal"
+                          minFractionDigits="2"
+                          suffix="%"
+                          (ngModelChange)="submitLoan()"
+                        ></p-inputNumber>
+                      </ng-container>
+                    </td>
+                    <!-- Based On -->
+                    <td>
+                      <ng-container *ngIf="fee.type === 'percentage'">
+                        <p-dropdown
+                          [(ngModel)]="fee.basedOn"
+                          [options]="[
+                            { label: 'Interest', value: 'interest' },
+                            { label: 'Principal', value: 'principal' },
+                            { label: 'Total Payment', value: 'totalPayment' }
+                          ]"
+                          (ngModelChange)="submitLoan()"
+                        ></p-dropdown>
+                      </ng-container>
+                    </td>
+                    <!-- Description -->
+                    <td>
+                      <input
+                        type="text"
+                        [(ngModel)]="fee.description"
+                        (ngModelChange)="submitLoan()"
+                      />
+                    </td>
+                    <!-- Remove Button -->
+                    <td>
+                      <p-button
+                        icon="pi pi-trash"
+                        class="p-button-rounded p-button-danger"
+                        (onClick)="removeFeeForAllTerms(i)"
+                      ></p-button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+              <div class="p-mt-2">
+                <p-button
+                  label="Add Fee"
+                  icon="pi pi-plus"
+                  class="p-button-success"
+                  (onClick)="addFeeForAllTerms()"
+                ></p-button>
+              </div>
+            </div>
+          </p-accordionTab>
+
+          <!-- Fees Per Term -->
+          <p-accordionTab header="Fees Per Term">
+            <div class="p-fluid">
+              <div *ngFor="let termFees of loan.feesPerTerm; let i = index">
+                <h4>Term {{ termFees.termNumber }}</h4>
+                <table class="p-datatable p-component">
+                  <thead>
+                    <tr>
+                      <th>Type</th>
+                      <th>Amount / Percentage</th>
+                      <th>Based On</th>
+                      <th>Description</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngFor="let fee of termFees.fees; let j = index">
+                      <!-- Fee Type -->
+                      <td>
+                        <p-dropdown
+                          [(ngModel)]="fee.type"
+                          [options]="[
+                            { label: 'Fixed', value: 'fixed' },
+                            { label: 'Percentage', value: 'percentage' }
+                          ]"
+                          (ngModelChange)="submitLoan()"
+                        ></p-dropdown>
+                      </td>
+                      <!-- Amount or Percentage -->
+                      <td>
+                        <ng-container *ngIf="fee.type === 'fixed'">
+                          <p-inputNumber
+                            [(ngModel)]="fee.amount"
+                            mode="currency"
+                            currency="USD"
+                            locale="en-US"
+                            (ngModelChange)="submitLoan()"
+                          ></p-inputNumber>
+                        </ng-container>
+                        <ng-container *ngIf="fee.type === 'percentage'">
+                          <p-inputNumber
+                            [(ngModel)]="fee.percentage"
+                            mode="decimal"
+                            minFractionDigits="2"
+                            suffix="%"
+                            (ngModelChange)="submitLoan()"
+                          ></p-inputNumber>
+                        </ng-container>
+                      </td>
+                      <!-- Based On -->
+                      <td>
+                        <ng-container *ngIf="fee.type === 'percentage'">
+                          <p-dropdown
+                            [(ngModel)]="fee.basedOn"
+                            [options]="[
+                              { label: 'Interest', value: 'interest' },
+                              { label: 'Principal', value: 'principal' },
+                              { label: 'Total Payment', value: 'totalPayment' }
+                            ]"
+                            (ngModelChange)="submitLoan()"
+                          ></p-dropdown>
+                        </ng-container>
+                      </td>
+                      <!-- Description -->
+                      <td>
+                        <input
+                          type="text"
+                          [(ngModel)]="fee.description"
+                          (ngModelChange)="submitLoan()"
+                        />
+                      </td>
+                      <!-- Remove Button -->
+                      <td>
+                        <p-button
+                          icon="pi pi-trash"
+                          class="p-button-rounded p-button-danger"
+                          (onClick)="removeFeePerTerm(termFees.termNumber, j)"
+                        ></p-button>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+                <div class="p-mt-2">
+                  <p-button
+                    label="Add Fee"
+                    icon="pi pi-plus"
+                    class="p-button-success"
+                    (onClick)="addFeePerTerm(termFees.termNumber)"
+                  ></p-button>
+                </div>
+                <p-divider></p-divider>
+              </div>
+              <!-- Button to Add New Term -->
+              <div class="p-mt-2">
+                <p-button
+                  label="Add Fees to a New Term"
+                  icon="pi pi-plus"
+                  class="p-button-success"
+                  (onClick)="addFeePerTerm(getNextTermNumber())"
+                ></p-button>
+              </div>
+            </div>
+          </p-accordionTab>
         </p-accordion>
       </div>
     </div>
@@ -1077,6 +1298,276 @@
       </div>
     </div>
   </p-tabPanel>
+
+  <!-- Deposits Tab -->
+  <p-tabPanel header="Deposits">
+    <div class="grid">
+      <div class="col-12">
+        <p-card header="Manage Deposits">
+          <div class="p-mb-3">
+            <!-- Button to Add New Deposit -->
+            <p-button
+              label="Add New Deposit"
+              icon="pi pi-plus"
+              class="p-button-success"
+              (onClick)="addDeposit()"
+            ></p-button>
+          </div>
+          <div class="p-fluid">
+            <!-- Deposits Table -->
+            <p-table
+              [value]="loan.deposits"
+              editMode="cell"
+              dataKey="id"
+              class="p-datatable-sm"
+            >
+              <ng-template pTemplate="header">
+                <tr>
+                  <th>ID</th>
+                  <th>Amount</th>
+                  <th>Currency</th>
+                  <th>Effective Date</th>
+                  <th>Clearing Date</th>
+                  <th>Payment Method</th>
+                  <th>Depositor</th>
+                  <th>Deposit Location</th>
+                  <th>Actions</th>
+                </tr>
+              </ng-template>
+              <ng-template pTemplate="body" let-deposit>
+                <tr>
+                  <!-- ID -->
+                  <td pEditableColumn>
+                    <p-cellEditor>
+                      <ng-template pTemplate="input">
+                        <input
+                          type="text"
+                          pInputText
+                          [(ngModel)]="deposit.id"
+                          name="depositId-{{ deposit.id }}"
+                          (onBlur)="submitLoan()"
+                        />
+                      </ng-template>
+                      <ng-template pTemplate="output">
+                        {{ deposit.id }}
+                      </ng-template>
+                    </p-cellEditor>
+                  </td>
+                  <!-- Amount -->
+                  <td pEditableColumn>
+                    <p-cellEditor>
+                      <ng-template pTemplate="input">
+                        <p-inputNumber
+                          [(ngModel)]="deposit.amount"
+                          name="depositAmount-{{ deposit.id }}"
+                          mode="currency"
+                          currency="USD"
+                          locale="en-US"
+                          (onBlur)="submitLoan()"
+                        ></p-inputNumber>
+                      </ng-template>
+                      <ng-template pTemplate="output">
+                        {{ deposit.amount | currency }}
+                      </ng-template>
+                    </p-cellEditor>
+                  </td>
+                  <!-- Currency -->
+                  <td pEditableColumn>
+                    <p-cellEditor>
+                      <ng-template pTemplate="input">
+                        <p-dropdown
+                          [(ngModel)]="deposit.currency"
+                          name="depositCurrency-{{ deposit.id }}"
+                          [options]="currencyOptions"
+                          placeholder="Select Currency"
+                          appendTo="body"
+                          (onBlur)="submitLoan()"
+                        ></p-dropdown>
+                      </ng-template>
+                      <ng-template pTemplate="output">
+                        {{ deposit.currency }}
+                      </ng-template>
+                    </p-cellEditor>
+                  </td>
+                  <!-- Effective Date -->
+                  <td pEditableColumn>
+                    <p-cellEditor>
+                      <ng-template pTemplate="input">
+                        <p-calendar
+                          [(ngModel)]="deposit.effectiveDate"
+                          name="depositEffectiveDate-{{ deposit.id }}"
+                          dateFormat="mm/dd/yy"
+                          showIcon
+                          appendTo="body"
+                          (onClick)="onCalendarClick($event)"
+                          (onBlur)="submitLoan()"
+                        ></p-calendar>
+                      </ng-template>
+                      <ng-template pTemplate="output">
+                        {{ deposit.effectiveDate | date : "MM/dd/yyyy" }}
+                      </ng-template>
+                    </p-cellEditor>
+                  </td>
+                  <!-- Clearing Date -->
+                  <td pEditableColumn>
+                    <p-cellEditor>
+                      <ng-template pTemplate="input">
+                        <p-calendar
+                          [(ngModel)]="deposit.clearingDate"
+                          name="depositClearingDate-{{ deposit.id }}"
+                          dateFormat="mm/dd/yy"
+                          showIcon
+                          appendTo="body"
+                          (onClick)="onCalendarClick($event)"
+                          (onBlur)="submitLoan()"
+                        ></p-calendar>
+                      </ng-template>
+                      <ng-template pTemplate="output">
+                        {{ deposit.clearingDate | date : "MM/dd/yyyy" }}
+                      </ng-template>
+                    </p-cellEditor>
+                  </td>
+                  <!-- Payment Method -->
+                  <td pEditableColumn>
+                    <p-cellEditor>
+                      <ng-template pTemplate="input">
+                        <input
+                          type="text"
+                          pInputText
+                          [(ngModel)]="deposit.paymentMethod"
+                          name="depositPaymentMethod-{{ deposit.id }}"
+                          (onBlur)="submitLoan()"
+                        />
+                      </ng-template>
+                      <ng-template pTemplate="output">
+                        {{ deposit.paymentMethod }}
+                      </ng-template>
+                    </p-cellEditor>
+                  </td>
+                  <!-- Depositor -->
+                  <td pEditableColumn>
+                    <p-cellEditor>
+                      <ng-template pTemplate="input">
+                        <input
+                          type="text"
+                          pInputText
+                          [(ngModel)]="deposit.depositor"
+                          name="depositDepositor-{{ deposit.id }}"
+                        />
+                      </ng-template>
+                      <ng-template pTemplate="output">
+                        {{ deposit.depositor }}
+                      </ng-template>
+                    </p-cellEditor>
+                  </td>
+                  <!-- Deposit Location -->
+                  <td pEditableColumn>
+                    <p-cellEditor>
+                      <ng-template pTemplate="input">
+                        <input
+                          type="text"
+                          pInputText
+                          [(ngModel)]="deposit.depositLocation"
+                          name="depositLocation-{{ deposit.id }}"
+                        />
+                      </ng-template>
+                      <ng-template pTemplate="output">
+                        {{ deposit.depositLocation }}
+                      </ng-template>
+                    </p-cellEditor>
+                  </td>
+                  <!-- Actions -->
+                  <td>
+                    <p-button
+                      icon="pi pi-trash"
+                      class="p-button-rounded p-button-danger"
+                      (onClick)="removeDeposit(deposit)"
+                      pTooltip="Remove Deposit"
+                      tooltipPosition="top"
+                    ></p-button>
+                  </td>
+                </tr>
+              </ng-template>
+            </p-table>
+          </div>
+        </p-card>
+      </div>
+    </div>
+  </p-tabPanel>
+
+  <!-- Bills -->
+  <p-tabPanel header="Bills">
+    <div class="grid">
+      <div class="col-12">
+        <p-card>
+          <p-table
+            [value]="bills"
+            [paginator]="true"
+            [rows]="24"
+            sortField="dueDate"
+          >
+            <ng-template pTemplate="header">
+              <tr>
+                <th pSortableColumn="id">
+                  Bill ID <p-sortIcon field="id"></p-sortIcon>
+                </th>
+                <th pSortableColumn="period">
+                  Period <p-sortIcon field="period"></p-sortIcon>
+                </th>
+                <th pSortableColumn="dueDate">
+                  Due Date <p-sortIcon field="dueDate"></p-sortIcon>
+                </th>
+                <th>Principal Due</th>
+                <th>Interest Due</th>
+                <th>Fees Due</th>
+                <th>Total Due</th>
+                <th>Status</th>
+                <th>Actions</th>
+
+                <!-- Add more columns if needed -->
+              </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-bill>
+              <tr>
+                <td>{{ bill.id }}</td>
+                <td>{{ bill.period }}</td>
+                <td>{{ bill.dueDate | date : "MM/dd/yyyy" }}</td>
+                <td>{{ bill.principalDue | currency }}</td>
+                <td>{{ bill.interestDue | currency }}</td>
+                <td>{{ bill.feesDue | currency }}</td>
+                <td>{{ bill.totalDue | currency }}</td>
+                <td>
+                  <p-tag
+                    *ngIf="bill.isOpen"
+                    value="Open Bill"
+                    severity="success"
+                  ></p-tag>
+                  <p-tag
+                    value="{{ bill.isPaid ? 'Paid' : 'Unpaid' }}"
+                    [severity]="bill.isPaid ? 'success' : 'warning'"
+                  ></p-tag>
+                  <p-tag
+                    *ngIf="bill.isPastDue"
+                    value="Past Due"
+                    severity="danger"
+                  ></p-tag>
+                </td>
+                <td>
+                  <p-button
+                    label="Mark as Paid"
+                    icon="pi pi-check"
+                    class="p-button-success"
+                    [disabled]="bill.isPaid"
+                    (onClick)="markBillAsPaid(bill)"
+                  ></p-button>
+                </td>
+              </tr>
+            </ng-template>
+          </p-table>
+        </p-card>
+      </div>
+    </div>
+  </p-tabPanel>
 </p-tabView>
 
 <!-- Repayment Plan at the Bottom -->
@@ -1100,16 +1591,16 @@
       <div class="col-3">
         <p-tag
           severity="success"
-          value="Total Charged Interest: ${{
-            amortization?.totalChargedInterestRounded?.toNumber()
+          value="Total Charged Interest: {{
+            amortization?.totalChargedInterestRounded?.toNumber() | currency
           }}"
         ></p-tag>
       </div>
       <div class="col-3">
         <p-tag
           severity="success"
-          value="Total Loan Amount: ${{
-            amortization?.totalLoanAmount?.toNumber()
+          value="Total Loan Amount: {{
+            amortization?.totalLoanAmount?.toNumber() | currency
           }}"
         ></p-tag>
       </div>
@@ -1136,6 +1627,7 @@
           <th>Bill Open Date</th>
           <th>Bill Due Date</th>
           <th>Interest Rate</th>
+          <th>Fees</th>
           <th>Total Interest</th>
           <th>Principal</th>
           <th>Total Payment</th>
@@ -1176,6 +1668,7 @@
           <td>{{ plan.periodBillOpenDate | date : "MM/dd/yyyy" }}</td>
           <td>{{ plan.periodBillDueDate | date : "MM/dd/yyyy" }}</td>
           <td>{{ plan.periodInterestRate }}%</td>
+          <td>{{ plan.fees | currency }}</td>
           <td>{{ plan.totalInterestForPeriod | currency }}</td>
           <td>{{ plan.principal | currency }}</td>
           <td>{{ plan.totalPayment | currency }}</td>

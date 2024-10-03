@@ -38,6 +38,16 @@ export class Currency {
     return new Currency(amount);
   }
 
+  /**
+   * Returns the smaller of two Currency instances.
+   * @param a - First Currency instance.
+   * @param b - Second Currency instance.
+   * @returns The Currency instance with the smaller value.
+   */
+  static min(a: Currency, b: Currency): Currency {
+    return a.getValue().lessThanOrEqualTo(b.getValue()) ? a : b;
+  }
+
   negated(): Currency {
     return Currency.of(this.value.negated());
   }
@@ -163,5 +173,30 @@ export class Currency {
 
   toJson(): string {
     return this.toCurrencyString();
+  }
+
+  /**
+   * Checks if the value is equal to another Currency's value.
+   * @param other - The other Currency instance to compare with.
+   * @returns True if values are equal, false otherwise.
+   */
+  equals(other: Currency): boolean {
+    return this.value.equals(other.getValue());
+  }
+
+  greaterThan(other: Currency): boolean {
+    return this.value.greaterThan(other.getValue());
+  }
+
+  lessThan(other: Currency): boolean {
+    return this.value.lessThan(other.getValue());
+  }
+
+  greaterThanOrEqualTo(other: Currency): boolean {
+    return this.value.greaterThanOrEqualTo(other.getValue());
+  }
+
+  lessThanOrEqualTo(other: Currency): boolean {
+    return this.value.lessThanOrEqualTo(other.getValue());
   }
 }

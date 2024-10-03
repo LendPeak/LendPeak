@@ -26,6 +26,9 @@ import { TabViewModule } from 'primeng/tabview';
 import { AccordionModule } from 'primeng/accordion';
 import { OverlayPanelModule } from 'primeng/overlaypanel';
 import { SplitButtonModule } from 'primeng/splitbutton';
+import { ChipModule } from 'primeng/chip';
+import { PaginatorModule } from 'primeng/paginator';
+import { TooltipModule } from 'primeng/tooltip';
 
 @NgModule({
   declarations: [AppComponent, TilaDisclosureComponent],
@@ -55,6 +58,9 @@ import { SplitButtonModule } from 'primeng/splitbutton';
     InputNumberModule,
     OverlayPanelModule,
     SplitButtonModule,
+    ChipModule,
+    PaginatorModule,
+    TooltipModule,
   ],
   providers: [],
   bootstrap: [AppComponent],

@@ -189,3 +189,39 @@ p-fieldset>.p-fieldset-legend {
     border-color: #ffc107;
     color: #212529;
 }
+
+/* Center group in the toolbar */
+.p-toolbar-group-center {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Snapshot Date Container */
+.snapshot-date-container {
+    display: flex;
+    align-items: center;
+}
+
+.snapshot-date-label {
+    margin-right: 0.5rem;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+}
+
+.snapshot-date-label i {
+    margin-right: 0.25rem;
+}
+
+.time-machine-active .snapshot-date-label,
+.time-machine-active .p-calendar {
+    color: #ff9800;
+    /* Orange color to indicate time travel mode */
+    font-weight: bold;
+}
+
+.time-machine-chip {
+    margin-right: 1rem;
+}

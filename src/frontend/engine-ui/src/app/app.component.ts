@@ -12,17 +12,51 @@ import {
   PreBillDaysConfiguration,
   BillDueDaysConfiguration,
   TILADisclosures,
+  Fee,
 } from 'lendpeak-engine/models/Amortization';
+import { Deposit, DepositRecord } from 'lendpeak-engine/models/Deposit';
+import {
+  PaymentApplication,
+  PaymentPriority,
+  PaymentApplicationResult,
+} from 'lendpeak-engine/models/PaymentApplication';
+import { Bill, UIBill } from 'lendpeak-engine/models/Bill';
+import { BillGenerator } from 'lendpeak-engine/models/BillGenerator';
 import { Currency, RoundingMethod } from 'lendpeak-engine/utils/Currency';
 import Decimal from 'decimal.js';
 import { CalendarType } from 'lendpeak-engine/models/Calendar';
 
-import dayjs from 'dayjs';
+import dayjs, { Dayjs } from 'dayjs';
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter';
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore';
 
 dayjs.extend(isSameOrAfter);
 dayjs.extend(isSameOrBefore);
+
+import { v4 as uuidv4 } from 'uuid'; // For generating unique IDs
+
+interface LoanFee {
+  type: 'fixed' | 'percentage';
+  amount?: number; // For fixed amount fees
+  percentage?: number; // For percentage-based fees (as percentage, e.g., 5% is 5)
+  basedOn?: 'interest' | 'principal' | 'totalPayment';
+  description?: string;
+  metadata?: any;
+}
+
+interface LoanDeposit {
+  id: string;
+  amount: number;
+  currency: string;
+  createdDate: Date;
+  insertedDate: Date;
+  effectiveDate: Date;
+  clearingDate?: Date;
+  systemDate: Date;
+  paymentMethod?: string;
+  depositor?: string;
+  depositLocation?: string;
+}
 
 @Component({
   selector: 'app-root',
@@ -30,7 +64,9 @@ dayjs.extend(isSameOrBefore);
   styleUrls: ['./app.component.css'],
 })
 export class AppComponent implements OnChanges {
-  CURRENT_OBJECT_VERSION = 6;
+  snapshotDate: Date = new Date();
+
+  CURRENT_OBJECT_VERSION = 8;
   loan: {
     objectVersion: number;
     principal: number;
@@ -43,6 +79,9 @@ export class AppComponent implements OnChanges {
     calendarType: string;
     roundingMethod: string;
     flushMethod: string;
+    feesForAllTerms: LoanFee[];
+    feesPerTerm: { termNumber: number; fees: LoanFee[] }[];
+
     roundingPrecision: number;
     flushThreshold: number;
     termPaymentAmount: number | undefined;
@@ -75,6 +114,7 @@ export class AppComponent implements OnChanges {
       interestRate: number;
       paymentAmount: number;
     }[];
+    deposits: LoanDeposit[];
     termPeriodDefinition: TermPeriodDefinition;
   } = {
     objectVersion: this.CURRENT_OBJECT_VERSION,
@@ -82,6 +122,8 @@ export class AppComponent implements OnChanges {
     originationFee: 0,
     interestRate: 10,
     term: 12,
+    feesForAllTerms: [],
+    feesPerTerm: [],
     startDate: new Date(),
     firstPaymentDate: dayjs().add(1, 'month').toDate(),
     endDate: dayjs().add(12, 'month').toDate(),
@@ -100,6 +142,7 @@ export class AppComponent implements OnChanges {
     changePaymentDates: [],
     dueBillDays: [],
     preBillDays: [],
+    deposits: [],
     termPeriodDefinition: {
       unit: 'month',
       count: [1],
@@ -113,6 +156,9 @@ export class AppComponent implements OnChanges {
     annualPercentageRate: new Decimal(0),
     paymentSchedule: [],
   };
+
+  bills: UIBill[] = [];
+  paymentApplicationResults: PaymentApplicationResult[] = [];
 
   lenderName = 'Your Bank Name';
   borrowerName = 'John Doe';
@@ -158,6 +204,15 @@ export class AppComponent implements OnChanges {
     localStorage.setItem('loan', JSON.stringify(this.loan));
   }
 
+  getNextTermNumber(): number {
+    if (this.loan.feesPerTerm.length === 0) {
+      return 1;
+    } else {
+      const termNumbers = this.loan.feesPerTerm.map((tf) => tf.termNumber);
+      return Math.max(...termNumbers) + 1;
+    }
+  }
+
   resetUIState() {
     // remove loacal storage
     localStorage.removeItem('uiState');
@@ -194,7 +249,25 @@ export class AppComponent implements OnChanges {
     }
   }
 
+  // Method to handle click events on the calendar component
+  onCalendarClick(event: Event): void {
+    event.stopPropagation();
+  }
+
+  // Method to handle changes to snapshotDate
+  onSnapshotDateChange(date: Date) {
+    this.snapshotDate = date;
+    this.submitLoan();
+    // this.updateDataForSnapshotDate();
+  }
+
+  // Method to check if the selected date is today
+  isToday(date: Date): boolean {
+    return dayjs(date).isSame(dayjs(), 'day');
+  }
+
   ngOnInit(): void {
+    this.snapshotDate = new Date();
     // Retrieve loan from local storage if exists
     try {
       const loan = localStorage.getItem('loan');
@@ -207,6 +280,64 @@ export class AppComponent implements OnChanges {
         this.loan.startDate = new Date(this.loan.startDate);
         this.loan.firstPaymentDate = new Date(this.loan.firstPaymentDate);
         this.loan.endDate = new Date(this.loan.endDate);
+
+        if (this.loan.deposits.length > 0) {
+          this.loan.deposits = this.loan.deposits.map((deposit) => {
+            return {
+              id: deposit.id,
+              amount: deposit.amount,
+              currency: deposit.currency,
+              createdDate: new Date(deposit.createdDate),
+              insertedDate: new Date(deposit.insertedDate),
+              effectiveDate: new Date(deposit.effectiveDate),
+              clearingDate: deposit.clearingDate
+                ? new Date(deposit.clearingDate)
+                : undefined,
+              systemDate: new Date(deposit.systemDate),
+              paymentMethod: deposit.paymentMethod,
+              depositor: deposit.depositor,
+              depositLocation: deposit.depositLocation,
+            };
+          });
+        }
+
+        // Parse feesForAllTerms
+        if (this.loan.feesForAllTerms) {
+          this.loan.feesForAllTerms = this.loan.feesForAllTerms.map((fee) => {
+            return {
+              type: fee.type,
+              amount: fee.amount,
+              percentage: fee.percentage,
+              basedOn: fee.basedOn,
+              description: fee.description,
+              metadata: fee.metadata,
+            };
+          });
+        } else {
+          this.loan.feesForAllTerms = [];
+        }
+
+        // Parse feesPerTerm
+        if (this.loan.feesPerTerm) {
+          this.loan.feesPerTerm = this.loan.feesPerTerm.map((termFees) => {
+            return {
+              termNumber: termFees.termNumber,
+              fees: termFees.fees.map((fee) => {
+                return {
+                  type: fee.type,
+                  amount: fee.amount,
+                  percentage: fee.percentage,
+                  basedOn: fee.basedOn,
+                  description: fee.description,
+                  metadata: fee.metadata,
+                };
+              }),
+            };
+          });
+        } else {
+          this.loan.feesPerTerm = [];
+        }
+
         this.loan.ratesSchedule = this.loan.ratesSchedule.map((rate) => {
           return {
             startDate: new Date(rate.startDate),
@@ -290,6 +421,18 @@ export class AppComponent implements OnChanges {
       console.error('Error while loading loan from local storage:', e);
       this.resetUIState();
     }
+
+    try {
+      this.generateBills();
+    } catch (e) {
+      console.error('Error while generating bills:', e);
+    }
+
+    try {
+      this.applyPayments();
+    } catch (e) {
+      console.error('Error while applying payments:', e);
+    }
   }
   showTable = false;
   showAdvancedTable: boolean = false; // Default is simple view
@@ -304,6 +447,41 @@ export class AppComponent implements OnChanges {
     this.showAdvancedTable = !this.showAdvancedTable;
   }
 
+  generateBills() {
+    const repaymentSchedule = this.amortization?.generateSchedule();
+    if (repaymentSchedule) {
+      this.bills = BillGenerator.generateBills(repaymentSchedule).map(
+        (bill) => {
+          return {
+            id: bill.id,
+            period: bill.period,
+            dueDate: bill.dueDate.toDate(),
+            principalDue: bill.principalDue.toNumber(),
+            interestDue: bill.interestDue.toNumber(),
+            feesDue: bill.feesDue.toNumber(),
+            totalDue: bill.totalDue.toNumber(),
+            isPaid: bill.isPaid,
+            isDue: bill.dueDate.isSameOrBefore(dayjs(this.snapshotDate)),
+            isOpen:
+              bill.amortizationEntry?.periodBillOpenDate.isSameOrBefore(
+                dayjs(this.snapshotDate)
+              ) || false,
+            isPastDue:
+              bill.isPaid === false &&
+              bill.dueDate.isSameOrBefore(dayjs(this.snapshotDate)),
+          };
+        }
+      );
+    } else {
+      console.error('Repayment schedule not available');
+    }
+  }
+
+  markBillAsPaid(bill: Bill) {
+    bill.isPaid = true;
+    // Optionally, update any backend or perform additional actions
+  }
+
   onTermPaymentAmountChange(value: any) {
     // if (!value) {
     //   this.loan.termPaymentAmount = undefined;
@@ -311,6 +489,55 @@ export class AppComponent implements OnChanges {
     //   this.loan.termPaymentAmount = parseFloat(this.loan.termPaymentAmount);
     // }
     this.submitLoan();
+  }
+
+  // Methods for Fees for All Terms
+  addFeeForAllTerms() {
+    this.loan.feesForAllTerms.push({
+      type: 'fixed', // default type
+      amount: 0,
+      description: '',
+    });
+    this.submitLoan();
+  }
+
+  removeFeeForAllTerms(index: number) {
+    this.loan.feesForAllTerms.splice(index, 1);
+    this.submitLoan();
+  }
+
+  // Methods for Fees Per Term
+  addFeePerTerm(termNumber: number) {
+    // Find the term in feesPerTerm
+    let termFees = this.loan.feesPerTerm.find(
+      (tf) => tf.termNumber === termNumber
+    );
+    if (!termFees) {
+      termFees = { termNumber: termNumber, fees: [] };
+      this.loan.feesPerTerm.push(termFees);
+    }
+    termFees.fees.push({
+      type: 'fixed', // default type
+      amount: 0,
+      description: '',
+    });
+    this.submitLoan();
+  }
+
+  removeFeePerTerm(termNumber: number, feeIndex: number) {
+    const termFees = this.loan.feesPerTerm.find(
+      (tf) => tf.termNumber === termNumber
+    );
+    if (termFees) {
+      termFees.fees.splice(feeIndex, 1);
+      if (termFees.fees.length === 0) {
+        // Remove the term if no fees left
+        this.loan.feesPerTerm = this.loan.feesPerTerm.filter(
+          (tf) => tf.termNumber !== termNumber
+        );
+      }
+      this.submitLoan();
+    }
   }
 
   termPeriodDefinitionChange() {
@@ -334,6 +561,29 @@ export class AppComponent implements OnChanges {
 
   ngOnChanges(changes: SimpleChanges) {
     console.log('Changes detected:', changes);
+  }
+
+  currencyOptions = [
+    { label: 'USD', value: 'USD' },
+    { label: 'EUR', value: 'EUR' },
+    // Add more currencies as needed
+  ];
+
+  addDeposit() {
+    const newDeposit: LoanDeposit = {
+      id: uuidv4(), // Generate a unique ID
+      amount: 0,
+      currency: 'USD',
+      createdDate: new Date(),
+      insertedDate: new Date(),
+      effectiveDate: new Date(),
+      systemDate: new Date(),
+    };
+    this.loan.deposits.push(newDeposit);
+  }
+
+  removeDeposit(deposit: Deposit) {
+    this.loan.deposits = this.loan.deposits.filter((d) => d.id !== deposit.id);
   }
 
   toolbarActions = [
@@ -516,6 +766,69 @@ export class AppComponent implements OnChanges {
 
     this.loan.changePaymentDates = changePaymentDates;
     this.submitLoan();
+  }
+
+  applyPayments() {
+    // Apply payments to the loan
+    const deposits: DepositRecord[] = this.loan.deposits.map((deposit) => {
+      return new DepositRecord({
+        id: deposit.id,
+        amount: Currency.of(deposit.amount),
+        currency: deposit.currency,
+        effectiveDate: dayjs(deposit.effectiveDate),
+        clearingDate: deposit.clearingDate
+          ? dayjs(deposit.clearingDate)
+          : undefined,
+        paymentMethod: deposit.paymentMethod,
+        depositor: deposit.depositor,
+        depositLocation: deposit.depositLocation,
+      });
+    });
+
+    const bills: Bill[] = this.bills.map((bill) => {
+      return {
+        id: bill.id,
+        period: bill.period,
+        dueDate: dayjs(bill.dueDate),
+        principalDue: Currency.of(bill.principalDue),
+        interestDue: Currency.of(bill.interestDue),
+        feesDue: Currency.of(bill.feesDue),
+        totalDue: Currency.of(bill.totalDue),
+        isPaid: bill.isPaid,
+        amortizationEntry: bill.amortizationEntry,
+      };
+    });
+
+    const paymentPriority: PaymentPriority = ['interest', 'fees', 'principal'];
+
+    const paymentApp = new PaymentApplication(bills, deposits, {
+      paymentPriority: paymentPriority,
+    });
+    this.paymentApplicationResults = paymentApp.processDeposits();
+    this.bills = paymentApp.bills.map((bill) => {
+      return {
+        id: bill.id,
+        period: bill.period,
+        dueDate: bill.dueDate.toDate(),
+        principalDue: bill.principalDue.toNumber(),
+        interestDue: bill.interestDue.toNumber(),
+        feesDue: bill.feesDue.toNumber(),
+        totalDue: bill.totalDue.toNumber(),
+        isPaid: bill.isPaid,
+        isDue: bill.dueDate.isSameOrBefore(dayjs(this.snapshotDate)),
+        isOpen:
+          bill.amortizationEntry?.periodBillOpenDate.isSameOrBefore(
+            dayjs(this.snapshotDate)
+          ) || false,
+        isPastDue:
+          bill.isPaid === false &&
+          bill.dueDate.isSameOrBefore(dayjs(this.snapshotDate)),
+        paymentMetadata: bill.paymentMetadata,
+        amortizationEntry: bill.amortizationEntry,
+      };
+    });
+
+    console.log('Payments applied');
   }
 
   addBalanceModificationRow() {
@@ -873,6 +1186,50 @@ export class AppComponent implements OnChanges {
         });
     }
 
+    if (this.loan.feesForAllTerms.length > 0) {
+      amortizationParams.feesForAllTerms = this.loan.feesForAllTerms.map(
+        (fee) => {
+          return {
+            type: fee.type,
+            amount:
+              fee.amount !== undefined ? Currency.of(fee.amount) : undefined,
+            percentage:
+              fee.percentage !== undefined
+                ? new Decimal(fee.percentage).dividedBy(100)
+                : undefined,
+            basedOn: fee.basedOn,
+            description: fee.description,
+            metadata: fee.metadata,
+          } as Fee;
+        }
+      );
+    }
+
+    if (this.loan.feesPerTerm.length > 0) {
+      amortizationParams.feesPerTerm = this.loan.feesPerTerm.map((termFees) => {
+        return {
+          termNumber: termFees.termNumber,
+          fees: termFees.fees.map(
+            (fee) =>
+              ({
+                type: fee.type,
+                amount:
+                  fee.amount !== undefined
+                    ? Currency.of(fee.amount)
+                    : undefined,
+                percentage:
+                  fee.percentage !== undefined
+                    ? new Decimal(fee.percentage).dividedBy(100)
+                    : undefined,
+                basedOn: fee.basedOn,
+                description: fee.description,
+                metadata: fee.metadata,
+              } as Fee)
+          ),
+        };
+      });
+    }
+
     const amortization = new Amortization(amortizationParams);
     this.amortization = amortization;
     this.tilaDisclosures = amortization.generateTILADisclosures();
@@ -894,6 +1251,7 @@ export class AppComponent implements OnChanges {
         periodBillDueDate: entry.periodBillDueDate.format('YYYY-MM-DD'),
         periodInterestRate: entry.periodInterestRate.times(100).toNumber(),
         principal: entry.principal.toNumber(),
+        fees: entry.fees.toNumber(),
         totalInterestForPeriod: entry.totalInterestForPeriod.toNumber(),
         interest: entry.interest.toNumber(),
         billedDeferredInterest: entry.billedDeferredInterest.toNumber(),
@@ -916,6 +1274,8 @@ export class AppComponent implements OnChanges {
 
     this.showTable = true;
 
+    this.generateBills();
+    this.applyPayments();
     this.saveUIState();
   }
 }

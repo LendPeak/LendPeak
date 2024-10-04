@@ -12,7 +12,7 @@ export interface Bill {
   feesDue: Currency;
   totalDue: Currency;
   isPaid: boolean;
-  amortizationEntry?: AmortizationSchedule;
+  amortizationEntry: AmortizationSchedule;
   // New property to track deposit IDs used for payment
   paymentMetadata?: {
     depositIds?: string[];
@@ -32,8 +32,15 @@ export interface UIBill {
   isDue: boolean;
   isPastDue: boolean;
   // Reference to the amortization schedule entry (optional)
-  amortizationEntry?: AmortizationSchedule;
+  amortizationEntry: AmortizationSchedule;
   paymentMetadata?: {
     depositIds?: string[];
   };
+  paymentDetails?: {
+    depositId: string;
+    allocatedPrincipal: number;
+    allocatedInterest: number;
+    allocatedFees: number;
+    date: Date;
+  }[];
 }

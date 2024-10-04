@@ -20,7 +20,7 @@ export class BillGenerator {
         dueDate: entry.periodBillDueDate,
         principalDue: entry.principal,
         interestDue: entry.interest,
-        feesDue: Currency.Zero(), // Assuming no additional fees; modify if needed
+        feesDue: entry.fees, // Assuming no additional fees; modify if needed
         totalDue: totalDue,
         isPaid: false,
         amortizationEntry: entry, // Optional: reference to the amortization entry

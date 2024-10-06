@@ -42,15 +42,18 @@
                 *ngIf="bill.isOpen && !bill.isPaid"
                 value="Open Bill"
                 severity="success"
+                class="status-tag"
               ></p-tag>
               <p-tag
                 value="{{ bill.isPaid ? 'Paid' : 'Unpaid' }}"
                 [severity]="bill.isPaid ? 'success' : 'warning'"
+                class="status-tag"
               ></p-tag>
               <p-tag
                 *ngIf="bill.isPastDue && !bill.isPaid"
                 value="{{ bill.daysPastDue }} Days Past Due"
                 severity="danger"
+                class="status-tag"
               ></p-tag>
             </td>
             <td>

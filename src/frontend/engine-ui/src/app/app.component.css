@@ -148,31 +148,3 @@ p-fieldset>.p-fieldset-legend {
 
 
 
-/* Snapshot Date Container */
-.snapshot-date-container {
-    display: flex;
-    align-items: center;
-}
-
-.snapshot-date-label {
-    margin-right: 0.5rem;
-    font-weight: bold;
-    display: flex;
-    align-items: center;
-}
-
-.snapshot-date-label i {
-    margin-right: 0.25rem;
-}
-
-.time-machine-active .snapshot-date-label,
-.time-machine-active .p-calendar {
-    color: #ff9800;
-    /* Orange color to indicate time travel mode */
-    font-weight: bold;
-}
-
-.time-machine-chip {
-    margin-right: 1rem;
-}
-

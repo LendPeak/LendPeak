@@ -32,6 +32,7 @@ export interface UIBill {
   isOpen: boolean;
   isDue: boolean;
   isPastDue: boolean;
+  daysPastDue: number;
   // Reference to the amortization schedule entry (optional)
   amortizationEntry: AmortizationSchedule;
   paymentMetadata?: {

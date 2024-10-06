@@ -527,6 +527,7 @@ export class AppComponent implements OnChanges {
             isPastDue:
               bill.isPaid === false &&
               bill.dueDate.isSameOrBefore(dayjs(this.snapshotDate)),
+            daysPastDue: dayjs(this.snapshotDate).diff(bill.dueDate, 'day'),
             amortizationEntry: bill.amortizationEntry,
           };
         }

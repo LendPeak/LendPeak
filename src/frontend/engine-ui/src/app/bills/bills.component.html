@@ -49,7 +49,7 @@
               ></p-tag>
               <p-tag
                 *ngIf="bill.isPastDue && !bill.isPaid"
-                value="Past Due"
+                value="{{ bill.daysPastDue }} Days Past Due"
                 severity="danger"
               ></p-tag>
             </td>

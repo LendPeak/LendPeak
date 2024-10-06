@@ -273,8 +273,17 @@ export class OverridesComponent {
     this.emitLoanChange();
   }
 
-  // Add the missing method
   updateTermForCPD(index: number, termNumber: number) {
+    // find the term number in the repayment plan
+    // const repaymentPlanRow = this.loanRepaymentPlan.find(
+    //   (row) => row.period === termNumber
+    // );
+    // if (repaymentPlanRow) {
+    //   this.loan.changePaymentDates[index].newDate =
+    //     repaymentPlanRow.periodEndDate.toDate();
+    //   this.emitLoanChange();
+    // }
+
     if (this.loanRepaymentPlan && this.loanRepaymentPlan.length >= termNumber) {
       this.loan.changePaymentDates[index].newDate =
         this.loanRepaymentPlan[termNumber - 1].periodEndDate.toDate();

@@ -25,6 +25,7 @@ export class BillGenerator {
         feesDue: entry.fees,
         totalDue: totalDue,
         isPaid: false,
+        isOpen: false,
         amortizationEntry: entry,
       };
 

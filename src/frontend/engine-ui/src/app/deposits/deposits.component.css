@@ -1,0 +1,12 @@
+.action-buttons {
+    display: flex;
+    align-items: center;
+}
+
+.action-buttons p-button {
+    margin-right: 0.5em;
+}
+
+.action-buttons p-button:last-child {
+    margin-right: 0;
+}

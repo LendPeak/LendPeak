@@ -1,0 +1,70 @@
+<!-- toolbar.component.html -->
+<p-toolbar class="custom-toolbar">
+  <div class="p-toolbar-group-start">
+    <img src="horizontal-logo.png" style="width: 160px" />
+  </div>
+
+  <div class="p-toolbar-group-center">
+    <!-- Snapshot Date Picker -->
+    <div
+      class="snapshot-date-container"
+      [ngClass]="{ 'time-machine-active': !isToday(snapshotDate) }"
+    >
+      <label for="snapshotDate" class="snapshot-date-label">
+        <i class="pi pi-calendar"></i>
+        Snapshot Date:
+      </label>
+      <p-calendar
+        id="snapshotDate"
+        [(ngModel)]="snapshotDate"
+        [showIcon]="true"
+        dateFormat="mm/dd/yy"
+        (ngModelChange)="onSnapshotDateChange($event)"
+      ></p-calendar>
+      <p-overlayPanel #startDateTooltip>
+        Select a date to view the loan as of that day
+      </p-overlayPanel>
+    </div>
+  </div>
+
+  <div class="p-toolbar-group-end">
+    <!-- Time Machine Indicator -->
+    <p-chip
+      *ngIf="!isToday(snapshotDate)"
+      label="Time Travel Mode"
+      icon="pi pi-clock"
+      class="p-mr-2 time-machine-chip"
+      [style]="{ 'background-color': '#ff9800', color: '#ffffff' }"
+    ></p-chip>
+
+    <!-- Save UI Button -->
+    <p-button
+      label="Save"
+      icon="pi pi-save"
+      class="p-button-success toolbar-button"
+      (onClick)="onSaveUIState()"
+      pTooltip="Save the current UI state"
+      tooltipPosition="bottom"
+    ></p-button>
+
+    <!-- Reset UI Button -->
+    <p-button
+      label="Reset"
+      icon="pi pi-refresh"
+      class="p-button-warning toolbar-button"
+      (onClick)="onResetUIState()"
+      pTooltip="Reset the UI to default settings"
+      tooltipPosition="bottom"
+    ></p-button>
+
+    <!-- Actions SplitButton -->
+    <p-splitButton
+      label="More"
+      icon="pi pi-ellipsis-v"
+      [model]="toolbarActions"
+      class="p-button-secondary toolbar-button"
+      pTooltip="More actions"
+      tooltipPosition="bottom"
+    ></p-splitButton>
+  </div>
+</p-toolbar>

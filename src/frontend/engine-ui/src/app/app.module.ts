@@ -20,7 +20,7 @@ import { ToolbarModule } from 'primeng/toolbar';
 import { CheckboxModule } from 'primeng/checkbox';
 import { TagModule } from 'primeng/tag';
 import { DialogModule } from 'primeng/dialog';
-import { TilaDisclosureComponent } from './tila-disclosure.component';
+
 import { PanelModule } from 'primeng/panel';
 import { TabViewModule } from 'primeng/tabview';
 import { AccordionModule } from 'primeng/accordion';
@@ -30,8 +30,17 @@ import { ChipModule } from 'primeng/chip';
 import { PaginatorModule } from 'primeng/paginator';
 import { TooltipModule } from 'primeng/tooltip';
 
+import { TilaDisclosureComponent } from './tila-disclosure.component';
+import { ToolbarComponent } from './toolbar/toolbar.component';
+import { DepositsComponent } from './deposits/deposits.component';
+
 @NgModule({
-  declarations: [AppComponent, TilaDisclosureComponent],
+  declarations: [
+    AppComponent,
+    TilaDisclosureComponent,
+    ToolbarComponent,
+    DepositsComponent,
+  ],
   imports: [
     BrowserModule,
     BrowserAnimationsModule, // Add this to enable animations

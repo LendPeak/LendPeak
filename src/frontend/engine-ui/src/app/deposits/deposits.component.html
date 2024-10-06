@@ -1,0 +1,237 @@
+<div class="grid">
+  <div class="col-12">
+    <p-card header="Manage Deposits">
+      <div class="p-mb-3">
+        <!-- Button to Add New Deposit -->
+        <p-button
+          label="Add New Deposit"
+          icon="pi pi-plus"
+          class="p-button-success"
+          (click)="openDepositDialog()"
+        ></p-button>
+      </div>
+      <div class="p-fluid">
+        <!-- Deposits Table -->
+        <p-table
+          [value]="deposits"
+          editMode="cell"
+          dataKey="id"
+          class="p-datatable-sm"
+        >
+          <ng-template pTemplate="header">
+            <tr>
+              <th>ID</th>
+              <th>Amount</th>
+              <th>Currency</th>
+              <th>Effective Date</th>
+              <th>Clearing Date</th>
+              <th>Payment Method</th>
+              <th>Depositor</th>
+              <th>Deposit Location</th>
+              <th>Unused Amount</th>
+              <th>Actions</th>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="body" let-deposit>
+            <tr>
+              <!-- ID -->
+              <td>{{ deposit.id }}</td>
+              <!-- Amount -->
+              <td>{{ deposit.amount | currency }}</td>
+              <!-- Currency -->
+              <td>{{ deposit.currency }}</td>
+              <!-- Effective Date -->
+              <td>{{ deposit.effectiveDate | date : "MM/dd/yyyy" }}</td>
+              <!-- Clearing Date -->
+              <td>{{ deposit.clearingDate | date : "MM/dd/yyyy" }}</td>
+              <!-- Payment Method -->
+              <td>{{ deposit.paymentMethod }}</td>
+              <!-- Depositor -->
+              <td>{{ deposit.depositor }}</td>
+              <!-- Deposit Location -->
+              <td>{{ deposit.depositLocation }}</td>
+              <!-- Unused Amount -->
+              <td>{{ deposit.unusedAmount | currency }}</td>
+              <!-- Actions -->
+              <td>
+                <div class="action-buttons">
+                  <p-button
+                    icon="pi pi-pencil"
+                    class="p-button-rounded p-button-warning p-button-sm p-mr-1"
+                    (click)="openDepositDialog(deposit)"
+                    pTooltip="Edit Deposit"
+                    tooltipPosition="top"
+                  ></p-button>
+                  <p-button
+                    icon="pi pi-trash"
+                    class="p-button-rounded p-button-danger p-button-sm p-mr-1"
+                    (click)="removeDeposit(deposit)"
+                    pTooltip="Remove Deposit"
+                    tooltipPosition="top"
+                  ></p-button>
+                  <p-button
+                    icon="pi pi-eye"
+                    class="p-button-rounded p-button-info p-button-sm"
+                    [disabled]="
+                      !deposit.usageDetails || deposit.usageDetails.length === 0
+                    "
+                    (click)="viewDepositUsageDetails(deposit)"
+                    pTooltip="View Usage Details"
+                    tooltipPosition="top"
+                  ></p-button>
+                </div>
+              </td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </div>
+    </p-card>
+  </div>
+</div>
+
+<!-- Deposit Add/Edit Dialog -->
+<p-dialog
+  header="{{ selectedDepositForEdit ? 'Edit Deposit' : 'Add New Deposit' }}"
+  [(visible)]="showDepositDialog"
+  [modal]="true"
+  [style]="{ width: '50vw' }"
+  [closable]="true"
+  (onHide)="onDepositDialogHide()"
+>
+  <form #depositForm="ngForm">
+    <div class="p-fluid grid">
+      <!-- Amount -->
+      <div class="field col-6">
+        <label for="amount">Amount</label>
+        <p-inputNumber
+          id="amount"
+          [(ngModel)]="depositData.amount"
+          name="amount"
+          mode="currency"
+          currency="USD"
+          locale="en-US"
+          required
+        ></p-inputNumber>
+      </div>
+      <!-- Currency -->
+      <div class="field col-6">
+        <label for="currency">Currency</label>
+        <p-dropdown
+          id="currency"
+          [(ngModel)]="depositData.currency"
+          name="currency"
+          [options]="currencyOptions"
+          optionLabel="label"
+          optionValue="value"
+          placeholder="Select Currency"
+          required
+        ></p-dropdown>
+      </div>
+      <!-- Effective Date -->
+      <div class="field col-6">
+        <label for="effectiveDate">Effective Date</label>
+        <p-calendar
+          id="effectiveDate"
+          [(ngModel)]="depositData.effectiveDate"
+          name="effectiveDate"
+          dateFormat="mm/dd/yy"
+          showIcon
+          required
+        ></p-calendar>
+      </div>
+      <!-- Clearing Date -->
+      <div class="field col-6">
+        <label for="clearingDate">Clearing Date</label>
+        <p-calendar
+          id="clearingDate"
+          [(ngModel)]="depositData.clearingDate"
+          name="clearingDate"
+          dateFormat="mm/dd/yy"
+          showIcon
+        ></p-calendar>
+      </div>
+      <!-- Payment Method -->
+      <div class="field col-12">
+        <label for="paymentMethod">Payment Method</label>
+        <input
+          id="paymentMethod"
+          type="text"
+          [(ngModel)]="depositData.paymentMethod"
+          name="paymentMethod"
+        />
+      </div>
+      <!-- Depositor -->
+      <div class="field col-6">
+        <label for="depositor">Depositor</label>
+        <input
+          id="depositor"
+          type="text"
+          [(ngModel)]="depositData.depositor"
+          name="depositor"
+        />
+      </div>
+      <!-- Deposit Location -->
+      <div class="field col-6">
+        <label for="depositLocation">Deposit Location</label>
+        <input
+          id="depositLocation"
+          type="text"
+          [(ngModel)]="depositData.depositLocation"
+          name="depositLocation"
+        />
+      </div>
+    </div>
+  </form>
+  <p-footer>
+    <p-button
+      label="Cancel"
+      icon="pi pi-times"
+      (click)="onDepositDialogHide()"
+      class="p-button-text"
+    ></p-button>
+    <p-button
+      label="Save"
+      icon="pi pi-check"
+      (click)="saveDeposit()"
+      [disabled]="!depositForm.form.valid"
+    ></p-button>
+  </p-footer>
+</p-dialog>
+
+<!-- Deposit Usage Details Dialog -->
+<p-dialog
+  header="Deposit Usage Details"
+  [(visible)]="showDepositUsageDetailsDialog"
+  [modal]="true"
+  [style]="{ width: '85%' }"
+  [closable]="true"
+  (onHide)="selectedDeposit = null"
+>
+  <p-table [value]="selectedDeposit?.usageDetails || []">
+    <ng-template pTemplate="header">
+      <tr>
+        <th>Period</th>
+        <th>Bill Due Date</th>
+        <th>Bill ID</th>
+        <th>Allocated Principal</th>
+        <th>Allocated Interest</th>
+        <th>Allocated Fees</th>
+        <th>Date</th>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="body" let-detail>
+      <tr>
+        <td>{{ detail.period }}</td>
+        <td>{{ detail.billDueDate | date : "MM/dd/yyyy" }}</td>
+        <td>{{ detail.billId }}</td>
+        <td>{{ detail.allocatedPrincipal | currency }}</td>
+        <td>{{ detail.allocatedInterest | currency }}</td>
+        <td>{{ detail.allocatedFees | currency }}</td>
+        <td>{{ detail.date | date : "MM/dd/yyyy" }}</td>
+      </tr>
+    </ng-template>
+  </p-table>
+  <p *ngIf="!selectedDeposit?.unusedAmount">
+    Unused Amount: {{ selectedDeposit?.unusedAmount | currency }}
+  </p>
+</p-dialog>

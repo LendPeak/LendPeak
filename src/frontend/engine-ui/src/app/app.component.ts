@@ -1,5 +1,9 @@
 import { Component, OnChanges, SimpleChanges } from '@angular/core';
 import { OverlayPanel } from 'primeng/overlaypanel';
+import {
+  DropDownOptionString,
+  DropDownOptionNumber,
+} from './models/common.model';
 
 import {
   Amortization,
@@ -544,7 +548,7 @@ export class AppComponent implements OnChanges {
   showTable = false;
   showAdvancedTable: boolean = false; // Default is simple view
   showTilaDialog: boolean = false;
-  termOptions: { label: string; value: number }[] = [];
+  termOptions: DropDownOptionNumber[] = [];
 
   updateTermOptions() {
     this.termOptions = [];
@@ -719,19 +723,19 @@ export class AppComponent implements OnChanges {
     // Code to open a settings dialog
   }
 
-  balanceIncreaseType = [
+  balanceIncreaseType: DropDownOptionString[] = [
     { label: 'Increase', value: 'increase' },
     { label: 'Decrease', value: 'decrease' },
   ];
 
-  termPeriodUnits = [
+  termPeriodUnits: DropDownOptionString[] = [
     { label: 'Year', value: 'year' },
     { label: 'Month', value: 'month' },
     { label: 'Week', value: 'week' },
     { label: 'Day', value: 'day' },
   ];
 
-  calendarTypes = [
+  calendarTypes: DropDownOptionString[] = [
     { label: 'Actual/Actual', value: 'ACTUAL_ACTUAL' },
     { label: 'Actual/360', value: 'ACTUAL_360' },
     { label: 'Actual/365', value: 'ACTUAL_365' },
@@ -739,7 +743,7 @@ export class AppComponent implements OnChanges {
     { label: '30/Actual', value: 'THIRTY_ACTUAL' },
   ];
 
-  roundingMethods = [
+  roundingMethods: DropDownOptionString[] = [
     { label: 'Round Up', value: 'ROUND_UP' },
     { label: 'Round Down', value: 'ROUND_DOWN' },
     { label: 'Round Half Up', value: 'ROUND_HALF_UP' },
@@ -749,7 +753,7 @@ export class AppComponent implements OnChanges {
     { label: 'Round Half Floor', value: 'ROUND_HALF_FLOOR' },
   ];
 
-  flushMethods = [
+  flushMethods: DropDownOptionString[] = [
     { label: 'None', value: 'none' },
     { label: 'At End', value: 'at_end' },
     { label: 'At Threshold', value: 'at_threshold' },
@@ -816,6 +820,17 @@ export class AppComponent implements OnChanges {
     const endDate = dayjs(selectedRow.endDate);
     const startDate = endDate;
     this.loan.periodsSchedule[index + 1].startDate = selectedRow.endDate;
+    this.submitLoan();
+  }
+
+  // Handle deposits change event
+  onDepositsChange(updatedDeposits: LoanDeposit[]) {
+    this.loan.deposits = updatedDeposits;
+    this.saveUIState(); // Save state if necessary
+  }
+
+  // Handle deposit updated event (e.g., to recalculate loan details)
+  onDepositUpdated() {
     this.submitLoan();
   }
 

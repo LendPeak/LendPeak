@@ -546,34 +546,38 @@ export class Amortization {
   }
 
   calculateAPR(): Decimal {
-    // APR = ((Interest + Fees / Loan amount) / Number of days in loan term) x 365 x 100
+    // Group repayments by period number, summing up principal and interest
+    const paymentsMap = new Map<number, { principal: Decimal; interest: Decimal; paymentDate: Date }>();
 
-    // using dayjs calculate the number of months between start date and end date
-    // then convert to days
-    const payments = this.repaymentSchedule.map((schedule) => {
-      return {
-        principal: schedule.principal.getValue(),
-        interest: schedule.interest.getValue(),
-        paymentDate: schedule.periodEndDate.toDate(),
-      };
-    });
+    for (const schedule of this.repaymentSchedule) {
+      const period = schedule.period;
+      let payment = paymentsMap.get(period);
+      if (!payment) {
+        // Initialize a new payment object
+        payment = {
+          principal: schedule.principal.getValue(),
+          interest: schedule.interest.getValue(),
+          paymentDate: schedule.periodEndDate.toDate(),
+        };
+        paymentsMap.set(period, payment);
+      } else {
+        // Accumulate principal and interest
+        payment.principal = payment.principal.add(schedule.principal.getValue());
+        payment.interest = payment.interest.add(schedule.interest.getValue());
+        // Update payment date if the current one is later
+        if (schedule.periodEndDate.toDate() > payment.paymentDate) {
+          payment.paymentDate = schedule.periodEndDate.toDate();
+        }
+      }
+    }
 
-    // print payments object to log for debugging but i want new Decimal, etc.. so i can copy
-    // paste this from debug into some test
-    // const formattedPayments = payments
-    //   .map((payment) => {
-    //     return `{ principal: new Decimal(${payment.principal}), interest: new Decimal(${payment.interest}), paymentDate: new Date("${payment.paymentDate.toISOString().split("T")[0]}") }`;
-    //   })
-    //   .join(",\n  ");
-    // console.log(`const terms = [\n  ${formattedPayments}\n];`);
+    // Extract the payments array from the paymentsMap
+    const payments = Array.from(paymentsMap.values());
 
-    // console.log(`loanAmount: Currency.of(${this.loanAmount.getValue()}),`);
-    // console.log(`originationFee: Currency.of(${this.originationFee.getValue()}),`);
-    // console.log("apr inpit", {
-    //   loanAmount: this.loanAmount.getValue(),
-    //   originationFee: new Decimal(0),
-    //   terms: payments,
-    // });
+    // Sort payments by paymentDate to ensure correct order
+    payments.sort((a, b) => a.paymentDate.getTime() - b.paymentDate.getTime());
+
+    // Now proceed to calculate the APR using the combined payments
     const apr = InterestCalculator.calculateRealAPR(
       {
         loanAmount: this.totalLoanAmount.getValue(),

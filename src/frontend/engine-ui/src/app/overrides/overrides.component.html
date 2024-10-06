@@ -2,7 +2,10 @@
   <div class="col-12">
     <p-accordion multiple="true">
       <!-- Interest Rate -->
-      <p-accordionTab header="Interest Rate">
+      <p-accordionTab
+        header="Interest Rate"
+        [selected]="loan.ratesSchedule.length > 0"
+      >
         <div class="p-fluid">
           <table
             *ngIf="loan.ratesSchedule.length > 0"

@@ -34,6 +34,7 @@ import { TilaDisclosureComponent } from './tila-disclosure.component';
 import { ToolbarComponent } from './toolbar/toolbar.component';
 import { DepositsComponent } from './deposits/deposits.component';
 import { BillsComponent } from './bills/bills.component';
+import { BasicLoanInfoComponent } from './basic-loan-info/basic-loan-info.component';
 
 @NgModule({
   declarations: [
@@ -42,6 +43,7 @@ import { BillsComponent } from './bills/bills.component';
     ToolbarComponent,
     DepositsComponent,
     BillsComponent,
+    BasicLoanInfoComponent,
   ],
   imports: [
     BrowserModule,

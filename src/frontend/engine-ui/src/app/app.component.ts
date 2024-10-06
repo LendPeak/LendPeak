@@ -193,6 +193,12 @@ export class AppComponent implements OnChanges {
     // Implement any logic needed when a bill action occurs
   }
 
+  // Handle loan change event
+  onLoanChange(updatedLoan: any) {
+    this.loan = updatedLoan;
+    this.saveUIState(); // Save state if necessary
+  }
+
   paymentApplicationResults: PaymentApplicationResult[] = [];
 
   lenderName = 'Your Bank Name';

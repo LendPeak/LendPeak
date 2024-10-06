@@ -1,0 +1,175 @@
+<!-- basic-loan-info.component.html -->
+<!-- Basic Loan Info Tab Content -->
+<form>
+  <div class="grid">
+    <div class="col-12">
+      <p-card header="Loan Details">
+        <div class="grid p-fluid">
+          <!-- Principal Amount -->
+          <div class="field col-6">
+            <label for="principal">
+              Principal Amount
+              <i
+                class="pi pi-info-circle tooltip-icon"
+                (click)="showTooltip($event, principalTooltip)"
+              ></i>
+            </label>
+            <p-inputNumber
+              id="principal"
+              [(ngModel)]="loan.principal"
+              name="principal"
+              mode="currency"
+              currency="USD"
+              locale="en-US"
+              (ngModelChange)="submitLoan()"
+            ></p-inputNumber>
+            <!-- Tooltip Overlay -->
+            <p-overlayPanel #principalTooltip>
+              The initial amount of the loan. E.g., $100,000
+            </p-overlayPanel>
+          </div>
+
+          <!-- Origination Fee -->
+          <div class="field col-6">
+            <label for="originationFee">
+              Origination Fee
+              <i
+                class="pi pi-info-circle tooltip-icon"
+                (click)="showTooltip($event, originationFeeTooltip)"
+              ></i>
+            </label>
+            <p-inputNumber
+              id="originationFee"
+              [(ngModel)]="loan.originationFee"
+              name="originationFee"
+              mode="currency"
+              currency="USD"
+              locale="en-US"
+              (ngModelChange)="submitLoan()"
+            ></p-inputNumber>
+            <!-- Tooltip Overlay -->
+            <p-overlayPanel #originationFeeTooltip>
+              The fee charged by the lender for processing the loan. E.g.,
+              $1,000
+            </p-overlayPanel>
+          </div>
+
+          <!-- Interest Rate (%) -->
+          <div class="field col-6">
+            <label for="interestRate">
+              Interest Rate (%)
+              <i
+                class="pi pi-info-circle tooltip-icon"
+                (click)="showTooltip($event, interestRateTooltip)"
+              ></i>
+            </label>
+            <p-inputNumber
+              id="interestRate"
+              [(ngModel)]="loan.interestRate"
+              name="interestRate"
+              mode="decimal"
+              minFractionDigits="2"
+              suffix="%"
+              (ngModelChange)="submitLoan()"
+            ></p-inputNumber>
+            <!-- Tooltip Overlay -->
+            <p-overlayPanel #interestRateTooltip>
+              Annual interest rate for the loan. E.g., 5%
+            </p-overlayPanel>
+          </div>
+
+          <!-- Term (Months) -->
+          <div class="field col-6">
+            <label for="term">
+              Term ({{ amortization?.loanTermInMonths }} months)
+              <i
+                class="pi pi-info-circle tooltip-icon"
+                (click)="showTooltip($event, termTooltip)"
+              ></i>
+            </label>
+            <p-inputNumber
+              id="term"
+              [(ngModel)]="loan.term"
+              name="term"
+              (ngModelChange)="updateTerm()"
+            ></p-inputNumber>
+            <!-- Tooltip Overlay -->
+            <p-overlayPanel #termTooltip>
+              Number of periods for the loan term. E.g., 12
+            </p-overlayPanel>
+          </div>
+
+          <!-- Start Date -->
+          <div class="field col-4">
+            <label for="startDate">
+              Start Date
+              <i
+                class="pi pi-info-circle tooltip-icon"
+                (click)="showTooltip($event, startDateTooltip)"
+              ></i>
+            </label>
+            <p-calendar
+              id="startDate"
+              [(ngModel)]="loan.startDate"
+              name="startDate"
+              dateFormat="mm/dd/yy"
+              showIcon
+              (ngModelChange)="updateStartDate()"
+            ></p-calendar>
+            <!-- Tooltip Overlay -->
+            <p-overlayPanel #startDateTooltip>
+              The date when the loan starts. E.g., 01/01/2024
+            </p-overlayPanel>
+          </div>
+
+          <!-- First Payment Date -->
+          <div class="field col-4">
+            <label for="firstPaymentDate">
+              First Payment Date
+              <i
+                class="pi pi-info-circle tooltip-icon"
+                (click)="showTooltip($event, firstPaymentDateTooltip)"
+              ></i>
+            </label>
+            <p-calendar
+              id="firstPaymentDate"
+              [(ngModel)]="loan.firstPaymentDate"
+              name="firstPaymentDate"
+              dateFormat="mm/dd/yy"
+              showIcon
+              (ngModelChange)="submitLoan()"
+            ></p-calendar>
+            <!-- Tooltip Overlay -->
+            <p-overlayPanel #firstPaymentDateTooltip>
+              The date of the first payment. E.g., 02/01/2024
+            </p-overlayPanel>
+          </div>
+
+          <!-- End Date -->
+          <div class="field col-4">
+            <label for="endDate">
+              End Date
+              <i
+                class="pi pi-info-circle tooltip-icon"
+                (click)="showTooltip($event, endDateTooltip)"
+              ></i>
+            </label>
+            <p-calendar
+              id="endDate"
+              [(ngModel)]="loan.endDate"
+              name="endDate"
+              dateFormat="mm/dd/yy"
+              showIcon
+              (ngModelChange)="submitLoan()"
+            ></p-calendar>
+            <!-- Tooltip Overlay -->
+            <p-overlayPanel #endDateTooltip>
+              The date when the loan ends. Calculated automatically if not
+              set.
+            </p-overlayPanel>
+          </div>
+        </div>
+      </p-card>
+    </div>
+  </div>
+</form>

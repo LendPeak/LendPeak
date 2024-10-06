@@ -146,57 +146,7 @@ p-fieldset>.p-fieldset-legend {
     color: #555;
 }
 
-/* Custom Toolbar Styles */
-.custom-toolbar {
-    background-color: #f5f5f5;
-    padding: 0.5rem;
-}
 
-.custom-toolbar .p-toolbar-group-start img {
-    vertical-align: middle;
-}
-
-.custom-toolbar .p-toolbar-group-end {
-    display: flex;
-    align-items: center;
-}
-
-/* Add margin between toolbar buttons */
-.custom-toolbar .toolbar-button {
-    margin-right: 0.5rem;
-}
-
-/* Remove right margin from the last button */
-.custom-toolbar .toolbar-button:last-child {
-    margin-right: 0;
-}
-
-.custom-toolbar .p-button {
-    min-width: 6rem;
-}
-
-.custom-toolbar .p-button .pi {
-    margin-right: 0.5rem;
-}
-
-.custom-toolbar .p-button-secondary {
-    background-color: #6c757d;
-    border-color: #6c757d;
-}
-
-.custom-toolbar .p-button-warning {
-    background-color: #ffc107;
-    border-color: #ffc107;
-    color: #212529;
-}
-
-/* Center group in the toolbar */
-.p-toolbar-group-center {
-    flex: 1;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
 
 /* Snapshot Date Container */
 .snapshot-date-container {

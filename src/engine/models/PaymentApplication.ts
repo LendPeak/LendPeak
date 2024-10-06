@@ -109,7 +109,7 @@ export class LIFOStrategy implements AllocationStrategy {
     const allocations: PaymentAllocation[] = [];
 
     // Sort bills by due date descending (most recent first)
-    const sortedBills = bills.filter((bill) => !bill.isPaid).sort((a, b) => b.dueDate.diff(a.dueDate));
+    const sortedBills = bills.filter((bill) => bill.isOpen === true && !bill.isPaid).sort((a, b) => b.dueDate.diff(a.dueDate));
 
     for (const bill of sortedBills) {
       if (remainingAmount.getValue().isZero()) break;
@@ -143,7 +143,7 @@ export class FIFOStrategy implements AllocationStrategy {
     const allocations: PaymentAllocation[] = [];
 
     // Sort bills by due date ascending
-    const sortedBills = bills.filter((bill) => !bill.isPaid).sort((a, b) => a.dueDate.diff(b.dueDate));
+    const sortedBills = bills.filter((bill) => bill.isOpen === true && !bill.isPaid).sort((a, b) => a.dueDate.diff(b.dueDate));
 
     for (const bill of sortedBills) {
       if (remainingAmount.getValue().isZero()) break;
@@ -181,7 +181,7 @@ export class EqualDistributionStrategy implements AllocationStrategy {
     const allocations: PaymentAllocation[] = [];
 
     // Filter unpaid bills
-    const unpaidBills = bills.filter((bill) => !bill.isPaid);
+    const unpaidBills = bills.filter((bill) => bill.isOpen === true && !bill.isPaid);
     const numOfBills = unpaidBills.length;
 
     if (numOfBills === 0) {
@@ -239,7 +239,7 @@ export class CustomOrderStrategy implements AllocationStrategy {
     const allocations: PaymentAllocation[] = [];
 
     // Sort bills using the custom compare function
-    const sortedBills = bills.filter((bill) => !bill.isPaid).sort(this.compareFunction);
+    const sortedBills = bills.filter((bill) => bill.isOpen === true && !bill.isPaid).sort(this.compareFunction);
 
     for (const bill of sortedBills) {
       if (remainingAmount.getValue().isZero()) break;
@@ -270,7 +270,7 @@ export class ProportionalStrategy implements AllocationStrategy {
     const allocations: PaymentAllocation[] = [];
 
     // Filter unpaid bills
-    const unpaidBills = bills.filter((bill) => !bill.isPaid);
+    const unpaidBills = bills.filter((bill) => bill.isOpen === true && !bill.isPaid);
 
     // Calculate the total amount due across all unpaid bills
     const totalDue = unpaidBills.reduce((sum, bill) => sum.add(bill.totalDue), Currency.Zero());

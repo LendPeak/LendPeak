@@ -98,7 +98,7 @@
   [closable]="true"
   (onHide)="onDepositDialogHide()"
 >
-  <form #depositForm="ngForm">
+  <form #depositForm="ngForm" (ngSubmit)="saveDeposit()">
     <div class="p-fluid grid">
       <!-- Amount -->
       <div class="field col-6">
@@ -195,6 +195,7 @@
     <p-button
       label="Save"
       icon="pi pi-check"
+      type="submit"
       (click)="saveDeposit()"
       [disabled]="!depositForm.form.valid"
     ></p-button>

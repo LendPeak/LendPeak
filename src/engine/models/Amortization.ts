@@ -913,6 +913,10 @@ export class Amortization {
 
           const daysInPeriod = this.calendar.daysBetween(interestRateForPeriod.startDate, interestRateForPeriod.endDate);
 
+          if (daysInPeriod === 0) {
+            continue;
+          }
+
           const interestCalculator = new InterestCalculator(interestRateForPeriod.annualInterestRate, this.calendar.calendarType);
 
           let rawInterest: Currency;

@@ -12,6 +12,7 @@ export interface Bill {
   feesDue: Currency;
   totalDue: Currency;
   isPaid: boolean;
+  isOpen: boolean;
   amortizationEntry: AmortizationSchedule;
   // New property to track deposit IDs used for payment
   paymentMetadata?: {

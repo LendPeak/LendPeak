@@ -23,6 +23,13 @@ import {
   PaymentApplication,
   PaymentPriority,
   PaymentApplicationResult,
+  AllocationStrategy,
+  CustomOrderStrategy,
+  EqualDistributionStrategy,
+  ProportionalStrategy,
+  PaymentComponent,
+  LIFOStrategy,
+  FIFOStrategy,
 } from 'lendpeak-engine/models/PaymentApplication';
 import { Bill, UIBill } from 'lendpeak-engine/models/Bill';
 import { BillGenerator } from 'lendpeak-engine/models/BillGenerator';
@@ -717,6 +724,19 @@ export class AppComponent implements OnChanges {
     this.showAdvancedOptions = !this.showAdvancedOptions;
   }
 
+  // Payment Allocation Strategy Options
+  paymentAllocationStrategy: string = 'FIFO'; // Default value
+  paymentAllocationStrategies = [
+    { label: 'First In First Out (FIFO)', value: 'FIFO' },
+    { label: 'Last In First Out (LIFO)', value: 'LIFO' },
+    { label: 'Equal Distribution', value: 'EqualDistribution' },
+    { label: 'Proportional', value: 'Proportional' },
+  ];
+
+  // Payment Priority Options
+  paymentPriorityOptions = ['interest', 'fees', 'principal'];
+  paymentPriority: PaymentComponent[] = ['interest', 'fees', 'principal'];
+
   applyPayments() {
     // Apply payments to the loan
     const deposits: DepositRecord[] = this.loan.deposits.map((deposit) => {
@@ -745,14 +765,36 @@ export class AppComponent implements OnChanges {
         feesDue: Currency.of(bill.feesDue),
         totalDue: Currency.of(bill.totalDue),
         isPaid: bill.isPaid,
+        isOpen: bill.isOpen,
         amortizationEntry: bill.amortizationEntry,
         paymentMetadata: bill.paymentMetadata,
       };
     });
 
-    const paymentPriority: PaymentPriority = ['interest', 'fees', 'principal'];
+    // Build the allocation strategy based on user selection
+    let allocationStrategy: AllocationStrategy;
+    switch (this.paymentAllocationStrategy) {
+      case 'FIFO':
+        allocationStrategy = new FIFOStrategy();
+        break;
+      case 'LIFO':
+        allocationStrategy = new LIFOStrategy();
+        break;
+      case 'EqualDistribution':
+        allocationStrategy = new EqualDistributionStrategy();
+        break;
+      case 'Proportional':
+        allocationStrategy = new ProportionalStrategy();
+        break;
+      default:
+        allocationStrategy = new FIFOStrategy();
+    }
+
+    // Build the payment priority
+    const paymentPriority = this.paymentPriority;
 
     const paymentApp = new PaymentApplication(bills, deposits, {
+      allocationStrategy: allocationStrategy,
       paymentPriority: paymentPriority,
     });
 
@@ -849,6 +891,23 @@ export class AppComponent implements OnChanges {
     });
 
     console.log('Payments applied');
+  }
+
+  onPaymentPriorityChange() {
+    // Ensure that each component is selected only once
+    // Remove duplicates
+    this.paymentPriority = Array.from(new Set(this.paymentPriority));
+
+    // If the array is less than 3 elements, add missing components
+    const allComponents: PaymentComponent[] = ['interest', 'fees', 'principal'];
+    for (const component of allComponents) {
+      if (!this.paymentPriority.includes(component)) {
+        this.paymentPriority.push(component);
+      }
+    }
+
+    // Update the UI
+    this.submitLoan();
   }
 
   submitLoan() {

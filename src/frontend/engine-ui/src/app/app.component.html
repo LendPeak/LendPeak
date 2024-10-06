@@ -142,7 +142,7 @@
           </p-accordionTab>
 
           <!-- Payment Settings Section -->
-          <p-accordionTab header="Payment Settings">
+          <p-accordionTab header="Payment Amount Settings">
             <div class="p-fluid">
               <!-- Term Payment Amount -->
               <div class="field">
@@ -166,6 +166,109 @@
                 <p-overlayPanel #termPaymentAmountTooltip>
                   Override the calculated payment amount per term. For example,
                   enter "$1,200" to set a fixed payment amount.
+                </p-overlayPanel>
+              </div>
+            </div>
+          </p-accordionTab>
+
+          <!-- Payment Application Settings Section -->
+          <p-accordionTab header="Payment Application Settings">
+            <div class="p-fluid">
+              <!-- Allocation Strategy -->
+              <div class="field">
+                <label for="paymentAllocationStrategy">
+                  Payment Allocation Strategy
+                  <i
+                    class="pi pi-info-circle tooltip-icon"
+                    (click)="
+                      showTooltip($event, paymentAllocationStrategyTooltip)
+                    "
+                  ></i>
+                </label>
+                <p-dropdown
+                  id="paymentAllocationStrategy"
+                  [(ngModel)]="paymentAllocationStrategy"
+                  name="paymentAllocationStrategy"
+                  [options]="paymentAllocationStrategies"
+                  placeholder="Select an allocation strategy"
+                  (ngModelChange)="submitLoan()"
+                ></p-dropdown>
+                <!-- Tooltip Overlay -->
+                <p-overlayPanel #paymentAllocationStrategyTooltip>
+                  <div class="tooltip-content">
+                    <p>Select the strategy for allocating deposits to bills:</p>
+                    <ul>
+                      <li>
+                        <strong>First In First Out (FIFO)</strong>: Apply
+                        payments to the oldest bills first.
+                      </li>
+                      <li>
+                        <strong>Last In First Out (LIFO)</strong>: Apply
+                        payments to the most recent bills first.
+                      </li>
+                      <li>
+                        <strong>Equal Distribution</strong>: Distribute payments
+                        equally across all outstanding bills.
+                      </li>
+                      <li>
+                        <strong>Proportional</strong>: Allocate payments
+                        proportionally based on the total amount due for each
+                        bill.
+                      </li>
+                    </ul>
+                  </div>
+                </p-overlayPanel>
+              </div>
+
+              <!-- Payment Priority -->
+              <div class="field">
+                <label for="paymentPriority">
+                  Payment Priority
+                  <i
+                    class="pi pi-info-circle tooltip-icon"
+                    (click)="showTooltip($event, paymentPriorityTooltip)"
+                  ></i>
+                </label>
+                <!-- Payment Priority Selection -->
+                <div class="p-grid">
+                  <div class="p-col-4">
+                    <p-dropdown
+                      [(ngModel)]="paymentPriority[0]"
+                      [options]="paymentPriorityOptions"
+                      placeholder="First"
+                      (ngModelChange)="onPaymentPriorityChange()"
+                    ></p-dropdown>
+                  </div>
+                  <div class="p-col-4">
+                    <p-dropdown
+                      [(ngModel)]="paymentPriority[1]"
+                      [options]="paymentPriorityOptions"
+                      placeholder="Second"
+                      (ngModelChange)="onPaymentPriorityChange()"
+                    ></p-dropdown>
+                  </div>
+                  <div class="p-col-4">
+                    <p-dropdown
+                      [(ngModel)]="paymentPriority[2]"
+                      [options]="paymentPriorityOptions"
+                      placeholder="Third"
+                      (ngModelChange)="onPaymentPriorityChange()"
+                    ></p-dropdown>
+                  </div>
+                </div>
+                <!-- Tooltip Overlay -->
+                <p-overlayPanel #paymentPriorityTooltip>
+                  <div class="tooltip-content">
+                    <p>
+                      Specify the order in which payments are applied to
+                      components:
+                    </p>
+                    <ul>
+                      <li><strong>Interest</strong></li>
+                      <li><strong>Fees</strong></li>
+                      <li><strong>Principal</strong></li>
+                    </ul>
+                  </div>
                 </p-overlayPanel>
               </div>
             </div>

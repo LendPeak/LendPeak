@@ -253,81 +253,6 @@ export class AppComponent implements OnChanges {
     localStorage.setItem('loan', JSON.stringify(this.loan));
   }
 
-  openDepositDialog(deposit?: LoanDeposit) {
-    if (deposit) {
-      // Edit existing deposit
-      this.selectedDepositForEdit = deposit;
-      this.depositData = {
-        amount: deposit.amount,
-        currency: deposit.currency,
-        effectiveDate: new Date(deposit.effectiveDate),
-        clearingDate: deposit.clearingDate
-          ? new Date(deposit.clearingDate)
-          : null,
-        paymentMethod: deposit.paymentMethod,
-        depositor: deposit.depositor,
-        depositLocation: deposit.depositLocation,
-      };
-    } else {
-      // Add new deposit
-      this.selectedDepositForEdit = null;
-      this.depositData = {
-        amount: 0,
-        currency: 'USD',
-        effectiveDate: new Date(),
-        clearingDate: null,
-        paymentMethod: '',
-        depositor: '',
-        depositLocation: '',
-      };
-    }
-    this.showDepositDialog = true;
-  }
-
-  onDepositDialogHide() {
-    this.showDepositDialog = false;
-    this.selectedDepositForEdit = null;
-    this.depositData = {};
-  }
-
-  saveDeposit() {
-    if (this.selectedDepositForEdit) {
-      // Update existing deposit
-      Object.assign(this.selectedDepositForEdit, this.depositData);
-    } else {
-      // Add new deposit
-      const newDeposit: LoanDeposit = {
-        id: uuidv4(),
-        amount: this.depositData.amount,
-        currency: this.depositData.currency,
-        createdDate: new Date(),
-        insertedDate: new Date(),
-        effectiveDate: this.depositData.effectiveDate,
-        clearingDate: this.depositData.clearingDate,
-        systemDate: new Date(),
-        paymentMethod: this.depositData.paymentMethod,
-        depositor: this.depositData.depositor,
-        depositLocation: this.depositData.depositLocation,
-        usageDetails: [],
-      };
-      this.loan.deposits.push(newDeposit);
-    }
-    this.showDepositDialog = false;
-    this.selectedDepositForEdit = null;
-    this.depositData = {};
-    this.submitLoan(); // Recalculate loan details if necessary
-  }
-
-  viewPaymentDetails(bill: any) {
-    this.selectedBill = bill;
-    this.showPaymentDetailsDialog = true;
-  }
-
-  viewDepositUsageDetails(deposit: any) {
-    this.selectedDeposit = deposit;
-    this.showDepositUsageDetailsDialog = true;
-  }
-
   getNextTermNumber(): number {
     if (this.loan.feesPerTerm.length === 0) {
       return 1;
@@ -383,11 +308,6 @@ export class AppComponent implements OnChanges {
     this.snapshotDate = date;
     this.submitLoan();
     // this.updateDataForSnapshotDate();
-  }
-
-  // Method to check if the selected date is today
-  isToday(date: Date): boolean {
-    return dayjs(date).isSame(dayjs(), 'day');
   }
 
   ngOnInit(): void {
@@ -623,36 +543,6 @@ export class AppComponent implements OnChanges {
     this.submitLoan();
   }
 
-  // Methods for Fees for All Terms
-  addFeeForAllTerms() {
-    this.loan.feesForAllTerms.push({
-      type: 'fixed', // default type
-      amount: 0,
-      description: '',
-    });
-    this.submitLoan();
-  }
-
-  removeFeeForAllTerms(index: number) {
-    this.loan.feesForAllTerms.splice(index, 1);
-    this.submitLoan();
-  }
-  // Methods for Fees Per Term
-  addFeePerTerm() {
-    this.loan.feesPerTerm.push({
-      termNumber: 1, // Default term number
-      type: 'fixed',
-      amount: 0,
-      description: '',
-    });
-    this.submitLoan();
-  }
-
-  removeFeePerTerm(index: number) {
-    this.loan.feesPerTerm.splice(index, 1);
-    this.submitLoan();
-  }
-
   termPeriodDefinitionChange() {
     const termUnit =
       this.loan.termPeriodDefinition.unit === 'complex'
@@ -668,11 +558,6 @@ export class AppComponent implements OnChanges {
     this.submitLoan();
   }
 
-  updateTerm() {
-    this.termPeriodDefinitionChange();
-    this.updateTermOptions();
-  }
-
   ngOnChanges(changes: SimpleChanges) {
     console.log('Changes detected:', changes);
   }
@@ -682,24 +567,6 @@ export class AppComponent implements OnChanges {
     { label: 'EUR', value: 'EUR' },
     // Add more currencies as needed
   ];
-
-  addDeposit() {
-    const newDeposit: LoanDeposit = {
-      id: uuidv4(), // Generate a unique ID
-      amount: 0,
-      currency: 'USD',
-      createdDate: new Date(),
-      insertedDate: new Date(),
-      effectiveDate: new Date(),
-      systemDate: new Date(),
-      usageDetails: [],
-    };
-    this.loan.deposits.push(newDeposit);
-  }
-
-  removeDeposit(deposit: Deposit) {
-    this.loan.deposits = this.loan.deposits.filter((d) => d.id !== deposit.id);
-  }
 
   toolbarActions = [
     {
@@ -846,52 +713,8 @@ export class AppComponent implements OnChanges {
     this.submitLoan();
   }
 
-  updateStartDate() {
-    // find days in a period
-    const daysInAPeriod = this.loan.termPeriodDefinition.count[0];
-    const periodUnit =
-      this.loan.termPeriodDefinition.unit === 'complex'
-        ? 'day'
-        : this.loan.termPeriodDefinition.unit;
-
-    // adjust first payment date based on start date
-    this.loan.firstPaymentDate = dayjs(this.loan.startDate)
-      .add(daysInAPeriod, periodUnit)
-      .toDate();
-
-    // adjust end date based on start date and term
-    this.loan.endDate = dayjs(this.loan.startDate)
-      .add(this.loan.term * daysInAPeriod, periodUnit)
-      .toDate();
-
-    this.submitLoan();
-  }
-
   toggleAdvancedOptions() {
     this.showAdvancedOptions = !this.showAdvancedOptions;
-  }
-
-  addNewChangePaymentTermRow() {
-    const changePaymentDates = this.loan.changePaymentDates;
-
-    if (changePaymentDates.length === 0) {
-      // First entry: use loan's start date
-      changePaymentDates.push({
-        termNumber: 1,
-        newDate: this.loanRepaymentPlan[0].periodEndDate.toDate(),
-      });
-    } else {
-      // Following entries: use end date from previous row as start date
-      const termNumber =
-        changePaymentDates[changePaymentDates.length - 1].termNumber + 1;
-      changePaymentDates.push({
-        termNumber: termNumber,
-        newDate: this.loanRepaymentPlan[termNumber].periodEndDate.toDate(),
-      });
-    }
-
-    this.loan.changePaymentDates = changePaymentDates;
-    this.submitLoan();
   }
 
   applyPayments() {
@@ -1026,188 +849,6 @@ export class AppComponent implements OnChanges {
     });
 
     console.log('Payments applied');
-  }
-
-  addBalanceModificationRow() {
-    const balanceModifications = this.loan.balanceModifications;
-
-    const dateOfTheModificaiton =
-      balanceModifications.length === 0
-        ? this.loan.startDate
-        : balanceModifications[balanceModifications.length - 1].date;
-    balanceModifications.push({
-      amount: 0,
-      date: dateOfTheModificaiton,
-      type: 'decrease',
-    });
-
-    this.loan.balanceModifications = balanceModifications;
-    this.submitLoan();
-  }
-
-  deleteBalanceModificationRow(index: number) {
-    this.loan.balanceModifications.splice(index, 1);
-    this.submitLoan();
-  }
-
-  balanceModificationChanged() {
-    // order the balance modifications by date and refresh the table
-    // this.loan.balanceModifications.sort((a, b) => {
-    //   return dayjs(a.date).diff(dayjs(b.date));
-    // });
-
-    this.submitLoan();
-  }
-
-  addTermPaymentAmountOverride() {
-    const termPaymentAmountOveride = this.loan.termPaymentAmountOverride;
-    let termNumber: number;
-    let paymentAmount: number;
-
-    if (termPaymentAmountOveride.length === 0) {
-      // First entry: use loan's start date
-      termNumber = 1;
-      paymentAmount = 0;
-    } else {
-      // Following entries: use end date from previous row as start date
-      termNumber =
-        termPaymentAmountOveride[termPaymentAmountOveride.length - 1]
-          .termNumber + 1;
-      paymentAmount =
-        termPaymentAmountOveride[termPaymentAmountOveride.length - 1]
-          .paymentAmount;
-    }
-
-    termPaymentAmountOveride.push({
-      termNumber: termNumber,
-      paymentAmount: paymentAmount,
-    });
-
-    this.loan.termPaymentAmountOverride = termPaymentAmountOveride;
-    this.submitLoan();
-  }
-
-  addPrebillDayTermRow() {
-    const preBillDaysConfiguration = this.loan.preBillDays;
-    let termNumber: number;
-    let preBillDays: number;
-
-    if (preBillDaysConfiguration.length === 0) {
-      // First entry: use loan's start date
-      termNumber = 1;
-      preBillDays = this.loan.defaultPreBillDaysConfiguration;
-    } else {
-      // Following entries: use end date from previous row as start date
-      termNumber =
-        preBillDaysConfiguration[preBillDaysConfiguration.length - 1]
-          .termNumber + 1;
-      preBillDays =
-        preBillDaysConfiguration[preBillDaysConfiguration.length - 1]
-          .preBillDays;
-    }
-
-    preBillDaysConfiguration.push({
-      termNumber: termNumber,
-      preBillDays: preBillDays,
-    });
-
-    this.loan.preBillDays = preBillDaysConfiguration;
-    this.submitLoan();
-  }
-
-  addDueBillDayTermRow() {
-    const dueBillDaysConfiguration = this.loan.dueBillDays;
-    let termNumber: number;
-    let daysDueAfterPeriodEnd: number;
-
-    if (dueBillDaysConfiguration.length === 0) {
-      // First entry: use loan's start date
-      termNumber = 1;
-      daysDueAfterPeriodEnd =
-        this.loan.defaultBillDueDaysAfterPeriodEndConfiguration;
-    } else {
-      // Following entries: use end date from previous row as start date
-      termNumber =
-        dueBillDaysConfiguration[dueBillDaysConfiguration.length - 1]
-          .termNumber + 1;
-      daysDueAfterPeriodEnd =
-        dueBillDaysConfiguration[dueBillDaysConfiguration.length - 1]
-          .daysDueAfterPeriodEnd;
-    }
-
-    dueBillDaysConfiguration.push({
-      termNumber: termNumber,
-      daysDueAfterPeriodEnd: daysDueAfterPeriodEnd,
-    });
-
-    this.loan.dueBillDays = dueBillDaysConfiguration;
-    this.submitLoan();
-  }
-
-  removeChangePaymentDate(index: number) {
-    if (this.loan.changePaymentDates.length > 0) {
-      this.loan.changePaymentDates.splice(index, 1);
-    }
-    this.submitLoan();
-  }
-
-  removePreBillDayTerm(index: number) {
-    if (this.loan.preBillDays.length > 0) {
-      this.loan.preBillDays.splice(index, 1);
-    }
-    this.submitLoan();
-  }
-
-  removeDueBillDayTerm(index: number) {
-    if (this.loan.dueBillDays.length > 0) {
-      this.loan.dueBillDays.splice(index, 1);
-    }
-    this.submitLoan();
-  }
-  removeTermPaymentAmountOverride(index: number) {
-    if (this.loan.termPaymentAmountOverride.length > 0) {
-      this.loan.termPaymentAmountOverride.splice(index, 1);
-    }
-    this.submitLoan();
-  }
-
-  updateTermForCPD(index: number, termNumber: number) {
-    this.loan.changePaymentDates[index].newDate =
-      this.loanRepaymentPlan[termNumber - 1].periodEndDate.toDate();
-    //this.submitLoan();
-  }
-
-  // Add new rate override
-  addRateOverride() {
-    const ratesSchedule = this.loan.ratesSchedule;
-    let startDate: Date;
-    let endDate: Date;
-
-    if (ratesSchedule.length === 0) {
-      // First entry: use loan's start date
-      startDate = this.loan.startDate;
-    } else {
-      // Following entries: use end date from previous row as start date
-      startDate = ratesSchedule[ratesSchedule.length - 1].endDate;
-    }
-
-    // End date is 1 month from start date
-    endDate = dayjs(startDate).add(1, 'month').toDate();
-
-    ratesSchedule.push({
-      startDate: startDate,
-      endDate: endDate,
-      annualInterestRate: 10,
-    });
-    this.submitLoan();
-  }
-
-  // Remove rate override by index
-  removeRateOverride(index: number) {
-    if (this.loan.ratesSchedule.length > 0) {
-      this.loan.ratesSchedule.splice(index, 1);
-    }
-    this.submitLoan();
   }
 
   submitLoan() {

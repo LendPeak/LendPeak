@@ -16,6 +16,7 @@ export class ToolbarComponent {
   @Output() saveUIState = new EventEmitter<void>();
   @Output() resetUIState = new EventEmitter<void>();
 
+  
   isToday(date: Date): boolean {
     return dayjs(date).isSame(dayjs(), 'day');
   }

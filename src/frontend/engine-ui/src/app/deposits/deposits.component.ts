@@ -62,8 +62,10 @@ export class DepositsComponent {
       Object.assign(this.selectedDepositForEdit, this.depositData);
     } else {
       // Add new deposit
+      // get last deposit id
+      let depositCount = this.deposits.length + 1;
       const newDeposit: LoanDeposit = {
-        id: this.generateUniqueId(),
+        id: this.generateUniqueId(depositCount),
         amount: this.depositData.amount,
         currency: this.depositData.currency,
         createdDate: new Date(),
@@ -96,8 +98,11 @@ export class DepositsComponent {
     this.showDepositUsageDetailsDialog = true;
   }
 
-  generateUniqueId(): string {
+  generateUniqueId(sequence?: number): string {
     // Simple unique ID generator (you can replace this with UUID if needed)
-    return 'DEPOSIT-' + Math.random().toString(36).substr(2, 9);
+    const sequencePrefix = sequence !== undefined ? `${sequence}-` : '';
+    return (
+      'DEPOSIT-' + sequencePrefix + Math.random().toString(36).substr(2, 9)
+    );
   }
 }

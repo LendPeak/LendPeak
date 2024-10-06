@@ -7,6 +7,7 @@ export class BillGenerator {
   static generateBills(amortizationSchedule: AmortizationSchedule[]): Bill[] {
     const bills: Bill[] = [];
 
+    let billIdSequence = 1;
     for (const entry of amortizationSchedule) {
       if (!entry.billablePeriod) {
         // Skip non-billable periods
@@ -14,22 +15,29 @@ export class BillGenerator {
       }
 
       const totalDue = entry.totalPayment;
+      const id = BillGenerator.generateId(billIdSequence++);
       const bill: Bill = {
-        id: uuidv4(), // Generate a unique ID for the bill
+        id: id,
         period: entry.period,
         dueDate: entry.periodBillDueDate,
         principalDue: entry.principal,
         interestDue: entry.interest,
-        feesDue: entry.fees, // Assuming no additional fees; modify if needed
+        feesDue: entry.fees,
         totalDue: totalDue,
         isPaid: false,
-        amortizationEntry: entry, // Optional: reference to the amortization entry
+        amortizationEntry: entry,
       };
 
       bills.push(bill);
     }
 
     return bills;
+  }
+
+  static generateId(sequence?: number): string {
+    //    return uuidv4();
+    const sequencePrefix = sequence ? `${sequence}-` : "";
+    return "BILL-" + sequencePrefix + Math.random().toString(36).substr(2, 9);
   }
 }
 

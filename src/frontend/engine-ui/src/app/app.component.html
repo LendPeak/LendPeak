@@ -20,13 +20,13 @@
 
   <!-- Overrides Tab -->
   <p-tabPanel header="Overrides">
- <app-overrides
-    [loan]="loan"
-    [termOptions]="termOptions"
-    [balanceIncreaseType]="balanceIncreaseType"
-    (loanChange)="onLoanChange($event)"
-    (loanUpdated)="submitLoan()"
-  ></app-overrides>
+    <app-overrides
+      [loan]="loan"
+      [termOptions]="termOptions"
+      [balanceIncreaseType]="balanceIncreaseType"
+      (loanChange)="onLoanChange($event)"
+      (loanUpdated)="submitLoan()"
+    ></app-overrides>
   </p-tabPanel>
 
   <!-- Advanced Settings Tab -->
@@ -429,7 +429,7 @@
           <div class="p-mb-3">
             <p-button
               label="Create Custom Schedule"
-              icon="pi pi-plus"
+              icon="pi pi-plus p-ml-2"
               class="p-button-success"
               (onClick)="createLoanRepaymentPlan()"
               pTooltip="Generate a custom periods schedule based on your inputs."

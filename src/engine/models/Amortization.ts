@@ -907,7 +907,7 @@ export class Amortization {
             metadata.splitBalancePeriod = true;
           }
 
-          const daysInPeriod = this.calendar.daysBetween(periodStartBalance.startDate, periodStartBalance.endDate);
+          const daysInPeriod = this.calendar.daysBetween(interestRateForPeriod.startDate, interestRateForPeriod.endDate);
 
           const interestCalculator = new InterestCalculator(interestRateForPeriod.annualInterestRate, this.calendar.calendarType);
 

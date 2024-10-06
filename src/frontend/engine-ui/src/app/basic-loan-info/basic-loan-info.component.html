@@ -113,6 +113,8 @@
               [(ngModel)]="loan.startDate"
               name="startDate"
               dateFormat="mm/dd/yy"
+              [numberOfMonths]="2"
+              [showButtonBar]="true"
               showIcon
               (ngModelChange)="updateStartDate()"
             ></p-calendar>
@@ -137,6 +139,8 @@
               name="firstPaymentDate"
               dateFormat="mm/dd/yy"
               showIcon
+              [numberOfMonths]="2"
+              [showButtonBar]="true"
               (ngModelChange)="submitLoan()"
             ></p-calendar>
             <!-- Tooltip Overlay -->
@@ -160,12 +164,13 @@
               name="endDate"
               dateFormat="mm/dd/yy"
               showIcon
+              [numberOfMonths]="2"
+              [showButtonBar]="true"
               (ngModelChange)="submitLoan()"
             ></p-calendar>
             <!-- Tooltip Overlay -->
             <p-overlayPanel #endDateTooltip>
-              The date when the loan ends. Calculated automatically if not
-              set.
+              The date when the loan ends. Calculated automatically if not set.
             </p-overlayPanel>
           </div>
         </div>

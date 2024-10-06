@@ -19,6 +19,9 @@
         [(ngModel)]="snapshotDate"
         [showIcon]="true"
         dateFormat="mm/dd/yy"
+        [showButtonBar]="true"
+        [numberOfMonths]="3"
+        
         (ngModelChange)="onSnapshotDateChange($event)"
       ></p-calendar>
       <p-overlayPanel #startDateTooltip>

@@ -33,6 +33,7 @@ import { TooltipModule } from 'primeng/tooltip';
 import { TilaDisclosureComponent } from './tila-disclosure.component';
 import { ToolbarComponent } from './toolbar/toolbar.component';
 import { DepositsComponent } from './deposits/deposits.component';
+import { BillsComponent } from './bills/bills.component';
 
 @NgModule({
   declarations: [
@@ -40,6 +41,7 @@ import { DepositsComponent } from './deposits/deposits.component';
     TilaDisclosureComponent,
     ToolbarComponent,
     DepositsComponent,
+    BillsComponent,
   ],
   imports: [
     BrowserModule,

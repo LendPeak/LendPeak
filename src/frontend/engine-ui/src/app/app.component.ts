@@ -187,6 +187,12 @@ export class AppComponent implements OnChanges {
   };
 
   bills: UIBill[] = [];
+
+  // Handle any actions emitted by the bills component
+  onBillAction() {
+    // Implement any logic needed when a bill action occurs
+  }
+
   paymentApplicationResults: PaymentApplicationResult[] = [];
 
   lenderName = 'Your Bank Name';

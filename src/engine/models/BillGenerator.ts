@@ -24,7 +24,7 @@ export class BillGenerator {
         interestDue: entry.dueInterestForTerm,
         feesDue: entry.fees,
         totalDue: totalDue,
-        isPaid: false,
+        isPaid: totalDue.getValue().isZero() ? true : false,
         isOpen: false,
         amortizationEntry: entry,
       };

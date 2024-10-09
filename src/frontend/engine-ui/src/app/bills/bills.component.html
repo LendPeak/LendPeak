@@ -45,6 +45,13 @@
                 class="status-tag"
               ></p-tag>
               <p-tag
+                *ngIf="bill.totalDue == 0"
+                value="Skip A Pay"
+                severity="secondary"
+                class="status-tag"
+              ></p-tag>
+              <p-tag
+                *ngIf="bill.totalDue > 0"
                 value="{{ bill.isPaid ? 'Paid' : 'Unpaid' }}"
                 [severity]="bill.isPaid ? 'success' : 'warning'"
                 class="status-tag"

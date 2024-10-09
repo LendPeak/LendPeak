@@ -21,7 +21,7 @@ export class BillGenerator {
         period: entry.term,
         dueDate: entry.periodBillDueDate,
         principalDue: entry.principal,
-        interestDue: entry.accruedInterestForPeriod,
+        interestDue: entry.dueInterestForTerm,
         feesDue: entry.fees,
         totalDue: totalDue,
         isPaid: false,

@@ -669,8 +669,11 @@
           <th>Period</th>
           <th>Start Date</th>
           <th>End Date</th>
+          <th *ngIf="showAdvancedTable">Pre Bill Days</th>
           <th>Bill Open Date</th>
+          <th *ngIf="showAdvancedTable">Due Bill Days</th>
           <th>Bill Due Date</th>
+
           <th>Interest Rate</th>
           <th>Fees</th>
           <th>Due Interest</th>
@@ -690,8 +693,6 @@
 
           <th *ngIf="showAdvancedTable">Per Diem</th>
           <th *ngIf="showAdvancedTable">Days</th>
-          <th *ngIf="showAdvancedTable">Pre Bill Days</th>
-          <th *ngIf="showAdvancedTable">Due Bill Days</th>
           <th *ngIf="showAdvancedTable">Metadata</th>
         </tr>
       </ng-template>
@@ -707,9 +708,16 @@
           (keydown)="onRowKeyDown($event, plan)"
         >
           <td>{{ plan.period }}</td>
+
           <td>{{ plan.periodStartDate | date : "MM/dd/yyyy" }}</td>
           <td>{{ plan.periodEndDate | date : "MM/dd/yyyy" }}</td>
+          <td *ngIf="showAdvancedTable">
+            {{ plan.prebillDaysConfiguration }}
+          </td>
           <td>{{ plan.periodBillOpenDate | date : "MM/dd/yyyy" }}</td>
+          <td *ngIf="showAdvancedTable">
+            {{ plan.billDueDaysAfterPeriodEndConfiguration }}
+          </td>
           <td>{{ plan.periodBillDueDate | date : "MM/dd/yyyy" }}</td>
           <td>{{ plan.periodInterestRate }}%</td>
           <td>{{ plan.fees | currency }}</td>
@@ -745,12 +753,6 @@
           <td *ngIf="showAdvancedTable">{{ plan.perDiem | currency }}</td>
           <td *ngIf="showAdvancedTable">{{ plan.daysInPeriod }}</td>
 
-          <td *ngIf="showAdvancedTable">
-            {{ plan.prebillDaysConfiguration }}
-          </td>
-          <td *ngIf="showAdvancedTable">
-            {{ plan.billDueDaysAfterPeriodEndConfiguration }}
-          </td>
           <td *ngIf="showAdvancedTable">
             <table class="metadata-table">
               <thead>

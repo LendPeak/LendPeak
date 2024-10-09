@@ -16,7 +16,7 @@ describe("Amortization", () => {
 
     expect(schedule.length).toBe(term);
     expect(schedule[0].principal).toBeDefined();
-    expect(schedule[0].interest).toBeDefined();
+    expect(schedule[0].accruedInterestForPeriod).toBeDefined();
     expect(schedule[0].totalPayment).toBeDefined();
     expect(schedule[0].endBalance).toBeDefined();
   });
@@ -59,7 +59,7 @@ describe("Amortization", () => {
 
       expect(schedule.length).toBe(term);
       expect(schedule[0].principal).toBeDefined();
-      expect(schedule[0].interest).toBeDefined();
+      expect(schedule[0].accruedInterestForPeriod).toBeDefined();
       expect(schedule[0].totalPayment).toBeDefined();
       expect(schedule[0].endBalance).toBeDefined();
     });
@@ -77,7 +77,7 @@ describe("Amortization", () => {
     expect(schedule.length).toBe(term);
 
     schedule.forEach((entry, index) => {
-      expect(entry.interest.getValue().toNumber()).toBe(0);
+      expect(entry.accruedInterestForPeriod.getValue().toNumber()).toBe(0);
 
       if (index === schedule.length - 1 && entry.metadata.finalAdjustment) {
         // Verify the final adjustment
@@ -102,7 +102,7 @@ describe("Amortization", () => {
 
     expect(schedule.length).toBe(term);
     expect(schedule[0].principal).toBeDefined();
-    expect(schedule[0].interest).toBeDefined();
+    expect(schedule[0].accruedInterestForPeriod).toBeDefined();
     expect(schedule[0].totalPayment).toBeDefined();
     expect(schedule[0].endBalance.getValue().toNumber()).toBe(0);
   });
@@ -118,7 +118,7 @@ describe("Amortization", () => {
 
     expect(schedule.length).toBe(term);
     expect(schedule[0].principal).toBeDefined();
-    expect(schedule[0].interest).toBeDefined();
+    expect(schedule[0].accruedInterestForPeriod).toBeDefined();
     expect(schedule[0].totalPayment).toBeDefined();
     expect(schedule[0].endBalance).toBeDefined();
   });
@@ -173,7 +173,7 @@ describe("Amortization", () => {
     expect(schedule.length).toBe(term);
     schedule.forEach((entry, index) => {
       expect(entry.principal.getValue().toNumber()).toBeGreaterThan(0);
-      expect(entry.interest.getValue().toNumber()).toBeGreaterThan(0);
+      expect(entry.accruedInterestForPeriod.getValue().toNumber()).toBeGreaterThan(0);
       expect(entry.totalPayment.getValue().toNumber()).toBeGreaterThan(0);
       if (index === term - 1) {
         expect(entry.endBalance.getValue().toNumber()).toBe(0);
@@ -208,7 +208,7 @@ describe("Amortization", () => {
     expect(schedule.length).toBe(term);
     schedule.forEach((entry, index) => {
       expect(entry.principal.getValue().toNumber()).toBeGreaterThan(0);
-      expect(entry.interest.getValue().toNumber()).toBeGreaterThan(0);
+      expect(entry.accruedInterestForPeriod.getValue().toNumber()).toBeGreaterThan(0);
       expect(entry.totalPayment.getValue().toNumber()).toBeGreaterThan(0);
       if (index === term - 1) {
         expect(entry.endBalance.getValue().toNumber()).toBe(0);
@@ -241,7 +241,7 @@ describe("Amortization", () => {
     expect(schedule.length).toBe(term);
     schedule.forEach((entry, index) => {
       expect(entry.principal.getValue().toNumber()).toBeGreaterThan(0);
-      expect(entry.interest.getValue().toNumber()).toBeGreaterThan(0);
+      expect(entry.accruedInterestForPeriod.getValue().toNumber()).toBeGreaterThan(0);
       expect(entry.totalPayment.getValue().toNumber()).toBeGreaterThan(0);
       if (index === term - 1) {
         expect(entry.endBalance.getValue().toNumber()).toBe(0);
@@ -263,7 +263,7 @@ describe("Amortization", () => {
     expect(schedule.length).toBe(term);
     const entry = schedule[0];
     expect(entry.principal.getValue().toNumber()).toBeGreaterThan(0);
-    expect(entry.interest.getValue().toNumber()).toBeGreaterThan(0);
+    expect(entry.accruedInterestForPeriod.getValue().toNumber()).toBeGreaterThan(0);
     expect(entry.totalPayment.getValue().toNumber()).toBeGreaterThan(0);
     expect(entry.endBalance.getValue().toNumber()).toBe(0);
   });
@@ -279,7 +279,7 @@ describe("Amortization", () => {
 
     expect(schedule.length).toBe(term);
     schedule.forEach((entry, index) => {
-      expect(entry.interest.getValue().toNumber()).toBe(0);
+      expect(entry.accruedInterestForPeriod.getValue().toNumber()).toBe(0);
 
       if (index === schedule.length - 1 && entry.metadata.finalAdjustment) {
         const totalPrincipalPaid = schedule.slice(0, -1).reduce((acc, e) => acc.add(e.principal), Currency.of(0));
@@ -303,7 +303,7 @@ describe("Amortization", () => {
     expect(schedule.length).toBe(term);
     const entry = schedule[0];
     expect(entry.principal.getValue().toNumber()).toBe(1000);
-    expect(entry.interest.getValue().toNumber()).toBe(0);
+    expect(entry.accruedInterestForPeriod.getValue().toNumber()).toBe(0);
     expect(entry.totalPayment.getValue().toNumber()).toBe(1000);
     expect(entry.endBalance.getValue().toNumber()).toBe(0);
   });
@@ -320,7 +320,7 @@ describe("Amortization", () => {
     expect(schedule.length).toBe(term);
     schedule.forEach((entry, index) => {
       expect(entry.principal.getValue().toNumber()).toBeGreaterThan(0);
-      expect(entry.interest.getValue().toNumber()).toBeGreaterThan(0);
+      expect(entry.accruedInterestForPeriod.getValue().toNumber()).toBeGreaterThan(0);
       expect(entry.totalPayment.getValue().toNumber()).toBeGreaterThan(0);
       if (index === term - 1) {
         expect(entry.endBalance.getValue().toNumber()).toBe(0);
@@ -354,7 +354,7 @@ describe("Amortization", () => {
     //console.log("schedule", schedule);
     schedule.forEach((entry, index) => {
       expect(entry.principal.getValue().toNumber()).toBeGreaterThan(0);
-      expect(entry.interest.getValue().toNumber()).toBeGreaterThan(0);
+      expect(entry.accruedInterestForPeriod.getValue().toNumber()).toBeGreaterThan(0);
       expect(entry.totalPayment.getValue().toNumber()).toBeGreaterThan(0);
       if (index === term - 1) {
         expect(entry.endBalance.getValue().toNumber()).toBe(0);

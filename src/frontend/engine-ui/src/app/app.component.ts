@@ -676,7 +676,7 @@ export class AppComponent implements OnChanges {
     // which will become a base for user to modify values
     this.loan.periodsSchedule = this.loanRepaymentPlan.map((entry) => {
       return {
-        period: entry.period,
+        period: entry.term,
         startDate: entry.periodStartDate.toDate(),
         endDate: entry.periodEndDate.toDate(),
         interestRate: entry.periodInterestRate.times(100).toNumber(),
@@ -845,7 +845,7 @@ export class AppComponent implements OnChanges {
         // Create usage detail object for deposit
         const usageDetail = {
           billId: billId,
-          period: bill.amortizationEntry?.period || 0,
+          period: bill.amortizationEntry?.term || 0,
           billDueDate: bill.dueDate,
           allocatedPrincipal: allocation.allocatedPrincipal.toNumber(),
           allocatedInterest: allocation.allocatedInterest.toNumber(),
@@ -1156,7 +1156,7 @@ export class AppComponent implements OnChanges {
     });
     this.repaymentPlan = this.loanRepaymentPlan.map((entry, index) => {
       return {
-        period: entry.period,
+        period: entry.term,
         periodStartDate: entry.periodStartDate.format('YYYY-MM-DD'),
         periodEndDate: entry.periodEndDate.format('YYYY-MM-DD'),
         prebillDaysConfiguration: entry.prebillDaysConfiguration,
@@ -1167,10 +1167,19 @@ export class AppComponent implements OnChanges {
         periodInterestRate: entry.periodInterestRate.times(100).toNumber(),
         principal: entry.principal.toNumber(),
         fees: entry.fees.toNumber(),
-        totalInterestForPeriod: entry.totalInterestForPeriod.toNumber(),
-        interest: entry.interest.toNumber(),
+        // interest transactions
+        accruedInterestForPeriod: entry.accruedInterestForPeriod.toNumber(), // track accrued interest for the period
+        billedInterestForTerm: entry.billedInterestForTerm.toNumber(), // tracks total accrued interest along with any deferred interest from previous periods
+        dueInterestForTerm: entry.dueInterestForTerm.toNumber(), // tracks total interest that is due for the term
+        dueInterestForTermError: entry.dueInterestForTerm
+          .getRoundingError()
+          .toNumber(), // tracks total interest that is due for the term
         billedDeferredInterest: entry.billedDeferredInterest.toNumber(),
-        realInterest: entry.realInterest.toNumber(),
+        unbilledTotalDeferredInterest:
+          entry.unbilledTotalDeferredInterest.toNumber(), // tracks deferred interest
+
+        totalInterestForPeriod: entry.billedInterestForTerm.toNumber(),
+        //  realInterest: entry.unroundedInterestForPeriod.toNumber(),
         interestRoundingError: entry.interestRoundingError.toNumber(),
         totalPayment: entry.totalPayment.toNumber(),
         perDiem: entry.perDiem.toNumber(),
@@ -1181,8 +1190,6 @@ export class AppComponent implements OnChanges {
         unbilledInterestDueToRounding:
           entry.unbilledInterestDueToRounding.toNumber(),
         totalDeferredInterest: entry.unbilledTotalDeferredInterest.toNumber(),
-        deferredInterestFromCurrentPeriod:
-          entry.unbilledDeferredInterestFromCurrentPeriod.toNumber(),
         metadata: entry.metadata,
       };
     });

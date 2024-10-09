@@ -22,6 +22,7 @@
   <p-tabPanel header="Overrides">
     <app-overrides
       [loan]="loan"
+      [loanRepaymentPlan]="loanRepaymentPlan"
       [termOptions]="termOptions"
       [balanceIncreaseType]="balanceIncreaseType"
       (loanChange)="onLoanChange($event)"
@@ -672,24 +673,23 @@
           <th>Bill Due Date</th>
           <th>Interest Rate</th>
           <th>Fees</th>
-          <th>Total Interest</th>
+          <th>Due Interest</th>
           <th>Principal</th>
           <th>Total Payment</th>
+          <th>Start Balance</th>
           <th>End Balance</th>
           <!-- Advanced Columns -->
-          <th *ngIf="showAdvancedTable">Start Balance</th>
           <th *ngIf="showAdvancedTable">Balance Modification Amount</th>
-          <th *ngIf="showAdvancedTable">Interest</th>
+          <!-- start of interest values -->
+          <th *ngIf="showAdvancedTable">Accrued Interest For Period</th>
+          <th *ngIf="showAdvancedTable">Billed Interest For Term</th>
           <th *ngIf="showAdvancedTable">Billed Deferred Interest</th>
-          <th *ngIf="showAdvancedTable">Real Interest</th>
+          <th *ngIf="showAdvancedTable">Unbilled Deferred Interest</th>
+          <!-- end of interest values -->
           <th *ngIf="showAdvancedTable">Rounding Error</th>
+
           <th *ngIf="showAdvancedTable">Per Diem</th>
           <th *ngIf="showAdvancedTable">Days</th>
-          <th *ngIf="showAdvancedTable">Unbilled Interest</th>
-          <th *ngIf="showAdvancedTable">Total Deferred Interest</th>
-          <th *ngIf="showAdvancedTable">
-            Deferred Interest For Current Period
-          </th>
           <th *ngIf="showAdvancedTable">Pre Bill Days</th>
           <th *ngIf="showAdvancedTable">Due Bill Days</th>
           <th *ngIf="showAdvancedTable">Metadata</th>
@@ -713,38 +713,38 @@
           <td>{{ plan.periodBillDueDate | date : "MM/dd/yyyy" }}</td>
           <td>{{ plan.periodInterestRate }}%</td>
           <td>{{ plan.fees | currency }}</td>
-          <td>{{ plan.totalInterestForPeriod | currency }}</td>
+          <td>{{ plan.dueInterestForTerm | currency }}</td>
           <td>{{ plan.principal | currency }}</td>
           <td>{{ plan.totalPayment | currency }}</td>
+          <td>{{ plan.startBalance | currency }}</td>
           <td>{{ plan.endBalance | currency }}</td>
           <!-- Advanced Columns -->
-          <td *ngIf="showAdvancedTable">
-            {{ plan.startBalance | currency }}
-          </td>
+
           <td *ngIf="showAdvancedTable">
             {{ plan.balanceModificationAmount | currency }}
           </td>
-          <td *ngIf="showAdvancedTable">{{ plan.interest | currency }}</td>
+
+          <!-- start of interest values -->
+          <td *ngIf="showAdvancedTable">
+            {{ plan.accruedInterestForPeriod | currency }}
+          </td>
+          <td *ngIf="showAdvancedTable">
+            {{ plan.billedInterestForTerm | currency }}
+          </td>
           <td *ngIf="showAdvancedTable">
             {{ plan.billedDeferredInterest | currency }}
           </td>
           <td *ngIf="showAdvancedTable">
-            {{ plan.realInterest }}
+            {{ plan.unbilledTotalDeferredInterest | currency }}
           </td>
+          <!-- end of interest values -->
+
           <td *ngIf="showAdvancedTable">
             {{ plan.interestRoundingError }}
           </td>
           <td *ngIf="showAdvancedTable">{{ plan.perDiem | currency }}</td>
           <td *ngIf="showAdvancedTable">{{ plan.daysInPeriod }}</td>
-          <td *ngIf="showAdvancedTable">
-            {{ plan.unbilledInterestDueToRounding | currency }}
-          </td>
-          <td *ngIf="showAdvancedTable">
-            {{ plan.totalDeferredInterest | currency }}
-          </td>
-          <td *ngIf="showAdvancedTable">
-            {{ plan.deferredInterestFromCurrentPeriod | currency }}
-          </td>
+
           <td *ngIf="showAdvancedTable">
             {{ plan.prebillDaysConfiguration }}
           </td>

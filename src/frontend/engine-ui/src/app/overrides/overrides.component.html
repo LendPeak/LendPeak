@@ -29,7 +29,27 @@
                     dateFormat="mm/dd/yy"
                     showIcon
                     (ngModelChange)="onInputChange()"
-                  ></p-calendar>
+                  >
+                    <ng-template pTemplate="date" let-date>
+                      <span
+                        [ngStyle]="
+                          isPeriodEndDate(date)
+                            ? {
+                                backgroundColor: 'orange',
+                                color: 'white',
+                                borderRadius: '50%',
+                                padding: '5px',
+                                display: 'inline-block',
+                                textAlign: 'center',
+                                width: '24px'
+                              }
+                            : {}
+                        "
+                      >
+                        {{ date.day }}
+                      </span>
+                    </ng-template>
+                  </p-calendar>
                 </td>
                 <!-- End Date -->
                 <td>
@@ -39,7 +59,27 @@
                     dateFormat="mm/dd/yy"
                     showIcon
                     (ngModelChange)="onInputChange()"
-                  ></p-calendar>
+                  >
+                    <ng-template pTemplate="date" let-date>
+                      <span
+                        [ngStyle]="
+                          isPeriodEndDate(date)
+                            ? {
+                                backgroundColor: 'orange',
+                                color: 'white',
+                                borderRadius: '50%',
+                                padding: '5px',
+                                display: 'inline-block',
+                                textAlign: 'center',
+                                width: '24px'
+                              }
+                            : {}
+                        "
+                      >
+                        {{ date.day }}
+                      </span>
+                    </ng-template>
+                  </p-calendar>
                 </td>
                 <!-- Interest Rate -->
                 <td>

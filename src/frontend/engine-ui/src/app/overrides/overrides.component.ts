@@ -273,6 +273,24 @@ export class OverridesComponent {
     this.emitLoanChange();
   }
 
+  isPeriodEndDate(ngDate: {
+    day: number;
+    month: number;
+    year: number;
+  }): boolean {
+    const passedDate = dayjs(
+      new Date(ngDate.year, ngDate.month, ngDate.day)
+    ).startOf('day');
+
+    for (const row of this.loanRepaymentPlan) {
+      if (row.periodEndDate.isSame(passedDate)) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
   updateTermForCPD(index: number, termNumber: number) {
     // find the term number in the repayment plan
     // const repaymentPlanRow = this.loanRepaymentPlan.find(

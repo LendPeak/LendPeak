@@ -18,10 +18,10 @@ export class BillGenerator {
       const id = BillGenerator.generateId(billIdSequence++);
       const bill: Bill = {
         id: id,
-        period: entry.period,
+        period: entry.term,
         dueDate: entry.periodBillDueDate,
         principalDue: entry.principal,
-        interestDue: entry.interest,
+        interestDue: entry.accruedInterestForPeriod,
         feesDue: entry.fees,
         totalDue: totalDue,
         isPaid: false,

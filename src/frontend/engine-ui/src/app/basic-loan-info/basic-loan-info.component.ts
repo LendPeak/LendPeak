@@ -25,7 +25,9 @@ export class BasicLoanInfoComponent {
   }
 
   updateTerm() {
-    this.loanUpdated.emit();
+    // when term is updated we need to extend the end date
+    this.updateStartDate();
+    // this.loanUpdated.emit();
   }
 
   updateStartDate() {

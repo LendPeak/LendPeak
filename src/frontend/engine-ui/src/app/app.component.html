@@ -808,3 +808,58 @@
     ></app-tila-disclosure>
   </p-dialog>
 </div>
+
+<!-- Version Modal -->
+<p-dialog
+  header="🎉 New Version Available!"
+  [(visible)]="showNewVersionModal"
+  modal="true"
+  [closable]="false"
+  [style]="{ width: '400px' }"
+  [contentStyle]="{ 'text-align': 'center' }"
+>
+  <div class="modal-content">
+    <i class="pi pi-info-circle modal-icon"></i>
+    <h2>Version {{ selectedVersion }}</h2>
+
+    <!-- Version Selector -->
+    <div class="version-selector">
+      <label for="versionSelect">Select Version:</label>
+      <p-dropdown
+        [options]="releaseNotes"
+        [(ngModel)]="selectedVersion"
+        optionLabel="version"
+        optionValue="version"
+        (onChange)="onVersionChange($event)"
+        placeholder="Select Version"
+        styleClass="version-dropdown"
+      ></p-dropdown>
+    </div>
+
+    <div *ngIf="selectedReleaseNotes">
+      <h3>What's New:</h3>
+      <ul>
+        <li *ngFor="let note of selectedReleaseNotes.details">
+          {{ note }}
+        </li>
+      </ul>
+    </div>
+    <p *ngIf="!selectedReleaseNotes">
+      We've made improvements and fixed some bugs to enhance your experience.
+    </p>
+  </div>
+  <p-footer>
+    <button
+      pButton
+      type="button"
+      label="Continue"
+      (click)="closeNewVersionModal()"
+      class="p-button-rounded p-button-success"
+    ></button>
+  </p-footer>
+</p-dialog>
+
+<!-- Footer -->
+<footer>
+  <p>Version: {{ currentVersion }}</p>
+</footer>

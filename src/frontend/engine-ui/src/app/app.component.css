@@ -151,3 +151,90 @@ p-fieldset>.p-fieldset-legend {
 .create-schedule-buttons {
     margin-right: 8px;
 }
+
+
+/* version modal and footer */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.modal-content {
+        padding: 20px;
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+
+
+.modal-icon {
+    font-size: 3em;
+    color: #007ad9;
+    margin-bottom: 10px;
+}
+
+.modal-content h2 {
+    margin-top: 0;
+    color: #333;
+}
+
+.modal-content h3 {
+    color: #007ad9;
+}
+
+.modal-content ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+.modal-content ul li {
+    text-align: left;
+    margin: 5px 0;
+    position: relative;
+    padding-left: 20px;
+}
+
+.modal-content ul li::before {
+    content: '•';
+    color: #007ad9;
+    position: absolute;
+    left: 0;
+}
+
+.modal-content p {
+    font-size: 1em;
+    color: #555;
+}
+
+.ui-dialog {
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    border-radius: 8px;
+}
+
+
+
+p-footer {
+    display: flex;
+    justify-content: center;
+}
+
+footer {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    text-align: right;
+    background-color: #f7f7f7;
+    padding: 0.5em 2em;
+    border-top: 1px solid #ddd;
+}
+
+footer p {
+    margin: 0;
+    color: #888;
+}

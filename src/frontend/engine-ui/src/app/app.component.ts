@@ -1,3 +1,5 @@
+import { appVersion } from '../environments/version';
+
 import { Component, OnChanges, SimpleChanges } from '@angular/core';
 import { OverlayPanel } from 'primeng/overlaypanel';
 import {
@@ -100,6 +102,27 @@ interface LoanDeposit {
   styleUrls: ['./app.component.css'],
 })
 export class AppComponent implements OnChanges {
+  currentVersion = appVersion;
+  showNewVersionModal = false;
+  currentReleaseNotes: any;
+  releaseNotes = [
+    {
+      version: '1.0.0',
+      date: '2024-10-09',
+      details: ['Initial release with basic features.'],
+    },
+    {
+      version: '1.1.0',
+      date: '2024-10-09',
+      details: [
+        'Added version tracking and release notes. Now you can see the release notes for the current version along with the release notes for previous versions. You will also get a notification when a new version is released.',
+      ],
+    },
+  ];
+
+  selectedVersion: string = this.currentVersion;
+  selectedReleaseNotes: any;
+
   snapshotDate: Date = new Date();
 
   CURRENT_OBJECT_VERSION = 8;
@@ -317,7 +340,32 @@ export class AppComponent implements OnChanges {
     // this.updateDataForSnapshotDate();
   }
 
+  closeNewVersionModal() {
+    this.showNewVersionModal = false;
+  }
+
+  showCurrentReleaseNotes() {
+    this.showNewVersionModal = true;
+
+    this.selectedReleaseNotes = this.releaseNotes.find(
+      (note) => note.version === this.selectedVersion
+    );
+  }
+
+  onVersionChange(event: any) {
+    this.selectedVersion = event.value;
+    this.selectedReleaseNotes = this.releaseNotes.find(
+      (note) => note.version === this.selectedVersion
+    );
+  }
+
   ngOnInit(): void {
+    const storedVersion = localStorage.getItem('appVersion');
+    if (storedVersion !== this.currentVersion) {
+      this.showCurrentReleaseNotes();
+      localStorage.setItem('appVersion', this.currentVersion);
+    }
+
     this.snapshotDate = new Date();
     // Retrieve loan from local storage if exists
     try {
@@ -591,6 +639,11 @@ export class AppComponent implements OnChanges {
       label: 'Help',
       icon: 'pi pi-question',
       command: () => this.openHelpDialog(),
+    },
+    {
+      label: 'Current Release Notes',
+      icon: 'pi pi-sparkles',
+      command: () => this.showCurrentReleaseNotes(),
     },
   ];
 

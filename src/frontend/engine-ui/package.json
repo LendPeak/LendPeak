@@ -1,7 +1,8 @@
 {
   "name": "engine-ui",
-  "version": "0.0.0",
+  "version": "1.1.0",
   "scripts": {
+    "prebuild": "node ./scripts/version.js",
     "ng": "ng",
     "start": "ng serve",
     "build": "ng build",

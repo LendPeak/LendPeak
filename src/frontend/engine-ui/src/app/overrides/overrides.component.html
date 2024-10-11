@@ -115,7 +115,10 @@
       </p-accordionTab>
 
       <!-- Term Payment Amount -->
-      <p-accordionTab header="Term Payment Amount">
+      <p-accordionTab
+        header="Term Payment Amount"
+        [selected]="loan.termPaymentAmountOverride.length > 0"
+      >
         <div class="p-fluid">
           <table
             *ngIf="loan.termPaymentAmountOverride.length > 0"
@@ -177,7 +180,10 @@
       </p-accordionTab>
 
       <!-- Change Payment Date -->
-      <p-accordionTab header="Change Payment Date">
+      <p-accordionTab
+        header="Change Payment Date"
+        [selected]="loan.changePaymentDates.length > 0"
+      >
         <div class="p-fluid">
           <table
             *ngIf="loan.changePaymentDates.length > 0"
@@ -240,7 +246,10 @@
       </p-accordionTab>
 
       <!-- Pre Bill Day Term -->
-      <p-accordionTab header="Pre Bill Day Term">
+      <p-accordionTab
+        header="Pre Bill Day Term"
+        [selected]="loan.preBillDays.length > 0"
+      >
         <div class="p-fluid">
           <table
             *ngIf="loan.preBillDays.length > 0"
@@ -294,7 +303,10 @@
       </p-accordionTab>
 
       <!-- Due Bill Day Term -->
-      <p-accordionTab header="Due Bill Day Term">
+      <p-accordionTab
+        header="Due Bill Day Term"
+        [selected]="loan.dueBillDays.length > 0"
+      >
         <div class="p-fluid">
           <table
             *ngIf="loan.dueBillDays.length > 0"
@@ -348,7 +360,10 @@
       </p-accordionTab>
 
       <!-- Balance Modifications -->
-      <p-accordionTab header="Balance Modifications">
+      <p-accordionTab
+        header="Balance Modifications"
+        [selected]="loan.balanceModifications.length > 0"
+      >
         <div class="p-fluid">
           <table
             *ngIf="loan.balanceModifications.length > 0"
@@ -423,7 +438,10 @@
       </p-accordionTab>
 
       <!-- Fees That Apply to All Terms -->
-      <p-accordionTab header="Fees That Apply to All Terms">
+      <p-accordionTab
+        header="Fees That Apply to All Terms"
+        [selected]="loan.feesForAllTerms.length > 0"
+      >
         <div class="p-fluid">
           <table
             *ngIf="loan.feesForAllTerms.length > 0"
@@ -517,7 +535,10 @@
       </p-accordionTab>
 
       <!-- Fees Per Term -->
-      <p-accordionTab header="Fees Per Term">
+      <p-accordionTab
+        header="Fees Per Term"
+        [selected]="loan.feesPerTerm.length > 0"
+      >
         <div class="p-fluid">
           <table class="p-datatable p-component">
             <thead>

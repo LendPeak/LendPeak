@@ -21,6 +21,8 @@ export interface AmortizationScheduleMetadata {
   finalAdjustment?: boolean;
   deferredInterestAppliedAmount?: number;
   amountAddedToDeferredInterest?: number;
+  deferredFeesAppliedAmount?: number;
+  amountAddedToDeferredFees?: number;
 }
 
 export interface BalanceModification {
@@ -75,7 +77,11 @@ export interface AmortizationSchedule {
   billedDeferredInterest: Currency;
   unbilledTotalDeferredInterest: Currency; // tracks deferred interest
 
+  // fees
   fees: Currency;
+  billedDeferredFees: Currency;
+  unbilledTotalDeferredFees: Currency; // tracks deferred interest
+
   totalPayment: Currency;
   endBalance: Currency;
   startBalance: Currency;
@@ -202,6 +208,7 @@ export class Amortization {
   totalChargedInterestUnrounded: Currency; // racks total charged interest (unrounded)
   unbilledInterestDueToRounding: Currency; // racks unbilled interest due to rounding
   unbilledDeferredInterest: Currency; // tracks deferred interest
+  unbilledDeferredFees: Currency; // tracks deferred interest
   roundingPrecision: number; // tracks precision for rounding
   flushThreshold: Currency; // property to track the threshold for flushing cumulative rounding error
   periodsSchedule: PeriodSchedule[] = [];
@@ -419,6 +426,7 @@ export class Amortization {
     this.generateDueBillDaysForAllTerms();
 
     this.unbilledDeferredInterest = Currency.of(0);
+    this.unbilledDeferredFees = Currency.of(0);
 
     // validate the schedule periods and rates
     this.verifySchedulePeriods();
@@ -432,9 +440,17 @@ export class Amortization {
     const termFees = this.feesPerTerm.get(termNumber) || [];
     // Retrieve fees that apply to all terms
     const allTermFees = this.feesForAllTerms;
+    // deffered fees
+    const deferredFees: Fee[] = [
+      {
+        type: "fixed",
+        amount: this.unbilledDeferredFees,
+        description: "Deferred fee",
+      },
+    ];
 
     // Combine the fees
-    const fees = [...allTermFees, ...termFees];
+    const fees = [...deferredFees, ...allTermFees, ...termFees];
 
     let totalFees = Currency.Zero();
     let feesBeforePrincipal: Fee[] = [];
@@ -475,6 +491,8 @@ export class Amortization {
       totalFees = totalFees.add(feeAmount);
     }
 
+    // reset deferred fees
+    this.unbilledDeferredFees = Currency.Zero();
     // Return the totalFees and the feesAfterPrincipal to be handled after principal is calculated
     return { totalFees, feesAfterPrincipal };
   }
@@ -981,13 +999,15 @@ export class Amortization {
               billedDeferredInterest: appliedDeferredInterest,
               unbilledTotalDeferredInterest: this.unbilledDeferredInterest,
               unbilledInterestDueToRounding: this.unbilledInterestDueToRounding,
-
+              // fees
+              fees: Currency.of(0),
+              billedDeferredFees: Currency.of(0),
+              unbilledTotalDeferredFees: Currency.of(0),
               // dates
               periodBillOpenDate: billOpenDate,
               periodBillDueDate: billDueDate,
               billDueDaysAfterPeriodEndConfiguration: dueBillDaysConfiguration,
               prebillDaysConfiguration: preBillDaysConfiguration,
-              fees: Currency.of(0),
               interestRoundingError: roundedInterest.getRoundingErrorAsCurrency(),
               balanceModificationAmount: periodStartBalance.modificationAmount,
               balanceModification: periodStartBalance.balanceModification,
@@ -1018,6 +1038,7 @@ export class Amortization {
           let dueInterestForTerm: Currency;
           let deferredInterestFromCurrentPeriod: Currency;
           let totalFeesAfterPrincipal: Currency;
+          let billedDeferredFees: Currency = Currency.Zero();
           let principal: Currency;
           let totalFees: Currency;
           let totalPayment: Currency;
@@ -1026,9 +1047,23 @@ export class Amortization {
           if (availableForInterestAndPrincipal.getValue().isNegative()) {
             principal = Currency.Zero();
             dueInterestForTerm = Currency.Zero();
+            const unpaidFees = availableForInterestAndPrincipal.abs();
+            metadata.amountAddedToDeferredFees = unpaidFees.toNumber();
+            this.unbilledDeferredFees = this.unbilledDeferredFees.add(unpaidFees);
+
+            let paidFeesThisPeriod = totalFeesBeforePrincipal.subtract(unpaidFees);
+            // it is possible that some part of the fees is deferred
+            // we will check if total fees minus unpaid fees is greater than zero
+            // if it is, we will set total fees to that value
+            // otherwise we will set it to zero
+            if (paidFeesThisPeriod.greaterThan(0)) {
+              totalFees = paidFeesThisPeriod;
+            } else {
+              totalFees = Currency.Zero();
+            }
+
             deferredInterestFromCurrentPeriod = roundedAccruedInterestForPeriod;
             this.unbilledDeferredInterest = this.unbilledDeferredInterest.add(deferredInterestFromCurrentPeriod);
-            totalFees = totalFeesBeforePrincipal;
           } else {
             if (availableForInterestAndPrincipal.greaterThanOrEqualTo(billedInterestForTerm)) {
               // Can pay all interest
@@ -1095,7 +1130,10 @@ export class Amortization {
             prebillDaysConfiguration: preBillDaysConfiguration,
             periodInterestRate: interestRateForPeriod.annualInterestRate,
             principal: principal,
+            // fees
             fees: totalFees,
+            billedDeferredFees: billedDeferredFees,
+            unbilledTotalDeferredFees: this.unbilledDeferredFees,
             // interest values
             dueInterestForTerm: dueInterestForTerm,
             accruedInterestForPeriod: accruedInterestForPeriod,

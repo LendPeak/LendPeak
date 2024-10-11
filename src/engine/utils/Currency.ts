@@ -56,6 +56,10 @@ export class Currency {
     return this.value.toNumber();
   }
 
+  abs(): Currency {
+    return Currency.of(this.value.abs());
+  }
+
   getValue(): Decimal {
     return this.value;
   }
@@ -184,8 +188,12 @@ export class Currency {
     return this.value.equals(other.getValue());
   }
 
-  greaterThan(other: Currency): boolean {
-    return this.value.greaterThan(other.getValue());
+  greaterThan(other: number | string | Decimal | Currency): boolean {
+    if (other instanceof Currency) {
+      return this.value.greaterThan(other.getValue());
+    } else {
+      return this.value.greaterThan(other);
+    }
   }
 
   lessThan(other: Currency): boolean {

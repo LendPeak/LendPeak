@@ -167,10 +167,9 @@ p-fieldset>.p-fieldset-legend {
 }
 
 .modal-content {
-        padding: 20px;
-  animation: fadeIn 0.5s ease-in-out;
+    padding: 20px;
+    animation: fadeIn 0.5s ease-in-out;
 }
-
 
 
 .modal-icon {
@@ -184,8 +183,13 @@ p-fieldset>.p-fieldset-legend {
     color: #333;
 }
 
-.modal-content h3 {
+.ui-accordion .ui-accordion-header {
+    font-weight: bold;
     color: #007ad9;
+}
+
+.ui-accordion .ui-accordion-content {
+    text-align: left;
 }
 
 .modal-content ul {
@@ -207,9 +211,12 @@ p-fieldset>.p-fieldset-legend {
     left: 0;
 }
 
-.modal-content p {
-    font-size: 1em;
-    color: #555;
+.view-all {
+    margin-top: 15px;
+}
+
+.view-all p {
+    margin-bottom: 5px;
 }
 
 .ui-dialog {

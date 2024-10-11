@@ -118,6 +118,14 @@ export class AppComponent implements OnChanges {
         'Added version tracking and release notes. Now you can see the release notes for the current version along with the release notes for previous versions. You will also get a notification when a new version is released.',
       ],
     },
+    {
+      version: '1.2.0',
+      date: '2024-10-09',
+      details: [
+        'Added logic to expand accordion section in overrides tab if override exists, allowing user to identify quickly areas that have some configuration present',
+        'Implemented deferred fee logic, so if total term payment amount cannot satisfy fees, fees are deferred to next term',
+      ],
+    },
   ];
 
   selectedVersion: string = this.currentVersion;

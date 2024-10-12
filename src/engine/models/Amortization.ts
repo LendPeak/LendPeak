@@ -375,19 +375,19 @@ export class Amortization {
       // we need to backfill the rate and end date to the last period
 
       if (!this.startDate.isSame(this.rateSchedules[0].startDate, "day")) {
-        // console.log(`adding rate schedule at the start ${this.startDate.format("YYYY-MM-DD")} and ${this.rateSchedules[0].startDate.format("YYYY-MM-DD")}`);
+        console.log(`adding rate schedule at the start ${this.startDate.format("YYYY-MM-DD")} and ${this.rateSchedules[0].startDate.format("YYYY-MM-DD")}`);
         this.rateSchedules.unshift({ annualInterestRate: this.annualInterestRate, startDate: this.startDate, endDate: this.rateSchedules[0].startDate });
       }
 
       for (let i = 0; i < this.rateSchedules.length - 1; i++) {
         if (!this.rateSchedules[i].endDate.isSame(this.rateSchedules[i + 1].startDate, "day")) {
-          // console.log(`adding rate schedule between ${this.rateSchedules[i].endDate.format("YYYY-MM-DD")} and ${this.rateSchedules[i + 1].startDate.format("YYYY-MM-DD")}`);
+          console.log(`adding rate schedule between ${this.rateSchedules[i].startDate.format("YYYY-MM-DD")} and ${this.rateSchedules[i + 1].endDate.format("YYYY-MM-DD")}`);
           this.rateSchedules.splice(i + 1, 0, { annualInterestRate: this.annualInterestRate, startDate: this.rateSchedules[i].endDate, endDate: this.rateSchedules[i + 1].startDate });
         }
       }
 
       if (!this.endDate.isSame(this.rateSchedules[this.rateSchedules.length - 1].endDate, "day")) {
-        // console.log(`adding rate schedule for the end between ${this.rateSchedules[this.rateSchedules.length - 1].endDate.format("YYYY-MM-DD")} and ${this.endDate.format("YYYY-MM-DD")}`);
+        console.log(`adding rate schedule for the end between ${this.rateSchedules[this.rateSchedules.length - 1].endDate.format("YYYY-MM-DD")} and ${this.endDate.format("YYYY-MM-DD")}`);
         this.rateSchedules.push({ annualInterestRate: this.annualInterestRate, startDate: this.rateSchedules[this.rateSchedules.length - 1].endDate, endDate: this.endDate });
       }
     }
@@ -794,7 +794,7 @@ export class Amortization {
     const rates: RateSchedule[] = [];
 
     for (let rate of this.rateSchedules) {
-      if (startDate.isSameOrBefore(rate.endDate) && endDate.isSameOrAfter(rate.startDate)) {
+      if (startDate.isBefore(rate.endDate) && endDate.isSameOrAfter(rate.startDate)) {
         const effectiveStartDate = startDate.isAfter(rate.startDate) ? startDate : rate.startDate;
         const effectiveEndDate = endDate.isBefore(rate.endDate) ? endDate : rate.endDate;
         rates.push({ annualInterestRate: rate.annualInterestRate, startDate: effectiveStartDate, endDate: effectiveEndDate });
@@ -879,17 +879,17 @@ export class Amortization {
       // if we have modifications, we will add the last balance to the end of the range
       balances.push({ balance: balances[balances.length - 1].balance, startDate: balances[balances.length - 1].endDate, endDate, modificationAmount: Currency.Zero() });
 
-      console.log(
-        "Balance Modifications:",
-        balances.map((balance) => {
-          return {
-            startDate: balance.startDate.format("YYYY-MM-DD"),
-            endDate: balance.endDate.format("YYYY-MM-DD"),
-            balance: balance.balance.toNumber(),
-            modificationAmount: balance.modificationAmount.toNumber(),
-          };
-        })
-      );
+      // console.log(
+      //   "Balance Modifications:",
+      //   balances.map((balance) => {
+      //     return {
+      //       startDate: balance.startDate.format("YYYY-MM-DD"),
+      //       endDate: balance.endDate.format("YYYY-MM-DD"),
+      //       balance: balance.balance.toNumber(),
+      //       modificationAmount: balance.modificationAmount.toNumber(),
+      //     };
+      //   })
+      // );
     }
 
     // console.log(
@@ -930,13 +930,13 @@ export class Amortization {
       const loanBalancesInAPeriod = this.getModifiedBalance(periodStartDate, periodEndDate, startBalance);
       const lastBalanceInPeriod = loanBalancesInAPeriod.length;
       let currentBalanceIndex = 0;
-      console.log(`Term ${termIndex} has ${loanBalancesInAPeriod.length} balances, lastBalanceInPeriod: ${lastBalanceInPeriod}`);
+      //console.log(`Term ${termIndex} has ${loanBalancesInAPeriod.length} balances, lastBalanceInPeriod: ${lastBalanceInPeriod}`);
       for (let periodStartBalance of loanBalancesInAPeriod) {
         currentBalanceIndex++;
-        console.log(`Term: ${termIndex} currentBalanceIndex: ${currentBalanceIndex}, lastBalanceInPeriod: ${lastBalanceInPeriod}`);
+        // console.log(`Term: ${termIndex} currentBalanceIndex: ${currentBalanceIndex}, lastBalanceInPeriod: ${lastBalanceInPeriod}`);
 
         const periodRates = this.getInterestRatesBetweenDates(periodStartBalance.startDate, periodStartBalance.endDate);
-
+        //console.log(`PeriodRates: termIndex: ${termIndex}`, periodRates);
         const lastRateInPeriod = periodRates.length;
         let currentRate = 0;
         for (let interestRateForPeriod of periodRates) {
@@ -953,9 +953,9 @@ export class Amortization {
 
           const daysInPeriod = this.calendar.daysBetween(interestRateForPeriod.startDate, interestRateForPeriod.endDate);
 
-          if (daysInPeriod === 0) {
-            continue;
-          }
+          // if (daysInPeriod === 0) {
+          //   continue;
+          // }
 
           const interestCalculator = new InterestCalculator(interestRateForPeriod.annualInterestRate, this.calendar.calendarType);
 
@@ -999,9 +999,9 @@ export class Amortization {
 
           billedInterestForTerm = billedInterestForTerm.add(interestForPeriod);
 
-          console.log(`Term: ${termIndex} CurrentBalanceIndex: ${currentBalanceIndex}, LastBalanceInPeriod: ${lastBalanceInPeriod} and CurrentRate: ${currentRate}, LastRateInPeriod: ${lastRateInPeriod}`);
+          //console.log(`Term: ${termIndex} CurrentBalanceIndex: ${currentBalanceIndex}, LastBalanceInPeriod: ${lastBalanceInPeriod} and CurrentRate: ${currentRate}, LastRateInPeriod: ${lastRateInPeriod}`);
           if (currentRate !== lastRateInPeriod || currentBalanceIndex !== lastBalanceInPeriod) {
-            console.log(`adding split period for term ${termIndex}`);
+            //console.log(`adding split period for term ${termIndex}`);
             // Handle split periods (non-billable periods)
             const endBalance = periodStartBalance.balance;
             schedule.push({

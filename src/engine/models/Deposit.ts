@@ -17,6 +17,8 @@ export interface Deposit {
   paymentMethod?: string; // Optional payment method
   depositor?: string; // Who made the deposit
   depositLocation?: string; // Where the deposit was made
+  applyExcessToPrincipal: boolean; // Whether to apply excess to principal
+  excessAppliedDate?: Dayjs; // Date when excess was applied
   metadata?: DepositMetadata; // Custom metadata
 }
 
@@ -32,9 +34,24 @@ export class DepositRecord implements Deposit {
   paymentMethod?: string;
   depositor?: string;
   depositLocation?: string;
+  applyExcessToPrincipal: boolean;
+  excessAppliedDate?: Dayjs;
+
   metadata?: DepositMetadata;
 
-  constructor(params: { id: string; amount: Currency; currency: string; effectiveDate: Dayjs; clearingDate?: Dayjs; paymentMethod?: string; depositor?: string; depositLocation?: string; metadata?: DepositMetadata }) {
+  constructor(params: {
+    id: string;
+    amount: Currency;
+    currency: string;
+    effectiveDate: Dayjs;
+    clearingDate?: Dayjs;
+    paymentMethod?: string;
+    depositor?: string;
+    depositLocation?: string;
+    applyExcessToPrincipal?: boolean;
+    excessAppliedDate?: Dayjs;
+    metadata?: DepositMetadata;
+  }) {
     this.id = params.id;
     this.amount = params.amount;
     this.currency = params.currency;
@@ -47,6 +64,12 @@ export class DepositRecord implements Deposit {
     this.depositor = params.depositor;
     this.depositLocation = params.depositLocation;
     this.metadata = params.metadata || {};
+    this.applyExcessToPrincipal = params.applyExcessToPrincipal || false;
+    if (this.applyExcessToPrincipal && !params.excessAppliedDate) {
+      this.excessAppliedDate = this.effectiveDate;
+    } else {
+      this.excessAppliedDate = params.excessAppliedDate;
+    }
   }
 }
 

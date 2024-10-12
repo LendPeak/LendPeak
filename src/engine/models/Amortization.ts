@@ -794,7 +794,7 @@ export class Amortization {
     const rates: RateSchedule[] = [];
 
     for (let rate of this.rateSchedules) {
-      if (startDate.isBefore(rate.endDate) && endDate.isAfter(rate.startDate)) {
+      if (startDate.isSameOrBefore(rate.endDate) && endDate.isSameOrAfter(rate.startDate)) {
         const effectiveStartDate = startDate.isAfter(rate.startDate) ? startDate : rate.startDate;
         const effectiveEndDate = endDate.isBefore(rate.endDate) ? endDate : rate.endDate;
         rates.push({ annualInterestRate: rate.annualInterestRate, startDate: effectiveStartDate, endDate: effectiveEndDate });
@@ -878,8 +878,22 @@ export class Amortization {
     } else {
       // if we have modifications, we will add the last balance to the end of the range
       balances.push({ balance: balances[balances.length - 1].balance, startDate: balances[balances.length - 1].endDate, endDate, modificationAmount: Currency.Zero() });
+
+      console.log(
+        "Balance Modifications:",
+        balances.map((balance) => {
+          return {
+            startDate: balance.startDate.format("YYYY-MM-DD"),
+            endDate: balance.endDate.format("YYYY-MM-DD"),
+            balance: balance.balance.toNumber(),
+            modificationAmount: balance.modificationAmount.toNumber(),
+          };
+        })
+      );
     }
+
     // console.log(
+    //   "Balance Modifications:",
     //   balances.map((balance) => {
     //     return {
     //       startDate: balance.startDate.format("YYYY-MM-DD"),
@@ -916,8 +930,11 @@ export class Amortization {
       const loanBalancesInAPeriod = this.getModifiedBalance(periodStartDate, periodEndDate, startBalance);
       const lastBalanceInPeriod = loanBalancesInAPeriod.length;
       let currentBalanceIndex = 0;
+      console.log(`Term ${termIndex} has ${loanBalancesInAPeriod.length} balances, lastBalanceInPeriod: ${lastBalanceInPeriod}`);
       for (let periodStartBalance of loanBalancesInAPeriod) {
         currentBalanceIndex++;
+        console.log(`Term: ${termIndex} currentBalanceIndex: ${currentBalanceIndex}, lastBalanceInPeriod: ${lastBalanceInPeriod}`);
+
         const periodRates = this.getInterestRatesBetweenDates(periodStartBalance.startDate, periodStartBalance.endDate);
 
         const lastRateInPeriod = periodRates.length;
@@ -936,9 +953,10 @@ export class Amortization {
 
           const daysInPeriod = this.calendar.daysBetween(interestRateForPeriod.startDate, interestRateForPeriod.endDate);
 
-          if (daysInPeriod === 0) {
-            continue;
-          }
+          // if (daysInPeriod === 0 && currentBalanceIndex > 1) {
+          //   console.log("Skipping period with 0 days");
+          //   continue;
+          // }
 
           const interestCalculator = new InterestCalculator(interestRateForPeriod.annualInterestRate, this.calendar.calendarType);
 
@@ -982,7 +1000,9 @@ export class Amortization {
 
           billedInterestForTerm = billedInterestForTerm.add(interestForPeriod);
 
+          console.log(`Term: ${termIndex} CurrentBalanceIndex: ${currentBalanceIndex}, LastBalanceInPeriod: ${lastBalanceInPeriod} and CurrentRate: ${currentRate}, LastRateInPeriod: ${lastRateInPeriod}`);
           if (currentRate !== lastRateInPeriod || currentBalanceIndex !== lastBalanceInPeriod) {
+            console.log(`adding split period for term ${termIndex}`);
             // Handle split periods (non-billable periods)
             const endBalance = periodStartBalance.balance;
             schedule.push({
@@ -1014,7 +1034,7 @@ export class Amortization {
               endBalance: Currency.of(endBalance),
               startBalance: Currency.of(startBalance),
               totalPayment: Currency.of(0),
-              perDiem: this.round(accruedInterestForPeriod.divide(daysInPeriod)),
+              perDiem: this.round(accruedInterestForPeriod.divide(daysInPeriod || 1)),
               daysInPeriod: daysInPeriod,
               metadata,
             });

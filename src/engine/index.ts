@@ -39,18 +39,18 @@ const amortization = new Amortization({
   //roundingMethod: RoundingMethod.ROUND_HALF_EVEN,
   flushUnbilledInterestRoundingErrorMethod: FlushUnbilledInterestDueToRoundingErrorType.NONE,
   termPaymentAmountOverride: [
-    {
-      paymentAmount: Currency.of(0),
-      termNumber: 1,
-    },
+    // {
+    //   paymentAmount: Currency.of(0),
+    //   termNumber: 1,
+    // },
   ],
 
   balanceModifications: [
-    // {
-    //   amount: Currency.of(200),
-    //   date: dayjs("2024-09-27"),
-    //   type: "decrease",
-    // },
+    {
+      amount: Currency.of(200),
+      date: startDate,
+      type: "decrease",
+    },
     // {
     //   amount: Currency.of(1000),
     //   date: dayjs("2024-09-25"),
@@ -60,23 +60,23 @@ const amortization = new Amortization({
   // flushUnbilledInterestRoundingErrorMethod: FlushUnbilledInterestDueToRoundingErrorType.AT_THRESHOLD,
   // roundingPrecision: 2, // 5 decimal places
   //flushThreshold: Currency.of(0.01), // 1 cent threshold
-  ratesSchedule: [
-    {
-      startDate: startDate,
-      endDate: startDate.add(10, "days"),
-      annualInterestRate: new Decimal(0.25),
-    },
-    {
-      startDate: startDate.add(10, "days"),
-      endDate: startDate.add(1, "month"),
-      annualInterestRate: new Decimal(0.18),
-    },
-    // {
-    //   startDate: startDate.add(1, "month"),
-    //   endDate: startDate.add(term, "month"),
-    //   annualInterestRate: interestRate,
-    // },
-  ],
+  // ratesSchedule: [
+  //   {
+  //     startDate: startDate,
+  //     endDate: startDate.add(10, "days"),
+  //     annualInterestRate: new Decimal(0.25),
+  //   },
+  //   {
+  //     startDate: startDate.add(10, "days"),
+  //     endDate: startDate.add(1, "month"),
+  //     annualInterestRate: new Decimal(0.18),
+  //   },
+  //   // {
+  //   //   startDate: startDate.add(1, "month"),
+  //   //   endDate: startDate.add(term, "month"),
+  //   //   annualInterestRate: interestRate,
+  //   // },
+  // ],
   // ratesSchedule: [
   //   { startDate: dayjs("2024-09-13"), endDate: dayjs("2024-10-13"), annualInterestRate: new Decimal(0.12) },
   //{ annualInterestRate: "0.1", startDate: "2024-10-14T02:26:21.870Z", endDate: "2025-09-14T02:26:14.078Z" },

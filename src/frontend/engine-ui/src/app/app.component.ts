@@ -93,6 +93,9 @@ interface LoanDeposit {
     date: Date;
   }[];
   unusedAmount?: number;
+  balanceModificationId?: string;
+  applyExcessToPrincipal: boolean;
+  excessAppliedDate?: Date;
   metadata?: any;
 }
 
@@ -126,6 +129,14 @@ export class AppComponent implements OnChanges {
         'Implemented deferred fee logic, so if total term payment amount cannot satisfy fees, fees are deferred to next term',
       ],
     },
+    {
+      version: '1.3.0',
+      date: '2024-10-10',
+      details: [
+        'Minor cosmetic changes to the UI to text input fields to align with the rest of the application',
+        'Added to deposit option to apply excess to principal balance',
+      ],
+    },
   ];
 
   selectedVersion: string = this.currentVersion;
@@ -133,7 +144,7 @@ export class AppComponent implements OnChanges {
 
   snapshotDate: Date = new Date();
 
-  CURRENT_OBJECT_VERSION = 8;
+  CURRENT_OBJECT_VERSION = 9;
   loan: {
     objectVersion: number;
     principal: number;
@@ -158,10 +169,12 @@ export class AppComponent implements OnChanges {
     dueBillDays: BillDueDaysConfiguration[];
     preBillDays: PreBillDaysConfiguration[];
     balanceModifications: {
+      id: string;
       amount: number;
       date: Date;
       type: 'increase' | 'decrease';
       description?: string;
+      isSystemModification?: boolean;
       metadata?: any;
     }[];
     changePaymentDates: {
@@ -405,6 +418,8 @@ export class AppComponent implements OnChanges {
               depositor: deposit.depositor,
               depositLocation: deposit.depositLocation,
               usageDetails: deposit.usageDetails,
+              applyExcessToPrincipal: deposit.applyExcessToPrincipal,
+              excessAppliedDate: deposit.excessAppliedDate,
             };
           });
         }
@@ -490,10 +505,12 @@ export class AppComponent implements OnChanges {
         this.loan.balanceModifications = this.loan.balanceModifications.map(
           (balanceModification) => {
             return {
+              id: balanceModification.id,
               amount: balanceModification.amount,
               date: new Date(balanceModification.date),
               type: balanceModification.type,
               description: balanceModification.description,
+              isSystemModification: balanceModification.isSystemModification,
               metadata: balanceModification.metadata,
             };
           }
@@ -799,6 +816,178 @@ export class AppComponent implements OnChanges {
   paymentPriorityOptions = ['interest', 'fees', 'principal'];
   paymentPriority: PaymentComponent[] = ['interest', 'fees', 'principal'];
 
+  determineBalanceModificationDate(deposit: LoanDeposit): Date {
+    const excessAppliedDate =
+      deposit.excessAppliedDate || deposit.effectiveDate;
+
+    // Ensure excessAppliedDate is not null
+    if (!excessAppliedDate) {
+      throw new Error(
+        `Deposit ${deposit.id} has no effective date or excess applied date.`
+      );
+    }
+
+    // Find open bills at the time of the deposit's effective date
+    const depositEffectiveDayjs = dayjs(deposit.effectiveDate);
+    const openBillsAtDepositDate = this.bills.filter(
+      (bill) =>
+        !bill.isPaid &&
+        bill.isOpen &&
+        dayjs(bill.dueDate).isSameOrAfter(depositEffectiveDayjs)
+    );
+
+    let balanceModificationDate: Dayjs;
+
+    if (openBillsAtDepositDate.length > 0) {
+      // There are open bills; apply excess at the beginning of the next term
+      const latestBill = openBillsAtDepositDate.reduce((latest, bill) =>
+        dayjs(bill.dueDate).isAfter(dayjs(latest.dueDate)) ? bill : latest
+      );
+      const nextTermStartDate = dayjs(
+        latestBill.amortizationEntry.periodEndDate
+      );
+
+      // Ensure the date is after the excessAppliedDate
+      balanceModificationDate = nextTermStartDate.isAfter(
+        dayjs(excessAppliedDate)
+      )
+        ? nextTermStartDate
+        : dayjs(excessAppliedDate).startOf('day');
+    } else {
+      // No open bills; use the effective date or excessAppliedDate
+      balanceModificationDate = depositEffectiveDayjs.isAfter(
+        dayjs(excessAppliedDate)
+      )
+        ? depositEffectiveDayjs
+        : dayjs(excessAppliedDate).startOf('day');
+    }
+
+    return balanceModificationDate.toDate();
+  }
+
+  addBalanceModification(balanceModification: {
+    id: string;
+    amount: number;
+    date: Date;
+    type: 'increase' | 'decrease';
+    description?: string;
+    metadata?: any;
+  }) {
+    this.loan.balanceModifications.push(balanceModification);
+    this.submitLoan();
+  }
+
+  removeBalanceModificationForDeposit(deposit: LoanDeposit) {
+    // // Remove any balance modifications associated with this deposit
+    // this.loan.balanceModifications = this.loan.balanceModifications.filter(
+    //   (bm) => !(bm.metadata && bm.metadata.depositId === deposit.id)
+    // );
+
+    // loop through this.loan.balanceModifications and remove the balance modification
+    // if it is associated with the deposit
+    const filteredBalanceModifications: {
+      id: string;
+      amount: number;
+      date: Date;
+      type: 'increase' | 'decrease';
+      description?: string;
+      metadata?: any;
+    }[] = [];
+    this.loan.balanceModifications.forEach((balanceModification) => {
+      if (balanceModification.metadata?.depositId !== deposit.id) {
+        filteredBalanceModifications.push(balanceModification);
+      } else {
+        console.log(
+          `Balance modification with id ${balanceModification.id} removed`
+        );
+        this.balanceModificationRemoved = true;
+      }
+    });
+    this.loan.balanceModifications = filteredBalanceModifications;
+
+    deposit.balanceModificationId = undefined;
+  }
+
+  balanceModificationRemoved = false;
+
+  createOrUpdateBalanceModificationForDeposit(
+    deposit: LoanDeposit,
+    excessAmount: number
+  ) {
+    // Find existing balance modification linked to this deposit
+    let balanceModification = this.loan.balanceModifications.find(
+      (bm) => bm.metadata && bm.metadata.depositId === deposit.id
+    );
+
+    // Determine the date to apply the balance modification
+    const dateToApply = this.determineBalanceModificationDate(deposit);
+
+    if (balanceModification) {
+      // Update existing balance modification
+      balanceModification.amount = excessAmount;
+      balanceModification.date = dateToApply;
+      // Update other properties if needed
+    } else {
+      // Create new balance modification
+      const newBalanceModification = {
+        id: this.generateUniqueId(),
+        amount: excessAmount,
+        date: dateToApply,
+        isSystemModification: true,
+        type: 'decrease' as 'decrease', // Reducing the principal balance
+        description: `Excess funds applied to principal from deposit ${deposit.id}`,
+        metadata: {
+          depositId: deposit.id,
+        },
+      };
+      this.addBalanceModification(newBalanceModification);
+      deposit.balanceModificationId = newBalanceModification.id;
+    }
+
+    deposit.usageDetails.push({
+      billId: 'Principal Prepayment',
+      period: 0,
+      billDueDate: dateToApply,
+      allocatedPrincipal: excessAmount,
+      allocatedInterest: 0,
+      allocatedFees: 0,
+      date: dateToApply,
+    });
+  }
+
+  generateUniqueId(): string {
+    return uuidv4();
+  }
+
+  cleaupeBalanceModifications() {
+    // remove any existing balance modifications that were associated with deposits
+    // but deposits are no longer present
+    const filteredBalanceModifications: {
+      id: string;
+      amount: number;
+      date: Date;
+      type: 'increase' | 'decrease';
+      description?: string;
+      metadata?: any;
+    }[] = [];
+    this.loan.balanceModifications.forEach((balanceModification) => {
+      if (balanceModification.metadata?.depositId) {
+        const deposit = this.loan.deposits.find(
+          (d) => d.id === balanceModification.metadata.depositId
+        );
+        if (!deposit) {
+          console.log(
+            `Balance modification with id ${balanceModification.id} removed`
+          );
+          this.balanceModificationRemoved = true;
+          return;
+        }
+      }
+      filteredBalanceModifications.push(balanceModification);
+    });
+    this.loan.balanceModifications = filteredBalanceModifications;
+  }
+
   applyPayments() {
     // Apply payments to the loan
     const deposits: DepositRecord[] = this.loan.deposits.map((deposit) => {
@@ -813,6 +1002,10 @@ export class AppComponent implements OnChanges {
         paymentMethod: deposit.paymentMethod,
         depositor: deposit.depositor,
         depositLocation: deposit.depositLocation,
+        applyExcessToPrincipal: deposit.applyExcessToPrincipal,
+        excessAppliedDate: deposit.excessAppliedDate
+          ? dayjs(deposit.excessAppliedDate)
+          : undefined,
         metadata: deposit.metadata,
       });
     });
@@ -882,7 +1075,7 @@ export class AppComponent implements OnChanges {
         const billId = allocation.billId;
         const bill = this.bills.find((b) => b.id === billId);
         if (!bill) {
-          console.error(`Bill with id ${billId} not found`);
+          console.info(`Bill with id ${billId} not found`);
           return;
         }
 
@@ -920,28 +1113,43 @@ export class AppComponent implements OnChanges {
 
       // Set the unallocated amount (unused amount)
       deposit.unusedAmount = result.unallocatedAmount.toNumber();
+
+      // Handle excess amount to be applied to principal
+      if (
+        deposit.applyExcessToPrincipal &&
+        result.unallocatedAmount.getValue().greaterThan(0)
+      ) {
+        const excessAmount = result.unallocatedAmount.toNumber();
+        this.createOrUpdateBalanceModificationForDeposit(deposit, excessAmount);
+      } else {
+        // Remove any existing balance modification for this deposit
+        this.removeBalanceModificationForDeposit(deposit);
+      }
     });
 
     // Update bills
-    this.bills = bills.map((bill) => {
-      // Find corresponding payment details
-      const uiBill = this.bills.find((b) => b.id === bill.id);
+    this.bills = bills
+      .map((bill) => {
+        // Find corresponding payment details
+        const uiBill = this.bills.find((b) => b.id === bill.id);
 
-      if (!uiBill) {
-        throw new Error(`Bill with id ${bill.id} not found`);
-      }
+        if (!uiBill) {
+          console.info(`Bill with id ${bill.id} not found`);
+          return null;
+        }
 
-      return {
-        ...uiBill,
-        principalDue: bill.principalDue.toNumber(),
-        interestDue: bill.interestDue.toNumber(),
-        feesDue: bill.feesDue.toNumber(),
-        totalDue: bill.totalDue.toNumber(),
-        isPaid: bill.isPaid,
-        paymentMetadata: bill.paymentMetadata,
-        paymentDetails: uiBill?.paymentDetails || [],
-      };
-    });
+        return {
+          ...uiBill,
+          principalDue: bill.principalDue.toNumber(),
+          interestDue: bill.interestDue.toNumber(),
+          feesDue: bill.feesDue.toNumber(),
+          totalDue: bill.totalDue.toNumber(),
+          isPaid: bill.isPaid,
+          paymentMetadata: bill.paymentMetadata,
+          paymentDetails: uiBill?.paymentDetails || [],
+        };
+      })
+      .filter((bill) => bill !== null);
 
     // Update deposits in the loan object
     this.loan.deposits = this.loan.deposits.map((deposit) => {
@@ -973,6 +1181,8 @@ export class AppComponent implements OnChanges {
   }
 
   submitLoan() {
+    this.cleaupeBalanceModifications();
+
     let calendarType: CalendarType;
     switch (this.loan.calendarType) {
       case 'ACTUAL_ACTUAL':
@@ -1133,11 +1343,12 @@ export class AppComponent implements OnChanges {
     }
 
     if (this.loan.balanceModifications.length > 0) {
+      console.log('Balance modifications:', this.loan.balanceModifications);
       amortizationParams.balanceModifications =
         this.loan.balanceModifications.map((balanceModification) => {
           return {
             amount: Currency.of(balanceModification.amount),
-            date: dayjs(balanceModification.date),
+            date: dayjs(balanceModification.date).startOf('day'),
             type: balanceModification.type,
             description: balanceModification.description,
             metadata: balanceModification.metadata,
@@ -1259,6 +1470,10 @@ export class AppComponent implements OnChanges {
 
     this.generateBills();
     this.applyPayments();
+    if (this.balanceModificationRemoved === true) {
+      this.balanceModificationRemoved = false;
+      this.submitLoan();
+    }
     this.saveUIState();
   }
 }

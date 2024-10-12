@@ -29,6 +29,8 @@
               <th>Depositor</th>
               <th>Deposit Location</th>
               <th>Unused Amount</th>
+              <th>Apply Excess to Principal</th>
+              <th>Excess Applied Date</th>
               <th>Actions</th>
             </tr>
           </ng-template>
@@ -52,6 +54,23 @@
               <td>{{ deposit.depositLocation }}</td>
               <!-- Unused Amount -->
               <td>{{ deposit.unusedAmount | currency }}</td>
+              <!-- Apply Excess to Principal -->
+              <td>
+                <i
+                  class="pi"
+                  [ngClass]="{
+                    'pi-check-circle': deposit.applyExcessToPrincipal,
+                    'pi-minus-circle': !deposit.applyExcessToPrincipal
+                  }"
+                  [style.color]="
+                    deposit.applyExcessToPrincipal ? 'green' : 'orange'
+                  "
+                ></i>
+              </td>
+              <!-- Excess Applied Date -->
+              <td>
+                {{ deposit.excessAppliedDate | date : "MM/dd/yyyy" }}
+              </td>
               <!-- Actions -->
               <td>
                 <div class="action-buttons">
@@ -94,7 +113,7 @@
   header="{{ selectedDepositForEdit ? 'Edit Deposit' : 'Add New Deposit' }}"
   [(visible)]="showDepositDialog"
   [modal]="true"
-  [style]="{ width: '50vw' }"
+  [style]="{ width: '80vw', minHeight: '80vh' }"
   [closable]="true"
   (onHide)="onDepositDialogHide()"
 >
@@ -182,6 +201,39 @@
           [(ngModel)]="depositData.depositLocation"
           name="depositLocation"
         />
+      </div>
+      <!-- Apply Excess to Principal Balance and Date After Which Excess is Applied to Principal -->
+      <div class="field col-12">
+        <div class="p-fluid grid">
+          <div class="field col-6" style="display: flex; align-items: center">
+            <p-checkbox
+              inputId="applyExcessToPrincipal"
+              [(ngModel)]="depositData.applyExcessToPrincipal"
+              name="applyExcessToPrincipal"
+              binary="true"
+              (onChange)="onApplyExcessToPrincipalChange($event)"
+            ></p-checkbox>
+            <label
+              for="applyExcessToPrincipal"
+              style="margin-left: 0.5em; margin-bottom: 0"
+            >
+              Apply Excess to Principal Balance
+            </label>
+          </div>
+          <div class="field col-6" *ngIf="depositData.applyExcessToPrincipal">
+            <label for="excessAppliedDate"
+              >Date On Which Excess is Applied to Principal</label
+            >
+            <p-calendar
+              id="excessAppliedDate"
+              [(ngModel)]="depositData.excessAppliedDate"
+              name="excessAppliedDate"
+              dateFormat="mm/dd/yy"
+              showIcon
+              [required]="depositData.applyExcessToPrincipal"
+            ></p-calendar>
+          </div>
+        </div>
       </div>
     </div>
   </form>

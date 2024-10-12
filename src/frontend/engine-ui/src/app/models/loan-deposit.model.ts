@@ -13,5 +13,7 @@ export interface LoanDeposit {
   depositLocation?: string;
   usageDetails: any[];
   unusedAmount?: number;
+  applyExcessToPrincipal: boolean;
+  excessAppliedDate?: Date;
   metadata?: any;
 }

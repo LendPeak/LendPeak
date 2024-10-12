@@ -953,10 +953,9 @@ export class Amortization {
 
           const daysInPeriod = this.calendar.daysBetween(interestRateForPeriod.startDate, interestRateForPeriod.endDate);
 
-          // if (daysInPeriod === 0 && currentBalanceIndex > 1) {
-          //   console.log("Skipping period with 0 days");
-          //   continue;
-          // }
+          if (daysInPeriod === 0) {
+            continue;
+          }
 
           const interestCalculator = new InterestCalculator(interestRateForPeriod.annualInterestRate, this.calendar.calendarType);
 

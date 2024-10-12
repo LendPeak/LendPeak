@@ -156,6 +156,7 @@
           dateFormat="mm/dd/yy"
           showIcon
           required
+          [appendTo]="'body'"
         ></p-calendar>
       </div>
       <!-- Clearing Date -->
@@ -166,6 +167,7 @@
           [(ngModel)]="depositData.clearingDate"
           name="clearingDate"
           dateFormat="mm/dd/yy"
+          [appendTo]="'body'"
           showIcon
         ></p-calendar>
       </div>

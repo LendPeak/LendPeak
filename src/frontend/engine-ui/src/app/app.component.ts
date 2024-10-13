@@ -325,7 +325,7 @@ export class AppComponent implements OnChanges {
     localStorage.removeItem('uiState');
     localStorage.removeItem('loan');
     // refresh the page
-    window.location.reload();
+    // window.location.reload();
   }
 
   showTooltip(event: Event, tooltipRef: OverlayPanel) {
@@ -424,9 +424,11 @@ export class AppComponent implements OnChanges {
               paymentMethod: deposit.paymentMethod,
               depositor: deposit.depositor,
               depositLocation: deposit.depositLocation,
-              usageDetails: deposit.usageDetails,
+              usageDetails: [],
               applyExcessToPrincipal: deposit.applyExcessToPrincipal,
-              excessAppliedDate: deposit.excessAppliedDate,
+              excessAppliedDate: deposit.excessAppliedDate
+                ? new Date(deposit.excessAppliedDate)
+                : undefined,
             };
           });
         }
@@ -1071,6 +1073,7 @@ export class AppComponent implements OnChanges {
         console.error(`Deposit with id ${depositId} not found`);
         return;
       }
+      console.log(`Processing deposit ${depositId}`, deposit);
 
       // Initialize usage details for deposit
       // if (!deposit.usageDetails) {

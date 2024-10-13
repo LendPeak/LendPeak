@@ -913,9 +913,9 @@ export class Amortization {
    * @returns An array of AmortizationSchedule entries.
    */
   generateSchedule(): AmortizationSchedule[] {
+    this.earlyRepayment = false;
     const schedule: AmortizationSchedule[] = [];
     let startBalance = this.totalLoanAmount;
-
     let termIndex = 0;
     for (let term of this.periodsSchedule) {
       if (this.earlyRepayment === true) {
@@ -1189,6 +1189,10 @@ export class Amortization {
     // Adjust the last payment to ensure the balance is zero and incorporate rounding error
     if (startBalance.toNumber() !== 0) {
       const lastPayment = schedule[schedule.length - 1];
+      if (!lastPayment) {
+        console.error(`Last payment is not defined`, schedule);
+        throw new Error("Last payment is not defined");
+      }
       lastPayment.principal = lastPayment.principal.add(startBalance);
       lastPayment.totalPayment = lastPayment.principal.add(lastPayment.accruedInterestForPeriod).add(lastPayment.fees);
       lastPayment.endBalance = Currency.of(0);

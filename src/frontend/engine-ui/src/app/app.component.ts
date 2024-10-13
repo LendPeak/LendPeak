@@ -137,6 +137,13 @@ export class AppComponent implements OnChanges {
         'Added to deposit option to apply excess to principal balance',
       ],
     },
+    {
+      version: '1.4.0',
+      date: '2024-10-12',
+      details: [
+        'Implemented early repayment where user can pay off the loan early',
+      ],
+    },
   ];
 
   selectedVersion: string = this.currentVersion;

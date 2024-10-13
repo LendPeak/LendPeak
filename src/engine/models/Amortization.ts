@@ -221,7 +221,8 @@ export class Amortization {
   changePaymentDates: ChangePaymentDate[] = [];
   repaymentSchedule: AmortizationSchedule[];
   balanceModifications: BalanceModification[] = [];
-  _arp?: Decimal;
+  _apr?: Decimal;
+  earlyRepayment: boolean = false;
 
   // Fee configurations
   // private staticFeePerBill: Currency;
@@ -498,10 +499,10 @@ export class Amortization {
   }
 
   get apr(): Decimal {
-    if (!this._arp) {
-      this._arp = this.calculateAPR();
+    if (!this._apr) {
+      this._apr = this.calculateAPR();
     }
-    return this._arp;
+    return this._apr;
   }
 
   get loanTermInMonths(): number {
@@ -917,7 +918,11 @@ export class Amortization {
 
     let termIndex = 0;
     for (let term of this.periodsSchedule) {
+      if (this.earlyRepayment === true) {
+        break;
+      }
       termIndex++;
+
       const periodStartDate = term.startDate;
       const periodEndDate = term.endDate;
       const preBillDaysConfiguration = this.preBillDays[termIndex - 1].preBillDays;
@@ -932,6 +937,9 @@ export class Amortization {
       let currentBalanceIndex = 0;
       //console.log(`Term ${termIndex} has ${loanBalancesInAPeriod.length} balances, lastBalanceInPeriod: ${lastBalanceInPeriod}`);
       for (let periodStartBalance of loanBalancesInAPeriod) {
+        if (this.earlyRepayment === true) {
+          break;
+        }
         currentBalanceIndex++;
         // console.log(`Term: ${termIndex} currentBalanceIndex: ${currentBalanceIndex}, lastBalanceInPeriod: ${lastBalanceInPeriod}`);
 
@@ -1169,6 +1177,11 @@ export class Amortization {
             unbilledInterestDueToRounding: this.unbilledInterestDueToRounding,
             metadata,
           });
+
+          if (balanceAfterPayment.lessThanOrEqualTo(0) && termIndex < this.term) {
+            this.earlyRepayment = true;
+            break;
+          }
         }
       }
     }

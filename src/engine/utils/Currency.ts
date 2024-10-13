@@ -52,6 +52,10 @@ export class Currency {
     return Currency.of(this.value.negated());
   }
 
+  isNegative(): boolean {
+    return this.value.isNegative();
+  }
+
   toNumber(): number {
     return this.value.toNumber();
   }
@@ -204,7 +208,11 @@ export class Currency {
     return this.value.greaterThanOrEqualTo(other.getValue());
   }
 
-  lessThanOrEqualTo(other: Currency): boolean {
-    return this.value.lessThanOrEqualTo(other.getValue());
+  lessThanOrEqualTo(other: number | string | Decimal | Currency): boolean {
+    if (other instanceof Currency) {
+      return this.value.lessThanOrEqualTo(other.getValue());
+    } else {
+      return this.value.lessThanOrEqualTo(other);
+    }
   }
 }

@@ -32,11 +32,11 @@
           <tr>
             <td>{{ bill.id }}</td>
             <td>{{ bill.period }}</td>
-            <td>{{ bill.dueDate | date : "MM/dd/yyyy" }}</td>
-            <td>{{ bill.principalDue | currency }}</td>
-            <td>{{ bill.interestDue | currency }}</td>
-            <td>{{ bill.feesDue | currency }}</td>
-            <td>{{ bill.totalDue | currency }}</td>
+            <td>{{ bill.jsDueDate | date : "MM/dd/yyyy" }}</td>
+            <td>{{ bill.jsPrincipalDue | currency }}</td>
+            <td>{{ bill.jsInterestDue | currency }}</td>
+            <td>{{ bill.jsFeesDue | currency }}</td>
+            <td>{{ bill.jsTotalDue | currency }}</td>
             <td>
               <p-tag
                 *ngIf="bill.isOpen && !bill.isPaid"
@@ -45,13 +45,13 @@
                 class="status-tag"
               ></p-tag>
               <p-tag
-                *ngIf="bill.totalDue == 0"
+                *ngIf="bill.jsTotalDue == 0"
                 value="Skip A Pay"
                 severity="secondary"
                 class="status-tag"
               ></p-tag>
               <p-tag
-                *ngIf="bill.totalDue > 0"
+                *ngIf="bill.jsTotalDue > 0"
                 value="{{ bill.isPaid ? 'Paid' : 'Unpaid' }}"
                 [severity]="bill.isPaid ? 'success' : 'warning'"
                 class="status-tag"
@@ -103,10 +103,10 @@
     <ng-template pTemplate="body" let-detail>
       <tr>
         <td>{{ detail.depositId }}</td>
-        <td>{{ detail.allocatedPrincipal | currency }}</td>
-        <td>{{ detail.allocatedInterest | currency }}</td>
-        <td>{{ detail.allocatedFees | currency }}</td>
-        <td>{{ detail.date | date : "MM/dd/yyyy" }}</td>
+        <td>{{ detail.jsAllocatedPrincipal | currency }}</td>
+        <td>{{ detail.jsAllocatedInterest | currency }}</td>
+        <td>{{ detail.jsAllocatedFees | currency }}</td>
+        <td>{{ detail.jsDate | date : "MM/dd/yyyy" }}</td>
       </tr>
     </ng-template>
   </p-table>

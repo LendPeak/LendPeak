@@ -1,6 +1,5 @@
 import dayjs, { Dayjs } from "dayjs";
 import { Currency } from "../utils/Currency";
-
 export interface DepositMetadata {
   [key: string]: any; // Allows arbitrary key-value pairs
 }
@@ -41,25 +40,32 @@ export class DepositRecord implements Deposit {
 
   constructor(params: {
     id: string;
-    amount: Currency;
+    amount: Currency | number;
     currency: string;
-    effectiveDate: Dayjs;
-    clearingDate?: Dayjs;
+    effectiveDate: Dayjs | Date;
+    clearingDate?: Dayjs | Date;
+    systemDate?: Dayjs | Date;
     paymentMethod?: string;
     depositor?: string;
     depositLocation?: string;
     applyExcessToPrincipal?: boolean;
-    excessAppliedDate?: Dayjs;
+    excessAppliedDate?: Dayjs | Date;
     metadata?: DepositMetadata;
   }) {
     this.id = params.id;
-    this.amount = params.amount;
+    this.amount = Currency.of(params.amount);
     this.currency = params.currency;
     this.createdDate = dayjs(); // Set to current date/time
     this.insertedDate = dayjs(); // Set to current date/time
-    this.effectiveDate = params.effectiveDate.startOf("day");
-    this.clearingDate = params.clearingDate?.startOf("day");
-    this.systemDate = dayjs(); // Automatically set, cannot be faked
+    this.effectiveDate = dayjs(params.effectiveDate).startOf("day");
+    if (params.clearingDate) {
+      this.clearingDate = dayjs(params.clearingDate).startOf("day");
+    }
+    if (params.systemDate) {
+      this.systemDate = dayjs(params.systemDate).startOf("day");
+    } else {
+      this.systemDate = dayjs();
+    }
     this.paymentMethod = params.paymentMethod;
     this.depositor = params.depositor;
     this.depositLocation = params.depositLocation;
@@ -68,7 +74,7 @@ export class DepositRecord implements Deposit {
     if (this.applyExcessToPrincipal && !params.excessAppliedDate) {
       this.excessAppliedDate = this.effectiveDate;
     } else {
-      this.excessAppliedDate = params.excessAppliedDate;
+      this.excessAppliedDate = dayjs(params.excessAppliedDate).startOf("day");
     }
   }
 }

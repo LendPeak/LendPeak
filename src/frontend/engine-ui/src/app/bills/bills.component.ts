@@ -1,6 +1,6 @@
 // bills.component.ts
 import { Component, Input, Output, EventEmitter } from '@angular/core';
-import { UIBill } from 'lendpeak-engine/models/Bill';
+import { Bill } from 'lendpeak-engine/models/Bill';
 import { Dayjs } from 'dayjs';
 
 @Component({
@@ -9,15 +9,15 @@ import { Dayjs } from 'dayjs';
   styleUrls: ['./bills.component.css'],
 })
 export class BillsComponent {
-  @Input() bills: UIBill[] = [];
+  @Input() bills: Bill[] = [];
   @Input() snapshotDate: Date = new Date();
 
   @Output() billAction = new EventEmitter<void>();
 
-  selectedBill: UIBill | null = null;
+  selectedBill: Bill | null = null;
   showPaymentDetailsDialog: boolean = false;
 
-  viewPaymentDetails(bill: UIBill) {
+  viewPaymentDetails(bill: Bill) {
     this.selectedBill = bill;
     this.showPaymentDetailsDialog = true;
   }

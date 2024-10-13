@@ -99,7 +99,7 @@ LIFO Strategy (Last-In, First-Out)
 The LIFO Strategy applies payments to the most recent bills first. This is useful when you want to prioritize clearing the newest debts.
 
 Explanation:
-- Bill Sorting: Bills are sorted in descending order of due date, so the most recent bills are prioritized.
+- Bill Sorting: Bill[] are sorted in descending order of due date, so the most recent bills are prioritized.
 - Allocation Logic: The allocation sequence is interest, then fees, then principal, similar to the FIFO strategy.
 - Bill Status Update: Marks bills as paid if all components are fully allocated.
 */
@@ -146,7 +146,7 @@ export class FIFOStrategy implements AllocationStrategy {
     const sortedBills = bills.filter((bill) => bill.isOpen === true && !bill.isPaid).sort((a, b) => a.dueDate.diff(b.dueDate));
 
     for (const bill of sortedBills) {
-      if (remainingAmount.getValue().isZero()) break;
+      if (remainingAmount.isZero()) break;
 
       const { allocation, remainingAmount: newRemainingAmount } = AllocationHelper.allocateToBill(bill, remainingAmount, paymentPriority, deposit.id);
 
@@ -356,7 +356,7 @@ class AllocationHelper {
     }
 
     // Update bill status if fully paid
-    if (bill.principalDue.getValue().isZero() && bill.interestDue.getValue().isZero() && bill.feesDue.getValue().isZero()) {
+    if (bill.principalDue.isZero() && bill.interestDue.isZero() && bill.feesDue.isZero()) {
       bill.isPaid = true;
     }
 

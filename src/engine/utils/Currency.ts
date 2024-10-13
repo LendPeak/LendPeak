@@ -68,6 +68,10 @@ export class Currency {
     return this.value;
   }
 
+  isZero(): boolean {
+    return this.value.isZero();
+  }
+
   getRoundingError(): Decimal {
     return this.roundingError;
   }

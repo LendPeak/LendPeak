@@ -2,10 +2,19 @@ import { AmortizationSchedule } from "./Amortization"; // Adjust the import path
 import { Bill } from "./Bill";
 import { v4 as uuidv4 } from "uuid"; // For generating unique IDs
 import { Currency } from "../utils/Currency";
+import dayjs, { Dayjs } from "dayjs";
+import isSameOrAfter from "dayjs/plugin/isSameOrAfter";
+import isSameOrBefore from "dayjs/plugin/isSameOrBefore";
+
+dayjs.extend(isSameOrAfter);
+dayjs.extend(isSameOrBefore);
 
 export class BillGenerator {
-  static generateBills(amortizationSchedule: AmortizationSchedule[]): Bill[] {
+  static generateBills(amortizationSchedule: AmortizationSchedule[], currentDate: Dayjs | Date = dayjs()): Bill[] {
     const bills: Bill[] = [];
+    if (currentDate instanceof Date) {
+      currentDate = dayjs(currentDate);
+    }
 
     let billIdSequence = 1;
     for (const entry of amortizationSchedule) {
@@ -16,7 +25,10 @@ export class BillGenerator {
 
       const totalDue = entry.totalPayment;
       const id = BillGenerator.generateId(billIdSequence++);
-      const bill: Bill = {
+      const isPaid = totalDue.getValue().isZero() ? true : false;
+      const isDue = entry.periodBillDueDate.isSameOrBefore(currentDate);
+      const isOpen = entry.periodBillOpenDate.isSameOrBefore(currentDate);
+      const bill: Bill = new Bill({
         id: id,
         period: entry.term,
         dueDate: entry.periodBillDueDate,
@@ -24,10 +36,13 @@ export class BillGenerator {
         interestDue: entry.dueInterestForTerm,
         feesDue: entry.fees,
         totalDue: totalDue,
-        isPaid: totalDue.getValue().isZero() ? true : false,
-        isOpen: false,
+        isPaid: isPaid,
+        isOpen: isOpen,
+        isDue: isDue,
+        isPastDue: isPaid === false && entry.periodBillDueDate.isSameOrBefore(currentDate),
+        daysPastDue: dayjs(currentDate).diff(entry.periodBillDueDate, "day"),
         amortizationEntry: entry,
-      };
+      });
 
       bills.push(bill);
     }

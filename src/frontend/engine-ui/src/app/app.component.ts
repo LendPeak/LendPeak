@@ -33,7 +33,8 @@ import {
   LIFOStrategy,
   FIFOStrategy,
 } from 'lendpeak-engine/models/PaymentApplication';
-import { Bill, UIBill } from 'lendpeak-engine/models/Bill';
+import { Bill } from 'lendpeak-engine/models/Bill';
+import { BillPaymentDetail } from 'lendpeak-engine/models/Bill/BillPaymentDetail';
 import { BillGenerator } from 'lendpeak-engine/models/BillGenerator';
 import { Currency, RoundingMethod } from 'lendpeak-engine/utils/Currency';
 import Decimal from 'decimal.js';
@@ -244,7 +245,7 @@ export class AppComponent implements OnChanges {
     paymentSchedule: [],
   };
 
-  bills: UIBill[] = [];
+  bills: Bill[] = [];
 
   // Handle any actions emitted by the bills component
   onBillAction() {
@@ -590,29 +591,9 @@ export class AppComponent implements OnChanges {
   generateBills() {
     const repaymentSchedule = this.amortization?.generateSchedule();
     if (repaymentSchedule) {
-      this.bills = BillGenerator.generateBills(repaymentSchedule).map(
-        (bill) => {
-          return {
-            id: bill.id,
-            period: bill.period,
-            dueDate: bill.dueDate.toDate(),
-            principalDue: bill.principalDue.toNumber(),
-            interestDue: bill.interestDue.toNumber(),
-            feesDue: bill.feesDue.toNumber(),
-            totalDue: bill.totalDue.toNumber(),
-            isPaid: bill.isPaid,
-            isDue: bill.dueDate.isSameOrBefore(dayjs(this.snapshotDate)),
-            isOpen:
-              bill.amortizationEntry?.periodBillOpenDate.isSameOrBefore(
-                dayjs(this.snapshotDate)
-              ) || false,
-            isPastDue:
-              bill.isPaid === false &&
-              bill.dueDate.isSameOrBefore(dayjs(this.snapshotDate)),
-            daysPastDue: dayjs(this.snapshotDate).diff(bill.dueDate, 'day'),
-            amortizationEntry: bill.amortizationEntry,
-          };
-        }
+      this.bills = BillGenerator.generateBills(
+        repaymentSchedule,
+        this.snapshotDate
       );
     } else {
       console.error('Repayment schedule not available');
@@ -1000,40 +981,10 @@ export class AppComponent implements OnChanges {
   applyPayments() {
     // Apply payments to the loan
     const deposits: DepositRecord[] = this.loan.deposits.map((deposit) => {
-      return new DepositRecord({
-        id: deposit.id,
-        amount: Currency.of(deposit.amount),
-        currency: deposit.currency,
-        effectiveDate: dayjs(deposit.effectiveDate),
-        clearingDate: deposit.clearingDate
-          ? dayjs(deposit.clearingDate)
-          : undefined,
-        paymentMethod: deposit.paymentMethod,
-        depositor: deposit.depositor,
-        depositLocation: deposit.depositLocation,
-        applyExcessToPrincipal: deposit.applyExcessToPrincipal,
-        excessAppliedDate: deposit.excessAppliedDate
-          ? dayjs(deposit.excessAppliedDate)
-          : undefined,
-        metadata: deposit.metadata,
-      });
+      return new DepositRecord(deposit);
     });
 
-    const bills: Bill[] = this.bills.map((bill) => {
-      return {
-        id: bill.id,
-        period: bill.period,
-        dueDate: dayjs(bill.dueDate),
-        principalDue: Currency.of(bill.principalDue),
-        interestDue: Currency.of(bill.interestDue),
-        feesDue: Currency.of(bill.feesDue),
-        totalDue: Currency.of(bill.totalDue),
-        isPaid: bill.isPaid,
-        isOpen: bill.isOpen,
-        amortizationEntry: bill.amortizationEntry,
-        paymentMetadata: bill.paymentMetadata,
-      };
-    });
+    const bills: Bill[] = this.bills;
 
     // Build the allocation strategy based on user selection
     let allocationStrategy: AllocationStrategy;
@@ -1067,6 +1018,8 @@ export class AppComponent implements OnChanges {
 
     // Map payment results back to bills and deposits
     this.paymentApplicationResults.forEach((result) => {
+      console.log('Processing deposit', result.depositId);
+      console.log(`results from payment application`, result);
       const depositId = result.depositId;
       const deposit = this.loan.deposits.find((d) => d.id === depositId);
       if (!deposit) {
@@ -1095,13 +1048,13 @@ export class AppComponent implements OnChanges {
         }
 
         // Create payment detail object
-        const paymentDetail = {
+        const paymentDetail = new BillPaymentDetail({
           depositId: depositId,
-          allocatedPrincipal: allocation.allocatedPrincipal.toNumber(),
-          allocatedInterest: allocation.allocatedInterest.toNumber(),
-          allocatedFees: allocation.allocatedFees.toNumber(),
+          allocatedPrincipal: allocation.allocatedPrincipal,
+          allocatedInterest: allocation.allocatedInterest,
+          allocatedFees: allocation.allocatedFees,
           date: deposit.effectiveDate,
-        };
+        });
 
         // Add to bill's payment details
         bill.paymentDetails.push(paymentDetail);
@@ -1110,7 +1063,7 @@ export class AppComponent implements OnChanges {
         const usageDetail = {
           billId: billId,
           period: bill.amortizationEntry?.term || 0,
-          billDueDate: bill.dueDate,
+          billDueDate: bill.dueDate.toDate(),
           allocatedPrincipal: allocation.allocatedPrincipal.toNumber(),
           allocatedInterest: allocation.allocatedInterest.toNumber(),
           allocatedFees: allocation.allocatedFees.toNumber(),
@@ -1148,16 +1101,40 @@ export class AppComponent implements OnChanges {
           return null;
         }
 
-        return {
-          ...uiBill,
-          principalDue: bill.principalDue.toNumber(),
-          interestDue: bill.interestDue.toNumber(),
-          feesDue: bill.feesDue.toNumber(),
-          totalDue: bill.totalDue.toNumber(),
+        // now we need to pam the details from new bills to old bill that was
+        // used for UI
+
+        // return {
+        //   ...uiBill,
+        //   principalDue: bill.principalDue.toNumber(),
+        //   interestDue: bill.interestDue.toNumber(),
+        //   feesDue: bill.feesDue.toNumber(),
+        //   totalDue: bill.totalDue.toNumber(),
+        //   isPaid: bill.isPaid,
+        //   paymentMetadata: bill.paymentMetadata,
+        //   paymentDetails: uiBill?.paymentDetails || [],
+        // };
+
+        const newModifiedBill = new Bill({
+          id: uiBill.id,
+          period: uiBill.period,
+          amortizationEntry: uiBill.amortizationEntry,
+          dueDate: uiBill.dueDate,
+          daysPastDue: uiBill.daysPastDue,
+          isDue: uiBill.isDue,
+          isOpen: uiBill.isOpen,
+          isPastDue: uiBill.isPastDue,
+          paymentDetails: uiBill?.paymentDetails || [],
+          // from new bill
+          principalDue: bill.principalDue,
+          interestDue: bill.interestDue,
+          feesDue: bill.feesDue,
+          totalDue: bill.totalDue,
           isPaid: bill.isPaid,
           paymentMetadata: bill.paymentMetadata,
-          paymentDetails: uiBill?.paymentDetails || [],
-        };
+        });
+        console.log(`new modified bill`, newModifiedBill);
+        return newModifiedBill;
       })
       .filter((bill) => bill !== null);
 

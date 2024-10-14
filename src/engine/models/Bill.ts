@@ -7,6 +7,8 @@ export interface BillParams {
   id: string;
   period: number;
   dueDate: Dayjs | Date;
+  openDate: Dayjs | Date;
+
   principalDue: Currency | number;
   interestDue: Currency | number;
   feesDue: Currency | number;
@@ -29,6 +31,7 @@ export class Bill {
   id: string;
   period: number;
   dueDate: Dayjs;
+  openDate: Dayjs;
   principalDue: Currency;
   interestDue: Currency;
   feesDue: Currency;
@@ -50,6 +53,7 @@ export class Bill {
     this.id = params.id;
     this.period = params.period;
     this.dueDate = dayjs(params.dueDate).startOf("day");
+    this.openDate = dayjs(params.openDate).startOf("day");
     this.principalDue = Currency.of(params.principalDue);
     this.interestDue = Currency.of(params.interestDue);
     this.feesDue = Currency.of(params.feesDue);
@@ -68,6 +72,10 @@ export class Bill {
         return new BillPaymentDetail(detail);
       });
     }
+  }
+
+  get jsOpenDate(): Date {
+    return this.openDate.toDate();
   }
 
   get jsDueDate(): Date {

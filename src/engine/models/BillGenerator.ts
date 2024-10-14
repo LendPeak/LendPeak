@@ -32,6 +32,7 @@ export class BillGenerator {
         id: id,
         period: entry.term,
         dueDate: entry.periodBillDueDate,
+        openDate: entry.periodBillOpenDate,
         principalDue: entry.principal,
         interestDue: entry.dueInterestForTerm,
         feesDue: entry.fees,

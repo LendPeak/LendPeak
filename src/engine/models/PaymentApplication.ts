@@ -57,6 +57,28 @@ export class PaymentApplication {
     this.paymentPriority = options.paymentPriority;
   }
 
+  static getAllocationStrategyFromName(strategyName: string): AllocationStrategy {
+    // Build the allocation strategy based on user selection
+    let allocationStrategy: AllocationStrategy;
+    switch (strategyName) {
+      case "FIFO":
+        allocationStrategy = new FIFOStrategy();
+        break;
+      case "LIFO":
+        allocationStrategy = new LIFOStrategy();
+        break;
+      case "EqualDistribution":
+        allocationStrategy = new EqualDistributionStrategy();
+        break;
+      case "Proportional":
+        allocationStrategy = new ProportionalStrategy();
+        break;
+      default:
+        throw new Error(`Unknown allocation strategy: ${strategyName}`);
+    }
+    return allocationStrategy;
+  }
+
   processDeposits(): PaymentApplicationResult[] {
     const results: PaymentApplicationResult[] = [];
 
@@ -109,7 +131,12 @@ export class LIFOStrategy implements AllocationStrategy {
     const allocations: PaymentAllocation[] = [];
 
     // Sort bills by due date descending (most recent first)
-    const sortedBills = bills.filter((bill) => bill.isOpen === true && !bill.isPaid).sort((a, b) => b.dueDate.diff(a.dueDate));
+    let sortedBills = bills.filter((bill) => bill.isOpen === true && !bill.isPaid).sort((a, b) => b.dueDate.diff(a.dueDate));
+
+    if (deposit.applyExcessToPrincipal) {
+      const excessAppliedDate = deposit.excessAppliedDate || deposit.effectiveDate;
+      sortedBills = sortedBills.filter((bill) => bill.openDate.isSameOrBefore(excessAppliedDate));
+    }
 
     for (const bill of sortedBills) {
       if (remainingAmount.getValue().isZero()) break;
@@ -143,7 +170,15 @@ export class FIFOStrategy implements AllocationStrategy {
     const allocations: PaymentAllocation[] = [];
 
     // Sort bills by due date ascending
-    const sortedBills = bills.filter((bill) => bill.isOpen === true && !bill.isPaid).sort((a, b) => a.dueDate.diff(b.dueDate));
+    let sortedBills = bills.filter((bill) => bill.isOpen === true && !bill.isPaid).sort((a, b) => a.dueDate.diff(b.dueDate));
+
+    // if deposit setup to apply excess to principal then we need to remove bills
+    // that are not open on or before the deposit effective date
+
+    if (deposit.applyExcessToPrincipal) {
+      const excessAppliedDate = deposit.excessAppliedDate || deposit.effectiveDate;
+      sortedBills = sortedBills.filter((bill) => bill.openDate.isSameOrBefore(excessAppliedDate));
+    }
 
     for (const bill of sortedBills) {
       if (remainingAmount.isZero()) break;
@@ -181,7 +216,17 @@ export class EqualDistributionStrategy implements AllocationStrategy {
     const allocations: PaymentAllocation[] = [];
 
     // Filter unpaid bills
-    const unpaidBills = bills.filter((bill) => bill.isOpen === true && !bill.isPaid);
+    let unpaidBills = bills.filter((bill) => bill.isOpen === true && !bill.isPaid);
+
+    if (deposit.applyExcessToPrincipal) {
+      const excessAppliedDate = deposit.excessAppliedDate || deposit.effectiveDate;
+      unpaidBills = unpaidBills.filter((bill) => bill.openDate.isSameOrBefore(excessAppliedDate));
+    }
+
+    if (deposit.applyExcessToPrincipal) {
+      const excessAppliedDate = deposit.excessAppliedDate || deposit.effectiveDate;
+      unpaidBills = unpaidBills.filter((bill) => bill.openDate.isSameOrBefore(excessAppliedDate));
+    }
     const numOfBills = unpaidBills.length;
 
     if (numOfBills === 0) {
@@ -239,7 +284,12 @@ export class CustomOrderStrategy implements AllocationStrategy {
     const allocations: PaymentAllocation[] = [];
 
     // Sort bills using the custom compare function
-    const sortedBills = bills.filter((bill) => bill.isOpen === true && !bill.isPaid).sort(this.compareFunction);
+    let sortedBills = bills.filter((bill) => bill.isOpen === true && !bill.isPaid).sort(this.compareFunction);
+
+    if (deposit.applyExcessToPrincipal) {
+      const excessAppliedDate = deposit.excessAppliedDate || deposit.effectiveDate;
+      sortedBills = sortedBills.filter((bill) => bill.openDate.isSameOrBefore(excessAppliedDate));
+    }
 
     for (const bill of sortedBills) {
       if (remainingAmount.getValue().isZero()) break;
@@ -270,7 +320,12 @@ export class ProportionalStrategy implements AllocationStrategy {
     const allocations: PaymentAllocation[] = [];
 
     // Filter unpaid bills
-    const unpaidBills = bills.filter((bill) => bill.isOpen === true && !bill.isPaid);
+    let unpaidBills = bills.filter((bill) => bill.isOpen === true && !bill.isPaid);
+
+    if (deposit.applyExcessToPrincipal) {
+      const excessAppliedDate = deposit.excessAppliedDate || deposit.effectiveDate;
+      unpaidBills = unpaidBills.filter((bill) => bill.openDate.isSameOrBefore(excessAppliedDate));
+    }
 
     // Calculate the total amount due across all unpaid bills
     const totalDue = unpaidBills.reduce((sum, bill) => sum.add(bill.totalDue), Currency.Zero());

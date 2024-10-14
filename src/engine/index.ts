@@ -1,6 +1,7 @@
 import { Payment } from "./models/Payment";
 import { Loan } from "./models/Loan";
 import { Amortization, FlushUnbilledInterestDueToRoundingErrorType } from "./models/Amortization";
+import { BalanceModification } from "./models/Amortization/BalanceModification";
 import { LoanRestructureService } from "./services/RestructureService";
 import { PaymentService } from "./services/PaymentService";
 import { Restructure } from "./models/Restructure";
@@ -46,11 +47,11 @@ const amortization = new Amortization({
   ],
 
   balanceModifications: [
-    {
-      amount: Currency.of(200),
+    new BalanceModification({
+      amount: 0,
       date: startDate,
       type: "decrease",
-    },
+    }),
     // {
     //   amount: Currency.of(1000),
     //   date: dayjs("2024-09-25"),

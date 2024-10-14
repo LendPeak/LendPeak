@@ -4,6 +4,13 @@ import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { OverlayPanel } from 'primeng/overlaypanel';
 import dayjs from 'dayjs';
 import { AmortizationSchedule } from 'lendpeak-engine/models/Amortization';
+import { BalanceModification } from 'lendpeak-engine/models/Amortization/BalanceModification';
+import {
+  LoanDeposit,
+  LoanFeeForAllTerms,
+  LoanFeePerTerm,
+  UILoan,
+} from '../models/loan.model';
 
 @Component({
   selector: 'app-overrides',
@@ -11,7 +18,7 @@ import { AmortizationSchedule } from 'lendpeak-engine/models/Amortization';
   styleUrls: ['./overrides.component.css'],
 })
 export class OverridesComponent {
-  @Input() loan: any;
+  @Input() loan!: UILoan;
   @Input() termOptions: { label: string; value: number }[] = [];
   @Input() balanceIncreaseType: { label: string; value: string }[] = [];
   @Input() loanRepaymentPlan: AmortizationSchedule[] = [];
@@ -205,20 +212,20 @@ export class OverridesComponent {
 
   // Methods related to Balance Modifications
   addBalanceModificationRow() {
-    const balanceModifications = this.loan.balanceModifications;
-
     const dateOfTheModification =
-      balanceModifications.length === 0
+      this.loan.balanceModifications.length === 0
         ? this.loan.startDate
-        : balanceModifications[balanceModifications.length - 1].date;
+        : this.loan.balanceModifications[
+            this.loan.balanceModifications.length - 1
+          ].date;
 
-    balanceModifications.push({
+    const balanceModificationToAdd = new BalanceModification({
       amount: 0,
       date: dateOfTheModification,
       type: 'decrease',
     });
 
-    this.loan.balanceModifications = balanceModifications;
+    this.loan.balanceModifications.push(balanceModificationToAdd);
     this.emitLoanChange();
   }
 
@@ -230,6 +237,13 @@ export class OverridesComponent {
   }
 
   balanceModificationChanged() {
+    // for some reason i cannot map ngModel to date that has getters and setters
+    // so i need to manually update the date. I've added jsDate as a simple
+    // Date and in this code we know that p-calendar is updating jsDate
+    // so we will do a date update here
+    this.loan.balanceModifications.forEach((balanceModification) => {
+      balanceModification.date = balanceModification.jsDate;
+    });
     // Optional: Order the balance modifications by date
     // this.loan.balanceModifications.sort((a, b) => dayjs(a.date).diff(dayjs(b.date)));
     this.emitLoanChange();

@@ -165,6 +165,7 @@
         <p-calendar
           id="clearingDate"
           [(ngModel)]="depositData.clearingDate"
+          [minDate]="depositData.effectiveDate"
           name="clearingDate"
           dateFormat="mm/dd/yy"
           [appendTo]="'body'"
@@ -232,7 +233,9 @@
               name="excessAppliedDate"
               dateFormat="mm/dd/yy"
               showIcon
+              [minDate]="depositData.effectiveDate"
               [required]="depositData.applyExcessToPrincipal"
+              [appendTo]="'body'"
             ></p-calendar>
           </div>
         </div>

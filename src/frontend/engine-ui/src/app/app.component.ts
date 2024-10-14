@@ -11,7 +11,6 @@ import {
   Amortization,
   AmortizationParams,
   FlushUnbilledInterestDueToRoundingErrorType,
-  BalanceModification,
   TermPaymentAmount,
   AmortizationSchedule,
   TermPeriodDefinition,
@@ -20,6 +19,7 @@ import {
   TILADisclosures,
   Fee,
 } from 'lendpeak-engine/models/Amortization';
+import { BalanceModification } from 'lendpeak-engine/models/Amortization/BalanceModification';
 import { Deposit, DepositRecord } from 'lendpeak-engine/models/Deposit';
 import {
   PaymentApplication,
@@ -48,57 +48,12 @@ dayjs.extend(isSameOrAfter);
 dayjs.extend(isSameOrBefore);
 
 import { v4 as uuidv4 } from 'uuid'; // For generating unique IDs
-
-interface LoanFee {
-  termNumber: number;
-  type: 'fixed' | 'percentage';
-  amount?: number; // For fixed amount fees
-  percentage?: number; // For percentage-based fees (as percentage, e.g., 5% is 5)
-  basedOn?: 'interest' | 'principal' | 'totalPayment';
-  description?: string;
-  metadata?: any;
-}
-
-interface LoanFeeForAllTerms {
-  type: 'fixed' | 'percentage';
-  amount?: number; // For fixed amount fees
-  percentage?: number; // For percentage-based fees (as percentage, e.g., 5% is 5)
-  basedOn?: 'interest' | 'principal' | 'totalPayment';
-  description?: string;
-  metadata?: any;
-}
-
-interface LoanFeePerTerm extends LoanFeeForAllTerms {
-  termNumber: number;
-}
-
-interface LoanDeposit {
-  id: string;
-  amount: number;
-  currency: string;
-  createdDate: Date;
-  insertedDate: Date;
-  effectiveDate: Date;
-  clearingDate?: Date;
-  systemDate: Date;
-  paymentMethod?: string;
-  depositor?: string;
-  depositLocation?: string;
-  usageDetails: {
-    billId: string;
-    period: number;
-    billDueDate: Date;
-    allocatedPrincipal: number;
-    allocatedInterest: number;
-    allocatedFees: number;
-    date: Date;
-  }[];
-  unusedAmount?: number;
-  balanceModificationId?: string;
-  applyExcessToPrincipal: boolean;
-  excessAppliedDate?: Date;
-  metadata?: any;
-}
+import {
+  LoanDeposit,
+  LoanFeeForAllTerms,
+  LoanFeePerTerm,
+  UILoan,
+} from './models/loan.model';
 
 @Component({
   selector: 'app-root',
@@ -145,6 +100,15 @@ export class AppComponent implements OnChanges {
         'Implemented early repayment where user can pay off the loan early',
       ],
     },
+    {
+      version: '1.5.0',
+      date: '2024-10-13',
+      details: [
+        'Simplified programmatic interfaces for UI moving logic to the engine',
+        'Added principal prepayment logic with excess application date, so payment can be forced allocated to principal balance',
+        'added balance modification locking to system generated modifications so principal prepayments that apply balance modifications automatically cannot be removed through UI',
+      ],
+    },
   ];
 
   selectedVersion: string = this.currentVersion;
@@ -153,58 +117,7 @@ export class AppComponent implements OnChanges {
   snapshotDate: Date = new Date();
 
   CURRENT_OBJECT_VERSION = 9;
-  loan: {
-    objectVersion: number;
-    principal: number;
-    originationFee: number;
-    interestRate: number;
-    term: number;
-    startDate: Date;
-    firstPaymentDate: Date;
-    endDate: Date;
-    calendarType: string;
-    roundingMethod: string;
-    flushMethod: string;
-    feesForAllTerms: LoanFeeForAllTerms[];
-    feesPerTerm: LoanFeePerTerm[];
-
-    roundingPrecision: number;
-    flushThreshold: number;
-    termPaymentAmount: number | undefined;
-    allowRateAbove100: boolean;
-    defaultPreBillDaysConfiguration: number;
-    defaultBillDueDaysAfterPeriodEndConfiguration: number;
-    dueBillDays: BillDueDaysConfiguration[];
-    preBillDays: PreBillDaysConfiguration[];
-    balanceModifications: {
-      id: string;
-      amount: number;
-      date: Date;
-      type: 'increase' | 'decrease';
-      description?: string;
-      isSystemModification?: boolean;
-      metadata?: any;
-    }[];
-    changePaymentDates: {
-      termNumber: number;
-      newDate: Date;
-    }[];
-    ratesSchedule: {
-      startDate: Date;
-      endDate: Date;
-      annualInterestRate: number;
-    }[];
-    termPaymentAmountOverride: { termNumber: number; paymentAmount: number }[];
-    periodsSchedule: {
-      period: number;
-      startDate: Date;
-      endDate: Date;
-      interestRate: number;
-      paymentAmount: number;
-    }[];
-    deposits: LoanDeposit[];
-    termPeriodDefinition: TermPeriodDefinition;
-  } = {
+  loan: UILoan = {
     objectVersion: this.CURRENT_OBJECT_VERSION,
     principal: 10000,
     originationFee: 0,
@@ -399,12 +312,16 @@ export class AppComponent implements OnChanges {
     // Retrieve loan from local storage if exists
     try {
       const loan = localStorage.getItem('loan');
+
       if (loan) {
         this.loan = JSON.parse(loan);
+        // all types are stored as strings in local storage, we need to convert them back to their original types
+
         if (this.loan.objectVersion !== this.CURRENT_OBJECT_VERSION) {
           // we have outdated cached object, lets just clear it and start fresh
           return this.resetUIState();
         }
+
         this.loan.startDate = new Date(this.loan.startDate);
         this.loan.firstPaymentDate = new Date(this.loan.firstPaymentDate);
         this.loan.endDate = new Date(this.loan.endDate);
@@ -514,15 +431,7 @@ export class AppComponent implements OnChanges {
         });
         this.loan.balanceModifications = this.loan.balanceModifications.map(
           (balanceModification) => {
-            return {
-              id: balanceModification.id,
-              amount: balanceModification.amount,
-              date: new Date(balanceModification.date),
-              type: balanceModification.type,
-              description: balanceModification.description,
-              isSystemModification: balanceModification.isSystemModification,
-              metadata: balanceModification.metadata,
-            };
+            return new BalanceModification(balanceModification);
           }
         );
       }
@@ -855,14 +764,7 @@ export class AppComponent implements OnChanges {
     return balanceModificationDate.toDate();
   }
 
-  addBalanceModification(balanceModification: {
-    id: string;
-    amount: number;
-    date: Date;
-    type: 'increase' | 'decrease';
-    description?: string;
-    metadata?: any;
-  }) {
+  addBalanceModification(balanceModification: BalanceModification) {
     this.loan.balanceModifications.push(balanceModification);
     this.submitLoan();
   }
@@ -875,14 +777,7 @@ export class AppComponent implements OnChanges {
 
     // loop through this.loan.balanceModifications and remove the balance modification
     // if it is associated with the deposit
-    const filteredBalanceModifications: {
-      id: string;
-      amount: number;
-      date: Date;
-      type: 'increase' | 'decrease';
-      description?: string;
-      metadata?: any;
-    }[] = [];
+    const filteredBalanceModifications: BalanceModification[] = [];
     this.loan.balanceModifications.forEach((balanceModification) => {
       if (balanceModification.metadata?.depositId !== deposit.id) {
         filteredBalanceModifications.push(balanceModification);
@@ -914,22 +809,22 @@ export class AppComponent implements OnChanges {
 
     if (balanceModification) {
       // Update existing balance modification
-      balanceModification.amount = excessAmount;
-      balanceModification.date = dateToApply;
+      balanceModification.amount = Currency.of(excessAmount);
+      balanceModification.date = dayjs(dateToApply);
       // Update other properties if needed
     } else {
       // Create new balance modification
-      const newBalanceModification = {
+      const newBalanceModification = new BalanceModification({
         id: this.generateUniqueId(),
         amount: excessAmount,
         date: dateToApply,
         isSystemModification: true,
-        type: 'decrease' as 'decrease', // Reducing the principal balance
+        type: 'decrease',
         description: `Excess funds applied to principal from deposit ${deposit.id}`,
         metadata: {
           depositId: deposit.id,
         },
-      };
+      });
       this.addBalanceModification(newBalanceModification);
       deposit.balanceModificationId = newBalanceModification.id;
     }
@@ -949,26 +844,16 @@ export class AppComponent implements OnChanges {
     return uuidv4();
   }
 
-  cleaupeBalanceModifications() {
+  cleanupBalanceModifications() {
     // remove any existing balance modifications that were associated with deposits
     // but deposits are no longer present
-    const filteredBalanceModifications: {
-      id: string;
-      amount: number;
-      date: Date;
-      type: 'increase' | 'decrease';
-      description?: string;
-      metadata?: any;
-    }[] = [];
+    const filteredBalanceModifications: BalanceModification[] = [];
     this.loan.balanceModifications.forEach((balanceModification) => {
       if (balanceModification.metadata?.depositId) {
         const deposit = this.loan.deposits.find(
           (d) => d.id === balanceModification.metadata.depositId
         );
         if (!deposit) {
-          console.log(
-            `Balance modification with id ${balanceModification.id} removed`
-          );
           this.balanceModificationRemoved = true;
           return;
         }
@@ -987,23 +872,9 @@ export class AppComponent implements OnChanges {
     const bills: Bill[] = this.bills;
 
     // Build the allocation strategy based on user selection
-    let allocationStrategy: AllocationStrategy;
-    switch (this.paymentAllocationStrategy) {
-      case 'FIFO':
-        allocationStrategy = new FIFOStrategy();
-        break;
-      case 'LIFO':
-        allocationStrategy = new LIFOStrategy();
-        break;
-      case 'EqualDistribution':
-        allocationStrategy = new EqualDistributionStrategy();
-        break;
-      case 'Proportional':
-        allocationStrategy = new ProportionalStrategy();
-        break;
-      default:
-        allocationStrategy = new FIFOStrategy();
-    }
+    let allocationStrategy = PaymentApplication.getAllocationStrategyFromName(
+      this.paymentAllocationStrategy
+    );
 
     // Build the payment priority
     const paymentPriority = this.paymentPriority;
@@ -1018,15 +889,15 @@ export class AppComponent implements OnChanges {
 
     // Map payment results back to bills and deposits
     this.paymentApplicationResults.forEach((result) => {
-      console.log('Processing deposit', result.depositId);
-      console.log(`results from payment application`, result);
+      // console.log('Processing deposit', result.depositId);
+      // console.log(`results from payment application`, result);
       const depositId = result.depositId;
       const deposit = this.loan.deposits.find((d) => d.id === depositId);
       if (!deposit) {
         console.error(`Deposit with id ${depositId} not found`);
         return;
       }
-      console.log(`Processing deposit ${depositId}`, deposit);
+      // console.log(`Processing deposit ${depositId}`, deposit);
 
       // Initialize usage details for deposit
       // if (!deposit.usageDetails) {
@@ -1120,6 +991,7 @@ export class AppComponent implements OnChanges {
           period: uiBill.period,
           amortizationEntry: uiBill.amortizationEntry,
           dueDate: uiBill.dueDate,
+          openDate: uiBill.openDate,
           daysPastDue: uiBill.daysPastDue,
           isDue: uiBill.isDue,
           isOpen: uiBill.isOpen,
@@ -1168,7 +1040,7 @@ export class AppComponent implements OnChanges {
   }
 
   submitLoan() {
-    this.cleaupeBalanceModifications();
+    this.cleanupBalanceModifications();
 
     let calendarType: CalendarType;
     switch (this.loan.calendarType) {
@@ -1331,16 +1203,7 @@ export class AppComponent implements OnChanges {
 
     if (this.loan.balanceModifications.length > 0) {
       console.log('Balance modifications:', this.loan.balanceModifications);
-      amortizationParams.balanceModifications =
-        this.loan.balanceModifications.map((balanceModification) => {
-          return {
-            amount: Currency.of(balanceModification.amount),
-            date: dayjs(balanceModification.date).startOf('day'),
-            type: balanceModification.type,
-            description: balanceModification.description,
-            metadata: balanceModification.metadata,
-          };
-        });
+      amortizationParams.balanceModifications = this.loan.balanceModifications;
     }
     // Process feesForAllTerms
     if (this.loan.feesForAllTerms.length > 0) {

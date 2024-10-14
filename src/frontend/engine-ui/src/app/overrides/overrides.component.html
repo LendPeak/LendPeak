@@ -386,7 +386,7 @@
                   <!-- Date -->
                   <td>
                     <p-calendar
-                      [(ngModel)]="balanceModification.date"
+                      [(ngModel)]="balanceModification.jsDate"
                       dateFormat="mm/dd/yy"
                       name="balanceModificationDate-{{ i }}"
                       showIcon
@@ -409,7 +409,7 @@
                   <!-- Amount -->
                   <td>
                     <p-inputNumber
-                      [(ngModel)]="balanceModification.amount"
+                      [(ngModel)]="balanceModification.jsAmount"
                       name="balanceModificationAmount-{{ i }}"
                       mode="currency"
                       currency="USD"

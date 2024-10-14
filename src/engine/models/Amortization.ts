@@ -1,6 +1,7 @@
 import { Currency, RoundingMethod } from "../utils/Currency";
 import { Calendar, CalendarType } from "./Calendar";
 import { InterestCalculator } from "./InterestCalculator";
+import { BalanceModification } from "./Amortization/BalanceModification";
 import Decimal from "decimal.js";
 
 import dayjs, { Dayjs } from "dayjs";
@@ -23,14 +24,6 @@ export interface AmortizationScheduleMetadata {
   amountAddedToDeferredInterest?: number;
   deferredFeesAppliedAmount?: number;
   amountAddedToDeferredFees?: number;
-}
-
-export interface BalanceModification {
-  amount: Currency;
-  date: Dayjs;
-  type: "increase" | "decrease";
-  description?: string;
-  metadata?: any;
 }
 
 /**
@@ -250,10 +243,6 @@ export class Amortization {
 
     if (params.balanceModifications) {
       this.balanceModifications = params.balanceModifications;
-      // fix dates to start at the beginning of the day
-      this.balanceModifications = this.balanceModifications.map((balanceModification) => {
-        return { amount: balanceModification.amount, date: balanceModification.date.startOf("day"), type: balanceModification.type, description: balanceModification.description };
-      });
 
       // sort balance modifications by date
       this.balanceModifications.sort((a, b) => {
@@ -865,7 +854,7 @@ export class Amortization {
             break;
           case "decrease":
             modifiedBalance = balanceToModify.subtract(modification.amount);
-            modificationAmount = modification.amount.negated();
+            modificationAmount = modification.amount.isZero() ? Currency.Zero() : modification.amount.negated();
             break;
           default:
             throw new Error("Invalid balance modification type");

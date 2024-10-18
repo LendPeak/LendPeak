@@ -1324,4 +1324,151 @@ export class Amortization {
 
     return document;
   }
+
+  public exportRepaymentScheduleToCSV(): string {
+    // Step 1: Collect all unique metadata keys
+    const metadataKeys = new Set<string>();
+    this.repaymentSchedule.forEach((entry) => {
+      Object.keys(entry.metadata).forEach((key) => {
+        metadataKeys.add(key);
+      });
+    });
+
+    // Convert the Set to an Array for easier handling
+    const metadataKeysArray = Array.from(metadataKeys);
+
+    // Step 2: Define the fields array, including metadata fields
+    const fields = [
+      {
+        header: "Term",
+        value: (entry: AmortizationSchedule) => entry.term,
+      },
+      {
+        header: "Period Start Date",
+        value: (entry: AmortizationSchedule) => entry.periodStartDate.format("YYYY-MM-DD"),
+      },
+      {
+        header: "Period End Date",
+        value: (entry: AmortizationSchedule) => entry.periodEndDate.format("YYYY-MM-DD"),
+      },
+      {
+        header: "Bill Open Date",
+        value: (entry: AmortizationSchedule) => entry.periodBillOpenDate.format("YYYY-MM-DD"),
+      },
+      {
+        header: "Bill Due Date",
+        value: (entry: AmortizationSchedule) => entry.periodBillDueDate.format("YYYY-MM-DD"),
+      },
+      {
+        header: "Period Interest Rate",
+        value: (entry: AmortizationSchedule) => entry.periodInterestRate.toString(),
+      },
+      {
+        header: "Principal",
+        value: (entry: AmortizationSchedule) => entry.principal.getRoundedValue(this.roundingPrecision),
+      },
+      {
+        header: "Fees",
+        value: (entry: AmortizationSchedule) => entry.fees.getRoundedValue(this.roundingPrecision),
+      },
+      {
+        header: "Billed Deferred Fees",
+        value: (entry: AmortizationSchedule) => entry.billedDeferredFees.getRoundedValue(this.roundingPrecision),
+      },
+      {
+        header: "Unbilled Total Deferred Fees",
+        value: (entry: AmortizationSchedule) => entry.unbilledTotalDeferredFees.getRoundedValue(this.roundingPrecision),
+      },
+      {
+        header: "Due Interest For Term",
+        value: (entry: AmortizationSchedule) => entry.dueInterestForTerm.getRoundedValue(this.roundingPrecision),
+      },
+      {
+        header: "Accrued Interest For Period",
+        value: (entry: AmortizationSchedule) => entry.accruedInterestForPeriod.getRoundedValue(this.roundingPrecision),
+      },
+      {
+        header: "Billed Deferred Interest",
+        value: (entry: AmortizationSchedule) => entry.billedDeferredInterest.getRoundedValue(this.roundingPrecision),
+      },
+      {
+        header: "Billed Interest For Term",
+        value: (entry: AmortizationSchedule) => entry.billedInterestForTerm.getRoundedValue(this.roundingPrecision),
+      },
+      {
+        header: "Balance Modification Amount",
+        value: (entry: AmortizationSchedule) => entry.balanceModificationAmount.getRoundedValue(this.roundingPrecision),
+      },
+      {
+        header: "End Balance",
+        value: (entry: AmortizationSchedule) => entry.endBalance.getRoundedValue(this.roundingPrecision),
+      },
+      {
+        header: "Start Balance",
+        value: (entry: AmortizationSchedule) => entry.startBalance.getRoundedValue(this.roundingPrecision),
+      },
+      {
+        header: "Total Payment",
+        value: (entry: AmortizationSchedule) => entry.totalPayment.getRoundedValue(this.roundingPrecision),
+      },
+      {
+        header: "Per Diem",
+        value: (entry: AmortizationSchedule) => entry.perDiem.getRoundedValue(this.roundingPrecision),
+      },
+      {
+        header: "Days In Period",
+        value: (entry: AmortizationSchedule) => entry.daysInPeriod,
+      },
+      {
+        header: "Unbilled Total Deferred Interest",
+        value: (entry: AmortizationSchedule) => entry.unbilledTotalDeferredInterest.getRoundedValue(this.roundingPrecision),
+      },
+      {
+        header: "Interest Rounding Error",
+        value: (entry: AmortizationSchedule) => entry.interestRoundingError.getRoundedValue(this.roundingPrecision),
+      },
+      {
+        header: "Unbilled Interest Due To Rounding",
+        value: (entry: AmortizationSchedule) => entry.unbilledInterestDueToRounding.getRoundedValue(this.roundingPrecision),
+      },
+      // Step 3: Add metadata fields dynamically
+      ...metadataKeysArray.map((key) => ({
+        header: `Metadata.${key}`,
+        value: (entry: AmortizationSchedule) => {
+          const value = entry.metadata[key as keyof AmortizationScheduleMetadata];
+          // Handle different types of metadata values
+          if (typeof value === "object" && value !== null) {
+            return JSON.stringify(value);
+          }
+          return value !== undefined ? value : "";
+        },
+      })),
+    ];
+
+    // Helper function to escape CSV fields
+    const escapeCSVField = (field: any): string => {
+      let str = String(field);
+      if (str.includes('"')) {
+        str = str.replace(/"/g, '""');
+      }
+      if (str.includes(",") || str.includes("\n") || str.includes('"')) {
+        str = `"${str}"`;
+      }
+      return str;
+    };
+
+    // Generate the header row
+    const headerRow = fields.map((field) => field.header).join(",");
+
+    // Generate the data rows
+    const dataRows = this.repaymentSchedule.map((entry) => {
+      const row = fields.map((field) => escapeCSVField(field.value(entry)));
+      return row.join(",");
+    });
+
+    // Combine the header and data rows
+    const csvContent = [headerRow, ...dataRows].join("\n");
+
+    return csvContent;
+  }
 }

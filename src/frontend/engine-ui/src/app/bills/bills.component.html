@@ -45,6 +45,12 @@
                 class="status-tag"
               ></p-tag>
               <p-tag
+                *ngIf="!bill.isOpen && !bill.isPaid"
+                value="Future"
+                severity="info"
+                class="status-tag"
+              ></p-tag>
+              <p-tag
                 *ngIf="bill.jsTotalDue == 0"
                 value="Skip A Pay"
                 severity="secondary"

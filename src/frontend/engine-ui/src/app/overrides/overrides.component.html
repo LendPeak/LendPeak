@@ -420,20 +420,9 @@
                   </td>
                   <!-- System Generated -->
                   <td>
-                    <i
-                      class="pi"
-                      [ngClass]="{
-                        'pi-check-circle':
-                          balanceModification.isSystemModification,
-                        'pi-minus-circle':
-                          !balanceModification.isSystemModification
-                      }"
-                      [style.color]="
-                        balanceModification.isSystemModification
-                          ? 'orange'
-                          : 'green'
-                      "
-                    ></i>
+                    <span>{{
+                      balanceModification.isSystemModification ? "Yes" : "No"
+                    }}</span>
                   </td>
                   <!-- Description -->
                   <td>
@@ -558,6 +547,8 @@
               </tr>
             </tbody>
           </table>
+          <p-divider></p-divider>
+
           <div class="p-mt-2">
             <p-button
               label="Add Fee"
@@ -575,7 +566,10 @@
         [selected]="loan.feesPerTerm.length > 0"
       >
         <div class="p-fluid">
-          <table class="p-datatable p-component">
+          <table
+            class="p-datatable p-component"
+            *ngIf="loan.feesPerTerm.length > 0"
+          >
             <thead>
               <tr>
                 <th>Term Number</th>
@@ -662,6 +656,8 @@
               </tr>
             </tbody>
           </table>
+          <p-divider></p-divider>
+
           <div class="p-mt-2">
             <p-button
               label="Add Fee"

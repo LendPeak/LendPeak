@@ -10,9 +10,12 @@
           (click)="openDepositDialog()"
         ></p-button>
       </div>
+      <p-divider></p-divider>
+
       <div class="p-fluid">
         <!-- Deposits Table -->
         <p-table
+          [hidden]="deposits.length === 0"
           [value]="deposits"
           editMode="cell"
           dataKey="id"

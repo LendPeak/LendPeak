@@ -36,6 +36,8 @@ import { DepositsComponent } from './deposits/deposits.component';
 import { BillsComponent } from './bills/bills.component';
 import { BasicLoanInfoComponent } from './basic-loan-info/basic-loan-info.component';
 import { OverridesComponent } from './overrides/overrides.component';
+import { ToastModule } from 'primeng/toast';
+import { MessageService } from 'primeng/api';
 
 @NgModule({
   declarations: [
@@ -76,8 +78,9 @@ import { OverridesComponent } from './overrides/overrides.component';
     ChipModule,
     PaginatorModule,
     TooltipModule,
+    ToastModule,
   ],
-  providers: [],
+  providers: [MessageService],
   bootstrap: [AppComponent],
 })
 export class AppModule {}

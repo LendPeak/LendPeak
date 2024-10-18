@@ -1,3 +1,5 @@
+<p-toast></p-toast>
+
 <app-toolbar
   [snapshotDate]="snapshotDate"
   (snapshotDateChange)="onSnapshotDateChange($event)"
@@ -22,7 +24,7 @@
   <p-tabPanel header="Overrides">
     <app-overrides
       [loan]="loan"
-      [loanRepaymentPlan]="loanRepaymentPlan"
+      [loanRepaymentPlan]="repaymentSchedule"
       [termOptions]="termOptions"
       [balanceIncreaseType]="balanceIncreaseType"
       (loanChange)="onLoanChange($event)"
@@ -650,20 +652,39 @@
         ></p-tag>
       </div>
     </div>
-    <p-divider></p-divider>
 
     <!-- Table Toggle Button -->
-    <div class="p-text-center p-mt-3">
-      <p-button
-        label="Show {{ showAdvancedTable ? 'Simple' : 'Advanced' }} Table"
-        icon="pi pi-table"
-        (onClick)="toggleAdvancedTable()"
-      ></p-button>
-    </div>
-    <p-divider></p-divider>
+    <p-toolbar styleClass="mb-4 gap-2">
+      <ng-template pTemplate="left">
+        <p-button
+          label="Show {{ showAdvancedTable ? 'Simple' : 'Advanced' }} Table"
+          icon="pi pi-table"
+          (onClick)="toggleAdvancedTable()"
+        ></p-button>
+      </ng-template>
+
+      <ng-template pTemplate="right">
+        <p-button
+          icon="pi pi-external-link"
+          label="Download"
+          (onClick)="downloadRepaymentPlanAsCSV()"
+          class="mr-2 inline-block"
+        />
+        <p-button
+          severity="help"
+          (onClick)="copyRepaymentPlanAsCSV()"
+          label="Copy As CSV"
+          icon="pi pi-copy"
+        />
+      </ng-template>
+    </p-toolbar>
 
     <!-- Repayment Plan Table -->
-    <p-table [value]="repaymentPlan" class="repayment-plan-table">
+    <p-table
+      #repaymentPlanTable
+      [value]="repaymentPlan"
+      class="repayment-plan-table"
+    >
       <ng-template pTemplate="header">
         <tr>
           <th>Period</th>

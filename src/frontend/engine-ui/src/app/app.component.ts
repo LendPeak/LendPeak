@@ -1,4 +1,5 @@
 import { appVersion } from '../environments/version';
+import { MessageService } from 'primeng/api';
 
 import { Component, OnChanges, SimpleChanges } from '@angular/core';
 import { OverlayPanel } from 'primeng/overlaypanel';
@@ -11,11 +12,7 @@ import {
   Amortization,
   AmortizationParams,
   FlushUnbilledInterestDueToRoundingErrorType,
-  TermPaymentAmount,
   AmortizationSchedule,
-  TermPeriodDefinition,
-  PreBillDaysConfiguration,
-  BillDueDaysConfiguration,
   TILADisclosures,
   Fee,
 } from 'lendpeak-engine/models/Amortization';
@@ -23,15 +20,8 @@ import { BalanceModification } from 'lendpeak-engine/models/Amortization/Balance
 import { Deposit, DepositRecord } from 'lendpeak-engine/models/Deposit';
 import {
   PaymentApplication,
-  PaymentPriority,
   PaymentApplicationResult,
-  AllocationStrategy,
-  CustomOrderStrategy,
-  EqualDistributionStrategy,
-  ProportionalStrategy,
   PaymentComponent,
-  LIFOStrategy,
-  FIFOStrategy,
 } from 'lendpeak-engine/models/PaymentApplication';
 import { Bill } from 'lendpeak-engine/models/Bill';
 import { BillPaymentDetail } from 'lendpeak-engine/models/Bill/BillPaymentDetail';
@@ -59,8 +49,11 @@ import {
   selector: 'app-root',
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.css'],
+  providers: [MessageService], // Add MessageService to the component providers
 })
 export class AppComponent implements OnChanges {
+  constructor(private messageService: MessageService) {}
+
   currentVersion = appVersion;
   showNewVersionModal = false;
   currentReleaseNotes: any;
@@ -107,6 +100,14 @@ export class AppComponent implements OnChanges {
         'Simplified programmatic interfaces for UI moving logic to the engine',
         'Added principal prepayment logic with excess application date, so payment can be forced allocated to principal balance',
         'added balance modification locking to system generated modifications so principal prepayments that apply balance modifications automatically cannot be removed through UI',
+      ],
+    },
+    {
+      version: '1.6.0',
+      date: '2024-10-17',
+      details: [
+        'Added export to CSV repayment plan functionality',
+        'Added copy to clipboard repayment plan functionality',
       ],
     },
   ];
@@ -498,7 +499,7 @@ export class AppComponent implements OnChanges {
   }
 
   generateBills() {
-    const repaymentSchedule = this.amortization?.generateSchedule();
+    const repaymentSchedule = this.repaymentSchedule;
     if (repaymentSchedule) {
       this.bills = BillGenerator.generateBills(
         repaymentSchedule,
@@ -506,6 +507,64 @@ export class AppComponent implements OnChanges {
       );
     } else {
       console.error('Repayment schedule not available');
+    }
+  }
+
+  downloadRepaymentPlanAsCSV() {
+    const repaymentPlanCSV = this.amortization?.exportRepaymentScheduleToCSV();
+    if (repaymentPlanCSV) {
+      const blob = new Blob([repaymentPlanCSV], {
+        type: 'text/csv',
+      });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'repayment-plan.csv';
+      a.click();
+      window.URL.revokeObjectURL(url);
+      this.messageService.add({
+        severity: 'success',
+        summary: 'Success',
+        detail: 'Repayment plan downloaded',
+      });
+    } else {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Warning',
+        detail: 'No repayment plan to download',
+      });
+    }
+  }
+
+  copyRepaymentPlanAsCSV() {
+    const repaymentPlanCSV = this.amortization?.exportRepaymentScheduleToCSV();
+    if (repaymentPlanCSV) {
+      navigator.clipboard
+        .writeText(repaymentPlanCSV)
+        .then(() => {
+          // Show success toast
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Success',
+            detail: 'Repayment plan copied to clipboard',
+          });
+        })
+        .catch((err) => {
+          // Show error toast
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'Failed to copy repayment plan to clipboard',
+          });
+          console.error('Failed to copy text: ', err);
+        });
+    } else {
+      // Handle the case where repaymentPlanCSV is null or undefined
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Warning',
+        detail: 'No repayment plan to copy',
+      });
     }
   }
 
@@ -643,7 +702,7 @@ export class AppComponent implements OnChanges {
     //   //    metadata: '{"unbilledInterestAmount":-0.004383561643835616}',
     // }
   ];
-  loanRepaymentPlan: AmortizationSchedule[] = [];
+  repaymentSchedule: AmortizationSchedule[] = [];
   repaymentPlanEndDates: string[] = [];
   amortization: Amortization | undefined = undefined;
 
@@ -651,7 +710,7 @@ export class AppComponent implements OnChanges {
     // we will reset current schedule and
     // copy over this.loanRepaymentPlan values to this.loan.periodsSchedule
     // which will become a base for user to modify values
-    this.loan.periodsSchedule = this.loanRepaymentPlan.map((entry) => {
+    this.loan.periodsSchedule = this.repaymentSchedule.map((entry) => {
       return {
         period: entry.term,
         startDate: entry.periodStartDate.toDate(),
@@ -1270,13 +1329,13 @@ export class AppComponent implements OnChanges {
     const amortization = new Amortization(amortizationParams);
     this.amortization = amortization;
     this.tilaDisclosures = amortization.generateTILADisclosures();
-    this.loanRepaymentPlan = amortization.repaymentSchedule;
+    this.repaymentSchedule = amortization.repaymentSchedule;
 
-    this.repaymentPlanEndDates = this.loanRepaymentPlan.map((entry) => {
+    this.repaymentPlanEndDates = this.repaymentSchedule.map((entry) => {
       // mm/dd/yy
       return entry.periodEndDate.format('MM/DD/YY');
     });
-    this.repaymentPlan = this.loanRepaymentPlan.map((entry, index) => {
+    this.repaymentPlan = this.repaymentSchedule.map((entry, index) => {
       return {
         period: entry.term,
         periodStartDate: entry.periodStartDate.format('YYYY-MM-DD'),

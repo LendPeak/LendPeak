@@ -70,7 +70,7 @@ export class Calendar {
   daysBetween(date1: Dayjs, date2: Dayjs): number {
     switch (this.calendarType) {
       case CalendarType.THIRTY_360:
-        return this.daysBetween30_360(date1, date2);
+        return this.daysBetween30_360_European(date1, date2);
       case CalendarType.THIRTY_ACTUAL:
         return this.daysBetween30_Actual(date1, date2);
       case CalendarType.ACTUAL_360:
@@ -86,7 +86,7 @@ export class Calendar {
   monthsBetween(date1: Dayjs, date2: Dayjs): number {
     switch (this.calendarType) {
       case CalendarType.THIRTY_360:
-        return this.daysBetween30_360(date1, date2) / 30;
+        return this.daysBetween30_360_European(date1, date2) / 30;
       case CalendarType.THIRTY_ACTUAL:
         return this.daysBetween30_Actual(date1, date2) / 30;
       case CalendarType.ACTUAL_360:
@@ -100,14 +100,25 @@ export class Calendar {
   }
 
   /**
-   * Adds a specified number of months to a date.
+   * Adds a specified number of months to a date according to the current calendar type.
    *
    * @param date - The date to add months to.
    * @param months - The number of months to add.
    * @returns {Dayjs} - The new date with the added months.
    */
   addMonths(date: Dayjs, months: number): Dayjs {
-    return date.add(months, "month");
+    // Handle 30/360 specific adjustments if needed
+    if (this.calendarType === CalendarType.THIRTY_360 || this.calendarType === CalendarType.THIRTY_ACTUAL) {
+      const newDate = date.add(months, "month");
+      // If the original date was on the 31st or last day of February, adjust to 30
+      if (date.date() === 31 || this.isLastDayOfFebruary(date)) {
+        return newDate.date(30);
+      }
+      return newDate;
+    } else {
+      // For actual calendars, simply add months
+      return date.add(months, "month");
+    }
   }
 
   /**
@@ -168,7 +179,20 @@ export class Calendar {
    */
   private daysBetweenActual_360(date1: Dayjs, date2: Dayjs): number {
     const actualDays = date2.diff(date1, "day");
-    return Math.floor(actualDays * (360 / 365));
+
+    // Avoid negative or zero actual days
+    if (actualDays <= 0) {
+      return actualDays;
+    }
+
+    // Calculate scaled days using the scaling factor
+    const scalingFactor = 360 / 365;
+
+    if (actualDays === 1) {
+      return 1;
+    } else {
+      return Math.floor(actualDays * scalingFactor);
+    }
   }
 
   /**
@@ -210,26 +234,73 @@ export class Calendar {
    * @param date2 - The end date.
    * @returns {number} - The number of days based on 30/360 convention.
    */
-  private daysBetween30_360(date1: Dayjs, date2: Dayjs): number {
-    const d1 = this.adjustDate30_360(date1);
-    const d2 = this.adjustDate30_360(date2);
-    const result = (d2.year() - d1.year()) * 360 + (d2.month() - d1.month()) * 30 + (d2.date() - d1.date());
-    //console.log(`d1: ${d1.format("YYYY-MM-DD")}, d2: ${d2.format("YYYY-MM-DD")}, result: ${result}`);
-    return result;
+  private daysBetween30_360(startDate: Dayjs, endDate: Dayjs): number {
+    // Extract date components
+    let Y1 = startDate.year();
+    let M1 = startDate.month() + 1; // dayjs months are 0-indexed
+    let D1 = startDate.date();
+    let Y2 = endDate.year();
+    let M2 = endDate.month() + 1;
+    let D2 = endDate.date();
+
+    // Adjust day values according to the 30/360 convention
+    if (D1 === 31 || this.isLastDayOfFebruary(startDate)) {
+      D1 = 30;
+    }
+
+    if (D2 === 31 && D1 === 30) {
+      D2 = 30;
+    }
+
+    // Calculate days between
+    const days = 360 * (Y2 - Y1) + 30 * (M2 - M1) + (D2 - D1);
+    return days;
+  }
+
+  private daysBetween30_360_European(startDate: Dayjs, endDate: Dayjs): number {
+    // Extract date components
+    let Y1 = startDate.year();
+    let M1 = startDate.month() + 1; // dayjs months are 0-indexed
+    let D1 = startDate.date();
+    let Y2 = endDate.year();
+    let M2 = endDate.month() + 1;
+    let D2 = endDate.date();
+
+    // Adjust day values according to the 30E/360 convention
+    if (D1 === 31) {
+      D1 = 30;
+    }
+
+    if (D2 === 31) {
+      D2 = 30;
+    }
+
+    // Calculate days between
+    const days = 360 * (Y2 - Y1) + 30 * (M2 - M1) + (D2 - D1);
+    return days;
+  }
+
+  /**
+   * Checks if the given date is the last day of February.
+   *
+   * @param date - The date to check.
+   * @returns {boolean} - True if the date is the last day of February, false otherwise.
+   */
+  private isLastDayOfFebruary(date: Dayjs): boolean {
+    return date.month() === 1 && date.date() === date.daysInMonth();
   }
 
   /**
    * Calculates the number of days between two dates using the 30/Actual convention.
-   * Uses 30 days per month when over 30 days, otherwise actual days.
+   * Uses 30 days per month but actual days per year.
    *
-   * @param date1 - The start date.
-   * @param date2 - The end date.
-   * @returns {number} - The number of days based on 30/Actual convention.
+   * @param startDate - The start date.
+   * @param endDate - The end date.
+   * @returns {number} - The number of days based on the 30/Actual convention.
    */
-  private daysBetween30_Actual(date1: Dayjs, date2: Dayjs): number {
-    const days30_360 = this.daysBetween30_360(date1, date2);
-    const actualDays = date2.diff(date1, "day");
-    return actualDays < 30 ? actualDays : days30_360;
+  private daysBetween30_Actual(startDate: Dayjs, endDate: Dayjs): number {
+    // Use the 30/360 day count for days between
+    return this.daysBetween30_360_European(startDate, endDate);
   }
 
   /**

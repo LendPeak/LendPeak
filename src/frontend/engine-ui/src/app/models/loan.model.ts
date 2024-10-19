@@ -10,10 +10,12 @@ import {
   TILADisclosures,
   Fee,
 } from 'lendpeak-engine/models/Amortization';
+
+import { PerDiemCalculationType } from 'lendpeak-engine/models/InterestCalculator';
+
 import { Currency } from 'lendpeak-engine/utils/Currency';
 import { Decimal } from 'decimal.js';
 import { BalanceModification } from 'lendpeak-engine/models/Amortization/BalanceModification';
-
 
 export interface LoanFeeForAllTerms {
   type: 'fixed' | 'percentage';
@@ -42,7 +44,7 @@ export interface UILoan {
   flushMethod: string;
   feesForAllTerms: LoanFeeForAllTerms[];
   feesPerTerm: LoanFeePerTerm[];
-
+  perDiemCalculationType: PerDiemCalculationType;
   roundingPrecision: number;
   flushThreshold: number;
   termPaymentAmount: number | undefined;

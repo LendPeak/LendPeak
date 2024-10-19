@@ -335,6 +335,65 @@
           <!-- Interest Settings Section -->
           <p-accordionTab header="Interest Settings">
             <div class="p-fluid">
+              <!-- Per Diem Calculation Type -->
+              <div class="field">
+                <label for="perDiemCalculationType">
+                  Per Diem Calculation Type
+                  <i
+                    class="pi pi-info-circle tooltip-icon"
+                    (click)="showTooltip($event, perDiemCalculationTypeTooltip)"
+                  ></i>
+                </label>
+                <p-dropdown
+                  id="perDiemCalculationType"
+                  [(ngModel)]="loan.perDiemCalculationType"
+                  name="perDiemCalculationType"
+                  [options]="perDiemCalculationTypes"
+                  placeholder="Select a per diem calculation type"
+                  (ngModelChange)="submitLoan()"
+                ></p-dropdown>
+                <!-- Tooltip Overlay -->
+                <p-overlayPanel #perDiemCalculationTypeTooltip>
+                  <div class="tooltip-content">
+                    <p><strong>Per Diem Calculation Types:</strong></p>
+                    <ul>
+                      <li>
+                        <strong>Annual Rate Divided by Days in Year</strong>
+                        <ul>
+                          <li>
+                            Calculate the daily interest rate by dividing the
+                            annual interest rate by the number of days in the
+                            year (usually 360, 365, or 366).
+                          </li>
+                          <li>
+                            Multiply this daily rate by the principal amount to
+                            determine the per diem interest.
+                          </li>
+                        </ul>
+                      </li>
+                      <li>
+                        <strong>Monthly Rate Divided by Days in Month</strong>
+                        <ul>
+                          <li>
+                            First, divide the annual interest rate by 12 to get
+                            the monthly interest rate.
+                          </li>
+                          <li>
+                            Then, divide this monthly rate by the number of days
+                            in the month (28, 29, 30, or 31) to get the daily
+                            rate.
+                          </li>
+                          <li>
+                            Multiply this daily rate by the principal amount to
+                            calculate the per diem interest.
+                          </li>
+                        </ul>
+                      </li>
+                    </ul>
+                  </div>
+                </p-overlayPanel>
+              </div>
+
               <!-- Allow Rates Above 100% -->
               <div class="field-checkbox">
                 <p-checkbox

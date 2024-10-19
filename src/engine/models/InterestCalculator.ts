@@ -3,6 +3,8 @@ import { Currency } from "../utils/Currency";
 import { Calendar, CalendarType } from "./Calendar";
 import Decimal from "decimal.js";
 
+export type PerDiemCalculationType = "AnnualRateDividedByDaysInYear" | "MonthlyRateDividedByDaysInMonth";
+
 export interface PaymentSplit {
   principal: Currency;
   interest: Currency;
@@ -30,10 +32,20 @@ export interface APRInputs {
 export class InterestCalculator {
   private calendar: Calendar;
   private annualInterestRate: Decimal;
+  private perDiemCalculationType: PerDiemCalculationType;
+  private daysInAMonth?: number;
 
-  constructor(annualInterestRate: Decimal, calendarType: CalendarType = CalendarType.ACTUAL_ACTUAL) {
+  constructor(annualInterestRate: Decimal, calendarType: CalendarType = CalendarType.ACTUAL_ACTUAL, perDiemCalculationType: PerDiemCalculationType = "AnnualRateDividedByDaysInYear", daysInAMonth?: number) {
     this.annualInterestRate = annualInterestRate;
     this.calendar = new Calendar(calendarType);
+    this.perDiemCalculationType = perDiemCalculationType;
+
+    if (this.perDiemCalculationType === "MonthlyRateDividedByDaysInMonth") {
+      if (daysInAMonth === undefined) {
+        throw new Error("Days in a month must be provided for MonthlyRateDividedByDaysInMonth calculation type.");
+      }
+      this.daysInAMonth = daysInAMonth;
+    }
   }
 
   static yearFraction(startDate: Date, endDate: Date): number {
@@ -134,9 +146,28 @@ export class InterestCalculator {
     if (annualRate.isZero()) {
       return Currency.of(0);
     }
-    const dailyInterestRate = new Decimal(annualRate).dividedBy(this.calendar.daysInYear());
+
+    let dailyInterestRate: Decimal;
+    if (this.perDiemCalculationType === "AnnualRateDividedByDaysInYear") {
+      dailyInterestRate = this.calculateDailyInteresUsingAnnualRateDividedByDaysInYear(annualRate);
+    } else if (this.perDiemCalculationType === "MonthlyRateDividedByDaysInMonth") {
+      dailyInterestRate = this.calculateDailyInterestUsingMonthlyRateDividedByDaysInMonth(annualRate);
+    } else {
+      throw new Error(`Invalid per diem calculation type: ${this.perDiemCalculationType}`);
+    }
     const dailyInterestAmount = principal.multiply(dailyInterestRate);
     return dailyInterestAmount;
+  }
+
+  calculateDailyInteresUsingAnnualRateDividedByDaysInYear(annualInterestRate: Decimal, customAnnualInterestRate?: Decimal): Decimal {
+    return new Decimal(annualInterestRate).dividedBy(this.calendar.daysInYear());
+  }
+
+  calculateDailyInterestUsingMonthlyRateDividedByDaysInMonth(annualInterestRate: Decimal, customAnnualInterestRate?: Decimal): Decimal {
+    if (this.daysInAMonth === undefined) {
+      throw new Error("Days in a month must be defined.");
+    }
+    return new Decimal(annualInterestRate).dividedBy(12).dividedBy(this.daysInAMonth);
   }
 
   /**

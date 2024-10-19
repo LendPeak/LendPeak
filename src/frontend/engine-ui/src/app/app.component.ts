@@ -110,6 +110,14 @@ export class AppComponent implements OnChanges {
         'Added copy to clipboard repayment plan functionality',
       ],
     },
+    {
+      version: '1.7.0',
+      date: '2024-10-18',
+      details: [
+        'Added "Per Diem Calculation Type" setting in the Interest Settings. Users can now choose between calculating per diem interest based on the annual rate divided by days in the year or the monthly rate divided by days in the month.',
+        'Improved tooltip formatting for better clarity and user experience.',
+      ],
+    },
   ];
 
   selectedVersion: string = this.currentVersion;
@@ -132,6 +140,7 @@ export class AppComponent implements OnChanges {
     calendarType: 'THIRTY_360', // Default value
     roundingMethod: 'ROUND_HALF_EVEN', // Default value
     flushMethod: 'at_threshold', // Default value
+    perDiemCalculationType: 'AnnualRateDividedByDaysInYear', // Default value
     roundingPrecision: 2,
     flushThreshold: 0.01,
     ratesSchedule: [],
@@ -317,6 +326,10 @@ export class AppComponent implements OnChanges {
       if (loan) {
         this.loan = JSON.parse(loan);
         // all types are stored as strings in local storage, we need to convert them back to their original types
+
+        // Set default if not present
+        this.loan.perDiemCalculationType =
+          this.loan.perDiemCalculationType || 'AnnualRateDividedByDaysInYear';
 
         if (this.loan.objectVersion !== this.CURRENT_OBJECT_VERSION) {
           // we have outdated cached object, lets just clear it and start fresh
@@ -605,6 +618,17 @@ export class AppComponent implements OnChanges {
     { label: 'USD', value: 'USD' },
     { label: 'EUR', value: 'EUR' },
     // Add more currencies as needed
+  ];
+
+  perDiemCalculationTypes: DropDownOptionString[] = [
+    {
+      label: 'Annual Rate Divided by Days in Year',
+      value: 'AnnualRateDividedByDaysInYear',
+    },
+    {
+      label: 'Monthly Rate Divided by Days in Month',
+      value: 'MonthlyRateDividedByDaysInMonth',
+    },
   ];
 
   toolbarActions = [
@@ -1200,6 +1224,7 @@ export class AppComponent implements OnChanges {
         this.loan.defaultBillDueDaysAfterPeriodEndConfiguration,
       preBillDays: this.loan.preBillDays,
       dueBillDays: this.loan.dueBillDays,
+      perDiemCalculationType: this.loan.perDiemCalculationType,
     };
 
     if (this.loan.termPaymentAmount) {

@@ -179,6 +179,8 @@ export class Calendar {
    * @returns {number} - The actual number of days between the two dates, assuming a 365-day year.
    */
   private daysBetweenActual_365(startDate: Dayjs, endDate: Dayjs): number {
+    startDate = startDate.startOf("day");
+    endDate = endDate.startOf("day");
     // Calculate total number of days between the two dates
     const totalDaysDiff = endDate.diff(startDate, "day");
 

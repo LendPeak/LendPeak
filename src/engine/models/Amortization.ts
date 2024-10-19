@@ -1,6 +1,6 @@
 import { Currency, RoundingMethod } from "../utils/Currency";
 import { Calendar, CalendarType } from "./Calendar";
-import { InterestCalculator } from "./InterestCalculator";
+import { InterestCalculator, PerDiemCalculationType } from "./InterestCalculator";
 import { BalanceModification } from "./Amortization/BalanceModification";
 import Decimal from "decimal.js";
 
@@ -168,6 +168,7 @@ export interface AmortizationParams {
   termPeriodDefinition?: TermPeriodDefinition;
   changePaymentDates?: ChangePaymentDate[];
   balanceModifications?: BalanceModification[];
+  perDiemCalculationType?: PerDiemCalculationType;
   // staticFeePerBill?: Currency; // A fixed fee amount applied to each bill.
   // customFeesPerTerm?: { termNumber: number; feeAmount: Currency }[]; // An array specifying custom fee amounts for each term.
   // feePercentageOfTotalPayment?: Decimal; // A percentage of the total payment to be applied as a fee.
@@ -216,6 +217,7 @@ export class Amortization {
   balanceModifications: BalanceModification[] = [];
   _apr?: Decimal;
   earlyRepayment: boolean = false;
+  perDiemCalculationType: PerDiemCalculationType = "AnnualRateDividedByDaysInYear";
 
   // Fee configurations
   // private staticFeePerBill: Currency;
@@ -251,6 +253,10 @@ export class Amortization {
     }
 
     this.totalLoanAmount = this.loanAmount.add(this.originationFee);
+
+    if (params.perDiemCalculationType) {
+      this.perDiemCalculationType = params.perDiemCalculationType;
+    }
 
     // Initialize feesPerTerm
     this.feesPerTerm = new Map();
@@ -791,7 +797,33 @@ export class Amortization {
       }
     }
 
-    return rates;
+    // if perDiemCalculationType is set to "AnnualRateDividedByDaysInYear", we dont need to do anything
+    // if perDiemCalculationType is set to "MonthlyRateDividedByDaysInMonth", we need to split the schedule
+    // into smaller schedules based on the month, so for example 11/15/2024 to 12/15/2024 will be split into
+    // 11/15/2024 to 11/30/2024 at 5% and 12/01/2024 to 12/15/2024 at 5%
+    // this will allow interest calculator to calculate MonthlyRateDividedByDaysInMonth
+    // correctly for terms that spawn multiple months, which is likely most of the time
+
+    if (this.perDiemCalculationType === "AnnualRateDividedByDaysInYear") {
+      return rates;
+    } else if (this.perDiemCalculationType === "MonthlyRateDividedByDaysInMonth") {
+      const splitRates: RateSchedule[] = [];
+      // we will split the rates into smaller schedules based on the month
+      for (let rate of rates) {
+        const startDate = rate.startDate;
+        const endDate = rate.endDate;
+        let currentDate = startDate;
+        while (currentDate.isSameOrBefore(endDate)) {
+          const lastDayOfMonth = currentDate.endOf("month");
+          const effectiveEndDate = endDate.isBefore(lastDayOfMonth) ? endDate : lastDayOfMonth.add(1, "day");
+          splitRates.push({ annualInterestRate: rate.annualInterestRate, startDate: currentDate.startOf("day"), endDate: effectiveEndDate.startOf("day") });
+          currentDate = lastDayOfMonth.add(1, "day");
+        }
+      }
+      return splitRates;
+    } else {
+      throw new Error(`Invalid per diem calculation type, getInterestRatesBetweenDates is not implemented for ${this.perDiemCalculationType}`);
+    }
   }
 
   getTermPaymentAmount(termNumber: number): Currency {
@@ -954,7 +986,7 @@ export class Amortization {
           //   continue;
           // }
 
-          const interestCalculator = new InterestCalculator(interestRateForPeriod.annualInterestRate, this.calendar.calendarType);
+          const interestCalculator = new InterestCalculator(interestRateForPeriod.annualInterestRate, this.calendar.calendarType, this.perDiemCalculationType, interestRateForPeriod.startDate.daysInMonth());
 
           let interestForPeriod: Currency;
           if (interestRateForPeriod.annualInterestRate.isZero()) {

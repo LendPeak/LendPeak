@@ -59,6 +59,30 @@ describe("Calendar Class", () => {
   });
 
   it("should calculate days between using Actual/365", () => {
+    const startDate = dayjs("2024-07-26").startOf("day");
+    const endDate = dayjs("2024-08-01").startOf("day");
+    const calendar = new Calendar(CalendarType.ACTUAL_365);
+    const days = calendar.daysBetween(startDate, endDate);
+    expect(days).toBe(6);
+  });
+
+  it("should calculate days between using Actual/365", () => {
+    const startDate = dayjs("2024-08-01").startOf("day");
+    const endDate = dayjs("2024-08-26").startOf("day");
+    const calendar = new Calendar(CalendarType.ACTUAL_365);
+    const days = calendar.daysBetween(startDate, endDate);
+    expect(days).toBe(25);
+  });
+
+  it("should calculate days between using Actual/365", () => {
+    const startDate = dayjs("2024-08-26").startOf("day");
+    const endDate = dayjs("2024-09-01").startOf("day");
+    const calendar = new Calendar(CalendarType.ACTUAL_365);
+    const days = calendar.daysBetween(startDate, endDate);
+    expect(days).toBe(6);
+  });
+
+  it("should calculate days between using Actual/365", () => {
     const startDate = dayjs("2024-02-15").startOf("day");
     const endDate = dayjs("2024-03-15").startOf("day");
     const calendar = new Calendar(CalendarType.ACTUAL_365);

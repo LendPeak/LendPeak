@@ -213,7 +213,7 @@ export class Calendar {
     for (let year = startDate.year(); year <= endDate.year(); year++) {
       if (dayjs(`${year}`).isLeapYear()) {
         // Check if Feb 29 is between the start and end date
-        const leapDay = dayjs(`${year}-02-29`);
+        const leapDay = dayjs(`${year}-02-29`).startOf("day");
         if (leapDay.isAfter(startDate) && leapDay.isBefore(endDate)) {
           leapDays += 1;
         }

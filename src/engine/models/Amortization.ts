@@ -676,14 +676,20 @@ export class Amortization {
     let startDate = this.startDate;
     for (let i = 0; i < this.term; i++) {
       let endDate: Dayjs;
+      const isStartDateLastDayOfMonth = startDate.isSame(startDate.endOf("month"), "day");
+
       if (i === 0 && this.firstPaymentDate) {
         endDate = this.firstPaymentDate.startOf("day");
       } else {
         const termUnit = this.termPeriodDefinition.unit === "complex" ? "day" : this.termPeriodDefinition.unit;
-        endDate = startDate.add(this.termPeriodDefinition.count[0], termUnit).startOf("day");
+        if (isStartDateLastDayOfMonth && termUnit === "month") {
+          endDate = startDate.add(this.termPeriodDefinition.count[0], termUnit).endOf("month").startOf("day");
+        } else {
+          endDate = startDate.add(this.termPeriodDefinition.count[0], termUnit).startOf("day");
+        }
       }
 
-      // check for change payment date
+      // Check for change payment date
       if (this.changePaymentDates.length > 0) {
         const changePaymentDate = this.changePaymentDates.find((changePaymentDate) => changePaymentDate.termNumber === i + 1);
         if (changePaymentDate) {
@@ -694,7 +700,7 @@ export class Amortization {
       startDate = endDate;
     }
 
-    // final period should end at the end date
+    // Ensure the final period ends on the loan's end date
     this.periodsSchedule[this.periodsSchedule.length - 1].endDate = this.endDate;
   }
 

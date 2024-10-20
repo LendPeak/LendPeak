@@ -245,3 +245,109 @@ footer p {
     margin: 0;
     color: #888;
 }
+
+/* Loan Name Styling */
+
+
+.p-toolbar {
+    padding: 0 1rem;
+}
+
+.p-toolbar-group-left {
+    display: flex;
+    align-items: center;
+}
+
+/* Adjustments for the toolbar */
+.app-toolbar .p-toolbar {
+    background-color: #f8f9fa;
+    /* Light background color */
+    border-bottom: 1px solid #dee2e6;
+}
+
+.app-toolbar .p-toolbar .p-toolbar-group-left {
+    flex-grow: 1;
+}
+
+.loan-not-found {
+    margin: 20px;
+    text-align: center;
+}
+
+.loan-not-found p {
+    font-size: 1.2em;
+}
+
+
+/* Loan Header Styling */
+.loan-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+    padding: 10px 20px;
+}
+
+.loan-header-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: nowrap;
+    /* Prevent wrapping */
+}
+
+.loan-details {
+    flex: 1 1 auto;
+    /* Allow to grow and shrink */
+    min-width: 0;
+    /* Prevent overflow */
+}
+
+.loan-actions {
+    display: flex;
+    align-items: center;
+    flex: 0 0 auto;
+    /* Do not grow or shrink */
+}
+
+.loan-name-title {
+    margin: 0;
+    font-size: 1.75rem;
+    font-weight: bold;
+    color: #333;
+    white-space: nowrap;
+    /* Prevent text wrapping */
+    overflow: hidden;
+    /* Hide overflow text */
+    text-overflow: ellipsis;
+    /* Show ellipsis for overflow */
+}
+
+.loan-description {
+    margin: 0;
+    font-size: 1rem;
+    color: #666;
+    white-space: nowrap;
+    /* Prevent text wrapping */
+    overflow: hidden;
+    /* Hide overflow text */
+    text-overflow: ellipsis;
+    /* Show ellipsis for overflow */
+}
+
+.unsaved-indicator {
+    font-size: 1rem;
+    font-weight: normal;
+    color: #ff9800;
+    margin-left: 10px;
+    white-space: nowrap;
+}
+
+.loan-actions .p-button {
+    margin-left: 10px;
+    flex-shrink: 0;
+    /* Prevent buttons from shrinking */
+    max-width: 120px;
+    /* Adjust as needed */
+    white-space: nowrap;
+}
+
+

@@ -1,65 +1,26 @@
-<!-- toolbar.component.html -->
 <p-toolbar class="custom-toolbar">
+  <!-- Left Group: Logo -->
   <div class="p-toolbar-group-start">
     <img src="horizontal-logo.png" style="width: 160px" />
   </div>
 
+  <!-- Center Group: (If any, otherwise remove) -->
   <div class="p-toolbar-group-center">
-    <!-- Snapshot Date Picker -->
-    <div
-      class="snapshot-date-container"
-      [ngClass]="{ 'time-machine-active': !isToday(snapshotDate) }"
-    >
-      <label for="snapshotDate" class="snapshot-date-label">
-        <i class="pi pi-calendar"></i>
-        Snapshot Date:
-      </label>
-      <p-calendar
-        id="snapshotDate"
-        [(ngModel)]="snapshotDate"
-        [showIcon]="true"
-        dateFormat="mm/dd/yy"
-        [showButtonBar]="true"
-        [numberOfMonths]="3"
-        
-        (ngModelChange)="onSnapshotDateChange($event)"
-      ></p-calendar>
-      <p-overlayPanel #startDateTooltip>
-        Select a date to view the loan as of that day
-      </p-overlayPanel>
-    </div>
+    <!-- Existing or new center elements -->
   </div>
 
+  <!-- Right Group: Remove "Save" and "Reset" Buttons -->
   <div class="p-toolbar-group-end">
     <!-- Time Machine Indicator -->
     <p-chip
       *ngIf="!isToday(snapshotDate)"
       label="Time Travel Mode"
       icon="pi pi-clock"
-      class="p-mr-2 time-machine-chip"
+      class="p-mr-2 mr-2 time-machine-chip"
       [style]="{ 'background-color': '#ff9800', color: '#ffffff' }"
     ></p-chip>
 
-    <!-- Save UI Button -->
-    <p-button
-      label="Save"
-      icon="pi pi-save"
-      class="p-button-success toolbar-button"
-      (onClick)="onSaveUIState()"
-      pTooltip="Save the current UI state"
-      tooltipPosition="bottom"
-    ></p-button>
-
-    <!-- Reset UI Button -->
-    <p-button
-      label="Reset"
-      icon="pi pi-refresh"
-      class="p-button-warning toolbar-button"
-      (onClick)="onResetUIState()"
-      pTooltip="Reset the UI to default settings"
-      tooltipPosition="bottom"
-    ></p-button>
-
+    <!-- Remove Save and Reset Buttons -->
     <!-- Actions SplitButton -->
     <p-splitButton
       label="More"

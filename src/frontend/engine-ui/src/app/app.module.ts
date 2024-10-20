@@ -37,7 +37,11 @@ import { BillsComponent } from './bills/bills.component';
 import { BasicLoanInfoComponent } from './basic-loan-info/basic-loan-info.component';
 import { OverridesComponent } from './overrides/overrides.component';
 import { ToastModule } from 'primeng/toast';
+import { MessageModule } from 'primeng/message';
 import { MessageService } from 'primeng/api';
+
+import { RouterModule } from '@angular/router';
+
 
 @NgModule({
   declarations: [
@@ -79,6 +83,8 @@ import { MessageService } from 'primeng/api';
     PaginatorModule,
     TooltipModule,
     ToastModule,
+    MessageModule,
+    RouterModule.forRoot([]),
   ],
   providers: [MessageService],
   bootstrap: [AppComponent],

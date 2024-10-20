@@ -1,5 +1,6 @@
 import { appVersion } from '../environments/version';
 import { MessageService } from 'primeng/api';
+import { ActivatedRoute, Router } from '@angular/router';
 
 import { Component, OnChanges, SimpleChanges } from '@angular/core';
 import { OverlayPanel } from 'primeng/overlaypanel';
@@ -52,9 +53,17 @@ import {
   providers: [MessageService], // Add MessageService to the component providers
 })
 export class AppComponent implements OnChanges {
-  constructor(private messageService: MessageService) {}
+  constructor(
+    private route: ActivatedRoute,
+    private router: Router,
+    private messageService: MessageService
+  ) {}
 
   currentVersion = appVersion;
+
+  loanNotFound: boolean = false;
+  requestedLoanName: string = '';
+
   showNewVersionModal = false;
   currentReleaseNotes: any;
   releaseNotes = [
@@ -118,6 +127,17 @@ export class AppComponent implements OnChanges {
         'Improved tooltip formatting for better clarity and user experience.',
       ],
     },
+    {
+      version: '1.8.0',
+      date: '2024-10-19',
+      details: [
+        'Deprecated Reset and Save UI buttons in the toolbar as they are no longer relevant with the introduction of manage loans functionality.',
+        'Improved the usability of the "More" menu by breaking it into multiple, context-aware buttons for better user interaction.',
+        'Added indicators for loan modification status, allowing users to see when a loan has unsaved changes.',
+        'Fixed Save Loan button alignment issue in dialogs.',
+        'Implemented loan not found handling, providing users with a clear message and suggestion to go back to the home page.',
+      ],
+    },
   ];
 
   selectedVersion: string = this.currentVersion;
@@ -125,7 +145,45 @@ export class AppComponent implements OnChanges {
 
   snapshotDate: Date = new Date();
 
+  loanName = 'Loan 1';
+
   CURRENT_OBJECT_VERSION = 9;
+
+  defaultLoan: UILoan = {
+    objectVersion: this.CURRENT_OBJECT_VERSION,
+    principal: 10000,
+    originationFee: 0,
+    interestRate: 10,
+    term: 12,
+    feesForAllTerms: [],
+    feesPerTerm: [],
+    startDate: new Date(),
+    firstPaymentDate: dayjs().add(1, 'month').toDate(),
+    endDate: dayjs().add(12, 'month').toDate(),
+    calendarType: 'THIRTY_360',
+    roundingMethod: 'ROUND_HALF_EVEN',
+    flushMethod: 'at_threshold',
+    perDiemCalculationType: 'AnnualRateDividedByDaysInYear',
+    roundingPrecision: 2,
+    flushThreshold: 0.01,
+    ratesSchedule: [],
+    termPaymentAmountOverride: [],
+    termPaymentAmount: undefined,
+    defaultBillDueDaysAfterPeriodEndConfiguration: 3,
+    defaultPreBillDaysConfiguration: 5,
+    allowRateAbove100: false,
+    periodsSchedule: [],
+    changePaymentDates: [],
+    dueBillDays: [],
+    preBillDays: [],
+    deposits: [],
+    termPeriodDefinition: {
+      unit: 'month',
+      count: [1],
+    },
+    balanceModifications: [],
+  };
+
   loan: UILoan = {
     objectVersion: this.CURRENT_OBJECT_VERSION,
     principal: 10000,
@@ -175,13 +233,44 @@ export class AppComponent implements OnChanges {
     // Implement any logic needed when a bill action occurs
   }
 
+  newLoan() {
+    if (this.loanModified) {
+      if (
+        !confirm(
+          'You have unsaved changes. Do you want to discard them and create a new loan?'
+        )
+      ) {
+        return;
+      }
+    }
+
+    // Reset the loan to default values
+    this.loan = { ...this.defaultLoan };
+
+    // Reset other properties
+    this.currentLoanName = 'New Loan';
+    this.loanModified = false;
+
+    // Reset bills and deposits
+    this.bills = [];
+    this.loan.deposits = [];
+
+    // Generate the default loan data
+    this.updateTermOptions();
+    this.submitLoan();
+  }
+
   // Handle loan change event
   onLoanChange(updatedLoan: any) {
     this.loan = updatedLoan;
-    this.saveUIState(); // Save state if necessary
+    this.loanModified = true; // Mark as modified
   }
 
   paymentApplicationResults: PaymentApplicationResult[] = [];
+
+  currentLoanName: string = 'New Loan';
+  currentLoanDescription: string = 'New Loan';
+  loanModified: boolean = false;
 
   lenderName = 'Your Bank Name';
   borrowerName = 'John Doe';
@@ -214,27 +303,6 @@ export class AppComponent implements OnChanges {
   selectedDeposit: any = null;
   showDepositUsageDetailsDialog: boolean = false;
 
-  saveUIState() {
-    // store UI state in the local storage that captures the state of the advanced options, rate overrides, and term payment amount overrides
-    localStorage.setItem(
-      'uiState',
-      JSON.stringify({
-        advancedSettingsCollapsed: this.advancedSettingsCollapsed,
-        termPaymentAmountOverrideCollapsed:
-          this.termPaymentAmountOverrideCollapsed,
-        rateOverrideCollapsed: this.rateOverrideCollapsed,
-        customPeriodsScheduleCollapsed: this.customPeriodsScheduleCollapsed,
-        changePaymentDateCollapsed: this.changePaymentDateCollapsed,
-        preBillDayTermOverrideCollapsed: this.preBillDayTermOverrideCollapsed,
-        dueBillDayTermOverrideCollapsed: this.dueBillDayTermOverrideCollapsed,
-        balanceModificationsCollapsed: this.balanceModificationsCollapsed,
-      })
-    );
-
-    // store this.loan in local storage
-    localStorage.setItem('loan', JSON.stringify(this.loan));
-  }
-
   getNextTermNumber(): number {
     if (this.loan.feesPerTerm.length === 0) {
       return 1;
@@ -242,14 +310,6 @@ export class AppComponent implements OnChanges {
       const termNumbers = this.loan.feesPerTerm.map((tf) => tf.termNumber);
       return Math.max(...termNumbers) + 1;
     }
-  }
-
-  resetUIState() {
-    // remove loacal storage
-    localStorage.removeItem('uiState');
-    localStorage.removeItem('loan');
-    // refresh the page
-    // window.location.reload();
   }
 
   showTooltip(event: Event, tooltipRef: OverlayPanel) {
@@ -324,130 +384,14 @@ export class AppComponent implements OnChanges {
       const loan = localStorage.getItem('loan');
 
       if (loan) {
-        this.loan = JSON.parse(loan);
-        // all types are stored as strings in local storage, we need to convert them back to their original types
+        const loanData = JSON.parse(loan);
+        this.loan = loanData;
 
-        // Set default if not present
-        this.loan.perDiemCalculationType =
-          this.loan.perDiemCalculationType || 'AnnualRateDividedByDaysInYear';
+        this.currentLoanName = loanData.name || 'New Loan';
+        this.currentLoanDescription = loanData.description || '';
 
-        if (this.loan.objectVersion !== this.CURRENT_OBJECT_VERSION) {
-          // we have outdated cached object, lets just clear it and start fresh
-          return this.resetUIState();
-        }
-
-        this.loan.startDate = new Date(this.loan.startDate);
-        this.loan.firstPaymentDate = new Date(this.loan.firstPaymentDate);
-        this.loan.endDate = new Date(this.loan.endDate);
-
-        if (this.loan.deposits.length > 0) {
-          this.loan.deposits = this.loan.deposits.map((deposit) => {
-            return {
-              id: deposit.id,
-              amount: deposit.amount,
-              currency: deposit.currency,
-              createdDate: new Date(deposit.createdDate),
-              insertedDate: new Date(deposit.insertedDate),
-              effectiveDate: new Date(deposit.effectiveDate),
-              clearingDate: deposit.clearingDate
-                ? new Date(deposit.clearingDate)
-                : undefined,
-              systemDate: new Date(deposit.systemDate),
-              paymentMethod: deposit.paymentMethod,
-              depositor: deposit.depositor,
-              depositLocation: deposit.depositLocation,
-              usageDetails: [],
-              applyExcessToPrincipal: deposit.applyExcessToPrincipal,
-              excessAppliedDate: deposit.excessAppliedDate
-                ? new Date(deposit.excessAppliedDate)
-                : undefined,
-            };
-          });
-        }
-
-        // Parse feesForAllTerms
-        if (this.loan.feesForAllTerms) {
-          this.loan.feesForAllTerms = this.loan.feesForAllTerms.map((fee) => {
-            return {
-              type: fee.type,
-              amount: fee.amount,
-              percentage: fee.percentage,
-              basedOn: fee.basedOn,
-              description: fee.description,
-              metadata: fee.metadata,
-            } as LoanFeeForAllTerms;
-          });
-        } else {
-          this.loan.feesForAllTerms = [];
-        }
-
-        // Parse feesPerTerm
-        if (this.loan.feesPerTerm) {
-          this.loan.feesPerTerm = this.loan.feesPerTerm.map((fee) => {
-            return {
-              termNumber: fee.termNumber,
-              type: fee.type,
-              amount: fee.amount,
-              percentage: fee.percentage,
-              basedOn: fee.basedOn,
-              description: fee.description,
-              metadata: fee.metadata,
-            } as LoanFeePerTerm;
-          });
-        } else {
-          this.loan.feesPerTerm = [];
-        }
-
-        this.loan.ratesSchedule = this.loan.ratesSchedule.map((rate) => {
-          return {
-            startDate: new Date(rate.startDate),
-            endDate: new Date(rate.endDate),
-            annualInterestRate: rate.annualInterestRate,
-          };
-        });
-        this.loan.periodsSchedule = this.loan.periodsSchedule.map((period) => {
-          return {
-            period: period.period,
-            startDate: new Date(period.startDate),
-            endDate: new Date(period.endDate),
-            interestRate: period.interestRate,
-            paymentAmount: period.paymentAmount,
-          };
-        });
-        this.loan.changePaymentDates = this.loan.changePaymentDates.map(
-          (changePaymentDate) => {
-            return {
-              termNumber: changePaymentDate.termNumber,
-              newDate: new Date(changePaymentDate.newDate),
-            };
-          }
-        );
-        this.loan.termPaymentAmountOverride =
-          this.loan.termPaymentAmountOverride.map(
-            (termPaymentAmountOverride) => {
-              return {
-                termNumber: termPaymentAmountOverride.termNumber,
-                paymentAmount: termPaymentAmountOverride.paymentAmount,
-              };
-            }
-          );
-        this.loan.preBillDays = this.loan.preBillDays.map((preBillDay) => {
-          return {
-            termNumber: preBillDay.termNumber,
-            preBillDays: preBillDay.preBillDays,
-          };
-        });
-        this.loan.dueBillDays = this.loan.dueBillDays.map((dueBillDay) => {
-          return {
-            termNumber: dueBillDay.termNumber,
-            daysDueAfterPeriodEnd: dueBillDay.daysDueAfterPeriodEnd,
-          };
-        });
-        this.loan.balanceModifications = this.loan.balanceModifications.map(
-          (balanceModification) => {
-            return new BalanceModification(balanceModification);
-          }
-        );
+        // Parse the loan data
+        this.parseLoanData(this.loan);
       }
 
       // Retrieve UI state from local storage if exists
@@ -473,7 +417,6 @@ export class AppComponent implements OnChanges {
       this.submitLoan();
     } catch (e) {
       console.error('Error while loading loan from local storage:', e);
-      this.resetUIState();
     }
 
     try {
@@ -489,7 +432,203 @@ export class AppComponent implements OnChanges {
     }
 
     this.updateTermOptions();
+    this.loanModified = false;
+
+    // Read query parameter
+    this.route.queryParams.subscribe((params) => {
+      const loanName = decodeURIComponent(params['loan'] || '');
+      if (loanName) {
+        this.loadLoanFromURL(loanName);
+      } else {
+        // No loan specified, proceed as normal
+        this.loadDefaultLoan();
+      }
+    });
   }
+
+  loadLoanFromURL(loanName: string) {
+    const key = `loan_${loanName}`;
+    const loanDataJSON = localStorage.getItem(key);
+    if (loanDataJSON) {
+      // Loan found, load it
+      const loanData = JSON.parse(loanDataJSON);
+      this.loan = loanData.loan;
+      this.bills = loanData.bills;
+      this.loan.deposits = loanData.deposits;
+      this.parseLoanData(this.loan);
+
+      // Set the current loan name and description
+      this.currentLoanName = loanData.name || 'Loaded Loan';
+      this.currentLoanDescription = loanData.description || '';
+
+      this.updateTermOptions();
+      this.generateBills();
+      this.applyPayments();
+      this.submitLoan();
+      this.loanModified = false;
+      this.loanNotFound = false; // Ensure this is false
+      this.messageService.add({
+        severity: 'success',
+        summary: 'Success',
+        detail: `Loan "${loanData.name}" loaded successfully`,
+      });
+    } else {
+      // Loan not found, display a message and suggest going back to home page
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: `Loan "${loanName}" not found.`,
+      });
+      this.loanNotFound = true;
+      this.requestedLoanName = loanName;
+    }
+  }
+
+  loadDefaultLoan() {
+    // Reset the loanNotFound flag
+    this.loanNotFound = false;
+    this.requestedLoanName = '';
+
+    // Existing code to load default loan or saved loan
+    const loan = localStorage.getItem('loan');
+    if (loan) {
+      const loanData = JSON.parse(loan);
+      this.loan = loanData;
+
+      // Set the current loan name if it exists
+      this.currentLoanName = loanData.name || 'New Loan';
+      this.currentLoanDescription = loanData.description || '';
+
+      this.parseLoanData(this.loan);
+      this.updateTermOptions();
+      this.generateBills();
+      this.applyPayments();
+      this.submitLoan();
+    } else {
+      // No loan found in localStorage, initialize with default values
+      this.loan = { ...this.defaultLoan };
+      this.currentLoanName = 'New Loan';
+      this.submitLoan();
+    }
+  }
+
+  goHome() {
+    this.router.navigate(['/']).then(() => {
+      // Reset the loanNotFound flag
+      this.loanNotFound = false;
+      this.requestedLoanName = '';
+
+      // Reload the default loan
+      this.loadDefaultLoan();
+    });
+  }
+
+  parseLoanData(loan: UILoan) {
+    // Parse dates
+    loan.startDate = new Date(loan.startDate);
+    loan.firstPaymentDate = new Date(loan.firstPaymentDate);
+    loan.endDate = new Date(loan.endDate);
+
+    // Set default if not present
+    loan.perDiemCalculationType =
+      loan.perDiemCalculationType || 'AnnualRateDividedByDaysInYear';
+
+    // Parse deposits
+    if (loan.deposits.length > 0) {
+      loan.deposits = loan.deposits.map((deposit) => ({
+        ...deposit,
+        createdDate: new Date(deposit.createdDate),
+        insertedDate: new Date(deposit.insertedDate),
+        effectiveDate: new Date(deposit.effectiveDate),
+        clearingDate: deposit.clearingDate
+          ? new Date(deposit.clearingDate)
+          : undefined,
+        systemDate: new Date(deposit.systemDate),
+        excessAppliedDate: deposit.excessAppliedDate
+          ? new Date(deposit.excessAppliedDate)
+          : undefined,
+      }));
+    }
+
+    // Parse feesForAllTerms
+    if (loan.feesForAllTerms) {
+      loan.feesForAllTerms = loan.feesForAllTerms.map((fee) => ({
+        type: fee.type,
+        amount: fee.amount,
+        percentage: fee.percentage,
+        basedOn: fee.basedOn,
+        description: fee.description,
+        metadata: fee.metadata,
+      }));
+    } else {
+      loan.feesForAllTerms = [];
+    }
+
+    // Parse feesPerTerm
+    if (loan.feesPerTerm) {
+      loan.feesPerTerm = loan.feesPerTerm.map((fee) => ({
+        termNumber: fee.termNumber,
+        type: fee.type,
+        amount: fee.amount,
+        percentage: fee.percentage,
+        basedOn: fee.basedOn,
+        description: fee.description,
+        metadata: fee.metadata,
+      }));
+    } else {
+      loan.feesPerTerm = [];
+    }
+
+    // Parse ratesSchedule
+    loan.ratesSchedule = loan.ratesSchedule.map((rate) => ({
+      startDate: new Date(rate.startDate),
+      endDate: new Date(rate.endDate),
+      annualInterestRate: rate.annualInterestRate,
+    }));
+
+    // Parse periodsSchedule
+    loan.periodsSchedule = loan.periodsSchedule.map((period) => ({
+      period: period.period,
+      startDate: new Date(period.startDate),
+      endDate: new Date(period.endDate),
+      interestRate: period.interestRate,
+      paymentAmount: period.paymentAmount,
+    }));
+
+    // Parse changePaymentDates
+    loan.changePaymentDates = loan.changePaymentDates.map(
+      (changePaymentDate) => ({
+        termNumber: changePaymentDate.termNumber,
+        newDate: new Date(changePaymentDate.newDate),
+      })
+    );
+
+    // Parse termPaymentAmountOverride
+    loan.termPaymentAmountOverride = loan.termPaymentAmountOverride.map(
+      (termPaymentAmountOverride) => ({
+        termNumber: termPaymentAmountOverride.termNumber,
+        paymentAmount: termPaymentAmountOverride.paymentAmount,
+      })
+    );
+
+    // Parse preBillDays
+    loan.preBillDays = loan.preBillDays.map((preBillDay) => ({
+      termNumber: preBillDay.termNumber,
+      preBillDays: preBillDay.preBillDays,
+    }));
+
+    // Parse dueBillDays
+    loan.dueBillDays = loan.dueBillDays.map((dueBillDay) => ({
+      termNumber: dueBillDay.termNumber,
+      daysDueAfterPeriodEnd: dueBillDay.daysDueAfterPeriodEnd,
+    }));
+
+    // Parse balanceModifications
+    loan.balanceModifications = loan.balanceModifications.map(
+      (balanceModification) => new BalanceModification(balanceModification)
+    );
+  }
+
   showTable = false;
   showAdvancedTable: boolean = false; // Default is simple view
   showTilaDialog: boolean = false;
@@ -631,7 +770,89 @@ export class AppComponent implements OnChanges {
     },
   ];
 
+  showEditLoanDialog: boolean = false;
+  loanToEdit = {
+    name: '',
+    description: '',
+  };
+
+  openEditLoanDialog() {
+    // Initialize the dialog fields with current loan details
+    this.loanToEdit = {
+      name: this.currentLoanName,
+      description: this.currentLoanDescription || '',
+    };
+    this.showEditLoanDialog = true;
+  }
+
+  saveEditedLoanDetails() {
+    // Validate the new loan name
+    if (!this.loanToEdit.name) {
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: 'Loan name is required',
+      });
+      return;
+    }
+
+    // Check if the new name conflicts with an existing loan (excluding the current loan)
+    const newKey = `loan_${this.loanToEdit.name}`;
+    const oldKey = `loan_${this.currentLoanName}`;
+
+    if (newKey !== oldKey && localStorage.getItem(newKey)) {
+      if (
+        !confirm(
+          `A loan named "${this.loanToEdit.name}" already exists. Do you want to overwrite it?`
+        )
+      ) {
+        return;
+      } else {
+        // Remove the existing loan with the new name
+        localStorage.removeItem(newKey);
+      }
+    }
+
+    // Update the loan data in localStorage
+    const loanData = {
+      loan: this.loan,
+      bills: this.bills,
+      deposits: this.loan.deposits,
+      description: this.loanToEdit.description,
+      name: this.loanToEdit.name,
+    };
+
+    // Remove the old key if the name has changed
+    if (newKey !== oldKey) {
+      localStorage.removeItem(oldKey);
+    }
+
+    localStorage.setItem(newKey, JSON.stringify(loanData));
+
+    // Update the current loan name and description
+    this.currentLoanName = this.loanToEdit.name;
+    this.currentLoanDescription = this.loanToEdit.description;
+
+    this.messageService.add({
+      severity: 'success',
+      summary: 'Success',
+      detail: `Loan details updated successfully`,
+    });
+
+    this.showEditLoanDialog = false;
+  }
+
   toolbarActions = [
+    {
+      label: 'New Loan',
+      icon: 'pi pi-plus',
+      command: () => this.newLoan(),
+    },
+    {
+      label: 'Manage Loans',
+      icon: 'pi pi-folder-open',
+      command: () => this.openManageLoansDialog(),
+    },
     {
       label: 'Export Data',
       icon: 'pi pi-file-export',
@@ -653,6 +874,176 @@ export class AppComponent implements OnChanges {
       command: () => this.showCurrentReleaseNotes(),
     },
   ];
+
+  showSaveLoanDialog: boolean = false;
+  loanToSave = {
+    name: '',
+    description: '',
+  };
+
+  showManageLoansDialog: boolean = false;
+  savedLoans: any[] = [];
+
+  openSaveLoanDialog() {
+    if (this.currentLoanName && this.currentLoanName !== 'New Loan') {
+      // Existing loan, save directly
+      this.saveLoan();
+    } else {
+      // New loan, prompt for name
+      this.loanToSave = {
+        name: '',
+        description: '',
+      };
+      this.showSaveLoanDialog = true;
+    }
+  }
+
+  openManageLoansDialog() {
+    this.loadSavedLoans();
+    this.showManageLoansDialog = true;
+  }
+
+  loadSavedLoans() {
+    this.savedLoans = [];
+
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith('loan_')) {
+        const loanData = JSON.parse(localStorage.getItem(key)!);
+        const loanName = key.replace('loan_', '');
+        this.savedLoans.push({
+          key: key,
+          name: loanName,
+          description: loanData.description || '',
+          loanAmount: loanData.loan.principal || 0,
+          startDate: loanData.loan.startDate || '',
+          interestRate: loanData.loan.interestRate || 0,
+        });
+      }
+    }
+  }
+
+  deleteLoan(key: string) {
+    localStorage.removeItem(key);
+    this.loadSavedLoans();
+    this.messageService.add({
+      severity: 'success',
+      summary: 'Success',
+      detail: `Loan deleted successfully`,
+    });
+  }
+
+  loadLoan(key: string) {
+    if (this.loanModified) {
+      if (
+        !confirm(
+          'You have unsaved changes. Do you want to discard them and load a different loan?'
+        )
+      ) {
+        return;
+      }
+    }
+    const loanData = JSON.parse(localStorage.getItem(key)!);
+    if (loanData) {
+      this.loan = loanData.loan;
+      this.bills = loanData.bills;
+      this.loan.deposits = loanData.deposits;
+      this.parseLoanData(this.loan);
+
+      // Set the current loan name
+      this.currentLoanName = loanData.name || 'Loaded Loan';
+      this.currentLoanDescription = loanData.description || '';
+
+      this.updateTermOptions();
+      this.generateBills();
+      this.applyPayments();
+      this.submitLoan();
+      this.showManageLoansDialog = false;
+      this.messageService.add({
+        severity: 'success',
+        summary: 'Success',
+        detail: `Loan "${loanData.name}" loaded successfully`,
+      });
+    }
+    this.loanModified = false;
+  }
+
+  saveLoan() {
+    if (!this.currentLoanName || this.currentLoanName === 'New Loan') {
+      // New loan, prompt for name
+      if (!this.loanToSave.name) {
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'Loan name is required',
+        });
+        return;
+      }
+
+      const key = `loan_${this.loanToSave.name}`;
+      const existingLoan = localStorage.getItem(key);
+
+      if (existingLoan) {
+        // Inform the user that the loan will overwrite existing data
+        if (
+          !confirm(
+            `A loan named "${this.loanToSave.name}" already exists. Do you want to overwrite it?`
+          )
+        ) {
+          return;
+        }
+      }
+
+      // Save the loan
+      const loanData = {
+        loan: this.loan,
+        bills: this.bills,
+        deposits: this.loan.deposits,
+        description: this.loanToSave.description,
+        name: this.loanToSave.name,
+      };
+
+      localStorage.setItem(key, JSON.stringify(loanData));
+
+      // Update the current loan name and reset loanModified
+      this.currentLoanName = this.loanToSave.name;
+      this.loanModified = false;
+
+      this.messageService.add({
+        severity: 'success',
+        summary: 'Success',
+        detail: `Loan "${
+          this.currentLoanName
+        }" saved successfully. Access it directly via: ${
+          window.location.origin
+        }/?loan=${encodeURIComponent(this.currentLoanName)}`,
+      });
+    } else {
+      // Existing loan, save to the same key
+      const key = `loan_${this.currentLoanName}`;
+
+      const loanData = {
+        loan: this.loan,
+        bills: this.bills,
+        deposits: this.loan.deposits,
+        description: this.loanToSave.description || '',
+        name: this.currentLoanName,
+      };
+
+      localStorage.setItem(key, JSON.stringify(loanData));
+
+      // Reset loanModified
+      this.loanModified = false;
+
+      this.messageService.add({
+        severity: 'success',
+        summary: 'Success',
+        detail: `Loan "${this.currentLoanName}" saved successfully`,
+      });
+    }
+
+    this.showSaveLoanDialog = false;
+  }
 
   exportData() {
     // Code to export data
@@ -773,7 +1164,6 @@ export class AppComponent implements OnChanges {
   // Handle deposits change event
   onDepositsChange(updatedDeposits: LoanDeposit[]) {
     this.loan.deposits = updatedDeposits;
-    this.saveUIState(); // Save state if necessary
   }
 
   // Handle deposit updated event (e.g., to recalculate loan details)
@@ -1408,6 +1798,6 @@ export class AppComponent implements OnChanges {
       this.balanceModificationRemoved = false;
       this.submitLoan();
     }
-    this.saveUIState();
+    this.loanModified = true; // Mark as modified
   }
 }

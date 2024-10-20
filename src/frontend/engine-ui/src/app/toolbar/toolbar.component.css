@@ -7,52 +7,54 @@
     vertical-align: middle;
 }
 
-.custom-toolbar .p-toolbar-group-end {
-    display: flex;
-    align-items: center;
-}
-
-/* Add margin between toolbar buttons */
-.custom-toolbar .toolbar-button {
-    margin-right: 0.5rem;
-}
-
-/* Remove right margin from the last button */
-.custom-toolbar .toolbar-button:last-child {
-    margin-right: 0;
-}
-
-.custom-toolbar .p-button {
-    min-width: 6rem;
-}
-
-.custom-toolbar .p-button .pi {
-    margin-right: 0.5rem;
-}
-
-.custom-toolbar .p-button-secondary {
-    background-color: #6c757d;
-    border-color: #6c757d;
-}
-
-.custom-toolbar .p-button-warning {
-    background-color: #ffc107;
-    border-color: #ffc107;
-    color: #212529;
-}
-
-/* Center group in the toolbar */
-.p-toolbar-group-center {
+.custom-toolbar .p-toolbar-group-center {
     flex: 1;
     display: flex;
     justify-content: center;
     align-items: center;
 }
 
+.custom-toolbar .p-toolbar-group-end {
+    display: flex;
+    align-items: center;
+}
+
+/* Loan Name Styling */
+.loan-name-container {
+    display: flex;
+    align-items: center;
+}
+
+.loan-name-title {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #333;
+}
+
+.unsaved-indicator {
+    font-size: 1rem;
+    font-weight: normal;
+    color: #ff9800;
+    /* Orange color for unsaved changes */
+    margin-left: 10px;
+}
+
+.loan-actions {
+    display: flex;
+    align-items: center;
+    margin-left: 10px;
+}
+
+.loan-actions .p-button {
+    margin-left: 5px;
+}
+
 /* Snapshot Date Container */
 .snapshot-date-container {
     display: flex;
     align-items: center;
+    margin-right: 1rem;
 }
 
 .snapshot-date-label {
@@ -73,6 +75,30 @@
     font-weight: bold;
 }
 
-.time-machine-chip {
-    margin-right: 1rem;
+/* Toolbar Buttons */
+.toolbar-button {
+    margin-right: 0.5rem;
+}
+
+.toolbar-button:last-child {
+    margin-right: 0;
+}
+
+.p-button {
+    min-width: 6rem;
+}
+
+.p-button .pi {
+    margin-right: 0.5rem;
+}
+
+.p-button-secondary {
+    background-color: #6c757d;
+    border-color: #6c757d;
+}
+
+.p-button-warning {
+    background-color: #ffc107;
+    border-color: #ffc107;
+    color: #212529;
 }

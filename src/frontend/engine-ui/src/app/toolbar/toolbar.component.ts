@@ -13,8 +13,6 @@ export class ToolbarComponent {
   @Output() snapshotDateChange = new EventEmitter<Date>();
 
   @Input() toolbarActions: MenuItem[] = [];
-  @Output() saveUIState = new EventEmitter<void>();
-  @Output() resetUIState = new EventEmitter<void>();
 
   isToday(date: Date): boolean {
     return dayjs(date).isSame(dayjs(), 'day');
@@ -22,13 +20,5 @@ export class ToolbarComponent {
 
   onSnapshotDateChange(date: Date) {
     this.snapshotDateChange.emit(date);
-  }
-
-  onSaveUIState() {
-    this.saveUIState.emit();
-  }
-
-  onResetUIState() {
-    this.resetUIState.emit();
   }
 }

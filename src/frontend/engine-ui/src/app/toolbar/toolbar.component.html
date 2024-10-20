@@ -11,6 +11,26 @@
 
   <!-- Right Group: Remove "Save" and "Reset" Buttons -->
   <div class="p-toolbar-group-end">
+    <!-- Snapshot Date Picker -->
+    <div
+      class="snapshot-date-container"
+      [ngClass]="{ 'time-machine-active': !isToday(snapshotDate) }"
+    >
+      <label for="snapshotDate" class="snapshot-date-label">
+        <i class="pi pi-calendar"></i>
+        Snapshot Date:
+      </label>
+      <p-calendar
+        id="snapshotDate"
+        [(ngModel)]="snapshotDate"
+        [showIcon]="true"
+        dateFormat="mm/dd/yy"
+        [showButtonBar]="true"
+        [numberOfMonths]="3"
+        (ngModelChange)="onSnapshotDateChange($event)"
+      ></p-calendar>
+    </div>
+
     <!-- Time Machine Indicator -->
     <p-chip
       *ngIf="!isToday(snapshotDate)"

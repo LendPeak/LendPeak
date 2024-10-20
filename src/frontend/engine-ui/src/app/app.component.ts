@@ -381,54 +381,9 @@ export class AppComponent implements OnChanges {
     this.snapshotDate = new Date();
     // Retrieve loan from local storage if exists
     try {
-      const loan = localStorage.getItem('loan');
-
-      if (loan) {
-        const loanData = JSON.parse(loan);
-        this.loan = loanData;
-
-        this.currentLoanName = loanData.name || 'New Loan';
-        this.currentLoanDescription = loanData.description || '';
-
-        // Parse the loan data
-        this.parseLoanData(this.loan);
-      }
-
-      // Retrieve UI state from local storage if exists
-      const uiState = localStorage.getItem('uiState');
-      if (uiState) {
-        const uiStateParsed = JSON.parse(uiState);
-        this.advancedSettingsCollapsed =
-          uiStateParsed.advancedSettingsCollapsed;
-        this.termPaymentAmountOverrideCollapsed =
-          uiStateParsed.termPaymentAmountOverrideCollapsed;
-        this.rateOverrideCollapsed = uiStateParsed.rateOverrideCollapsed;
-        this.customPeriodsScheduleCollapsed =
-          uiStateParsed.customPeriodsScheduleCollapsed;
-        this.changePaymentDateCollapsed =
-          uiStateParsed.changePaymentDateCollapsed;
-        this.preBillDayTermOverrideCollapsed =
-          uiStateParsed.preBillDayTermOverrideCollapsed;
-        this.dueBillDayTermOverrideCollapsed =
-          uiStateParsed.dueBillDayTermOverrideCollapsed;
-        this.balanceModificationsCollapsed =
-          uiStateParsed.balanceModificationsCollapsed;
-      }
-      this.submitLoan();
+      this.loadDefaultLoan();
     } catch (e) {
       console.error('Error while loading loan from local storage:', e);
-    }
-
-    try {
-      this.generateBills();
-    } catch (e) {
-      console.error('Error while generating bills:', e);
-    }
-
-    try {
-      this.applyPayments();
-    } catch (e) {
-      console.error('Error while applying payments:', e);
     }
 
     this.updateTermOptions();

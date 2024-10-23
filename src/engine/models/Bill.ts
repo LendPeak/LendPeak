@@ -1,7 +1,7 @@
 // Bill.ts
 import dayjs, { Dayjs } from "dayjs";
 import { Currency } from "../utils/Currency";
-import { AmortizationSchedule } from "./Amortization";
+import { AmortizationEntry } from "./Amortization/AmortizationEntry";
 import { BillPaymentDetail } from "./Bill/BillPaymentDetail";
 export interface BillParams {
   id: string;
@@ -19,7 +19,8 @@ export interface BillParams {
   isPastDue: boolean;
   daysPastDue: number;
 
-  amortizationEntry: AmortizationSchedule;
+  isDSIBill?: boolean;
+  amortizationEntry: AmortizationEntry;
   // New property to track deposit IDs used for payment
   paymentMetadata?: {
     depositIds?: string[];
@@ -41,8 +42,9 @@ export class Bill {
   isDue: boolean;
   isPastDue: boolean;
   daysPastDue: number;
+  isDSIBill?: boolean;
 
-  amortizationEntry: AmortizationSchedule;
+  amortizationEntry: AmortizationEntry;
   // New property to track deposit IDs used for payment
   paymentMetadata?: {
     depositIds?: string[];
@@ -64,6 +66,8 @@ export class Bill {
     this.isPastDue = params.isPastDue;
     this.daysPastDue = params.daysPastDue;
     this.amortizationEntry = params.amortizationEntry;
+    this.isDSIBill = params.isDSIBill || false;
+
     if (params.paymentMetadata) {
       this.paymentMetadata = params.paymentMetadata;
     }

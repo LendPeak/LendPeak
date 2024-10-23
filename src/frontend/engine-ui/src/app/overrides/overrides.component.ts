@@ -3,7 +3,7 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { OverlayPanel } from 'primeng/overlaypanel';
 import dayjs from 'dayjs';
-import { AmortizationSchedule } from 'lendpeak-engine/models/Amortization';
+import { AmortizationEntry } from 'lendpeak-engine/models/Amortization/AmortizationEntry';
 import { BalanceModification } from 'lendpeak-engine/models/Amortization/BalanceModification';
 import {
   LoanDeposit,
@@ -21,7 +21,7 @@ export class OverridesComponent {
   @Input() loan!: UILoan;
   @Input() termOptions: { label: string; value: number }[] = [];
   @Input() balanceIncreaseType: { label: string; value: string }[] = [];
-  @Input() loanRepaymentPlan: AmortizationSchedule[] = [];
+  @Input() loanRepaymentPlan: AmortizationEntry[] = [];
 
   @Output() loanChange = new EventEmitter<any>();
   @Output() loanUpdated = new EventEmitter<void>();

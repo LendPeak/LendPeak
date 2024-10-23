@@ -6,6 +6,7 @@ import { Bill } from "./Bill";
 
 // Payment components
 export type PaymentComponent = "interest" | "fees" | "principal";
+export type PaymentAllocationStrategyName = "FIFO" | "LIFO" | "EqualDistribution" | "Proportional";
 
 // Payment priority configuration
 export type PaymentPriority = PaymentComponent[];
@@ -57,7 +58,7 @@ export class PaymentApplication {
     this.paymentPriority = options.paymentPriority;
   }
 
-  static getAllocationStrategyFromName(strategyName: string): AllocationStrategy {
+  static getAllocationStrategyFromName(strategyName: PaymentAllocationStrategyName): AllocationStrategy {
     // Build the allocation strategy based on user selection
     let allocationStrategy: AllocationStrategy;
     switch (strategyName) {

@@ -160,31 +160,33 @@
   </p-dialog>
 
   <!-- Toolbar with Loan Name -->
-<app-toolbar
-  [snapshotDate]="snapshotDate"
-  (snapshotDateChange)="onSnapshotDateChange($event)"
-  [toolbarActions]="toolbarActions"
-  (openEditLoanDialog)="openEditLoanDialog()"
-  (openSaveLoanDialog)="openSaveLoanDialog()"
-></app-toolbar>
+  <app-toolbar
+    [snapshotDate]="snapshotDate"
+    (snapshotDateChange)="onSnapshotDateChange($event)"
+    [toolbarActions]="toolbarActions"
+    (openEditLoanDialog)="openEditLoanDialog()"
+    (openSaveLoanDialog)="openSaveLoanDialog()"
+  ></app-toolbar>
 
   <!-- Loan Header Section -->
   <div class="loan-header">
     <div class="loan-header-content">
       <!-- Left Section: Loan Details -->
       <div class="loan-details">
-        <h2 class="loan-name-title">
-          {{ currentLoanName }}
-          <span *ngIf="loanModified" class="unsaved-indicator">
-            (Modified)
-          </span>
-          <span
-            *ngIf="!loanModified && currentLoanName === 'New Loan'"
-            class="unsaved-indicator"
-          >
-            (Unsaved)
-          </span>
-        </h2>
+        <a class="sexy-link" href="?loan={{ currentLoanName }}">
+          <h2 class="loan-name-title">
+            {{ currentLoanName }}
+            <span *ngIf="loanModified" class="unsaved-indicator">
+              (Modified)
+            </span>
+            <span
+              *ngIf="!loanModified && currentLoanName === 'New Loan'"
+              class="unsaved-indicator"
+            >
+              (Unsaved)
+            </span>
+          </h2>
+        </a>
         <p class="loan-description" *ngIf="currentLoanDescription">
           {{ currentLoanDescription }}
         </p>
@@ -394,11 +396,11 @@
                   </label>
                   <p-dropdown
                     id="paymentAllocationStrategy"
-                    [(ngModel)]="paymentAllocationStrategy"
+                    [(ngModel)]="loan.paymentAllocationStrategy"
                     name="paymentAllocationStrategy"
                     [options]="paymentAllocationStrategies"
                     placeholder="Select an allocation strategy"
-                    (ngModelChange)="submitLoan()"
+                    (ngModelChange)="submitLoan(true)"
                   ></p-dropdown>
                   <!-- Tooltip Overlay -->
                   <p-overlayPanel #paymentAllocationStrategyTooltip>
@@ -486,7 +488,48 @@
             <!-- Billing Settings Section -->
             <p-accordionTab header="Billing Settings">
               <div class="p-fluid">
-                <div class="field grid">
+                <!-- Loan Type Selection -->
+                <div class="field">
+                  <label for="billingModel">
+                    Loan Type
+                    <i
+                      class="pi pi-info-circle tooltip-icon"
+                      (click)="showTooltip($event, billingModelTooltip)"
+                    ></i>
+                  </label>
+                  <p-dropdown
+                    id="billingModel"
+                    [(ngModel)]="loan.billingModel"
+                    name="billingModel"
+                    [options]="billingModelOptions"
+                    placeholder="Select a loan type"
+                    (ngModelChange)="submitLoan()"
+                  ></p-dropdown>
+                  <!-- Tooltip Overlay -->
+                  <p-overlayPanel #billingModelTooltip>
+                    <div class="tooltip-content">
+                      <p>
+                        <strong>Amortized Loan:</strong> An amortized loan has
+                        scheduled, periodic payments applied to both principal
+                        and interest over the loan's life. Each payment reduces
+                        the loan balance and covers accrued interest.
+                      </p>
+                      <p>
+                        <strong>Daily Simple Interest Loan:</strong> A daily
+                        simple interest loan accrues interest daily on the
+                        outstanding principal. Payments first cover the accrued
+                        interest, with any remaining amount reducing the
+                        principal.
+                      </p>
+                    </div>
+                  </p-overlayPanel>
+                </div>
+
+                <!-- Conditionally display these fields only for 'amortized' loans -->
+                <div
+                  *ngIf="loan.billingModel === 'amortized'"
+                  class="field grid"
+                >
                   <!-- Default Pre Bill Days -->
                   <div class="field col-6">
                     <label for="defaultPreBillDaysConfiguration">
@@ -891,19 +934,27 @@
     <p-card header="Repayment Plan Summary">
       <!-- Summary Tags -->
       <div class="grid">
-        <div class="col-3">
+        <div class="col-2">
           <p-tag
             severity="success"
             value="Term In Months: {{ amortization?.loanTermInMonths }}"
           ></p-tag>
         </div>
-        <div class="col-3">
+        <div class="col-2">
           <p-tag
             severity="success"
             value="APR: {{ amortization?.apr?.toDecimalPlaces(4) }}%"
           ></p-tag>
         </div>
-        <div class="col-3">
+        <div class="col-2">
+          <p-tag
+            severity="success"
+            value="Accrued Interest: {{
+              accruedInterest.getRoundedNumber() | currency
+            }}"
+          ></p-tag>
+        </div>
+        <div class="col-2">
           <p-tag
             severity="success"
             value="Total Charged Interest: {{
@@ -911,7 +962,7 @@
             }}"
           ></p-tag>
         </div>
-        <div class="col-3">
+        <div class="col-2">
           <p-tag
             severity="success"
             value="Total Loan Amount: {{
@@ -1039,7 +1090,9 @@
             <td *ngIf="showAdvancedTable">
               {{ plan.interestRoundingError }}
             </td>
-            <td *ngIf="showAdvancedTable">{{ plan.perDiem | currency }}</td>
+            <td *ngIf="showAdvancedTable">
+              {{ plan.perDiem.getRoundedNumber() | currency }}
+            </td>
             <td *ngIf="showAdvancedTable">{{ plan.daysInPeriod }}</td>
 
             <td *ngIf="showAdvancedTable">

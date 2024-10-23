@@ -126,6 +126,10 @@ export class Currency {
     return this.value.toDecimalPlaces(decimalPlaces, this.getRoundingMode(method));
   }
 
+  getRoundedNumber(decimalPlaces: number = 2, method: RoundingMethod = RoundingMethod.ROUND_HALF_UP): number {
+    return this.value.toDecimalPlaces(decimalPlaces, this.getRoundingMode(method)).toNumber();
+  }
+
   private getRoundingMode(method: RoundingMethod): Decimal.Rounding {
     switch (method) {
       case RoundingMethod.ROUND_UP:

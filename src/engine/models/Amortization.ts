@@ -4,27 +4,15 @@ import { InterestCalculator, PerDiemCalculationType } from "./InterestCalculator
 import { BalanceModification } from "./Amortization/BalanceModification";
 import Decimal from "decimal.js";
 
+import { AmortizationEntry, AmortizationScheduleMetadata } from "./Amortization/AmortizationEntry";
 import dayjs, { Dayjs } from "dayjs";
 import isSameOrAfter from "dayjs/plugin/isSameOrAfter";
 import isSameOrBefore from "dayjs/plugin/isSameOrBefore";
+import isBetween from "dayjs/plugin/isBetween";
 
 dayjs.extend(isSameOrAfter);
 dayjs.extend(isSameOrBefore);
-
-export interface AmortizationScheduleMetadata {
-  splitInterestPeriod?: boolean;
-  splitBalancePeriod?: boolean;
-  unbilledInterestApplied?: boolean;
-  unbilledInterestAppliedAmount?: number;
-  interestLessThanOneCent?: boolean;
-  unbilledInterestAmount?: number;
-  actualInterestValue?: number;
-  finalAdjustment?: boolean;
-  deferredInterestAppliedAmount?: number;
-  amountAddedToDeferredInterest?: number;
-  deferredFeesAppliedAmount?: number;
-  amountAddedToDeferredFees?: number;
-}
+dayjs.extend(isBetween);
 
 /**
  * Interface representing each entry in the payment schedule.
@@ -47,44 +35,6 @@ export interface TILADisclosures {
   totalOfPayments: Currency;
   annualPercentageRate: Decimal;
   paymentSchedule: PaymentScheduleEntry[];
-}
-
-/**
- * Represents a single entry in the amortization schedule.
- */
-export interface AmortizationSchedule {
-  term: number;
-  periodStartDate: Dayjs;
-  periodEndDate: Dayjs;
-  prebillDaysConfiguration: number;
-  billDueDaysAfterPeriodEndConfiguration: number;
-  billablePeriod: boolean;
-  periodBillOpenDate: Dayjs;
-  periodBillDueDate: Dayjs;
-  periodInterestRate: Decimal;
-  principal: Currency;
-  // interest tracking fields
-  dueInterestForTerm: Currency; // tracks total interest that is due for the term
-  accruedInterestForPeriod: Currency; // track accrued interest for the period
-  billedInterestForTerm: Currency; // tracks total accrued interest along with any deferred interest from previous periods
-  billedDeferredInterest: Currency;
-  unbilledTotalDeferredInterest: Currency; // tracks deferred interest
-
-  // fees
-  fees: Currency;
-  billedDeferredFees: Currency;
-  unbilledTotalDeferredFees: Currency; // tracks deferred interest
-
-  totalPayment: Currency;
-  endBalance: Currency;
-  startBalance: Currency;
-  balanceModificationAmount: Currency;
-  balanceModification?: BalanceModification;
-  perDiem: Currency;
-  daysInPeriod: number;
-  interestRoundingError: Currency;
-  unbilledInterestDueToRounding: Currency; // tracks unbilled interest due to rounding
-  metadata: AmortizationScheduleMetadata; // Metadata to track any adjustments or corrections
 }
 
 export interface PeriodSchedule {
@@ -175,7 +125,10 @@ export interface AmortizationParams {
   // customFeePercentagesPerTerm?: { termNumber: number; feePercentage: Decimal }[]; // An array specifying custom percentages per term.
   feesPerTerm?: { termNumber: number; fees: Fee[] }[];
   feesForAllTerms?: Fee[];
+  billingModel?: BillingModel;
 }
+
+export type BillingModel = "amortized" | "dailySimpleInterest";
 
 const DEFAULT_PRE_BILL_DAYS_CONFIGURATION = 0;
 const DEFAULT_BILL_DUE_DAYS_AFTER_PERIO_END_CONFIGURATION = 0;
@@ -213,11 +166,12 @@ export class Amortization {
   firstPaymentDate?: Dayjs;
   termPeriodDefinition: TermPeriodDefinition;
   changePaymentDates: ChangePaymentDate[] = [];
-  repaymentSchedule: AmortizationSchedule[];
+  repaymentSchedule: AmortizationEntry[];
   balanceModifications: BalanceModification[] = [];
   _apr?: Decimal;
   earlyRepayment: boolean = false;
   perDiemCalculationType: PerDiemCalculationType = "AnnualRateDividedByDaysInYear";
+  billingModel: BillingModel = "amortized";
 
   // Fee configurations
   // private staticFeePerBill: Currency;
@@ -233,6 +187,10 @@ export class Amortization {
       throw new Error("Invalid loan amount, must be greater than zero");
     }
     this.loanAmount = params.loanAmount;
+
+    if (params.billingModel) {
+      this.billingModel = params.billingModel;
+    }
 
     if (params.originationFee) {
       if (params.originationFee.getValue().isNegative()) {
@@ -416,6 +374,36 @@ export class Amortization {
       this.dueBillDays = params.dueBillDays;
     } else {
       this.dueBillDays = [{ daysDueAfterPeriodEnd: this.defaultBillDueDaysAfterPeriodEndConfiguration, termNumber: 1 }];
+    }
+
+    // when using DSI there is no concept of a bill so perBillDays and dueBillDays are not used
+    // so lets throw an error if they are used
+    if (this.billingModel === "dailySimpleInterest") {
+      if (this.preBillDays.length > 1) {
+        throw new Error("Pre-bill days are not used in Daily Simple Interest billing model");
+      }
+      if (this.dueBillDays.length > 1) {
+        throw new Error("Due-bill days are not used in Daily Simple Interest billing model");
+      }
+      // now lets make sure that the pre-bill days and due-bill days are set to 0, if not, since user
+      // might have passed custom values, we will throw an error
+      if (this.preBillDays[0].preBillDays !== 0) {
+        throw new Error("Pre-bill days are not used in Daily Simple Interest billing model");
+      }
+
+      if (this.dueBillDays[0].daysDueAfterPeriodEnd !== 0) {
+        throw new Error("Due-bill days are not used in Daily Simple Interest billing model");
+      }
+
+      // while we are at it, just to make sure default values are not passed in
+      // we will also throw an error if they are not zero
+      if (this.defaultPreBillDaysConfiguration !== 0) {
+        throw new Error("Pre-bill days are not used in Daily Simple Interest billing model");
+      }
+
+      if (this.defaultBillDueDaysAfterPeriodEndConfiguration !== 0) {
+        throw new Error("Due-bill days are not used in Daily Simple Interest billing model");
+      }
     }
 
     this.generatePreBillDaysForAllTerms();
@@ -939,9 +927,9 @@ export class Amortization {
    * Generates the amortization schedule.
    * @returns An array of AmortizationSchedule entries.
    */
-  generateSchedule(): AmortizationSchedule[] {
+  generateSchedule(): AmortizationEntry[] {
     this.earlyRepayment = false;
-    const schedule: AmortizationSchedule[] = [];
+    const schedule: AmortizationEntry[] = [];
     let startBalance = this.totalLoanAmount;
     let termIndex = 0;
     for (let term of this.periodsSchedule) {
@@ -1039,39 +1027,41 @@ export class Amortization {
             //console.log(`adding split period for term ${termIndex}`);
             // Handle split periods (non-billable periods)
             const endBalance = periodStartBalance.balance;
-            schedule.push({
-              term: termIndex,
-              billablePeriod: false,
-              periodStartDate: interestRateForPeriod.startDate,
-              periodEndDate: interestRateForPeriod.endDate,
-              periodInterestRate: interestRateForPeriod.annualInterestRate,
-              principal: Currency.of(0),
-              // interest values
-              dueInterestForTerm: Currency.of(0),
-              accruedInterestForPeriod: roundedAccruedInterestForPeriod,
-              billedInterestForTerm: billedInterestForTerm,
-              billedDeferredInterest: appliedDeferredInterest,
-              unbilledTotalDeferredInterest: this.unbilledDeferredInterest,
-              unbilledInterestDueToRounding: this.unbilledInterestDueToRounding,
-              // fees
-              fees: Currency.of(0),
-              billedDeferredFees: Currency.of(0),
-              unbilledTotalDeferredFees: Currency.of(0),
-              // dates
-              periodBillOpenDate: billOpenDate,
-              periodBillDueDate: billDueDate,
-              billDueDaysAfterPeriodEndConfiguration: dueBillDaysConfiguration,
-              prebillDaysConfiguration: preBillDaysConfiguration,
-              interestRoundingError: roundedInterest.getRoundingErrorAsCurrency(),
-              balanceModificationAmount: periodStartBalance.modificationAmount,
-              balanceModification: periodStartBalance.balanceModification,
-              endBalance: Currency.of(endBalance),
-              startBalance: Currency.of(startBalance),
-              totalPayment: Currency.of(0),
-              perDiem: this.round(accruedInterestForPeriod.divide(daysInPeriod || 1)),
-              daysInPeriod: daysInPeriod,
-              metadata,
-            });
+            schedule.push(
+              new AmortizationEntry({
+                term: termIndex,
+                billablePeriod: false,
+                periodStartDate: interestRateForPeriod.startDate,
+                periodEndDate: interestRateForPeriod.endDate,
+                periodInterestRate: interestRateForPeriod.annualInterestRate,
+                principal: Currency.of(0),
+                // interest values
+                dueInterestForTerm: Currency.of(0),
+                accruedInterestForPeriod: roundedAccruedInterestForPeriod,
+                billedInterestForTerm: billedInterestForTerm,
+                billedDeferredInterest: appliedDeferredInterest,
+                unbilledTotalDeferredInterest: this.unbilledDeferredInterest,
+                unbilledInterestDueToRounding: this.unbilledInterestDueToRounding,
+                // fees
+                fees: Currency.of(0),
+                billedDeferredFees: Currency.of(0),
+                unbilledTotalDeferredFees: Currency.of(0),
+                // dates
+                periodBillOpenDate: billOpenDate,
+                periodBillDueDate: billDueDate,
+                billDueDaysAfterPeriodEndConfiguration: dueBillDaysConfiguration,
+                prebillDaysConfiguration: preBillDaysConfiguration,
+                interestRoundingError: roundedInterest.getRoundingErrorAsCurrency(),
+                balanceModificationAmount: periodStartBalance.modificationAmount,
+                balanceModification: periodStartBalance.balanceModification,
+                endBalance: Currency.of(endBalance),
+                startBalance: Currency.of(startBalance),
+                totalPayment: Currency.of(0),
+                perDiem: accruedInterestForPeriod.divide(daysInPeriod || 1),
+                daysInPeriod: daysInPeriod,
+                metadata,
+              })
+            );
             startBalance = endBalance;
             continue;
           }
@@ -1173,37 +1163,39 @@ export class Amortization {
 
           startBalance = balanceAfterPayment;
 
-          schedule.push({
-            term: termIndex,
-            billablePeriod: true,
-            periodStartDate: interestRateForPeriod.startDate,
-            periodEndDate: interestRateForPeriod.endDate,
-            periodBillOpenDate: billOpenDate,
-            periodBillDueDate: billDueDate,
-            billDueDaysAfterPeriodEndConfiguration: dueBillDaysConfiguration,
-            prebillDaysConfiguration: preBillDaysConfiguration,
-            periodInterestRate: interestRateForPeriod.annualInterestRate,
-            principal: principal,
-            // fees
-            fees: totalFees,
-            billedDeferredFees: billedDeferredFees,
-            unbilledTotalDeferredFees: this.unbilledDeferredFees,
-            // interest values
-            dueInterestForTerm: dueInterestForTerm,
-            accruedInterestForPeriod: accruedInterestForPeriod,
-            billedDeferredInterest: appliedDeferredInterest,
-            billedInterestForTerm: billedInterestForTerm,
-            balanceModificationAmount: periodStartBalance.modificationAmount,
-            endBalance: balanceAfterPayment,
-            startBalance: balanceBeforePayment,
-            totalPayment: totalPayment,
-            perDiem: this.round(accruedInterestForPeriod.divide(daysInPeriod)),
-            daysInPeriod: daysInPeriod,
-            unbilledTotalDeferredInterest: this.unbilledDeferredInterest,
-            interestRoundingError: roundedInterest.getRoundingErrorAsCurrency(),
-            unbilledInterestDueToRounding: this.unbilledInterestDueToRounding,
-            metadata,
-          });
+          schedule.push(
+            new AmortizationEntry({
+              term: termIndex,
+              billablePeriod: true,
+              periodStartDate: interestRateForPeriod.startDate,
+              periodEndDate: interestRateForPeriod.endDate,
+              periodBillOpenDate: billOpenDate,
+              periodBillDueDate: billDueDate,
+              billDueDaysAfterPeriodEndConfiguration: dueBillDaysConfiguration,
+              prebillDaysConfiguration: preBillDaysConfiguration,
+              periodInterestRate: interestRateForPeriod.annualInterestRate,
+              principal: principal,
+              // fees
+              fees: totalFees,
+              billedDeferredFees: billedDeferredFees,
+              unbilledTotalDeferredFees: this.unbilledDeferredFees,
+              // interest values
+              dueInterestForTerm: dueInterestForTerm,
+              accruedInterestForPeriod: accruedInterestForPeriod,
+              billedDeferredInterest: appliedDeferredInterest,
+              billedInterestForTerm: billedInterestForTerm,
+              balanceModificationAmount: periodStartBalance.modificationAmount,
+              endBalance: balanceAfterPayment,
+              startBalance: balanceBeforePayment,
+              totalPayment: totalPayment,
+              perDiem: accruedInterestForPeriod.divide(daysInPeriod),
+              daysInPeriod: daysInPeriod,
+              unbilledTotalDeferredInterest: this.unbilledDeferredInterest,
+              interestRoundingError: roundedInterest.getRoundingErrorAsCurrency(),
+              unbilledInterestDueToRounding: this.unbilledInterestDueToRounding,
+              metadata,
+            })
+          );
 
           if (balanceAfterPayment.lessThanOrEqualTo(0) && termIndex < this.term) {
             this.earlyRepayment = true;
@@ -1223,7 +1215,7 @@ export class Amortization {
       lastPayment.principal = lastPayment.principal.add(startBalance);
       lastPayment.totalPayment = lastPayment.principal.add(lastPayment.accruedInterestForPeriod).add(lastPayment.fees);
       lastPayment.endBalance = Currency.of(0);
-      lastPayment.perDiem = this.round(lastPayment.accruedInterestForPeriod.divide(this.calendar.daysInMonth(this.calendar.addMonths(this.startDate, this.term))));
+      lastPayment.perDiem = lastPayment.accruedInterestForPeriod.divide(this.calendar.daysInMonth(this.calendar.addMonths(this.startDate, this.term)));
       lastPayment.metadata.finalAdjustment = true;
     }
 
@@ -1246,6 +1238,34 @@ export class Amortization {
 
     this.repaymentSchedule = schedule;
     return schedule;
+  }
+
+  getPeriodByDate(date: Dayjs): AmortizationEntry {
+    // find period where passed date is between period start and end date
+    return this.repaymentSchedule.find((period) => date.isBetween(period.periodStartDate, period.periodEndDate, null, "[]"))!;
+  }
+
+  getAccruedInterestByDate(date: Dayjs | Date): Currency {
+    if (date instanceof Date) {
+      date = dayjs(date);
+    }
+    date = date.startOf("day");
+
+    // first we get the period where the date is
+    const activePeriod = this.getPeriodByDate(date);
+    // next we get amortization entries with same period number and end date is same or before active period
+    const amortizationEntries = this.repaymentSchedule.filter((entry) => entry.term === activePeriod.term && entry.periodEndDate.isSameOrBefore(activePeriod.periodStartDate));
+    // sum up accrued interest for those entries
+    let accruedInterest = Currency.Zero();
+    for (let entry of amortizationEntries) {
+      accruedInterest = accruedInterest.add(entry.accruedInterestForPeriod);
+    }
+    // next we calculate interest for the active period
+    const daysInPeriod = this.calendar.daysBetween(activePeriod.periodStartDate, date);
+    const interestCalculator = new InterestCalculator(activePeriod.periodInterestRate, this.calendar.calendarType, this.perDiemCalculationType, daysInPeriod);
+    const interestForDays = interestCalculator.calculateInterestForDays(activePeriod.startBalance, daysInPeriod);
+    accruedInterest = accruedInterest.add(interestForDays);
+    return accruedInterest;
   }
 
   /**
@@ -1379,100 +1399,100 @@ export class Amortization {
     const fields = [
       {
         header: "Term",
-        value: (entry: AmortizationSchedule) => entry.term,
+        value: (entry: AmortizationEntry) => entry.term,
       },
       {
         header: "Period Start Date",
-        value: (entry: AmortizationSchedule) => entry.periodStartDate.format("YYYY-MM-DD"),
+        value: (entry: AmortizationEntry) => entry.periodStartDate.format("YYYY-MM-DD"),
       },
       {
         header: "Period End Date",
-        value: (entry: AmortizationSchedule) => entry.periodEndDate.format("YYYY-MM-DD"),
+        value: (entry: AmortizationEntry) => entry.periodEndDate.format("YYYY-MM-DD"),
       },
       {
         header: "Bill Open Date",
-        value: (entry: AmortizationSchedule) => entry.periodBillOpenDate.format("YYYY-MM-DD"),
+        value: (entry: AmortizationEntry) => entry.periodBillOpenDate.format("YYYY-MM-DD"),
       },
       {
         header: "Bill Due Date",
-        value: (entry: AmortizationSchedule) => entry.periodBillDueDate.format("YYYY-MM-DD"),
+        value: (entry: AmortizationEntry) => entry.periodBillDueDate.format("YYYY-MM-DD"),
       },
       {
         header: "Period Interest Rate",
-        value: (entry: AmortizationSchedule) => entry.periodInterestRate.toString(),
+        value: (entry: AmortizationEntry) => entry.periodInterestRate.toString(),
       },
       {
         header: "Principal",
-        value: (entry: AmortizationSchedule) => entry.principal.getRoundedValue(this.roundingPrecision),
+        value: (entry: AmortizationEntry) => entry.principal.getRoundedValue(this.roundingPrecision),
       },
       {
         header: "Fees",
-        value: (entry: AmortizationSchedule) => entry.fees.getRoundedValue(this.roundingPrecision),
+        value: (entry: AmortizationEntry) => entry.fees.getRoundedValue(this.roundingPrecision),
       },
       {
         header: "Billed Deferred Fees",
-        value: (entry: AmortizationSchedule) => entry.billedDeferredFees.getRoundedValue(this.roundingPrecision),
+        value: (entry: AmortizationEntry) => entry.billedDeferredFees.getRoundedValue(this.roundingPrecision),
       },
       {
         header: "Unbilled Total Deferred Fees",
-        value: (entry: AmortizationSchedule) => entry.unbilledTotalDeferredFees.getRoundedValue(this.roundingPrecision),
+        value: (entry: AmortizationEntry) => entry.unbilledTotalDeferredFees.getRoundedValue(this.roundingPrecision),
       },
       {
         header: "Due Interest For Term",
-        value: (entry: AmortizationSchedule) => entry.dueInterestForTerm.getRoundedValue(this.roundingPrecision),
+        value: (entry: AmortizationEntry) => entry.dueInterestForTerm.getRoundedValue(this.roundingPrecision),
       },
       {
         header: "Accrued Interest For Period",
-        value: (entry: AmortizationSchedule) => entry.accruedInterestForPeriod.getRoundedValue(this.roundingPrecision),
+        value: (entry: AmortizationEntry) => entry.accruedInterestForPeriod.getRoundedValue(this.roundingPrecision),
       },
       {
         header: "Billed Deferred Interest",
-        value: (entry: AmortizationSchedule) => entry.billedDeferredInterest.getRoundedValue(this.roundingPrecision),
+        value: (entry: AmortizationEntry) => entry.billedDeferredInterest.getRoundedValue(this.roundingPrecision),
       },
       {
         header: "Billed Interest For Term",
-        value: (entry: AmortizationSchedule) => entry.billedInterestForTerm.getRoundedValue(this.roundingPrecision),
+        value: (entry: AmortizationEntry) => entry.billedInterestForTerm.getRoundedValue(this.roundingPrecision),
       },
       {
         header: "Balance Modification Amount",
-        value: (entry: AmortizationSchedule) => entry.balanceModificationAmount.getRoundedValue(this.roundingPrecision),
+        value: (entry: AmortizationEntry) => entry.balanceModificationAmount.getRoundedValue(this.roundingPrecision),
       },
       {
         header: "End Balance",
-        value: (entry: AmortizationSchedule) => entry.endBalance.getRoundedValue(this.roundingPrecision),
+        value: (entry: AmortizationEntry) => entry.endBalance.getRoundedValue(this.roundingPrecision),
       },
       {
         header: "Start Balance",
-        value: (entry: AmortizationSchedule) => entry.startBalance.getRoundedValue(this.roundingPrecision),
+        value: (entry: AmortizationEntry) => entry.startBalance.getRoundedValue(this.roundingPrecision),
       },
       {
         header: "Total Payment",
-        value: (entry: AmortizationSchedule) => entry.totalPayment.getRoundedValue(this.roundingPrecision),
+        value: (entry: AmortizationEntry) => entry.totalPayment.getRoundedValue(this.roundingPrecision),
       },
       {
         header: "Per Diem",
-        value: (entry: AmortizationSchedule) => entry.perDiem.getRoundedValue(this.roundingPrecision),
+        value: (entry: AmortizationEntry) => entry.perDiem.getRoundedValue(this.roundingPrecision),
       },
       {
         header: "Days In Period",
-        value: (entry: AmortizationSchedule) => entry.daysInPeriod,
+        value: (entry: AmortizationEntry) => entry.daysInPeriod,
       },
       {
         header: "Unbilled Total Deferred Interest",
-        value: (entry: AmortizationSchedule) => entry.unbilledTotalDeferredInterest.getRoundedValue(this.roundingPrecision),
+        value: (entry: AmortizationEntry) => entry.unbilledTotalDeferredInterest.getRoundedValue(this.roundingPrecision),
       },
       {
         header: "Interest Rounding Error",
-        value: (entry: AmortizationSchedule) => entry.interestRoundingError.getRoundedValue(this.roundingPrecision),
+        value: (entry: AmortizationEntry) => entry.interestRoundingError.getRoundedValue(this.roundingPrecision),
       },
       {
         header: "Unbilled Interest Due To Rounding",
-        value: (entry: AmortizationSchedule) => entry.unbilledInterestDueToRounding.getRoundedValue(this.roundingPrecision),
+        value: (entry: AmortizationEntry) => entry.unbilledInterestDueToRounding.getRoundedValue(this.roundingPrecision),
       },
       // Step 3: Add metadata fields dynamically
       ...metadataKeysArray.map((key) => ({
         header: `Metadata.${key}`,
-        value: (entry: AmortizationSchedule) => {
+        value: (entry: AmortizationEntry) => {
           const value = entry.metadata[key as keyof AmortizationScheduleMetadata];
           // Handle different types of metadata values
           if (typeof value === "object" && value !== null) {

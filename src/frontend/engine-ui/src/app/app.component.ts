@@ -13,16 +13,17 @@ import {
   Amortization,
   AmortizationParams,
   FlushUnbilledInterestDueToRoundingErrorType,
-  AmortizationSchedule,
   TILADisclosures,
   Fee,
 } from 'lendpeak-engine/models/Amortization';
+import { AmortizationEntry } from 'lendpeak-engine/models/Amortization/AmortizationEntry';
 import { BalanceModification } from 'lendpeak-engine/models/Amortization/BalanceModification';
 import { Deposit, DepositRecord } from 'lendpeak-engine/models/Deposit';
 import {
   PaymentApplication,
   PaymentApplicationResult,
   PaymentComponent,
+  PaymentAllocationStrategyName,
 } from 'lendpeak-engine/models/PaymentApplication';
 import { Bill } from 'lendpeak-engine/models/Bill';
 import { BillPaymentDetail } from 'lendpeak-engine/models/Bill/BillPaymentDetail';
@@ -138,6 +139,14 @@ export class AppComponent implements OnChanges {
         'Implemented loan not found handling, providing users with a clear message and suggestion to go back to the home page.',
       ],
     },
+    {
+      version: '1.9.0',
+      date: '2024-10-22',
+      details: [
+        'Added accrued interest functionality to get current accrued interest for mid term, for demo UI it is represented as a tag above the repayment plan',
+        'Added loan object tracking to simplify loan modification detection in the UI',
+      ],
+    },
   ];
 
   selectedVersion: string = this.currentVersion;
@@ -182,42 +191,12 @@ export class AppComponent implements OnChanges {
       count: [1],
     },
     balanceModifications: [],
+    billingModel: 'amortized',
+    paymentAllocationStrategy: 'FIFO',
   };
 
-  loan: UILoan = {
-    objectVersion: this.CURRENT_OBJECT_VERSION,
-    principal: 10000,
-    originationFee: 0,
-    interestRate: 10,
-    term: 12,
-    feesForAllTerms: [],
-    feesPerTerm: [],
-    startDate: new Date(),
-    firstPaymentDate: dayjs().add(1, 'month').toDate(),
-    endDate: dayjs().add(12, 'month').toDate(),
-    calendarType: 'THIRTY_360', // Default value
-    roundingMethod: 'ROUND_HALF_EVEN', // Default value
-    flushMethod: 'at_threshold', // Default value
-    perDiemCalculationType: 'AnnualRateDividedByDaysInYear', // Default value
-    roundingPrecision: 2,
-    flushThreshold: 0.01,
-    ratesSchedule: [],
-    termPaymentAmountOverride: [],
-    termPaymentAmount: undefined,
-    defaultBillDueDaysAfterPeriodEndConfiguration: 3,
-    defaultPreBillDaysConfiguration: 5,
-    allowRateAbove100: false,
-    periodsSchedule: [],
-    changePaymentDates: [],
-    dueBillDays: [],
-    preBillDays: [],
-    deposits: [],
-    termPeriodDefinition: {
-      unit: 'month',
-      count: [1],
-    },
-    balanceModifications: [],
-  };
+  loan: UILoan = { ...this.defaultLoan };
+
   tilaDisclosures: TILADisclosures = {
     amountFinanced: Currency.of(0),
     financeCharge: Currency.of(0),
@@ -253,7 +232,6 @@ export class AppComponent implements OnChanges {
 
     // Reset bills and deposits
     this.bills = [];
-    this.loan.deposits = [];
 
     // Generate the default loan data
     this.updateTermOptions();
@@ -283,6 +261,8 @@ export class AppComponent implements OnChanges {
   latePaymentGracePeriod = 15; // Days
   latePaymentFee = Currency.of(25);
   assumable = false;
+
+  accruedInterest = Currency.of(0);
 
   selectedDepositForEdit: LoanDeposit | null = null;
   showDepositDialog: boolean = false;
@@ -399,6 +379,15 @@ export class AppComponent implements OnChanges {
         this.loadDefaultLoan();
       }
     });
+
+    this.loan = this.makeReactive(
+      this.loan,
+      (target: any, property: string | symbol, value: any) => {
+        this.loanModified = true;
+      }
+    );
+
+    this.loanModified = false;
   }
 
   loadLoanFromURL(loanName: string) {
@@ -444,27 +433,10 @@ export class AppComponent implements OnChanges {
     this.loanNotFound = false;
     this.requestedLoanName = '';
 
-    // Existing code to load default loan or saved loan
-    const loan = localStorage.getItem('loan');
-    if (loan) {
-      const loanData = JSON.parse(loan);
-      this.loan = loanData;
-
-      // Set the current loan name if it exists
-      this.currentLoanName = loanData.name || 'New Loan';
-      this.currentLoanDescription = loanData.description || '';
-
-      this.parseLoanData(this.loan);
-      this.updateTermOptions();
-      this.generateBills();
-      this.applyPayments();
-      this.submitLoan();
-    } else {
-      // No loan found in localStorage, initialize with default values
-      this.loan = { ...this.defaultLoan };
-      this.currentLoanName = 'New Loan';
-      this.submitLoan();
-    }
+    // No loan found in localStorage, initialize with default values
+    this.loan = { ...this.defaultLoan };
+    this.currentLoanName = 'New Loan';
+    this.submitLoan();
   }
 
   goHome() {
@@ -701,12 +673,17 @@ export class AppComponent implements OnChanges {
     this.loan.firstPaymentDate = dayjs(this.loan.startDate)
       .add(this.loan.termPeriodDefinition.count[0], termUnit)
       .toDate();
+    this.loanModified = true;
     this.submitLoan();
   }
 
   ngOnChanges(changes: SimpleChanges) {
     console.log('Changes detected:', changes);
   }
+  billingModelOptions: DropDownOptionString[] = [
+    { label: 'Amortized Loan', value: 'amortized' },
+    { label: 'Daily Simple Interest Loan', value: 'dailySimpleInterest' },
+  ];
 
   currencyOptions = [
     { label: 'USD', value: 'USD' },
@@ -1072,7 +1049,7 @@ export class AppComponent implements OnChanges {
     //   //    metadata: '{"unbilledInterestAmount":-0.004383561643835616}',
     // }
   ];
-  repaymentSchedule: AmortizationSchedule[] = [];
+  repaymentSchedule: AmortizationEntry[] = [];
   repaymentPlanEndDates: string[] = [];
   amortization: Amortization | undefined = undefined;
 
@@ -1131,7 +1108,6 @@ export class AppComponent implements OnChanges {
   }
 
   // Payment Allocation Strategy Options
-  paymentAllocationStrategy: string = 'FIFO'; // Default value
   paymentAllocationStrategies = [
     { label: 'First In First Out (FIFO)', value: 'FIFO' },
     { label: 'Last In First Out (LIFO)', value: 'LIFO' },
@@ -1301,7 +1277,7 @@ export class AppComponent implements OnChanges {
 
     // Build the allocation strategy based on user selection
     let allocationStrategy = PaymentApplication.getAllocationStrategyFromName(
-      this.paymentAllocationStrategy
+      this.loan.paymentAllocationStrategy
     );
 
     // Build the payment priority
@@ -1467,7 +1443,10 @@ export class AppComponent implements OnChanges {
     this.submitLoan();
   }
 
-  submitLoan() {
+  submitLoan(loanModified: boolean = false) {
+    if (loanModified) {
+      this.loanModified = true;
+    }
     this.cleanupBalanceModifications();
 
     let calendarType: CalendarType;
@@ -1570,7 +1549,15 @@ export class AppComponent implements OnChanges {
       preBillDays: this.loan.preBillDays,
       dueBillDays: this.loan.dueBillDays,
       perDiemCalculationType: this.loan.perDiemCalculationType,
+      billingModel: this.loan.billingModel,
     };
+
+    // if billing model is Daily Simple Interest Loan then we will remove pre bill days and due bill days
+    // configurations
+    if (this.loan.billingModel === 'dailySimpleInterest') {
+      delete amortizationParams.defaultPreBillDaysConfiguration;
+      delete amortizationParams.defaultBillDueDaysAfterPeriodEndConfiguration;
+    }
 
     if (this.loan.termPaymentAmount) {
       console.log('Term payment amount:', this.loan.termPaymentAmount);
@@ -1696,8 +1683,26 @@ export class AppComponent implements OnChanges {
       );
     }
 
-    const amortization = new Amortization(amortizationParams);
+    let amortization: Amortization;
+
+    try {
+      amortization = new Amortization(amortizationParams);
+    } catch (error) {
+      console.error('Error creating Amortization:', error);
+
+      this.messageService.add({
+        severity: 'error',
+        summary: 'System Error During Amortization',
+        detail: `An error occurred while calculating the amortization schedule: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      });
+      return;
+    }
     this.amortization = amortization;
+    this.accruedInterest = amortization.getAccruedInterestByDate(
+      this.snapshotDate
+    );
     this.tilaDisclosures = amortization.generateTILADisclosures();
     this.repaymentSchedule = amortization.repaymentSchedule;
 
@@ -1733,7 +1738,7 @@ export class AppComponent implements OnChanges {
         //  realInterest: entry.unroundedInterestForPeriod.toNumber(),
         interestRoundingError: entry.interestRoundingError.toNumber(),
         totalPayment: entry.totalPayment.toNumber(),
-        perDiem: entry.perDiem.toNumber(),
+        perDiem: entry.perDiem,
         daysInPeriod: entry.daysInPeriod,
         startBalance: entry.startBalance.toNumber(),
         endBalance: entry.endBalance.toNumber(),
@@ -1754,5 +1759,29 @@ export class AppComponent implements OnChanges {
       this.submitLoan();
     }
     this.loanModified = true; // Mark as modified
+  }
+
+  makeReactive(obj: any, callback: Function): any {
+    const handler = {
+      get: (target: any, property: string | symbol) => {
+        const value = target[property];
+        if (typeof value === 'object' && value !== null) {
+          return new Proxy(value, handler);
+        }
+        return value;
+      },
+      set: (target: any, property: string | symbol, value: any) => {
+        target[property] = value;
+        callback(target, property, value);
+        return true;
+      },
+      deleteProperty: (target: any, property: string | symbol) => {
+        delete target[property];
+        callback(target, property, undefined);
+        return true;
+      },
+    };
+
+    return new Proxy(obj, handler);
   }
 }

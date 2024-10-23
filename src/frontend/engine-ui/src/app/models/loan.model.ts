@@ -3,19 +3,20 @@ import {
   AmortizationParams,
   FlushUnbilledInterestDueToRoundingErrorType,
   TermPaymentAmount,
-  AmortizationSchedule,
   TermPeriodDefinition,
   PreBillDaysConfiguration,
   BillDueDaysConfiguration,
   TILADisclosures,
   Fee,
+  BillingModel,
 } from 'lendpeak-engine/models/Amortization';
-
+import { AmortizationEntry } from 'lendpeak-engine/models/Amortization/AmortizationEntry';
 import { PerDiemCalculationType } from 'lendpeak-engine/models/InterestCalculator';
 
 import { Currency } from 'lendpeak-engine/utils/Currency';
 import { Decimal } from 'decimal.js';
 import { BalanceModification } from 'lendpeak-engine/models/Amortization/BalanceModification';
+import { PaymentAllocationStrategyName } from 'lendpeak-engine/models/PaymentApplication';
 
 export interface LoanFeeForAllTerms {
   type: 'fixed' | 'percentage';
@@ -54,6 +55,7 @@ export interface UILoan {
   dueBillDays: BillDueDaysConfiguration[];
   preBillDays: PreBillDaysConfiguration[];
   balanceModifications: BalanceModification[];
+  billingModel: BillingModel;
   changePaymentDates: {
     termNumber: number;
     newDate: Date;
@@ -73,6 +75,7 @@ export interface UILoan {
   }[];
   deposits: LoanDeposit[];
   termPeriodDefinition: TermPeriodDefinition;
+  paymentAllocationStrategy: PaymentAllocationStrategyName;
 }
 
 export interface LoanDeposit {

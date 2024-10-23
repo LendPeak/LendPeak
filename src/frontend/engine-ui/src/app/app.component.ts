@@ -358,6 +358,13 @@ export class AppComponent implements OnChanges {
       localStorage.setItem('appVersion', this.currentVersion);
     }
 
+    this.loan = this.makeReactive(
+      this.loan,
+      (target: any, property: string | symbol, value: any) => {
+        this.loanModified = true;
+      }
+    );
+
     this.snapshotDate = new Date();
     // Retrieve loan from local storage if exists
     try {
@@ -379,13 +386,6 @@ export class AppComponent implements OnChanges {
         this.loadDefaultLoan();
       }
     });
-
-    this.loan = this.makeReactive(
-      this.loan,
-      (target: any, property: string | symbol, value: any) => {
-        this.loanModified = true;
-      }
-    );
 
     this.loanModified = false;
   }
@@ -1203,6 +1203,10 @@ export class AppComponent implements OnChanges {
     deposit: LoanDeposit,
     excessAmount: number
   ) {
+    if (excessAmount <= 0) {
+      // No excess amount to apply
+      return;
+    }
     // Find existing balance modification linked to this deposit
     let balanceModification = this.loan.balanceModifications.find(
       (bm) => bm.metadata && bm.metadata.depositId === deposit.id

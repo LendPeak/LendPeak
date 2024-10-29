@@ -328,6 +328,8 @@ export class AppComponent implements OnChanges {
   // Method to handle changes to snapshotDate
   onSnapshotDateChange(date: Date) {
     this.snapshotDate = date;
+    localStorage.setItem('snapshotDate', date.toISOString());
+
     this.submitLoan();
     // this.updateDataForSnapshotDate();
   }
@@ -365,7 +367,14 @@ export class AppComponent implements OnChanges {
       }
     );
 
-    this.snapshotDate = new Date();
+    try {
+      this.snapshotDate = new Date(localStorage.getItem('snapshotDate')!);
+    } catch (e) {
+      // clear the snapshot date from local storage
+      localStorage.removeItem('snapshotDate');
+      this.snapshotDate = new Date();
+    }
+
     // Retrieve loan from local storage if exists
     try {
       this.loadDefaultLoan();

@@ -5,12 +5,7 @@ import { OverlayPanel } from 'primeng/overlaypanel';
 import dayjs from 'dayjs';
 import { AmortizationEntry } from 'lendpeak-engine/models/Amortization/AmortizationEntry';
 import { BalanceModification } from 'lendpeak-engine/models/Amortization/BalanceModification';
-import {
-  LoanDeposit,
-  LoanFeeForAllTerms,
-  LoanFeePerTerm,
-  UILoan,
-} from '../models/loan.model';
+import { UILoan } from '../models/loan.model';
 
 @Component({
   selector: 'app-overrides',

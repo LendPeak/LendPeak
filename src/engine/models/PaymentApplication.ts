@@ -1,8 +1,11 @@
 import { Currency } from "../utils/Currency";
-import { Dayjs } from "dayjs";
-import { Deposit } from "./Deposit";
+import { DepositRecord } from "./Deposit";
 import { Decimal } from "decimal.js";
 import { Bill } from "./Bill";
+import { BalanceModification } from "./Amortization/BalanceModification";
+import { UsageDetail } from "./Bill/Deposit/UsageDetail";
+import dayjs, { Dayjs } from "dayjs";
+import { v4 as uuidv4 } from "uuid"; // Import UUID
 
 // Payment components
 export type PaymentComponent = "interest" | "fees" | "principal";
@@ -26,16 +29,17 @@ export interface PaymentApplicationResult {
   allocations: PaymentAllocation[];
   unallocatedAmount: Currency;
   excessAmount: Currency;
+  balanceModification?: BalanceModification;
 }
 
 // Payment Application Module
 export class PaymentApplication {
   bills: Bill[];
-  private deposits: Deposit[];
+  private deposits: DepositRecord[];
   private allocationStrategy: AllocationStrategy;
   private paymentPriority: PaymentPriority;
 
-  constructor(bills: Bill[], deposits: Deposit[], options?: { allocationStrategy?: AllocationStrategy; paymentPriority?: PaymentPriority }) {
+  constructor(bills: Bill[], deposits: DepositRecord[], options?: { allocationStrategy?: AllocationStrategy; paymentPriority?: PaymentPriority }) {
     this.bills = bills;
     this.deposits = deposits;
 
@@ -95,24 +99,85 @@ export class PaymentApplication {
   }
 
   applyDeposit(
-    deposit: Deposit,
+    deposit: DepositRecord,
     options?: {
       allocationStrategy?: AllocationStrategy;
       paymentPriority?: PaymentPriority;
     }
   ): PaymentApplicationResult {
-    // Default to class strategies if not provided
     options = options || {};
     options.allocationStrategy = options.allocationStrategy || this.allocationStrategy;
     options.paymentPriority = options.paymentPriority || this.paymentPriority;
 
-    return options.allocationStrategy.apply(deposit, this.bills, options.paymentPriority);
+    const result = options.allocationStrategy.apply(deposit, this.bills, options.paymentPriority);
+
+    if (deposit.applyExcessToPrincipal && result.unallocatedAmount.getValue().greaterThan(0)) {
+      const excessAmount = result.unallocatedAmount;
+
+      const dateToApply = this.determineBalanceModificationDate(deposit);
+
+      const balanceModification = new BalanceModification({
+        id: this.generateUniqueId(),
+        amount: excessAmount.toNumber(),
+        date: dateToApply,
+        isSystemModification: true,
+        type: "decrease",
+        description: `Excess funds applied to principal from deposit ${deposit.id}`,
+        metadata: {
+          depositId: deposit.id,
+        },
+      });
+
+      result.balanceModification = balanceModification;
+
+      const usageDetail = new UsageDetail({
+        billId: "Principal Prepayment",
+        period: 0,
+        billDueDate: dateToApply,
+        allocatedPrincipal: excessAmount.toNumber(),
+        allocatedInterest: 0,
+        allocatedFees: 0,
+        date: dateToApply,
+      });
+
+      deposit.addUsageDetail(usageDetail);
+    }
+
+    return result;
+  }
+
+  private determineBalanceModificationDate(deposit: DepositRecord): Dayjs {
+    const excessAppliedDate = deposit.excessAppliedDate || deposit.effectiveDate;
+
+    if (!excessAppliedDate) {
+      throw new Error(`Deposit ${deposit.id} has no effective date or excess applied date.`);
+    }
+
+    const depositEffectiveDayjs = dayjs(deposit.effectiveDate);
+    const openBillsAtDepositDate = this.bills.filter((bill) => !bill.isPaid && bill.isOpen && bill.dueDate.isSameOrAfter(depositEffectiveDayjs));
+
+    let balanceModificationDate: Dayjs;
+
+    if (openBillsAtDepositDate.length > 0) {
+      const latestBill = openBillsAtDepositDate.reduce((latest, bill) => (bill.dueDate.isAfter(latest.dueDate) ? bill : latest));
+      const nextTermStartDate = latestBill.amortizationEntry.periodEndDate;
+
+      balanceModificationDate = nextTermStartDate.isAfter(excessAppliedDate) ? nextTermStartDate : dayjs(excessAppliedDate).startOf("day");
+    } else {
+      balanceModificationDate = depositEffectiveDayjs.isAfter(excessAppliedDate) ? depositEffectiveDayjs : dayjs(excessAppliedDate).startOf("day");
+    }
+
+    return balanceModificationDate;
+  }
+
+  private generateUniqueId(): string {
+    return uuidv4();
   }
 }
 
 // Allocation Strategy Interface
 export interface AllocationStrategy {
-  apply(deposit: Deposit, bills: Bill[], paymentPriority: PaymentPriority): PaymentApplicationResult;
+  apply(deposit: DepositRecord, bills: Bill[], paymentPriority: PaymentPriority): PaymentApplicationResult;
 }
 
 // Allocation Strategies
@@ -127,7 +192,7 @@ Explanation:
 - Bill Status Update: Marks bills as paid if all components are fully allocated.
 */
 export class LIFOStrategy implements AllocationStrategy {
-  apply(deposit: Deposit, bills: Bill[], paymentPriority: PaymentPriority): PaymentApplicationResult {
+  apply(deposit: DepositRecord, bills: Bill[], paymentPriority: PaymentPriority): PaymentApplicationResult {
     let remainingAmount = deposit.amount;
     const allocations: PaymentAllocation[] = [];
 
@@ -166,7 +231,7 @@ export class LIFOStrategy implements AllocationStrategy {
 }
 // FIFO Strategy (First-In, First-Out)
 export class FIFOStrategy implements AllocationStrategy {
-  apply(deposit: Deposit, bills: Bill[], paymentPriority: PaymentPriority): PaymentApplicationResult {
+  apply(deposit: DepositRecord, bills: Bill[], paymentPriority: PaymentPriority): PaymentApplicationResult {
     let remainingAmount = deposit.amount;
     const allocations: PaymentAllocation[] = [];
 
@@ -212,7 +277,7 @@ Explanation:
 - Handling Remainders: Any unallocated amount due to rounding is captured and can be handled per your business rules.
 */
 export class EqualDistributionStrategy implements AllocationStrategy {
-  apply(deposit: Deposit, bills: Bill[], paymentPriority: PaymentPriority): PaymentApplicationResult {
+  apply(deposit: DepositRecord, bills: Bill[], paymentPriority: PaymentPriority): PaymentApplicationResult {
     const remainingAmount = deposit.amount;
     const allocations: PaymentAllocation[] = [];
 
@@ -280,7 +345,7 @@ export class CustomOrderStrategy implements AllocationStrategy {
     this.compareFunction = compareFunction;
   }
 
-  apply(deposit: Deposit, bills: Bill[], paymentPriority: PaymentPriority): PaymentApplicationResult {
+  apply(deposit: DepositRecord, bills: Bill[], paymentPriority: PaymentPriority): PaymentApplicationResult {
     let remainingAmount = deposit.amount;
     const allocations: PaymentAllocation[] = [];
 
@@ -316,7 +381,7 @@ export class CustomOrderStrategy implements AllocationStrategy {
 // Proportional Strategy
 // The Proportional Strategy allocates the payment proportionally across all outstanding bills based on the total amount due for each bill.
 export class ProportionalStrategy implements AllocationStrategy {
-  apply(deposit: Deposit, bills: Bill[], paymentPriority: PaymentPriority): PaymentApplicationResult {
+  apply(deposit: DepositRecord, bills: Bill[], paymentPriority: PaymentPriority): PaymentApplicationResult {
     const remainingAmount = deposit.amount;
     const allocations: PaymentAllocation[] = [];
 
@@ -436,33 +501,3 @@ class AllocationHelper {
     };
   }
 }
-
-/*
-// Import necessary modules
-import { PaymentApplication } from './PaymentApplication';
-import { FIFOStrategy } from './AllocationStrategies';
-import { DepositRecord } from './DepositModule';
-
-// Create a deposit
-const deposit = new DepositRecord({
-  id: 'DEP-123456',
-  amount: Currency.of(900),
-  currency: 'USD',
-  effectiveDate: dayjs('2023-11-01'),
-  paymentMethod: 'Bank Transfer',
-  depositor: 'John Doe',
-});
-
-// Create a payment application instance
-const paymentApp = new PaymentApplication(bills, [deposit]);
-
-// Define payment priority
-const paymentPriority: PaymentPriority = ['interest', 'fees', 'principal'];
-
-// Apply the deposit using FIFO strategy
-const result = paymentApp.applyDeposit(deposit, new FIFOStrategy(), paymentPriority);
-
-console.log('Payment Application Result:', result);
-
-
-*/

@@ -1,27 +1,12 @@
 import dayjs, { Dayjs } from "dayjs";
 import { Currency } from "../utils/Currency";
+import { UsageDetail } from "./Bill/Deposit/UsageDetail";
+
 export interface DepositMetadata {
   [key: string]: any; // Allows arbitrary key-value pairs
 }
 
 export interface Deposit {
-  id: string; // Unique identifier for the deposit
-  amount: Currency;
-  currency: string; // Currency code, e.g., USD, EUR
-  createdDate: Dayjs; // When the deposit record was created
-  insertedDate: Dayjs; // When the deposit was inserted into the system
-  effectiveDate: Dayjs; // The date the deposit takes effect
-  clearingDate?: Dayjs; // Optional clearing date
-  systemDate: Dayjs; // Automatically set by the system
-  paymentMethod?: string; // Optional payment method
-  depositor?: string; // Who made the deposit
-  depositLocation?: string; // Where the deposit was made
-  applyExcessToPrincipal: boolean; // Whether to apply excess to principal
-  excessAppliedDate?: Dayjs; // Date when excess was applied
-  metadata?: DepositMetadata; // Custom metadata
-}
-
-export class DepositRecord implements Deposit {
   id: string;
   amount: Currency;
   currency: string;
@@ -35,13 +20,66 @@ export class DepositRecord implements Deposit {
   depositLocation?: string;
   applyExcessToPrincipal: boolean;
   excessAppliedDate?: Dayjs;
-
+  usageDetails?: UsageDetail[];
+  unusedAmount: Currency;
+  balanceModificationId?: string;
   metadata?: DepositMetadata;
+}
+
+export class DepositRecord implements Deposit {
+  id: string;
+
+  private _amount!: Currency;
+  jsAmount?: number;
+
+  private _currency!: string;
+  jsCurrency?: string;
+
+  private _createdDate!: Dayjs;
+  jsCreatedDate?: Date;
+
+  private _insertedDate!: Dayjs;
+  jsInsertedDate?: Date;
+
+  private _effectiveDate!: Dayjs;
+  jsEffectiveDate?: Date;
+
+  private _clearingDate?: Dayjs;
+  jsClearingDate?: Date;
+
+  private _systemDate!: Dayjs;
+  jsSystemDate?: Date;
+
+  private _unusedAmount: Currency = Currency.of(0);
+  jsUnusedAmount?: number;
+
+  private _excessAppliedDate?: Dayjs;
+  jsExcessAppliedDate?: Date;
+
+  private _paymentMethod?: string;
+  jsPaymentMethod?: string;
+
+  private _depositor?: string;
+  jsDepositor?: string;
+
+  private _depositLocation?: string;
+  jsDepositLocation?: string;
+
+  private _applyExcessToPrincipal!: boolean;
+  jsApplyExcessToPrincipal?: boolean;
+
+  private _balanceModificationId?: string;
+  jsBalanceModificationId?: string;
+
+  _metadata?: DepositMetadata;
+  _usageDetails: UsageDetail[] = [];
 
   constructor(params: {
-    id: string;
+    id?: string;
+    sequence?: number;
     amount: Currency | number;
     currency: string;
+    createdDate?: Dayjs | Date;
     effectiveDate: Dayjs | Date;
     clearingDate?: Dayjs | Date;
     systemDate?: Dayjs | Date;
@@ -50,13 +88,21 @@ export class DepositRecord implements Deposit {
     depositLocation?: string;
     applyExcessToPrincipal?: boolean;
     excessAppliedDate?: Dayjs | Date;
+    usageDetails?: UsageDetail[];
+    unusedAmount?: Currency | number;
+    balanceModificationId?: string;
     metadata?: DepositMetadata;
   }) {
-    this.id = params.id;
+    console.log("params in deposit record", params);
+    if (params.id) {
+      this.id = params.id;
+    } else {
+      this.id = DepositRecord.generateUniqueId(params.sequence);
+    }
+
     this.amount = Currency.of(params.amount);
     this.currency = params.currency;
-    this.createdDate = dayjs(); // Set to current date/time
-    this.insertedDate = dayjs(); // Set to current date/time
+    this.insertedDate = dayjs();
     this.effectiveDate = dayjs(params.effectiveDate).startOf("day");
     if (params.clearingDate) {
       this.clearingDate = dayjs(params.clearingDate).startOf("day");
@@ -66,6 +112,12 @@ export class DepositRecord implements Deposit {
     } else {
       this.systemDate = dayjs();
     }
+
+    if (params.createdDate) {
+      this.createdDate = dayjs(params.createdDate).startOf("day");
+    } else {
+      this.createdDate = dayjs();
+    }
     this.paymentMethod = params.paymentMethod;
     this.depositor = params.depositor;
     this.depositLocation = params.depositLocation;
@@ -73,32 +125,225 @@ export class DepositRecord implements Deposit {
     this.applyExcessToPrincipal = params.applyExcessToPrincipal || false;
     if (this.applyExcessToPrincipal && !params.excessAppliedDate) {
       this.excessAppliedDate = this.effectiveDate;
-    } else {
+    } else if (params.excessAppliedDate) {
       this.excessAppliedDate = dayjs(params.excessAppliedDate).startOf("day");
     }
+    this.usageDetails = params.usageDetails || [];
+    this.unusedAmount = params.unusedAmount ? Currency.of(params.unusedAmount) : Currency.of(0);
+    this.balanceModificationId = params.balanceModificationId;
+
+    this.syncJSPropertiesFromValues();
+  }
+
+  static rehydrateFromJSON(json: any): DepositRecord {
+    // when object is saved it will have js keys and keys prefixed with _ and with js
+    const rehydrated: any = Object.keys(json).reduce((acc, key) => {
+      const newKey = key.startsWith("js") ? key.charAt(2).toLowerCase() + key.slice(3) : key;
+      acc[newKey] = (json as any)[key];
+      return acc;
+    }, {} as any);
+    rehydrated.usageDetails = (json._usageDetails || []).map((detail: any) => UsageDetail.rehydrateFromJSON(detail));
+    rehydrated.metadata = json._metadata;
+    return new DepositRecord(rehydrated);
+  }
+
+  addUsageDetail(detail: UsageDetail): void {
+    this._usageDetails.push(detail);
+  }
+
+  removeUsageDetail(index: number): void {
+    this._usageDetails.splice(index, 1);
+  }
+
+  resetUsageDetails(): void {
+    this._usageDetails = [];
+  }
+
+  clearHistory(): void {
+    this.resetUsageDetails();
+    this.unusedAmount = Currency.Zero();
+    this.balanceModificationId = undefined;
+  }
+
+  get amount(): Currency {
+    return this._amount;
+  }
+
+  set amount(value: Currency) {
+    this._amount = value;
+    this.jsAmount = value.toNumber();
+  }
+
+  get currency(): string {
+    return this._currency;
+  }
+
+  set currency(value: string) {
+    this._currency = value;
+    this.jsCurrency = value;
+  }
+
+  get createdDate(): Dayjs {
+    return this._createdDate;
+  }
+
+  set createdDate(value: Dayjs) {
+    this._createdDate = value;
+    this.jsCreatedDate = value.toDate();
+  }
+
+  get insertedDate(): Dayjs {
+    return this._insertedDate;
+  }
+
+  set insertedDate(value: Dayjs) {
+    this._insertedDate = value;
+    this.jsInsertedDate = value.toDate();
+  }
+
+  get effectiveDate(): Dayjs {
+    return this._effectiveDate;
+  }
+
+  set effectiveDate(value: Dayjs) {
+    this._effectiveDate = value;
+    this.jsEffectiveDate = value.toDate();
+  }
+
+  get clearingDate(): Dayjs | undefined {
+    return this._clearingDate;
+  }
+
+  set clearingDate(value: Dayjs | undefined) {
+    this._clearingDate = value;
+    this.jsClearingDate = value ? value.toDate() : undefined;
+  }
+
+  get systemDate(): Dayjs {
+    return this._systemDate;
+  }
+
+  set systemDate(value: Dayjs) {
+    this._systemDate = value;
+    this.jsSystemDate = value.toDate();
+  }
+
+  get paymentMethod(): string | undefined {
+    return this._paymentMethod;
+  }
+
+  get depositor(): string | undefined {
+    return this._depositor;
+  }
+
+  get depositLocation(): string | undefined {
+    return this._depositLocation;
+  }
+
+  get applyExcessToPrincipal(): boolean {
+    return this._applyExcessToPrincipal;
+  }
+
+  set applyExcessToPrincipal(value: boolean) {
+    this._applyExcessToPrincipal = value;
+    this.jsApplyExcessToPrincipal = value;
+  }
+
+  get excessAppliedDate(): Dayjs | undefined {
+    return this._excessAppliedDate;
+  }
+
+  set excessAppliedDate(value: Dayjs | undefined) {
+    this._excessAppliedDate = value;
+    this.jsExcessAppliedDate = value ? value.toDate() : undefined;
+  }
+
+  get usageDetails(): UsageDetail[] {
+    return this._usageDetails;
+  }
+
+  get unusedAmount(): Currency {
+    return this._unusedAmount;
+  }
+
+  get balanceModificationId(): string | undefined {
+    return this._balanceModificationId;
+  }
+
+  get metadata(): DepositMetadata | undefined {
+    return this._metadata;
+  }
+
+  set metadata(value: DepositMetadata | undefined) {
+    this._metadata = value;
+  }
+
+  set paymentMethod(value: string | undefined) {
+    this._paymentMethod = value;
+    this.jsPaymentMethod = value;
+  }
+
+  set depositor(value: string | undefined) {
+    this._depositor = value;
+    this.jsDepositor = value;
+  }
+
+  set depositLocation(value: string | undefined) {
+    this._depositLocation = value;
+    this.jsDepositLocation = value;
+  }
+
+  set usageDetails(value: UsageDetail[]) {
+    this._usageDetails = value;
+  }
+
+  set unusedAmount(value: Currency) {
+    this._unusedAmount = value;
+    this.jsUnusedAmount = value.toNumber();
+  }
+
+  set balanceModificationId(value: string | undefined) {
+    this._balanceModificationId = value;
+    this.jsBalanceModificationId = value;
+  }
+
+  syncValuesFromJSProperties(): void {
+    this.amount = Currency.of(this.jsAmount || 0);
+    this.currency = this.jsCurrency || "";
+    this.createdDate = dayjs(this.jsCreatedDate);
+    this.insertedDate = dayjs(this.jsInsertedDate);
+    this.effectiveDate = dayjs(this.jsEffectiveDate);
+    this.systemDate = dayjs(this.jsSystemDate);
+    this.clearingDate = this.jsClearingDate ? dayjs(this.jsClearingDate) : undefined;
+    this.paymentMethod = this.jsPaymentMethod;
+    this.depositor = this.jsDepositor;
+    this.depositLocation = this.jsDepositLocation;
+    this.applyExcessToPrincipal = this.jsApplyExcessToPrincipal || false;
+    this.excessAppliedDate = this.jsExcessAppliedDate ? dayjs(this.jsExcessAppliedDate) : undefined;
+    this.unusedAmount = Currency.of(this.jsUnusedAmount || 0);
+    this.balanceModificationId = this.jsBalanceModificationId;
+  }
+
+  syncJSPropertiesFromValues(): void {
+    this.jsAmount = this.amount.toNumber();
+    this.jsCurrency = this.currency;
+    this.jsCreatedDate = this.createdDate.toDate();
+    this.jsInsertedDate = this.insertedDate.toDate();
+    this.jsEffectiveDate = this.effectiveDate.toDate();
+    this.jsSystemDate = this.systemDate.toDate();
+    this.jsClearingDate = this.clearingDate?.toDate();
+    this.jsPaymentMethod = this.paymentMethod;
+    this.jsDepositor = this.depositor;
+    this.jsDepositLocation = this.depositLocation;
+    this.jsApplyExcessToPrincipal = this.applyExcessToPrincipal;
+    this.jsExcessAppliedDate = this.excessAppliedDate?.toDate();
+    this.jsUnusedAmount = this.unusedAmount.toNumber();
+    this.jsBalanceModificationId = this.balanceModificationId;
+  }
+
+  static generateUniqueId(sequence?: number): string {
+    // Simple unique ID generator (you can replace this with UUID if needed)
+    const sequencePrefix = sequence !== undefined ? `${sequence}-` : "";
+    return "DEPOSIT-" + sequencePrefix + Math.random().toString(36).substr(2, 9);
   }
 }
-
-/*
-// Example Usage:
-
-import dayjs from "dayjs";
-
-const deposit = new DepositRecord({
-  id: "DEP-123456",
-  amount: Currency.of(1000),
-  currency: "USD",
-  effectiveDate: dayjs("2023-10-01"),
-  paymentMethod: "Bank Transfer",
-  depositor: "John Doe",
-  depositLocation: "Main Branch",
-  metadata: {
-    note: "First installment payment",
-    referenceNumber: "REF-987654",
-  },
-});
-
-// System date is automatically set
-console.log(deposit.systemDate.format("YYYY-MM-DD HH:mm:ss"));
-
-*/

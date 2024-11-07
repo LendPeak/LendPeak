@@ -42,13 +42,17 @@
               <!-- ID -->
               <td>{{ deposit.id }}</td>
               <!-- Amount -->
-              <td>{{ deposit.amount | currency }}</td>
+              <td>{{ deposit.jsAmount | currency }}</td>
               <!-- Currency -->
               <td>{{ deposit.currency }}</td>
               <!-- Effective Date -->
-              <td>{{ deposit.effectiveDate | date : "MM/dd/yyyy" }}</td>
+              <td>
+                {{ deposit.jsEffectiveDate | date : "MM/dd/yyyy" }}
+              </td>
               <!-- Clearing Date -->
-              <td>{{ deposit.clearingDate | date : "MM/dd/yyyy" }}</td>
+              <td>
+                {{ deposit.jsClearingDate | date : "MM/dd/yyyy" }}
+              </td>
               <!-- Payment Method -->
               <td>{{ deposit.paymentMethod }}</td>
               <!-- Depositor -->
@@ -56,7 +60,7 @@
               <!-- Deposit Location -->
               <td>{{ deposit.depositLocation }}</td>
               <!-- Unused Amount -->
-              <td>{{ deposit.unusedAmount | currency }}</td>
+              <td>{{ deposit.jsUnusedAmount | currency }}</td>
               <!-- Apply Excess to Principal -->
               <td>
                 <i
@@ -72,7 +76,7 @@
               </td>
               <!-- Excess Applied Date -->
               <td>
-                {{ deposit.excessAppliedDate | date : "MM/dd/yyyy" }}
+                {{ deposit.jsExcessAppliedDate | date : "MM/dd/yyyy" }}
               </td>
               <!-- Actions -->
               <td>
@@ -127,11 +131,12 @@
         <label for="amount">Amount</label>
         <p-inputNumber
           id="amount"
-          [(ngModel)]="depositData.amount"
+          [(ngModel)]="depositData.jsAmount"
           name="amount"
           mode="currency"
           currency="USD"
           locale="en-US"
+          (ngModelChange)="onDataChange($event)"
           required
         ></p-inputNumber>
       </div>
@@ -146,6 +151,7 @@
           optionLabel="label"
           optionValue="value"
           placeholder="Select Currency"
+          (ngModelChange)="onDataChange($event)"
           required
         ></p-dropdown>
       </div>
@@ -154,7 +160,8 @@
         <label for="effectiveDate">Effective Date</label>
         <p-calendar
           id="effectiveDate"
-          [(ngModel)]="depositData.effectiveDate"
+          [(ngModel)]="depositData.jsEffectiveDate"
+          (ngModelChange)="onDataChange($event)"
           name="effectiveDate"
           dateFormat="mm/dd/yy"
           showIcon
@@ -167,8 +174,9 @@
         <label for="clearingDate">Clearing Date</label>
         <p-calendar
           id="clearingDate"
-          [(ngModel)]="depositData.clearingDate"
-          [minDate]="depositData.effectiveDate"
+          [(ngModel)]="depositData.jsClearingDate"
+          (ngModelChange)="onDataChange($event)"
+          [minDate]="depositData.jsEffectiveDate"
           name="clearingDate"
           dateFormat="mm/dd/yy"
           [appendTo]="'body'"
@@ -232,11 +240,12 @@
             >
             <p-calendar
               id="excessAppliedDate"
-              [(ngModel)]="depositData.excessAppliedDate"
+              [(ngModel)]="depositData.jsExcessAppliedDate"
+              (ngModelChange)="onDataChange($event)"
               name="excessAppliedDate"
               dateFormat="mm/dd/yy"
               showIcon
-              [minDate]="depositData.effectiveDate"
+              [minDate]="depositData.jsEffectiveDate"
               [required]="depositData.applyExcessToPrincipal"
               [appendTo]="'body'"
             ></p-calendar>
@@ -286,16 +295,16 @@
     <ng-template pTemplate="body" let-detail>
       <tr>
         <td>{{ detail.period }}</td>
-        <td>{{ detail.billDueDate | date : "MM/dd/yyyy" }}</td>
+        <td>{{ detail.billDueDate.toDate() | date : "MM/dd/yyyy" }}</td>
         <td>{{ detail.billId }}</td>
-        <td>{{ detail.allocatedPrincipal | currency }}</td>
-        <td>{{ detail.allocatedInterest | currency }}</td>
-        <td>{{ detail.allocatedFees | currency }}</td>
-        <td>{{ detail.date | date : "MM/dd/yyyy" }}</td>
+        <td>{{ detail.allocatedPrincipal.toNumber() | currency }}</td>
+        <td>{{ detail.allocatedInterest.toNumber() | currency }}</td>
+        <td>{{ detail.allocatedFees.toNumber() | currency }}</td>
+        <td>{{ detail.date.toDate() | date : "MM/dd/yyyy" }}</td>
       </tr>
     </ng-template>
   </p-table>
   <p *ngIf="!selectedDeposit?.unusedAmount">
-    Unused Amount: {{ selectedDeposit?.unusedAmount | currency }}
+    Unused Amount: {{ selectedDeposit?.jsUnusedAmount | currency }}
   </p>
 </p-dialog>

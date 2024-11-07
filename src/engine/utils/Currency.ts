@@ -21,13 +21,31 @@ export class Currency {
   private value: Decimal;
   private roundingError: Decimal;
 
-  constructor(amount: number | string | Decimal | Currency) {
+  constructor(amount: number | string | Decimal | Currency, roundingError?: Decimal | number | string) {
     if (amount instanceof Currency) {
       this.value = amount.getValue();
+      this.roundingError = amount.getRoundingError();
     } else {
       this.value = new Decimal(amount);
+      if (roundingError !== undefined) {
+        this.roundingError = new Decimal(roundingError);
+      } else {
+        this.roundingError = new Decimal(0);
+      }
     }
-    this.roundingError = new Decimal(0);
+  }
+
+  toJSON(): any {
+    return {
+      value: this.value.toString(),
+      roundingError: this.roundingError.toString(),
+    };
+  }
+
+  static fromJSON(data: any): Currency {
+    const value = new Decimal(data.value);
+    const roundingError = new Decimal(data.roundingError || 0);
+    return new Currency(value, roundingError);
   }
 
   static Zero(): Currency {

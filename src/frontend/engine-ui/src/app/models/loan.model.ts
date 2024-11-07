@@ -16,6 +16,7 @@ import { PerDiemCalculationType } from 'lendpeak-engine/models/InterestCalculato
 import { Currency } from 'lendpeak-engine/utils/Currency';
 import { Decimal } from 'decimal.js';
 import { BalanceModification } from 'lendpeak-engine/models/Amortization/BalanceModification';
+import { DepositRecord } from 'lendpeak-engine/models/Deposit';
 import { PaymentAllocationStrategyName } from 'lendpeak-engine/models/PaymentApplication';
 
 export interface LoanFeeForAllTerms {
@@ -73,35 +74,7 @@ export interface UILoan {
     interestRate: number;
     paymentAmount: number;
   }[];
-  deposits: LoanDeposit[];
+  deposits: DepositRecord[];
   termPeriodDefinition: TermPeriodDefinition;
   paymentAllocationStrategy: PaymentAllocationStrategyName;
-}
-
-export interface LoanDeposit {
-  id: string;
-  amount: number;
-  currency: string;
-  createdDate: Date;
-  insertedDate: Date;
-  effectiveDate: Date;
-  clearingDate?: Date;
-  systemDate: Date;
-  paymentMethod?: string;
-  depositor?: string;
-  depositLocation?: string;
-  usageDetails: {
-    billId: string;
-    period: number;
-    billDueDate: Date;
-    allocatedPrincipal: number;
-    allocatedInterest: number;
-    allocatedFees: number;
-    date: Date;
-  }[];
-  unusedAmount?: number;
-  balanceModificationId?: string;
-  applyExcessToPrincipal: boolean;
-  excessAppliedDate?: Date;
-  metadata?: any;
 }

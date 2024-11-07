@@ -1,6 +1,7 @@
 import { appVersion } from '../environments/version';
 import { MessageService } from 'primeng/api';
 import { ActivatedRoute, Router } from '@angular/router';
+import { Location } from '@angular/common';
 
 import { Component, OnChanges, SimpleChanges } from '@angular/core';
 import { OverlayPanel } from 'primeng/overlaypanel';
@@ -41,11 +42,11 @@ dayjs.extend(isSameOrBefore);
 
 import { v4 as uuidv4 } from 'uuid'; // For generating unique IDs
 import {
-  LoanDeposit,
   LoanFeeForAllTerms,
   LoanFeePerTerm,
   UILoan,
 } from './models/loan.model';
+import { UsageDetail } from 'lendpeak-engine/models/Bill/Deposit/UsageDetail';
 
 @Component({
   selector: 'app-root',
@@ -57,6 +58,7 @@ export class AppComponent implements OnChanges {
   constructor(
     private route: ActivatedRoute,
     private router: Router,
+    private location: Location,
     private messageService: MessageService
   ) {}
 
@@ -236,6 +238,15 @@ export class AppComponent implements OnChanges {
     // Generate the default loan data
     this.updateTermOptions();
     this.submitLoan();
+
+    // Remove the 'loan' parameter from the URL without navigating
+    const urlTree = this.router.createUrlTree([], {
+      relativeTo: this.route,
+      queryParams: { loan: null },
+      queryParamsHandling: 'merge',
+    });
+    const newUrl = this.router.serializeUrl(urlTree);
+    this.location.go(newUrl);
   }
 
   // Handle loan change event
@@ -264,7 +275,7 @@ export class AppComponent implements OnChanges {
 
   accruedInterest = Currency.of(0);
 
-  selectedDepositForEdit: LoanDeposit | null = null;
+  selectedDepositForEdit: DepositRecord | null = null;
   showDepositDialog: boolean = false;
   depositData: any = {};
 
@@ -380,6 +391,7 @@ export class AppComponent implements OnChanges {
       this.loadDefaultLoan();
     } catch (e) {
       console.error('Error while loading loan from local storage:', e);
+      localStorage.clear();
     }
 
     this.updateTermOptions();
@@ -389,7 +401,9 @@ export class AppComponent implements OnChanges {
     this.route.queryParams.subscribe((params) => {
       const loanName = decodeURIComponent(params['loan'] || '');
       if (loanName) {
-        this.loadLoanFromURL(loanName);
+        if (this.currentLoanName !== loanName) {
+          this.loadLoanFromURL(loanName);
+        }
       } else {
         // No loan specified, proceed as normal
         this.loadDefaultLoan();
@@ -471,19 +485,9 @@ export class AppComponent implements OnChanges {
 
     // Parse deposits
     if (loan.deposits.length > 0) {
-      loan.deposits = loan.deposits.map((deposit) => ({
-        ...deposit,
-        createdDate: new Date(deposit.createdDate),
-        insertedDate: new Date(deposit.insertedDate),
-        effectiveDate: new Date(deposit.effectiveDate),
-        clearingDate: deposit.clearingDate
-          ? new Date(deposit.clearingDate)
-          : undefined,
-        systemDate: new Date(deposit.systemDate),
-        excessAppliedDate: deposit.excessAppliedDate
-          ? new Date(deposit.excessAppliedDate)
-          : undefined,
-      }));
+      loan.deposits = loan.deposits.map((deposit: DepositRecord) => {
+        return DepositRecord.rehydrateFromJSON(deposit);
+      });
     }
 
     // Parse feesForAllTerms
@@ -905,6 +909,21 @@ export class AppComponent implements OnChanges {
         summary: 'Success',
         detail: `Loan "${loanData.name}" loaded successfully`,
       });
+
+      // Update the URL without navigating
+      const urlTree = this.router.createUrlTree([], {
+        relativeTo: this.route,
+        queryParams: { loan: encodeURIComponent(this.currentLoanName) },
+        queryParamsHandling: 'merge',
+      });
+      const newUrl = this.router.serializeUrl(urlTree);
+      this.location.go(newUrl);
+    } else {
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: `Failed to load loan.`,
+      });
     }
     this.loanModified = false;
   }
@@ -1103,7 +1122,7 @@ export class AppComponent implements OnChanges {
   }
 
   // Handle deposits change event
-  onDepositsChange(updatedDeposits: LoanDeposit[]) {
+  onDepositsChange(updatedDeposits: DepositRecord[]) {
     this.loan.deposits = updatedDeposits;
   }
 
@@ -1128,7 +1147,7 @@ export class AppComponent implements OnChanges {
   paymentPriorityOptions = ['interest', 'fees', 'principal'];
   paymentPriority: PaymentComponent[] = ['interest', 'fees', 'principal'];
 
-  determineBalanceModificationDate(deposit: LoanDeposit): Date {
+  determineBalanceModificationDate(deposit: DepositRecord): Date {
     const excessAppliedDate =
       deposit.excessAppliedDate || deposit.effectiveDate;
 
@@ -1182,7 +1201,7 @@ export class AppComponent implements OnChanges {
     this.submitLoan();
   }
 
-  removeBalanceModificationForDeposit(deposit: LoanDeposit) {
+  removeBalanceModificationForDeposit(deposit: DepositRecord) {
     // // Remove any balance modifications associated with this deposit
     // this.loan.balanceModifications = this.loan.balanceModifications.filter(
     //   (bm) => !(bm.metadata && bm.metadata.depositId === deposit.id)
@@ -1209,7 +1228,7 @@ export class AppComponent implements OnChanges {
   balanceModificationRemoved = false;
 
   createOrUpdateBalanceModificationForDeposit(
-    deposit: LoanDeposit,
+    deposit: DepositRecord,
     excessAmount: number
   ) {
     if (excessAmount <= 0) {
@@ -1246,15 +1265,17 @@ export class AppComponent implements OnChanges {
       deposit.balanceModificationId = newBalanceModification.id;
     }
 
-    deposit.usageDetails.push({
-      billId: 'Principal Prepayment',
-      period: 0,
-      billDueDate: dateToApply,
-      allocatedPrincipal: excessAmount,
-      allocatedInterest: 0,
-      allocatedFees: 0,
-      date: dateToApply,
-    });
+    deposit.usageDetails.push(
+      new UsageDetail({
+        billId: 'Principal Prepayment',
+        period: 0,
+        billDueDate: dateToApply,
+        allocatedPrincipal: excessAmount,
+        allocatedInterest: 0,
+        allocatedFees: 0,
+        date: dateToApply,
+      })
+    );
   }
 
   generateUniqueId(): string {
@@ -1281,6 +1302,11 @@ export class AppComponent implements OnChanges {
   }
 
   applyPayments() {
+    // Reset usageDetails and related fields for each deposit
+    this.loan.deposits.forEach((deposit) => {
+      deposit.clearHistory();
+    });
+
     // Apply payments to the loan
     const deposits: DepositRecord[] = this.loan.deposits.map((deposit) => {
       return new DepositRecord(deposit);
@@ -1304,24 +1330,38 @@ export class AppComponent implements OnChanges {
     // Process deposits
     this.paymentApplicationResults = paymentApp.processDeposits();
 
-    // Map payment results back to bills and deposits
+    // Update bills and deposits based on payment results
     this.paymentApplicationResults.forEach((result) => {
-      // console.log('Processing deposit', result.depositId);
-      // console.log(`results from payment application`, result);
       const depositId = result.depositId;
       const deposit = this.loan.deposits.find((d) => d.id === depositId);
       if (!deposit) {
         console.error(`Deposit with id ${depositId} not found`);
         return;
       }
-      // console.log(`Processing deposit ${depositId}`, deposit);
 
-      // Initialize usage details for deposit
-      // if (!deposit.usageDetails) {
-      deposit.usageDetails = [];
-      // }
+      deposit.usageDetails = deposit.usageDetails || [];
 
-      // Go through each allocation in the result
+      // Apply balance modification if present
+      if (result.balanceModification) {
+        // Remove existing balance modifications linked to this deposit
+        this.loan.balanceModifications = this.loan.balanceModifications.filter(
+          (bm) => !(bm.metadata && bm.metadata.depositId === deposit.id)
+        );
+        // Add the new balance modification
+        this.loan.balanceModifications.push(result.balanceModification);
+        deposit.balanceModificationId = result.balanceModification.id;
+      } else {
+        // Remove any existing balance modification for this deposit
+        this.loan.balanceModifications = this.loan.balanceModifications.filter(
+          (bm) => !(bm.metadata && bm.metadata.depositId === deposit.id)
+        );
+        deposit.balanceModificationId = undefined;
+      }
+
+      // Update deposit's unused amount
+      deposit.unusedAmount = result.unallocatedAmount;
+
+      // Process allocations to update bills
       result.allocations.forEach((allocation) => {
         const billId = allocation.billId;
         const bill = this.bills.find((b) => b.id === billId);
@@ -1330,110 +1370,45 @@ export class AppComponent implements OnChanges {
           return;
         }
 
-        // Initialize payment details for bill
-        if (!bill.paymentDetails) {
-          bill.paymentDetails = [];
-        }
+        bill.paymentDetails = bill.paymentDetails || [];
+        bill.paymentDetails.push(
+          new BillPaymentDetail({
+            depositId: depositId,
+            allocatedPrincipal: allocation.allocatedPrincipal,
+            allocatedInterest: allocation.allocatedInterest,
+            allocatedFees: allocation.allocatedFees,
+            date: deposit.effectiveDate,
+          })
+        );
 
-        // Create payment detail object
-        const paymentDetail = new BillPaymentDetail({
-          depositId: depositId,
-          allocatedPrincipal: allocation.allocatedPrincipal,
-          allocatedInterest: allocation.allocatedInterest,
-          allocatedFees: allocation.allocatedFees,
-          date: deposit.effectiveDate,
-        });
-
-        // Add to bill's payment details
-        bill.paymentDetails.push(paymentDetail);
-
-        // Create usage detail object for deposit
-        const usageDetail = {
-          billId: billId,
-          period: bill.amortizationEntry?.term || 0,
-          billDueDate: bill.dueDate.toDate(),
-          allocatedPrincipal: allocation.allocatedPrincipal.toNumber(),
-          allocatedInterest: allocation.allocatedInterest.toNumber(),
-          allocatedFees: allocation.allocatedFees.toNumber(),
-          date: deposit.effectiveDate,
-        };
-
-        // Add to deposit's usage details
-        deposit.usageDetails.push(usageDetail);
+        deposit.usageDetails.push(
+          new UsageDetail({
+            billId: billId,
+            period: bill.amortizationEntry?.term || 0,
+            billDueDate: bill.dueDate.toDate(),
+            allocatedPrincipal: allocation.allocatedPrincipal.toNumber(),
+            allocatedInterest: allocation.allocatedInterest.toNumber(),
+            allocatedFees: allocation.allocatedFees.toNumber(),
+            date: deposit.effectiveDate,
+          })
+        );
       });
-
-      // Set the unallocated amount (unused amount)
-      deposit.unusedAmount = result.unallocatedAmount.toNumber();
-
-      // Handle excess amount to be applied to principal
-      if (
-        deposit.applyExcessToPrincipal &&
-        result.unallocatedAmount.getValue().greaterThan(0)
-      ) {
-        const excessAmount = result.unallocatedAmount.toNumber();
-        this.createOrUpdateBalanceModificationForDeposit(deposit, excessAmount);
-      } else {
-        // Remove any existing balance modification for this deposit
-        this.removeBalanceModificationForDeposit(deposit);
-      }
     });
 
-    // Update bills
-    this.bills = bills
-      .map((bill) => {
-        // Find corresponding payment details
-        const uiBill = this.bills.find((b) => b.id === bill.id);
+    // Update bills with new payment details
+    this.bills = this.bills.map((bill) => {
+      const updatedBill = this.paymentApplicationResults
+        .flatMap((result) => result.allocations)
+        .find((allocation) => allocation.billId === bill.id);
 
-        if (!uiBill) {
-          console.info(`Bill with id ${bill.id} not found`);
-          return null;
-        }
+      if (updatedBill) {
+        bill.isPaid =
+          bill.principalDue.isZero() &&
+          bill.interestDue.isZero() &&
+          bill.feesDue.isZero();
+      }
 
-        // now we need to pam the details from new bills to old bill that was
-        // used for UI
-
-        // return {
-        //   ...uiBill,
-        //   principalDue: bill.principalDue.toNumber(),
-        //   interestDue: bill.interestDue.toNumber(),
-        //   feesDue: bill.feesDue.toNumber(),
-        //   totalDue: bill.totalDue.toNumber(),
-        //   isPaid: bill.isPaid,
-        //   paymentMetadata: bill.paymentMetadata,
-        //   paymentDetails: uiBill?.paymentDetails || [],
-        // };
-
-        const newModifiedBill = new Bill({
-          id: uiBill.id,
-          period: uiBill.period,
-          amortizationEntry: uiBill.amortizationEntry,
-          dueDate: uiBill.dueDate,
-          openDate: uiBill.openDate,
-          daysPastDue: uiBill.daysPastDue,
-          isDue: uiBill.isDue,
-          isOpen: uiBill.isOpen,
-          isPastDue: uiBill.isPastDue,
-          paymentDetails: uiBill?.paymentDetails || [],
-          // from new bill
-          principalDue: bill.principalDue,
-          interestDue: bill.interestDue,
-          feesDue: bill.feesDue,
-          totalDue: bill.totalDue,
-          isPaid: bill.isPaid,
-          paymentMetadata: bill.paymentMetadata,
-        });
-        console.log(`new modified bill`, newModifiedBill);
-        return newModifiedBill;
-      })
-      .filter((bill) => bill !== null);
-
-    // Update deposits in the loan object
-    this.loan.deposits = this.loan.deposits.map((deposit) => {
-      return {
-        ...deposit,
-        usageDetails: deposit.usageDetails || [],
-        unusedAmount: deposit.unusedAmount || 0,
-      };
+      return bill;
     });
 
     console.log('Payments applied');

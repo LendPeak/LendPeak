@@ -1253,6 +1253,10 @@ export class Amortization {
 
     // first we get the period where the date is
     const activePeriod = this.getPeriodByDate(date);
+
+    if (!activePeriod) {
+      return Currency.Zero();
+    }
     // next we get amortization entries with same period number and end date is same or before active period
     const amortizationEntries = this.repaymentSchedule.filter((entry) => entry.term === activePeriod.term && entry.periodEndDate.isSameOrBefore(activePeriod.periodStartDate));
     // sum up accrued interest for those entries

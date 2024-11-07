@@ -57,12 +57,39 @@ export class InterestCalculator {
     const maxIterations = 100;
     const tolerance = 1e-9;
 
+    // Input validation
+    if (loanAmount.lessThanOrEqualTo(0)) {
+      throw new Error("Loan amount must be greater than zero.");
+    }
+
+    if (originationFee.lessThan(0)) {
+      throw new Error("Origination fee cannot be negative.");
+    }
+
+    if (originationFee.greaterThan(loanAmount)) {
+      throw new Error("Origination fee cannot exceed the loan amount.");
+    }
+
+    if (terms.length === 0) {
+      throw new Error("At least one payment term is required.");
+    }
+
     // Build cash flows
     const netLoanAmount = loanAmount.minus(originationFee);
-    const cashFlows: Decimal[] = [netLoanAmount]; // Cash inflow at time zero
+
+    // Ensure netLoanAmount is positive
+    if (netLoanAmount.lessThanOrEqualTo(0)) {
+      throw new Error("Net loan amount after subtracting origination fee must be greater than zero.");
+    }
+
+    const cashFlows: Decimal[] = [];
+
+    // Cash inflow at time zero (from the lender's perspective, it's an outflow)
+    cashFlows.push(netLoanAmount.negated());
 
     terms.forEach((term) => {
-      const payment = term.principal.plus(term.interest).negated(); // Negative cash outflow
+      const payment = term.principal.plus(term.interest);
+      // Payments are inflows to the lender (outflows from borrower), so they are positive
       cashFlows.push(payment);
     });
 
@@ -95,7 +122,10 @@ export class InterestCalculator {
       const derivative = npvDerivative(monthlyRate);
 
       if (derivative.abs().lessThan(tolerance)) {
-        throw new Error("Derivative too small; cannot continue iteration.");
+        console.warn("APR calculation failed: Derivative is too small. This may occur due to invalid or inconsistent input values, such as negative balances or improper cash flows.");
+
+        // Return zero APR
+        return new Decimal(0);
       }
 
       const newRate = monthlyRate.minus(currentNPV.div(derivative));
@@ -110,7 +140,7 @@ export class InterestCalculator {
     }
 
     if (iteration === maxIterations) {
-      throw new Error("Failed to converge to a solution within the maximum number of iterations.");
+      throw new Error("APR calculation failed: Maximum number of iterations reached. This may occur due to invalid inputs or the method not converging.");
     }
 
     // Convert monthly rate to annual rate (APR)

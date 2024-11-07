@@ -149,6 +149,18 @@ export class AppComponent implements OnChanges {
         'Added loan object tracking to simplify loan modification detection in the UI',
       ],
     },
+    {
+      version: '1.10.0',
+      date: '2024-10-28',
+      details: [
+        'Implemented URL updating when loading loans, so that refreshing the browser reloads the same loan.',
+        'Fixed an issue where loading a loan through the Manage Loans screen would cause the loan to load twice.',
+        'Enhanced the user experience by updating the URL without triggering navigation or component re-initialization.',
+        'Resolved accumulation of `usageDetails` in deposits by resetting them before processing payments, ensuring accurate tracking of deposit usage.',
+        'Added serialization and deserialization methods to the `Currency` class, enabling instances to be reconstructed from JSON objects for database storage and retrieval.',
+        'Improved error handling in `InterestCalculator` when calculating APR by validating inputs and providing more descriptive error messages when inputs are invalid or calculations fail.',
+      ],
+    },
   ];
 
   selectedVersion: string = this.currentVersion;

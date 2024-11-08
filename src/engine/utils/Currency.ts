@@ -18,13 +18,18 @@ export enum RoundingMethod {
  * The class supports various rounding methods and tracks rounding errors.
  */
 export class Currency {
-  private value: Decimal;
-  private roundingError: Decimal;
+  private value!: Decimal;
+  private roundingError!: Decimal;
 
   constructor(amount: number | string | Decimal | Currency, roundingError?: Decimal | number | string) {
-    if (amount instanceof Currency) {
+    if (amount === undefined || amount === null) {
+      this.value = new Decimal(0);
+      this.roundingError = new Decimal(0);
+    } else if (amount instanceof Currency) {
       this.value = amount.getValue();
       this.roundingError = amount.getRoundingError();
+    } else if (typeof amount === "object" && "value" in amount && "roundingError" in amount) {
+      return Currency.fromJSON(amount);
     } else {
       this.value = new Decimal(amount);
       if (roundingError !== undefined) {
@@ -43,6 +48,17 @@ export class Currency {
   }
 
   static fromJSON(data: any): Currency {
+    if (!data) {
+      console.warn("Currency.fromJSON: No data provided");
+      return Currency.Zero();
+    }
+    if (typeof data === "string") {
+      data = JSON.parse(data);
+    }
+    if (!data.value) {
+      console.warn("Currency.fromJSON: No value found in data", data);
+      return Currency.Zero();
+    }
     const value = new Decimal(data.value);
     const roundingError = new Decimal(data.roundingError || 0);
     return new Currency(value, roundingError);

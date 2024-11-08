@@ -21,7 +21,7 @@ export class DepositsComponent {
   showDepositUsageDetailsDialog: boolean = false;
   selectedDepositForEdit: DepositRecord | null = null;
   selectedDeposit: DepositRecord | null = null;
-  depositData: any = {};
+  depositData: DepositRecord = this.getEmptyDepositData();
 
   getEmptyDepositData(): DepositRecord {
     return new DepositRecord({
@@ -65,6 +65,13 @@ export class DepositsComponent {
   onDataChange(event: any) {
     console.log('Effective date changed:', event);
     this.depositData.syncValuesFromJSProperties();
+
+    if (
+      this.depositData.applyExcessToPrincipal &&
+      this.depositData.effectiveDate.isAfter(this.depositData.excessAppliedDate)
+    ) {
+      this.depositData.excessAppliedDate = this.depositData.effectiveDate;
+    }
   }
 
   onDepositDialogHide() {
@@ -76,12 +83,14 @@ export class DepositsComponent {
   saveDeposit() {
     if (
       this.depositData.applyExcessToPrincipal &&
-      !this.depositData.excessAppliedDate
+      !this.depositData.jsExcessAppliedDate
     ) {
-      this.depositData.jsExcessAppliedDate = new Date(); // Default to today
+      this.depositData.jsExcessAppliedDate = this.depositData.jsEffectiveDate;
     } else if (!this.depositData.applyExcessToPrincipal) {
       this.depositData.jsExcessAppliedDate = undefined;
     }
+
+    this.depositData.syncJSPropertiesFromValues();
 
     if (this.selectedDepositForEdit) {
       // Update existing deposit

@@ -399,12 +399,12 @@ export class AppComponent implements OnChanges {
     }
 
     // Retrieve loan from local storage if exists
-    try {
-      this.loadDefaultLoan();
-    } catch (e) {
-      console.error('Error while loading loan from local storage:', e);
-      localStorage.clear();
-    }
+    // try {
+    //   this.loadDefaultLoan();
+    // } catch (e) {
+    //   console.error('Error while loading loan from local storage:', e);
+    //   localStorage.clear();
+    // }
 
     this.updateTermOptions();
     this.loanModified = false;
@@ -576,9 +576,11 @@ export class AppComponent implements OnChanges {
     }));
 
     // Parse balanceModifications
-    loan.balanceModifications = loan.balanceModifications.map(
-      (balanceModification) => new BalanceModification(balanceModification)
+    loan.balanceModifications = BalanceModification.parseJSONArray(
+      loan.balanceModifications
     );
+
+    this.submitLoan();
   }
 
   showTable = false;
@@ -604,14 +606,10 @@ export class AppComponent implements OnChanges {
 
   generateBills() {
     const repaymentSchedule = this.repaymentSchedule;
-    if (repaymentSchedule) {
-      this.bills = BillGenerator.generateBills(
-        repaymentSchedule,
-        this.snapshotDate
-      );
-    } else {
-      console.error('Repayment schedule not available');
-    }
+    this.bills = BillGenerator.generateBills(
+      repaymentSchedule,
+      this.snapshotDate
+    );
   }
 
   downloadRepaymentPlanAsCSV() {
@@ -903,7 +901,7 @@ export class AppComponent implements OnChanges {
     const loanData = JSON.parse(localStorage.getItem(key)!);
     if (loanData) {
       this.loan = loanData.loan;
-      this.bills = loanData.bills;
+      // this.bills = loanData.bills;
       this.loan.deposits = loanData.deposits;
       this.parseLoanData(this.loan);
 
@@ -911,9 +909,6 @@ export class AppComponent implements OnChanges {
       this.currentLoanName = loanData.name || 'Loaded Loan';
       this.currentLoanDescription = loanData.description || '';
 
-      this.updateTermOptions();
-      this.generateBills();
-      this.applyPayments();
       this.submitLoan();
       this.showManageLoansDialog = false;
       this.messageService.add({
@@ -1355,6 +1350,10 @@ export class AppComponent implements OnChanges {
 
       // Apply balance modification if present
       if (result.balanceModification) {
+        console.log(
+          'Applying balance modification',
+          result.balanceModification
+        );
         // Remove existing balance modifications linked to this deposit
         this.loan.balanceModifications = this.loan.balanceModifications.filter(
           (bm) => !(bm.metadata && bm.metadata.depositId === deposit.id)

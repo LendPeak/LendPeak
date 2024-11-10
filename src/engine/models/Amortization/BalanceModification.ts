@@ -67,12 +67,22 @@ export class BalanceModification {
   }
 
   static parseJSONArray(json: any[]): BalanceModification[] {
+    if (!json) {
+      return [];
+    }
+
+    if (!Array.isArray(json)) {
+      json = [json];
+    }
+
     const mods: BalanceModification[] = [];
     for (const entry of json) {
       // ensure modification is greater than zero otherwise discard it
       const mod = new BalanceModification(entry);
       if (mod.amount.greaterThan(0)) {
         mods.push(mod);
+      } else {
+        console.log(`BalanceModification with amount ${mod.amount.toCurrencyString()} is not greater than zero. Discarding.`);
       }
     }
     return mods;

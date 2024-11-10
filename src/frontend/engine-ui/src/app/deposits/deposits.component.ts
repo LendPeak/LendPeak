@@ -63,7 +63,6 @@ export class DepositsComponent {
   }
 
   onDataChange(event: any) {
-    console.log('Effective date changed:', event);
     this.depositData.syncValuesFromJSProperties();
 
     if (
@@ -105,10 +104,11 @@ export class DepositsComponent {
   }
 
   onApplyExcessToPrincipalChange(event: any) {
-    if (event.checked) {
-      this.depositData.jsExcessAppliedDate = new Date();
+    console.log('onApplyExceesToPrincipalChange triggered', event);
+    if (event.checked === true) {
+      this.depositData.excessAppliedDate = this.depositData.effectiveDate;
     } else {
-      this.depositData.jsExcessAppliedDate = undefined;
+      this.depositData.excessAppliedDate = undefined;
     }
   }
 

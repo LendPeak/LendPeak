@@ -1002,6 +1002,9 @@
       <p-table
         #repaymentPlanTable
         [value]="repaymentPlan"
+        [autoLayout]="true"
+        [scrollable]="true"
+        scrollHeight="600px"
         class="repayment-plan-table"
       >
         <ng-template pTemplate="header">

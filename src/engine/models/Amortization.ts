@@ -172,7 +172,6 @@ export class Amortization {
   earlyRepayment: boolean = false;
   perDiemCalculationType: PerDiemCalculationType = "AnnualRateDividedByDaysInYear";
   billingModel: BillingModel = "amortized";
-
   // Fee configurations
   // private staticFeePerBill: Currency;
   // private customFeesPerTerm: Map<number, Currency>;
@@ -867,7 +866,7 @@ export class Amortization {
       // see if there are any modifications in the range
       // console.log(`Checking modification ${modification.date.format("YYYY-MM-DD")} and comparing it to ${startDate.format("YYYY-MM-DD")} and ${endDate.format("YYYY-MM-DD")}`);
 
-      if (modification.date.isSameOrAfter(startDate) && modification.date.isSameOrBefore(endDate)) {
+      if (modification.date.isBetween(startDate, endDate, "day", "[]")) {
         // we found a modification, lets get its start date
         let modificationStartDate = balances.length > 0 ? balances[balances.length - 1].endDate : startDate;
         let modificationEndDate = modification.date;
@@ -880,12 +879,25 @@ export class Amortization {
             break;
           case "decrease":
             modifiedBalance = balanceToModify.subtract(modification.amount);
-            modificationAmount = modification.amount.isZero() ? Currency.Zero() : modification.amount.negated();
+            if (modifiedBalance.isNegative()) {
+              const exess = modifiedBalance.abs();
+              modifiedBalance = Currency.Zero();
+              modificationAmount = modification.amount.subtract(exess);
+              modification.usedAmount = modificationAmount;
+            } else {
+              modificationAmount = modification.amount.isZero() ? Currency.Zero() : modification.amount.negated();
+            }
             break;
           default:
             throw new Error("Invalid balance modification type");
         }
-        balances.push({ balance: modifiedBalance, balanceModification: modification, modificationAmount, startDate: modificationStartDate, endDate: modificationEndDate });
+        balances.push({
+          balance: modifiedBalance,
+          balanceModification: modification,
+          modificationAmount: modificationAmount,
+          startDate: modificationStartDate,
+          endDate: modificationEndDate,
+        });
       }
     }
     // if we dont have any modifications in the range, we will just return the original balance
@@ -928,6 +940,10 @@ export class Amortization {
    * @returns An array of AmortizationSchedule entries.
    */
   generateSchedule(): AmortizationEntry[] {
+    this.balanceModifications.forEach((modification) => {
+      modification.resetUsedAmount();
+    });
+
     this.earlyRepayment = false;
     const schedule: AmortizationEntry[] = [];
     let startBalance = this.totalLoanAmount;

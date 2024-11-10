@@ -1135,6 +1135,7 @@ export class AppComponent implements OnChanges {
 
   // Handle deposit updated event (e.g., to recalculate loan details)
   onDepositUpdated() {
+    this.applyPayments();
     this.submitLoan();
   }
 
@@ -1208,30 +1209,6 @@ export class AppComponent implements OnChanges {
     this.submitLoan();
   }
 
-  removeBalanceModificationForDeposit(deposit: DepositRecord) {
-    // // Remove any balance modifications associated with this deposit
-    // this.loan.balanceModifications = this.loan.balanceModifications.filter(
-    //   (bm) => !(bm.metadata && bm.metadata.depositId === deposit.id)
-    // );
-
-    // loop through this.loan.balanceModifications and remove the balance modification
-    // if it is associated with the deposit
-    const filteredBalanceModifications: BalanceModification[] = [];
-    this.loan.balanceModifications.forEach((balanceModification) => {
-      if (balanceModification.metadata?.depositId !== deposit.id) {
-        filteredBalanceModifications.push(balanceModification);
-      } else {
-        console.log(
-          `Balance modification with id ${balanceModification.id} removed`
-        );
-        this.balanceModificationRemoved = true;
-      }
-    });
-    this.loan.balanceModifications = filteredBalanceModifications;
-
-    deposit.balanceModificationId = undefined;
-  }
-
   balanceModificationRemoved = false;
 
   createOrUpdateBalanceModificationForDeposit(
@@ -1299,6 +1276,8 @@ export class AppComponent implements OnChanges {
           (d) => d.id === balanceModification.metadata.depositId
         );
         if (!deposit) {
+          // Deposit not found; remove this balance modification
+          console.log('Removing balance modification', balanceModification);
           this.balanceModificationRemoved = true;
           return;
         }
@@ -1757,6 +1736,11 @@ export class AppComponent implements OnChanges {
       this.balanceModificationRemoved = false;
       this.submitLoan();
     }
+
+    // after balance modifications are applied amortization will add usage values and
+    // it is possible that modification amount exceeds the principal amount
+    // this will show user how much was unused
+    this.loan.balanceModifications = this.amortization.balanceModifications;
     this.loanModified = true; // Mark as modified
   }
 

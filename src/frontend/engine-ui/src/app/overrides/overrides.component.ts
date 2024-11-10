@@ -237,8 +237,9 @@ export class OverridesComponent {
     // Date and in this code we know that p-calendar is updating jsDate
     // so we will do a date update here
     this.loan.balanceModifications.forEach((balanceModification) => {
-      balanceModification.date = balanceModification.jsDate;
+      balanceModification.syncValuesFromJSProperties();
     });
+
     // Optional: Order the balance modifications by date
     // this.loan.balanceModifications.sort((a, b) => dayjs(a.date).diff(dayjs(b.date)));
     this.emitLoanChange();

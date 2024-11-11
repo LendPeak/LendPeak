@@ -1,6 +1,6 @@
 import { appVersion } from '../environments/version';
 import { MessageService } from 'primeng/api';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, NavigationEnd } from '@angular/router';
 import { Location } from '@angular/common';
 
 import { Component, OnChanges, SimpleChanges } from '@angular/core';
@@ -161,6 +161,15 @@ export class AppComponent implements OnChanges {
         'Improved error handling in `InterestCalculator` when calculating APR by validating inputs and providing more descriptive error messages when inputs are invalid or calculations fail.',
       ],
     },
+    {
+      version: '1.11.0',
+      date: '2024-11-09',
+      details: [
+        'Added tab state to the URL, allowing users to share links that open directly to specific tabs within the application.',
+        "Implemented browser navigation event handling, so that the active tab updates correctly when using the browser's back and forward buttons.",
+        'Enhanced the user experience by maintaining tab state across sessions and shared links.',
+      ],
+    },
   ];
 
   selectedVersion: string = this.currentVersion;
@@ -251,10 +260,10 @@ export class AppComponent implements OnChanges {
     this.updateTermOptions();
     this.submitLoan();
 
-    // Remove the 'loan' parameter from the URL without navigating
+    // Update the URL without navigating
+    const queryParams = { loan: null, tab: 'basicInfo' };
     const urlTree = this.router.createUrlTree([], {
-      relativeTo: this.route,
-      queryParams: { loan: null },
+      queryParams: queryParams,
       queryParamsHandling: 'merge',
     });
     const newUrl = this.router.serializeUrl(urlTree);
@@ -305,6 +314,38 @@ export class AppComponent implements OnChanges {
 
   selectedDeposit: any = null;
   showDepositUsageDetailsDialog: boolean = false;
+
+  activeTabIndex: number = 0;
+
+  tabIndices: { [key: string]: number } = {
+    basicInfo: 0,
+    overrides: 1,
+    advancedSettings: 2,
+    customPeriodsSchedule: 3,
+    deposits: 4,
+    bills: 5,
+  };
+
+  tabNames: string[] = [
+    'basicInfo',
+    'overrides',
+    'advancedSettings',
+    'customPeriodsSchedule',
+    'deposits',
+    'bills',
+  ];
+
+  onTabChange(event: any) {
+    this.activeTabIndex = event.index;
+    const tabName = this.tabNames[this.activeTabIndex];
+    const queryParams = { ...this.route.snapshot.queryParams, tab: tabName };
+    const urlTree = this.router.createUrlTree([], {
+      queryParams: queryParams,
+      queryParamsHandling: 'merge',
+    });
+    const newUrl = this.router.serializeUrl(urlTree);
+    this.location.go(newUrl);
+  }
 
   getNextTermNumber(): number {
     if (this.loan.feesPerTerm.length === 0) {
@@ -419,6 +460,48 @@ export class AppComponent implements OnChanges {
       } else {
         // No loan specified, proceed as normal
         this.loadDefaultLoan();
+      }
+
+      const tabParam = params['tab'];
+      if (tabParam !== undefined) {
+        if (isNaN(tabParam)) {
+          // tabParam is a string (tab name)
+          const tabIndex = this.tabIndices[tabParam];
+          if (tabIndex !== undefined) {
+            this.activeTabIndex = tabIndex;
+          }
+        } else {
+          // tabParam is a number (tab index)
+          const tabIndex = parseInt(tabParam, 10);
+          if (!isNaN(tabIndex)) {
+            this.activeTabIndex = tabIndex;
+          }
+        }
+      }
+    });
+
+    // Handle browser navigation events to update the activeTabIndex
+    this.router.events.subscribe((event) => {
+      if (event instanceof NavigationEnd) {
+        const params = this.route.snapshot.queryParams;
+        const tabParam = params['tab'];
+        if (tabParam !== undefined) {
+          if (isNaN(tabParam)) {
+            // tabParam is a string (tab name)
+            const tabIndex = this.tabIndices[tabParam];
+            if (tabIndex !== undefined) {
+              this.activeTabIndex = tabIndex;
+            }
+          } else {
+            // tabParam is a number (tab index)
+            const tabIndex = parseInt(tabParam, 10);
+            if (!isNaN(tabIndex)) {
+              this.activeTabIndex = tabIndex;
+            }
+          }
+        } else {
+          this.activeTabIndex = 0; // Default to the first tab if no tab parameter
+        }
       }
     });
 
@@ -918,9 +1001,12 @@ export class AppComponent implements OnChanges {
       });
 
       // Update the URL without navigating
+      const queryParams = {
+        loan: encodeURIComponent(this.currentLoanName),
+        tab: this.tabNames[this.activeTabIndex],
+      };
       const urlTree = this.router.createUrlTree([], {
-        relativeTo: this.route,
-        queryParams: { loan: encodeURIComponent(this.currentLoanName) },
+        queryParams: queryParams,
         queryParamsHandling: 'merge',
       });
       const newUrl = this.router.serializeUrl(urlTree);

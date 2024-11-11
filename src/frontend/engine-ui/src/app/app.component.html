@@ -213,7 +213,7 @@
   </div>
 
   <!-- TabView -->
-  <p-tabView>
+  <p-tabView [(activeIndex)]="activeTabIndex" (onChange)="onTabChange($event)">
     <!-- Basic Loan Info Tab -->
     <p-tabPanel header="Basic Loan Info">
       <app-basic-loan-info

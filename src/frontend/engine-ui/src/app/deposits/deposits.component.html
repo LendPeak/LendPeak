@@ -32,6 +32,7 @@
               <th>Depositor</th>
               <th>Deposit Location</th>
               <th>Unused Amount</th>
+              <th>Principal Prepayment Amount</th>
               <th>Apply Excess to Principal</th>
               <th>Excess Applied Date</th>
               <th>Actions</th>
@@ -61,6 +62,9 @@
               <td>{{ deposit.depositLocation }}</td>
               <!-- Unused Amount -->
               <td>{{ deposit.jsUnusedAmount | currency }}</td>
+              <!-- Principal Prepayment Amount -->
+              <td>{{ deposit.jsExcess | currency }}</td>
+
               <!-- Apply Excess to Principal -->
               <td>
                 <i

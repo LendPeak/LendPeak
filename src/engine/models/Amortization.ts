@@ -204,7 +204,7 @@ export class Amortization {
       this.balanceModifications = params.balanceModifications;
 
       // sort balance modifications by date
-      this.balanceModifications.sort((a, b) => {
+      this.balanceModifications = this.balanceModifications.sort((a, b) => {
         return a.date.diff(b.date);
       });
     }
@@ -883,10 +883,11 @@ export class Amortization {
               const exess = modifiedBalance.abs();
               modifiedBalance = Currency.Zero();
               modificationAmount = modification.amount.subtract(exess);
+              modification.usedAmount = modificationAmount;
             } else {
               modificationAmount = modification.amount.isZero() ? Currency.Zero() : modification.amount.negated();
+              modification.usedAmount = modificationAmount.negated();
             }
-            modification.usedAmount = modificationAmount.negated();
 
             break;
           default:

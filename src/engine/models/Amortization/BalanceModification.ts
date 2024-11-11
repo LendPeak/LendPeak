@@ -72,7 +72,7 @@ export class BalanceModification {
 
   private set unusedAmount(amount: Currency) {
     this._unusedAmount = amount;
-    this.jsUnusedAmount = this._unusedAmount.toNumber();
+    this.jsUnusedAmount = amount.toNumber();
   }
 
   set date(date: Dayjs | Date | string) {

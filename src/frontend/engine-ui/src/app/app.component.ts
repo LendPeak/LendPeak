@@ -1741,6 +1741,7 @@ export class AppComponent implements OnChanges {
     // it is possible that modification amount exceeds the principal amount
     // this will show user how much was unused
     this.loan.balanceModifications = this.amortization.balanceModifications;
+
     this.loanModified = true; // Mark as modified
   }
 

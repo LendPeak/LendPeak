@@ -883,10 +883,11 @@ export class Amortization {
               const exess = modifiedBalance.abs();
               modifiedBalance = Currency.Zero();
               modificationAmount = modification.amount.subtract(exess);
-              modification.usedAmount = modificationAmount;
             } else {
               modificationAmount = modification.amount.isZero() ? Currency.Zero() : modification.amount.negated();
             }
+            modification.usedAmount = modificationAmount.negated();
+
             break;
           default:
             throw new Error("Invalid balance modification type");

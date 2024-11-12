@@ -432,7 +432,15 @@ export class AppComponent implements OnChanges {
     );
 
     try {
-      this.snapshotDate = new Date(localStorage.getItem('snapshotDate')!);
+      const snapshotDate = localStorage.getItem('snapshotDate');
+      if (snapshotDate) {
+        this.snapshotDate = new Date(snapshotDate);
+        if (isNaN(this.snapshotDate.getTime())) {
+          this.snapshotDate = new Date();
+        }
+      } else {
+        this.snapshotDate = new Date();
+      }
     } catch (e) {
       // clear the snapshot date from local storage
       localStorage.removeItem('snapshotDate');

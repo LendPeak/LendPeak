@@ -3,7 +3,14 @@ import { MessageService } from 'primeng/api';
 import { ActivatedRoute, Router, NavigationEnd } from '@angular/router';
 import { Location } from '@angular/common';
 
-import { Component, OnChanges, SimpleChanges } from '@angular/core';
+import {
+  Component,
+  OnChanges,
+  SimpleChanges,
+  ElementRef,
+  ViewChild,
+} from '@angular/core';
+
 import { OverlayPanel } from 'primeng/overlaypanel';
 import {
   DropDownOptionString,
@@ -52,15 +59,18 @@ import { UsageDetail } from 'lendpeak-engine/models/Bill/Deposit/UsageDetail';
   selector: 'app-root',
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.css'],
-  providers: [MessageService], // Add MessageService to the component providers
+  providers: [MessageService],
 })
 export class AppComponent implements OnChanges {
   constructor(
     private route: ActivatedRoute,
     private router: Router,
     private location: Location,
-    private messageService: MessageService
+    private messageService: MessageService,
   ) {}
+
+  showCodeDialogVisible: boolean = false;
+  generatedCode: string = ''; // Use SafeHtml to safely bind HTML content
 
   currentVersion = appVersion;
 
@@ -239,7 +249,7 @@ export class AppComponent implements OnChanges {
     if (this.loanModified) {
       if (
         !confirm(
-          'You have unsaved changes. Do you want to discard them and create a new loan?'
+          'You have unsaved changes. Do you want to discard them and create a new loan?',
         )
       ) {
         return;
@@ -406,14 +416,14 @@ export class AppComponent implements OnChanges {
     this.showNewVersionModal = true;
 
     this.selectedReleaseNotes = this.releaseNotes.find(
-      (note) => note.version === this.selectedVersion
+      (note) => note.version === this.selectedVersion,
     );
   }
 
   onVersionChange(event: any) {
     this.selectedVersion = event.value;
     this.selectedReleaseNotes = this.releaseNotes.find(
-      (note) => note.version === this.selectedVersion
+      (note) => note.version === this.selectedVersion,
     );
   }
 
@@ -428,7 +438,7 @@ export class AppComponent implements OnChanges {
       this.loan,
       (target: any, property: string | symbol, value: any) => {
         this.loanModified = true;
-      }
+      },
     );
 
     try {
@@ -643,7 +653,7 @@ export class AppComponent implements OnChanges {
       (changePaymentDate) => ({
         termNumber: changePaymentDate.termNumber,
         newDate: new Date(changePaymentDate.newDate),
-      })
+      }),
     );
 
     // Parse termPaymentAmountOverride
@@ -651,7 +661,7 @@ export class AppComponent implements OnChanges {
       (termPaymentAmountOverride) => ({
         termNumber: termPaymentAmountOverride.termNumber,
         paymentAmount: termPaymentAmountOverride.paymentAmount,
-      })
+      }),
     );
 
     // Parse preBillDays
@@ -668,7 +678,7 @@ export class AppComponent implements OnChanges {
 
     // Parse balanceModifications
     loan.balanceModifications = BalanceModification.parseJSONArray(
-      loan.balanceModifications
+      loan.balanceModifications,
     );
 
     this.submitLoan();
@@ -699,7 +709,7 @@ export class AppComponent implements OnChanges {
     const repaymentSchedule = this.repaymentSchedule;
     this.bills = BillGenerator.generateBills(
       repaymentSchedule,
-      this.snapshotDate
+      this.snapshotDate,
     );
   }
 
@@ -849,7 +859,7 @@ export class AppComponent implements OnChanges {
     if (newKey !== oldKey && localStorage.getItem(newKey)) {
       if (
         !confirm(
-          `A loan named "${this.loanToEdit.name}" already exists. Do you want to overwrite it?`
+          `A loan named "${this.loanToEdit.name}" already exists. Do you want to overwrite it?`,
         )
       ) {
         return;
@@ -915,6 +925,11 @@ export class AppComponent implements OnChanges {
       command: () => this.openHelpDialog(),
     },
     {
+      label: 'Show Code',
+      icon: 'pi pi-code',
+      command: () => this.openCodeDialog(),
+    },
+    {
       label: 'Current Release Notes',
       icon: 'pi pi-sparkles',
       command: () => this.showCurrentReleaseNotes(),
@@ -929,6 +944,30 @@ export class AppComponent implements OnChanges {
 
   showManageLoansDialog: boolean = false;
   savedLoans: any[] = [];
+
+  getLineNumbers(code: string): number[] {
+    return Array.from({ length: code.split('\n').length }, (_, i) => i + 1);
+  }
+
+  openCodeDialog() {
+    if (this.amortization) {
+      this.generatedCode = this.amortization.toCode();
+      this.showCodeDialogVisible = true;
+    } else {
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: 'No loan data to generate code',
+      });
+    }
+  }
+
+  copyCodeToClipboard() {
+    navigator.clipboard.writeText(this.generatedCode).then(
+      () => alert('Code copied to clipboard'),
+      (err) => console.error('Could not copy text:', err),
+    );
+  }
 
   openSaveLoanDialog() {
     if (this.currentLoanName && this.currentLoanName !== 'New Loan') {
@@ -983,7 +1022,7 @@ export class AppComponent implements OnChanges {
     if (this.loanModified) {
       if (
         !confirm(
-          'You have unsaved changes. Do you want to discard them and load a different loan?'
+          'You have unsaved changes. Do you want to discard them and load a different loan?',
         )
       ) {
         return;
@@ -1048,7 +1087,7 @@ export class AppComponent implements OnChanges {
         // Inform the user that the loan will overwrite existing data
         if (
           !confirm(
-            `A loan named "${this.loanToSave.name}" already exists. Do you want to overwrite it?`
+            `A loan named "${this.loanToSave.name}" already exists. Do you want to overwrite it?`,
           )
         ) {
           return;
@@ -1256,7 +1295,7 @@ export class AppComponent implements OnChanges {
     // Ensure excessAppliedDate is not null
     if (!excessAppliedDate) {
       throw new Error(
-        `Deposit ${deposit.id} has no effective date or excess applied date.`
+        `Deposit ${deposit.id} has no effective date or excess applied date.`,
       );
     }
 
@@ -1266,7 +1305,7 @@ export class AppComponent implements OnChanges {
       (bill) =>
         !bill.isPaid &&
         bill.isOpen &&
-        dayjs(bill.dueDate).isSameOrAfter(depositEffectiveDayjs)
+        dayjs(bill.dueDate).isSameOrAfter(depositEffectiveDayjs),
     );
 
     let balanceModificationDate: Dayjs;
@@ -1274,22 +1313,22 @@ export class AppComponent implements OnChanges {
     if (openBillsAtDepositDate.length > 0) {
       // There are open bills; apply excess at the beginning of the next term
       const latestBill = openBillsAtDepositDate.reduce((latest, bill) =>
-        dayjs(bill.dueDate).isAfter(dayjs(latest.dueDate)) ? bill : latest
+        dayjs(bill.dueDate).isAfter(dayjs(latest.dueDate)) ? bill : latest,
       );
       const nextTermStartDate = dayjs(
-        latestBill.amortizationEntry.periodEndDate
+        latestBill.amortizationEntry.periodEndDate,
       );
 
       // Ensure the date is after the excessAppliedDate
       balanceModificationDate = nextTermStartDate.isAfter(
-        dayjs(excessAppliedDate)
+        dayjs(excessAppliedDate),
       )
         ? nextTermStartDate
         : dayjs(excessAppliedDate).startOf('day');
     } else {
       // No open bills; use the effective date or excessAppliedDate
       balanceModificationDate = depositEffectiveDayjs.isAfter(
-        dayjs(excessAppliedDate)
+        dayjs(excessAppliedDate),
       )
         ? depositEffectiveDayjs
         : dayjs(excessAppliedDate).startOf('day');
@@ -1307,7 +1346,7 @@ export class AppComponent implements OnChanges {
 
   createOrUpdateBalanceModificationForDeposit(
     deposit: DepositRecord,
-    excessAmount: number
+    excessAmount: number,
   ) {
     if (excessAmount <= 0) {
       // No excess amount to apply
@@ -1315,7 +1354,7 @@ export class AppComponent implements OnChanges {
     }
     // Find existing balance modification linked to this deposit
     let balanceModification = this.loan.balanceModifications.find(
-      (bm) => bm.metadata && bm.metadata.depositId === deposit.id
+      (bm) => bm.metadata && bm.metadata.depositId === deposit.id,
     );
 
     // Determine the date to apply the balance modification
@@ -1352,7 +1391,7 @@ export class AppComponent implements OnChanges {
         allocatedInterest: 0,
         allocatedFees: 0,
         date: dateToApply,
-      })
+      }),
     );
   }
 
@@ -1367,7 +1406,7 @@ export class AppComponent implements OnChanges {
     this.loan.balanceModifications.forEach((balanceModification) => {
       if (balanceModification.metadata?.depositId) {
         const deposit = this.loan.deposits.find(
-          (d) => d.id === balanceModification.metadata.depositId
+          (d) => d.id === balanceModification.metadata.depositId,
         );
         if (!deposit) {
           // Deposit not found; remove this balance modification
@@ -1396,7 +1435,7 @@ export class AppComponent implements OnChanges {
 
     // Build the allocation strategy based on user selection
     let allocationStrategy = PaymentApplication.getAllocationStrategyFromName(
-      this.loan.paymentAllocationStrategy
+      this.loan.paymentAllocationStrategy,
     );
 
     // Build the payment priority
@@ -1425,11 +1464,11 @@ export class AppComponent implements OnChanges {
       if (result.balanceModification) {
         console.log(
           'Applying balance modification',
-          result.balanceModification
+          result.balanceModification,
         );
         // Remove existing balance modifications linked to this deposit
         this.loan.balanceModifications = this.loan.balanceModifications.filter(
-          (bm) => !(bm.metadata && bm.metadata.depositId === deposit.id)
+          (bm) => !(bm.metadata && bm.metadata.depositId === deposit.id),
         );
         // Add the new balance modification
         this.loan.balanceModifications.push(result.balanceModification);
@@ -1437,7 +1476,7 @@ export class AppComponent implements OnChanges {
       } else {
         // Remove any existing balance modification for this deposit
         this.loan.balanceModifications = this.loan.balanceModifications.filter(
-          (bm) => !(bm.metadata && bm.metadata.depositId === deposit.id)
+          (bm) => !(bm.metadata && bm.metadata.depositId === deposit.id),
         );
         deposit.balanceModificationId = undefined;
       }
@@ -1462,7 +1501,7 @@ export class AppComponent implements OnChanges {
             allocatedInterest: allocation.allocatedInterest,
             allocatedFees: allocation.allocatedFees,
             date: deposit.effectiveDate,
-          })
+          }),
         );
 
         deposit.usageDetails.push(
@@ -1474,7 +1513,7 @@ export class AppComponent implements OnChanges {
             allocatedInterest: allocation.allocatedInterest.toNumber(),
             allocatedFees: allocation.allocatedFees.toNumber(),
             date: deposit.effectiveDate,
-          })
+          }),
         );
       });
     });
@@ -1634,7 +1673,7 @@ export class AppComponent implements OnChanges {
     if (this.loan.termPaymentAmount) {
       console.log('Term payment amount:', this.loan.termPaymentAmount);
       amortizationParams.termPaymentAmount = Currency.of(
-        this.loan.termPaymentAmount
+        this.loan.termPaymentAmount,
       );
     }
 
@@ -1645,7 +1684,7 @@ export class AppComponent implements OnChanges {
             termNumber: changePaymentDate.termNumber,
             newDate: dayjs(changePaymentDate.newDate),
           };
-        }
+        },
       );
     }
 
@@ -1667,10 +1706,10 @@ export class AppComponent implements OnChanges {
             return {
               termNumber: termPaymentAmountConfiguration.termNumber,
               paymentAmount: Currency.of(
-                termPaymentAmountConfiguration.paymentAmount
+                termPaymentAmountConfiguration.paymentAmount,
               ),
             };
-          }
+          },
         );
     }
 
@@ -1685,7 +1724,7 @@ export class AppComponent implements OnChanges {
             interestRate: interestAsDecimal.dividedBy(100),
             paymentAmount: Currency.of(period.paymentAmount),
           };
-        }
+        },
       );
     }
 
@@ -1709,21 +1748,24 @@ export class AppComponent implements OnChanges {
             description: fee.description,
             metadata: fee.metadata,
           } as Fee;
-        }
+        },
       );
     }
 
     // Process feesPerTerm
     if (this.loan.feesPerTerm.length > 0) {
       // Group fees by term number
-      const feesGroupedByTerm = this.loan.feesPerTerm.reduce((acc, fee) => {
-        const termNumber = fee.termNumber;
-        if (!acc[termNumber]) {
-          acc[termNumber] = [];
-        }
-        acc[termNumber].push(fee);
-        return acc;
-      }, {} as { [key: number]: LoanFeePerTerm[] });
+      const feesGroupedByTerm = this.loan.feesPerTerm.reduce(
+        (acc, fee) => {
+          const termNumber = fee.termNumber;
+          if (!acc[termNumber]) {
+            acc[termNumber] = [];
+          }
+          acc[termNumber].push(fee);
+          return acc;
+        },
+        {} as { [key: number]: LoanFeePerTerm[] },
+      );
 
       // Build amortizationParams.feesPerTerm
       amortizationParams.feesPerTerm = Object.keys(feesGroupedByTerm).map(
@@ -1748,10 +1790,10 @@ export class AppComponent implements OnChanges {
                   basedOn: fee.basedOn,
                   description: fee.description,
                   metadata: fee.metadata,
-                } as Fee)
+                }) as Fee,
             ),
           };
-        }
+        },
       );
     }
 
@@ -1773,7 +1815,7 @@ export class AppComponent implements OnChanges {
     }
     this.amortization = amortization;
     this.accruedInterest = amortization.getAccruedInterestByDate(
-      this.snapshotDate
+      this.snapshotDate,
     );
     this.tilaDisclosures = amortization.generateTILADisclosures();
     this.repaymentSchedule = amortization.repaymentSchedule;

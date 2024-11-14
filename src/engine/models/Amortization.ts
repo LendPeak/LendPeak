@@ -14,6 +14,8 @@ dayjs.extend(isSameOrAfter);
 dayjs.extend(isSameOrBefore);
 dayjs.extend(isBetween);
 
+import cloneDeep from "lodash/cloneDeep";
+
 /**
  * Interface representing each entry in the payment schedule.
  */
@@ -180,7 +182,11 @@ export class Amortization {
   private feesPerTerm: Map<number, Fee[]>;
   private feesForAllTerms: Fee[]; // New property for global fees
 
+  private _inputParams: AmortizationParams;
+
   constructor(params: AmortizationParams) {
+    this._inputParams = cloneDeep(params);
+
     // validate that loan amount is greater than zero
     if (params.loanAmount.getValue().isZero() || params.loanAmount.getValue().isNegative()) {
       throw new Error("Invalid loan amount, must be greater than zero");
@@ -1550,5 +1556,149 @@ export class Amortization {
     const csvContent = [headerRow, ...dataRows].join("\n");
 
     return csvContent;
+  }
+
+  /**
+   * Generates TypeScript code to recreate this Amortization instance.
+   * @returns A string containing the TypeScript code.
+   */
+  public toCode(): string {
+    // Helper functions to serialize special types
+    const serializeCurrency = (currency: Currency | number): string => {
+      if (currency instanceof Currency) {
+        return `Currency.of(${currency.toNumber()})`;
+      } else {
+        return `Currency.of(${currency})`;
+      }
+    };
+
+    const serializeDecimal = (decimal: Decimal | number): string => {
+      if (decimal instanceof Decimal) {
+        return `new Decimal(${decimal.toString()})`;
+      } else {
+        return `new Decimal(${decimal})`;
+      }
+    };
+
+    const serializeDayjs = (date: dayjs.Dayjs | Date | string): string => {
+      const dateStr = dayjs.isDayjs(date) ? date.format("YYYY-MM-DD") : dayjs(date).format("YYYY-MM-DD");
+      return `dayjs('${dateStr}')`;
+    };
+
+    const serializeAny = (value: any): string => {
+      return JSON.stringify(value);
+    };
+
+    // Serialize arrays of special types
+    const serializeArray = <T>(arr: T[], serializer: (item: T) => string): string => {
+      return `[${arr.map(serializer).join(", ")}]`;
+    };
+
+    // Serialize the input parameters
+    const serializeParams = (params: AmortizationParams): string => {
+      const lines = [];
+
+      for (const [key, value] of Object.entries(params)) {
+        if (value === undefined || value === null) {
+          continue; // Skip undefined or null values
+        }
+
+        let serializedValue: string;
+
+        switch (key) {
+          case "loanAmount":
+          case "originationFee":
+          case "flushThreshold":
+            serializedValue = serializeCurrency(value as Currency | number);
+            break;
+
+          case "annualInterestRate":
+            serializedValue = serializeDecimal(value as Decimal | number);
+            break;
+
+          case "startDate":
+          case "endDate":
+          case "firstPaymentDate":
+            serializedValue = serializeDayjs(value as Date | string);
+            break;
+
+          case "calendarType":
+            serializedValue = `CalendarType.${value as CalendarType}`;
+            break;
+
+          case "roundingMethod":
+            serializedValue = `RoundingMethod.${value as RoundingMethod}`;
+            break;
+
+          case "termPeriodDefinition":
+            serializedValue = `{
+    unit: '${(value as TermPeriodDefinition).unit}',
+    count: ${serializeArray((value as TermPeriodDefinition).count, (item) => item.toString())}
+  }`;
+            break;
+
+          case "balanceModifications":
+            serializedValue = serializeArray(value as BalanceModification[], (mod) => mod.toCode());
+            break;
+
+          // Handle other complex types as needed
+          default:
+            serializedValue = serializeAny(value);
+        }
+
+        lines.push(`  ${key}: ${serializedValue},`);
+      }
+
+      return lines.join("\n");
+    };
+
+    // Build the complete code string
+    const code = `import { Amortization, AmortizationParams, CalendarType, RoundingMethod, Fee, TermPeriodDefinition } from './Amortization';
+import { BalanceModification } from './BalanceModification';
+import { Currency } from '../utils/Currency';
+import Decimal from 'decimal.js';
+import dayjs from 'dayjs';
+
+// Define the parameters for the loan
+const params: AmortizationParams = {
+${serializeParams(this._inputParams)}
+};
+
+// Create the Amortization instance
+const amortization = new Amortization(params);
+`;
+
+    return code.trim();
+  }
+
+  public toTestCode(): string {
+    return `
+describe('Amortization Class', () => {
+  let amortization: Amortization;
+
+  beforeEach(() => {
+    ${this.toCode()}
+  });
+
+  it('should initialize with correct parameters', () => {
+    expect(amortization.loanAmount).toBeDefined();
+    expect(amortization.annualInterestRate).toBeDefined();
+    expect(amortization.term).toBeGreaterThan(0);
+  });
+
+  it('should calculate APR correctly', () => {
+    const apr = amortization.apr;
+    expect(apr).toBeInstanceOf(Decimal);
+    expect(apr.greaterThan(0)).toBe(true);
+  });
+
+  it('should generate an amortization schedule', () => {
+    const schedule = amortization.generateSchedule();
+    expect(schedule.length).toBeGreaterThan(0);
+    expect(schedule[0].principal).toBeDefined();
+    expect(schedule[0].interestRoundingError).toBeDefined();
+  });
+});
+  `.trim();
   }
 }

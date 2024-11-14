@@ -13,7 +13,6 @@
   </p>
 </div>
 
-<!-- Rest of your content -->
 <div *ngIf="!loanNotFound">
   <p-dialog
     header="Save Loan"
@@ -58,6 +57,34 @@
     </p-footer>
   </p-dialog>
 
+  <!-- generated code -->
+  <p-dialog
+    header="Generated Code"
+    [(visible)]="showCodeDialogVisible"
+    [modal]="true"
+    [style]="{ width: '80%' }"
+    [maximizable]="true"
+  >
+    <pre class="hljs">
+      <code [highlight]="generatedCode" language="typescript" lineNumbers></code>
+    </pre>
+
+    <p-footer>
+      <button
+        pButton
+        label="Copy to Clipboard"
+        icon="pi pi-copy"
+        (click)="copyCodeToClipboard()"
+      ></button>
+
+      <button
+        pButton
+        label="Close"
+        (click)="showCodeDialogVisible = false"
+      ></button>
+    </p-footer>
+  </p-dialog>
+
   <p-dialog
     header="Manage Loans"
     [(visible)]="showManageLoansDialog"
@@ -84,7 +111,7 @@
           <td>{{ loan.name }}</td>
           <td>{{ loan.description }}</td>
           <td>{{ loan.loanAmount | currency }}</td>
-          <td>{{ loan.startDate | date : "MM/dd/yyyy" }}</td>
+          <td>{{ loan.startDate | date: "MM/dd/yyyy" }}</td>
           <td>{{ loan.interestRate }}%</td>
           <td>
             <button
@@ -999,6 +1026,7 @@
       </p-toolbar>
 
       <!-- Repayment Plan Table -->
+
       <p-table
         #repaymentPlanTable
         [value]="repaymentPlan"
@@ -1052,16 +1080,16 @@
           >
             <td>{{ plan.period }}</td>
 
-            <td>{{ plan.periodStartDate | date : "MM/dd/yyyy" }}</td>
-            <td>{{ plan.periodEndDate | date : "MM/dd/yyyy" }}</td>
+            <td>{{ plan.periodStartDate | date: "MM/dd/yyyy" }}</td>
+            <td>{{ plan.periodEndDate | date: "MM/dd/yyyy" }}</td>
             <td *ngIf="showAdvancedTable">
               {{ plan.prebillDaysConfiguration }}
             </td>
-            <td>{{ plan.periodBillOpenDate | date : "MM/dd/yyyy" }}</td>
+            <td>{{ plan.periodBillOpenDate | date: "MM/dd/yyyy" }}</td>
             <td *ngIf="showAdvancedTable">
               {{ plan.billDueDaysAfterPeriodEndConfiguration }}
             </td>
-            <td>{{ plan.periodBillDueDate | date : "MM/dd/yyyy" }}</td>
+            <td>{{ plan.periodBillDueDate | date: "MM/dd/yyyy" }}</td>
             <td>{{ plan.periodInterestRate }}%</td>
             <td>{{ plan.fees | currency }}</td>
             <td>{{ plan.dueInterestForTerm | currency }}</td>

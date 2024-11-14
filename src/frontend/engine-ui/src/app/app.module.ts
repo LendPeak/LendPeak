@@ -40,8 +40,11 @@ import { ToastModule } from 'primeng/toast';
 import { MessageModule } from 'primeng/message';
 import { MessageService } from 'primeng/api';
 
-import { RouterModule } from '@angular/router';
+import { HighlightModule, LineNumbersOptions } from 'ngx-highlightjs';
+import { provideHighlightOptions } from 'ngx-highlightjs';
 
+import { RouterModule } from '@angular/router';
+import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 
 @NgModule({
   declarations: [
@@ -84,9 +87,21 @@ import { RouterModule } from '@angular/router';
     TooltipModule,
     ToastModule,
     MessageModule,
+    HighlightModule,
     RouterModule.forRoot([]),
   ],
-  providers: [MessageService],
+  providers: [
+    MessageService,
+    provideHighlightOptions({
+      coreLibraryLoader: () => import('highlight.js/lib/core'),
+      lineNumbersLoader: () => import('ngx-highlightjs/line-numbers'),
+
+      languages: {
+        typescript: () => import('highlight.js/lib/languages/typescript'),
+      },
+    }),
+    provideAnimationsAsync(),
+  ],
   bootstrap: [AppComponent],
 })
 export class AppModule {}

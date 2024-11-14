@@ -39,8 +39,11 @@ export class BalanceModification {
   private _unusedAmount!: Currency;
   jsUnusedAmount!: number;
 
+  private _inputParams: IBalanceModification;
+
   constructor(params: IBalanceModification) {
-    console.log("params passed to balance modification", params);
+    this._inputParams = JSON.parse(JSON.stringify(params));
+
     if (params.id) {
       this.id = params.id;
     }
@@ -138,5 +141,58 @@ export class BalanceModification {
       }
     }
     return mods;
+  }
+
+  /**
+   * Generates TypeScript code to recreate this BalanceModification instance.
+   * @returns A string containing the TypeScript code.
+   */
+  public toCode(): string {
+    // Helper functions
+    const serializeCurrency = (currency: Currency | number): string => {
+      if (currency instanceof Currency) {
+        return `Currency.of(${currency.toNumber()})`;
+      } else {
+        return `Currency.of(${currency})`;
+      }
+    };
+
+    const serializeDayjs = (date: Dayjs | Date | string): string => {
+      const dateStr = dayjs.isDayjs(date) ? date.format("YYYY-MM-DD") : dayjs(date).format("YYYY-MM-DD");
+      return `dayjs('${dateStr}')`;
+    };
+
+    const serializeAny = (value: any): string => {
+      return JSON.stringify(value);
+    };
+
+    // Build the BalanceModification object
+    const lines = [];
+
+    lines.push("{");
+
+    if (this.id) {
+      lines.push(`  id: '${this.id}',`);
+    }
+
+    lines.push(`  amount: ${serializeCurrency(this.amount)},`);
+    lines.push(`  date: ${serializeDayjs(this.date)},`);
+    lines.push(`  type: '${this.type}',`);
+
+    if (this.description) {
+      lines.push(`  description: '${this.description}',`);
+    }
+
+    if (this.metadata) {
+      lines.push(`  metadata: ${serializeAny(this.metadata)},`);
+    }
+
+    if (this.isSystemModification !== undefined) {
+      lines.push(`  isSystemModification: ${this.isSystemModification},`);
+    }
+
+    lines.push("}");
+
+    return lines.join("\n");
   }
 }

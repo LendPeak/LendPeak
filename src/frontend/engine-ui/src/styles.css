@@ -3,6 +3,7 @@
 @import "primeng/resources/primeng.min.css";
 @import "primeicons/primeicons.css";
 @import "primeflex/primeflex.css";
+@import 'highlight.js/styles/a11y-light.css';
 
 html {
     font-size: 80%;

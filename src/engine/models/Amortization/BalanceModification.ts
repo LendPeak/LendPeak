@@ -195,4 +195,43 @@ export class BalanceModification {
 
     return lines.join("\n");
   }
+
+  /**
+   * Serializes the BalanceModification instance into a JSON object.
+   * @returns A JSON-compatible object representing the BalanceModification instance.
+   */
+  public toJSON(): any {
+    return {
+      id: this.id,
+      amount: this.amount.toNumber(),
+      date: this.date.toISOString(),
+      type: this.type,
+      description: this.description,
+      metadata: this.metadata,
+      isSystemModification: this.isSystemModification,
+      usedAmount: this.usedAmount.toNumber(),
+      unusedAmount: this.unusedAmount.toNumber(),
+    };
+  }
+
+  /**
+   * Recreates a BalanceModification instance from a JSON object.
+   * @param json The JSON object representing a BalanceModification instance.
+   * @returns A new BalanceModification instance.
+   */
+  public static fromJSON(json: any): BalanceModification {
+    const params: IBalanceModification = {
+      id: json.id,
+      amount: Currency.of(json.amount),
+      date: dayjs(json.date),
+      type: json.type,
+      description: json.description,
+      metadata: json.metadata,
+      isSystemModification: json.isSystemModification,
+    };
+
+    const balanceModification = new BalanceModification(params);
+    balanceModification.usedAmount = Currency.of(json.usedAmount);
+    return balanceModification;
+  }
 }

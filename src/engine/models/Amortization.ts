@@ -1701,4 +1701,95 @@ describe('Amortization Class', () => {
 });
   `.trim();
   }
+
+  /**
+   * Serializes the Amortization instance into a JSON object.
+   * @returns A JSON-compatible object representing the Amortization instance.
+   */
+  public toJSON(): any {
+    return {
+      loanAmount: this.loanAmount.toNumber(),
+      originationFee: this.originationFee.toNumber(),
+      totalLoanAmount: this.totalLoanAmount.toNumber(),
+      annualInterestRate: this.annualInterestRate.toString(),
+      term: this.term,
+      preBillDays: this.preBillDays,
+      dueBillDays: this.dueBillDays,
+      defaultPreBillDaysConfiguration: this.defaultPreBillDaysConfiguration,
+      defaultBillDueDaysAfterPeriodEndConfiguration: this.defaultBillDueDaysAfterPeriodEndConfiguration,
+      startDate: this.startDate.toISOString(),
+      endDate: this.endDate.toISOString(),
+      calendarType: this.calendar.calendarType,
+      roundingMethod: this.roundingMethod,
+      flushUnbilledInterestRoundingErrorMethod: this.flushUnbilledInterestRoundingErrorMethod,
+      roundingPrecision: this.roundingPrecision,
+      flushThreshold: this.flushThreshold.toNumber(),
+      periodsSchedule: this.periodsSchedule.map((period) => ({
+        startDate: period.startDate.toISOString(),
+        endDate: period.endDate.toISOString(),
+      })),
+      rateSchedules: this.rateSchedules.map((rate) => ({
+        annualInterestRate: rate.annualInterestRate.toString(),
+        startDate: rate.startDate.toISOString(),
+        endDate: rate.endDate.toISOString(),
+      })),
+      allowRateAbove100: this.allowRateAbove100,
+      termPaymentAmountOverride: this.termPaymentAmountOverride,
+      termPeriodDefinition: this.termPeriodDefinition,
+      changePaymentDates: this.changePaymentDates,
+      balanceModifications: this.balanceModifications.map((mod) => mod.toJSON()), // Assuming BalanceModification has a toJSON method
+      perDiemCalculationType: this.perDiemCalculationType,
+      billingModel: this.billingModel,
+      feesPerTerm: Array.from(this.feesPerTerm.entries()),
+      feesForAllTerms: this.feesForAllTerms,
+      repaymentSchedule: this.repaymentSchedule.map((entry) => entry.toJSON()), // Assuming AmortizationEntry has a toJSON method
+    };
+  }
+
+  /**
+   * Recreates an Amortization instance from a JSON object.
+   * @param json The JSON object representing an Amortization instance.
+   * @returns A new Amortization instance.
+   */
+  public static fromJSON(json: any): Amortization {
+    const params: AmortizationParams = {
+      loanAmount: Currency.of(json.loanAmount),
+      originationFee: json.originationFee ? Currency.of(json.originationFee) : undefined,
+      annualInterestRate: new Decimal(json.annualInterestRate),
+      term: json.term,
+      preBillDays: json.preBillDays,
+      dueBillDays: json.dueBillDays,
+      defaultPreBillDaysConfiguration: json.defaultPreBillDaysConfiguration,
+      defaultBillDueDaysAfterPeriodEndConfiguration: json.defaultBillDueDaysAfterPeriodEndConfiguration,
+      startDate: dayjs(json.startDate),
+      endDate: json.endDate ? dayjs(json.endDate) : undefined,
+      calendarType: json.calendarType,
+      roundingMethod: json.roundingMethod,
+      flushUnbilledInterestRoundingErrorMethod: json.flushUnbilledInterestRoundingErrorMethod,
+      roundingPrecision: json.roundingPrecision,
+      flushThreshold: Currency.of(json.flushThreshold),
+      periodsSchedule: json.periodsSchedule.map((period: any) => ({
+        startDate: dayjs(period.startDate),
+        endDate: dayjs(period.endDate),
+      })),
+      ratesSchedule: json.rateSchedules.map((rate: any) => ({
+        annualInterestRate: new Decimal(rate.annualInterestRate),
+        startDate: dayjs(rate.startDate),
+        endDate: dayjs(rate.endDate),
+      })),
+      allowRateAbove100: json.allowRateAbove100,
+      termPaymentAmountOverride: json.termPaymentAmountOverride,
+      termPeriodDefinition: json.termPeriodDefinition,
+      changePaymentDates: json.changePaymentDates,
+      balanceModifications: json.balanceModifications.map((mod: any) => BalanceModification.fromJSON(mod)),
+      perDiemCalculationType: json.perDiemCalculationType,
+      billingModel: json.billingModel,
+      feesPerTerm: json.feesPerTerm,
+      feesForAllTerms: json.feesForAllTerms,
+    };
+
+    const amortization = new Amortization(params);
+
+    return amortization;
+  }
 }

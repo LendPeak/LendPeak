@@ -128,4 +128,79 @@ export class AmortizationEntry {
     this.unbilledInterestDueToRounding = params.unbilledInterestDueToRounding;
     this.metadata = params.metadata;
   }
+
+  /**
+   * Converts the AmortizationEntry instance into a JSON object.
+   * @returns A JSON-compatible object representing the AmortizationEntry instance.
+   */
+  public toJSON(): any {
+    return {
+      term: this.term,
+      periodStartDate: this.periodStartDate.toISOString(),
+      periodEndDate: this.periodEndDate.toISOString(),
+      prebillDaysConfiguration: this.prebillDaysConfiguration,
+      billDueDaysAfterPeriodEndConfiguration: this.billDueDaysAfterPeriodEndConfiguration,
+      billablePeriod: this.billablePeriod,
+      periodBillOpenDate: this.periodBillOpenDate.toISOString(),
+      periodBillDueDate: this.periodBillDueDate.toISOString(),
+      periodInterestRate: this.periodInterestRate.toString(),
+      principal: this.principal.toNumber(),
+      dueInterestForTerm: this.dueInterestForTerm.toNumber(),
+      accruedInterestForPeriod: this.accruedInterestForPeriod.toNumber(),
+      billedInterestForTerm: this.billedInterestForTerm.toNumber(),
+      billedDeferredInterest: this.billedDeferredInterest.toNumber(),
+      unbilledTotalDeferredInterest: this.unbilledTotalDeferredInterest.toNumber(),
+      fees: this.fees.toNumber(),
+      billedDeferredFees: this.billedDeferredFees.toNumber(),
+      unbilledTotalDeferredFees: this.unbilledTotalDeferredFees.toNumber(),
+      totalPayment: this.totalPayment.toNumber(),
+      endBalance: this.endBalance.toNumber(),
+      startBalance: this.startBalance.toNumber(),
+      balanceModificationAmount: this.balanceModificationAmount.toNumber(),
+      balanceModification: this.balanceModification ? this.balanceModification.toJSON() : undefined,
+      perDiem: this.perDiem.toNumber(),
+      daysInPeriod: this.daysInPeriod,
+      interestRoundingError: this.interestRoundingError.toNumber(),
+      unbilledInterestDueToRounding: this.unbilledInterestDueToRounding.toNumber(),
+      metadata: this.metadata,
+    };
+  }
+
+  /**
+   * Reconstructs an AmortizationEntry instance from a JSON object.
+   * @param json The JSON object representing an AmortizationEntry instance.
+   * @returns A new AmortizationEntry instance.
+   */
+  public static fromJSON(json: any): AmortizationEntry {
+    return new AmortizationEntry({
+      term: json.term,
+      periodStartDate: dayjs(json.periodStartDate),
+      periodEndDate: dayjs(json.periodEndDate),
+      prebillDaysConfiguration: json.prebillDaysConfiguration,
+      billDueDaysAfterPeriodEndConfiguration: json.billDueDaysAfterPeriodEndConfiguration,
+      billablePeriod: json.billablePeriod,
+      periodBillOpenDate: dayjs(json.periodBillOpenDate),
+      periodBillDueDate: dayjs(json.periodBillDueDate),
+      periodInterestRate: new Decimal(json.periodInterestRate),
+      principal: Currency.of(json.principal),
+      dueInterestForTerm: Currency.of(json.dueInterestForTerm),
+      accruedInterestForPeriod: Currency.of(json.accruedInterestForPeriod),
+      billedInterestForTerm: Currency.of(json.billedInterestForTerm),
+      billedDeferredInterest: Currency.of(json.billedDeferredInterest),
+      unbilledTotalDeferredInterest: Currency.of(json.unbilledTotalDeferredInterest),
+      fees: Currency.of(json.fees),
+      billedDeferredFees: Currency.of(json.billedDeferredFees),
+      unbilledTotalDeferredFees: Currency.of(json.unbilledTotalDeferredFees),
+      totalPayment: Currency.of(json.totalPayment),
+      endBalance: Currency.of(json.endBalance),
+      startBalance: Currency.of(json.startBalance),
+      balanceModificationAmount: Currency.of(json.balanceModificationAmount),
+      balanceModification: json.balanceModification ? BalanceModification.fromJSON(json.balanceModification) : undefined,
+      perDiem: Currency.of(json.perDiem),
+      daysInPeriod: json.daysInPeriod,
+      interestRoundingError: Currency.of(json.interestRoundingError),
+      unbilledInterestDueToRounding: Currency.of(json.unbilledInterestDueToRounding),
+      metadata: json.metadata,
+    });
+  }
 }

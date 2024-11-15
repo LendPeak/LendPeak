@@ -1235,7 +1235,12 @@ export class Amortization {
         throw new Error("Last payment is not defined");
       }
       lastPayment.principal = lastPayment.principal.add(startBalance);
-      lastPayment.totalPayment = lastPayment.principal.add(lastPayment.accruedInterestForPeriod).add(lastPayment.fees).add(lastPayment.dueInterestForTerm);
+      lastPayment.totalPayment = lastPayment.principal.add(lastPayment.accruedInterestForPeriod).add(lastPayment.fees);
+      // if it is an interest only term and there is no more principal left, accrued interest should be zero
+      // but due interest might not be, so we will add due interest to a total payment in those instances
+      if (lastPayment.totalPayment.isZero() && lastPayment.dueInterestForTerm.greaterThan(0)) {
+        lastPayment.totalPayment = lastPayment.totalPayment.add(lastPayment.dueInterestForTerm);
+      }
       lastPayment.endBalance = Currency.of(0);
       lastPayment.perDiem = lastPayment.accruedInterestForPeriod.divide(this.calendar.daysInMonth(this.calendar.addMonths(this.startDate, this.term)));
       lastPayment.metadata.finalAdjustment = true;

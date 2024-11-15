@@ -402,7 +402,16 @@ export class AppComponent implements OnChanges {
   // Method to handle changes to snapshotDate
   onSnapshotDateChange(date: Date) {
     this.snapshotDate = date;
-    localStorage.setItem('snapshotDate', date.toISOString());
+
+    // if snapshot date is today, we don't need to store it in local storage
+    // and we want to clear the stored snapshot date
+    const today = dayjs().startOf('day');
+    const selectedDate = dayjs(date).startOf('day');
+    if (selectedDate.isSame(today)) {
+      localStorage.removeItem('snapshotDate');
+    } else {
+      localStorage.setItem('snapshotDate', date.toISOString());
+    }
 
     this.submitLoan();
     // this.updateDataForSnapshotDate();

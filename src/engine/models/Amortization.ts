@@ -1168,8 +1168,6 @@ export class Amortization {
             totalPayment = fixedMonthlyPayment;
           }
 
-          // Corrected code ends here
-
           const balanceBeforePayment = Currency.of(startBalance);
           const balanceAfterPayment = startBalance.subtract(principal);
 
@@ -1237,7 +1235,7 @@ export class Amortization {
         throw new Error("Last payment is not defined");
       }
       lastPayment.principal = lastPayment.principal.add(startBalance);
-      lastPayment.totalPayment = lastPayment.principal.add(lastPayment.accruedInterestForPeriod).add(lastPayment.fees);
+      lastPayment.totalPayment = lastPayment.principal.add(lastPayment.accruedInterestForPeriod).add(lastPayment.fees).add(lastPayment.dueInterestForTerm);
       lastPayment.endBalance = Currency.of(0);
       lastPayment.perDiem = lastPayment.accruedInterestForPeriod.divide(this.calendar.daysInMonth(this.calendar.addMonths(this.startDate, this.term)));
       lastPayment.metadata.finalAdjustment = true;

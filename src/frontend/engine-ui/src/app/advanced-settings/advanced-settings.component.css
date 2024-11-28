@@ -1,3 +1,5 @@
+/* advanced-settings.component.css */
+
 /* Add spacing between buttons */
 .p-buttonset .p-button,
 .p-dialog .p-footer .p-button,
@@ -14,7 +16,7 @@
 /* Style for the 'Modified' indicator */
 .modified-indicator {
     color: #f39c12;
-    /* Orange color */
+    /* Orange color for emphasis */
     font-weight: bold;
 }
 
@@ -28,28 +30,4 @@
 /* Center align the toolbar content */
 .p-toolbar .p-toolbar-group-right {
     align-items: center;
-}
-
-/* Center the 'Save' button */
-.p-toolbar-group-center {
-    flex-grow: 1;
-    display: flex;
-    justify-content: center;
-}
-
-/* Right align the right group */
-.p-toolbar-group-right {
-    display: flex;
-    align-items: center;
-}
-
-/* Styles for the loaded settings info and modified indicator */
-.loaded-settings {
-    color: #007ad9;
-    font-weight: bold;
-}
-
-.modified-indicator {
-    color: #f39c12;
-    font-weight: bold;
 }

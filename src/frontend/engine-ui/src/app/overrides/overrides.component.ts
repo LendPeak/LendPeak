@@ -6,6 +6,9 @@ import dayjs from 'dayjs';
 import { AmortizationEntry } from 'lendpeak-engine/models/Amortization/AmortizationEntry';
 import { BalanceModification } from 'lendpeak-engine/models/Amortization/BalanceModification';
 import { UILoan } from '../models/loan.model';
+import { OverrideSettingsService } from '../services/override-settings.service';
+import { OverrideSettings } from '../models/override-settings.model';
+import { v4 as uuidv4 } from 'uuid';
 
 @Component({
   selector: 'app-overrides',
@@ -21,9 +24,272 @@ export class OverridesComponent {
   @Output() loanChange = new EventEmitter<any>();
   @Output() loanUpdated = new EventEmitter<void>();
 
-  // Add this method
-  onInputChange() {
+  savedSettings: OverrideSettings[] = [];
+  selectedSettingId: string | null = null;
+  isModified: boolean = false;
+  currentSettingVersion: number | null = null;
+
+  showSaveSettingsDialog: boolean = false;
+  showLoadSettingsDialog: boolean = false;
+  showPreviewSettingsDialog: boolean = false;
+
+  // For saving settings
+  newSetting: OverrideSettings = {
+    id: '',
+    name: '',
+    version: 1,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    isDefault: false,
+    settings: {},
+  };
+
+  loadedSettingName: string = '';
+  originalSettings: any = {};
+
+  selectedSetting: OverrideSettings | null = null;
+
+  constructor(private overrideSettingsService: OverrideSettingsService) {}
+
+  ngOnInit() {
+    this.loadSavedSettings();
+
+    // Check for default settings
+    const defaultSetting = this.overrideSettingsService.getDefaultSetting();
+    if (defaultSetting) {
+      this.applySettings(defaultSetting);
+      this.selectedSettingId = defaultSetting.id;
+      this.loadedSettingName = defaultSetting.name;
+      this.currentSettingVersion = defaultSetting.version;
+      this.originalSettings = JSON.parse(
+        JSON.stringify(defaultSetting.settings),
+      );
+    } else {
+      // Store the current settings as original
+      this.originalSettings = JSON.parse(
+        JSON.stringify(this.getCurrentSettings()),
+      );
+    }
+  }
+
+  startWithNewSettings() {
+    if (this.isModified) {
+      if (
+        !confirm(
+          'You have unsaved changes. Do you want to discard them and start with default settings?',
+        )
+      ) {
+        return;
+      }
+    }
+    this.selectedSettingId = null;
+    this.loadedSettingName = '';
+    this.currentSettingVersion = null;
+    this.applyDefaultSettings();
+    this.isModified = false;
+  }
+
+  applyDefaultSettings() {
+    // Reset overrides to default values
+    this.loan.termPaymentAmountOverride = [];
+    this.loan.ratesSchedule = [];
+    this.loan.changePaymentDates = [];
+    this.loan.preBillDays = [];
+    this.loan.dueBillDays = [];
+    this.loan.balanceModifications = [];
+    this.loan.feesForAllTerms = [];
+    this.loan.feesPerTerm = [];
+    // Add other properties as needed
+
+    // Store as original settings
+    this.originalSettings = JSON.parse(
+      JSON.stringify(this.getCurrentSettings()),
+    );
+
     this.emitLoanChange();
+  }
+
+  resetToOriginalSettings() {
+    if (this.selectedSettingId) {
+      const originalSetting = this.overrideSettingsService.getSettingById(
+        this.selectedSettingId,
+      );
+      if (originalSetting) {
+        this.applySettings(originalSetting);
+        this.isModified = false;
+      }
+    } else {
+      // Reset to stored original settings
+      const settings = this.originalSettings;
+      this.loan.termPaymentAmountOverride =
+        settings.termPaymentAmountOverride || [];
+      this.loan.ratesSchedule = settings.ratesSchedule || [];
+      this.loan.changePaymentDates = settings.changePaymentDates || [];
+      this.loan.preBillDays = settings.preBillDays || [];
+      this.loan.dueBillDays = settings.dueBillDays || [];
+      this.loan.balanceModifications = settings.balanceModifications || [];
+      this.loan.feesForAllTerms = settings.feesForAllTerms || [];
+      this.loan.feesPerTerm = settings.feesPerTerm || [];
+      // Reset other properties as needed
+
+      this.emitLoanChange();
+      this.isModified = false;
+    }
+  }
+
+  // Save the current settings
+  saveCurrentSettings() {
+    const newSetting: OverrideSettings = {
+      id: uuidv4(),
+      name: '', // Prompt user for a name in the UI
+      version: 1,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      isDefault: false,
+      settings: this.getCurrentSettings(),
+    };
+    // Open a dialog to get the name and isDefault flag
+    this.openSaveSettingsDialog(newSetting);
+  }
+
+  // Update an existing setting
+  updateCurrentSettings() {
+    if (this.selectedSettingId) {
+      const existingSetting = this.overrideSettingsService.getSettingById(
+        this.selectedSettingId,
+      );
+      if (existingSetting) {
+        const newVersion: OverrideSettings = {
+          ...existingSetting,
+          id: uuidv4(),
+          version: existingSetting.version + 1,
+          previousVersionId: existingSetting.id,
+          updatedAt: new Date(),
+          settings: this.getCurrentSettings(),
+        };
+        this.overrideSettingsService.saveSetting(newVersion);
+        this.loadSavedSettings();
+
+        // Update state
+        this.selectedSettingId = newVersion.id;
+        this.loadedSettingName = newVersion.name;
+        this.currentSettingVersion = newVersion.version;
+        this.originalSettings = JSON.parse(
+          JSON.stringify(this.getCurrentSettings()),
+        );
+        this.isModified = false;
+      }
+    }
+  }
+
+  // Get the current settings from the component
+  getCurrentSettings() {
+    return {
+      termPaymentAmountOverride: this.loan.termPaymentAmountOverride,
+      ratesSchedule: this.loan.ratesSchedule,
+      changePaymentDates: this.loan.changePaymentDates,
+      preBillDays: this.loan.preBillDays,
+      dueBillDays: this.loan.dueBillDays,
+      balanceModifications: this.loan.balanceModifications,
+      feesForAllTerms: this.loan.feesForAllTerms,
+      feesPerTerm: this.loan.feesPerTerm,
+      // Add other settings as needed
+    };
+  }
+
+  // Apply settings to the component
+  applySettings(setting: OverrideSettings) {
+    const settings = setting.settings;
+    this.loan.termPaymentAmountOverride =
+      settings.termPaymentAmountOverride || [];
+    this.loan.ratesSchedule = settings.ratesSchedule || [];
+    this.loan.changePaymentDates = settings.changePaymentDates || [];
+    this.loan.preBillDays = settings.preBillDays || [];
+    this.loan.dueBillDays = settings.dueBillDays || [];
+    this.loan.balanceModifications = settings.balanceModifications || [];
+    this.loan.feesForAllTerms = settings.feesForAllTerms || [];
+    this.loan.feesPerTerm = settings.feesPerTerm || [];
+    // Apply other settings as needed
+
+    this.emitLoanChange();
+    this.isModified = false;
+  }
+
+  // Load saved settings from the service
+  loadSavedSettings() {
+    this.savedSettings = this.overrideSettingsService.getAllSettings();
+  }
+
+  // Open Save Settings Dialog
+  openSaveSettingsDialog(setting: OverrideSettings) {
+    this.newSetting = setting;
+    this.showSaveSettingsDialog = true;
+  }
+
+  confirmSaveSettings() {
+    // Save the setting
+    this.overrideSettingsService.saveSetting(this.newSetting);
+    this.loadSavedSettings();
+    this.showSaveSettingsDialog = false;
+
+    // Update state
+    this.selectedSettingId = this.newSetting.id;
+    this.loadedSettingName = this.newSetting.name;
+    this.currentSettingVersion = this.newSetting.version;
+    this.originalSettings = JSON.parse(
+      JSON.stringify(this.getCurrentSettings()),
+    );
+    this.isModified = false;
+  }
+
+  // Open Load Settings Dialog
+  openLoadSettingsDialog() {
+    this.loadSavedSettings();
+    this.showLoadSettingsDialog = true;
+  }
+
+  getVersionById(id: string | undefined): OverrideSettings | undefined {
+    if (!id) return undefined;
+    return this.savedSettings.find((s) => s.id === id);
+  }
+
+  // Confirm Load Settings
+  confirmLoadSettings() {
+    if (this.selectedSetting) {
+      this.applySettings(this.selectedSetting);
+      this.selectedSettingId = this.selectedSetting.id;
+      this.currentSettingVersion = this.selectedSetting.version;
+      this.isModified = false;
+    }
+    this.showLoadSettingsDialog = false;
+  }
+
+  // Preview Settings
+  previewSettings(setting: OverrideSettings) {
+    this.selectedSetting = setting;
+    this.showPreviewSettingsDialog = true;
+  }
+
+  // Delete a setting
+  deleteSetting(id: string) {
+    this.overrideSettingsService.deleteSetting(id);
+    this.loadSavedSettings();
+  }
+
+  onInputChange() {
+    this.isModified = true;
+
+    this.emitLoanChange();
+  }
+
+  saveSettings() {
+    if (this.selectedSettingId) {
+      // Update existing settings
+      this.updateCurrentSettings();
+    } else {
+      // Save as new settings
+      this.saveCurrentSettings();
+    }
   }
 
   // Methods related to Term Payment Amount Overrides
@@ -114,7 +380,7 @@ export class OverridesComponent {
       changePaymentDates.push({
         termNumber: lastTermNumber + 1,
         newDate: dayjs(
-          changePaymentDates[changePaymentDates.length - 1].newDate
+          changePaymentDates[changePaymentDates.length - 1].newDate,
         )
           .add(1, 'month')
           .toDate(),
@@ -289,7 +555,7 @@ export class OverridesComponent {
     year: number;
   }): boolean {
     const passedDate = dayjs(
-      new Date(ngDate.year, ngDate.month, ngDate.day)
+      new Date(ngDate.year, ngDate.month, ngDate.day),
     ).startOf('day');
 
     for (const row of this.loanRepaymentPlan) {

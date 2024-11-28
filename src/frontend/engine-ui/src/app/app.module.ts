@@ -36,6 +36,10 @@ import { DepositsComponent } from './deposits/deposits.component';
 import { BillsComponent } from './bills/bills.component';
 import { BasicLoanInfoComponent } from './basic-loan-info/basic-loan-info.component';
 import { OverridesComponent } from './overrides/overrides.component';
+import { AdvancedSettingsComponent } from './advanced-settings/advanced-settings.component';
+import { AdvancedSettingsService } from './services/advanced-settings.service';
+import { OverrideSettingsService } from './services/override-settings.service';
+
 import { ToastModule } from 'primeng/toast';
 import { MessageModule } from 'primeng/message';
 import { MessageService } from 'primeng/api';
@@ -55,6 +59,7 @@ import { provideAnimationsAsync } from '@angular/platform-browser/animations/asy
     BillsComponent,
     BasicLoanInfoComponent,
     OverridesComponent,
+    AdvancedSettingsComponent,
   ],
   imports: [
     BrowserModule,
@@ -91,6 +96,8 @@ import { provideAnimationsAsync } from '@angular/platform-browser/animations/asy
     RouterModule.forRoot([]),
   ],
   providers: [
+    AdvancedSettingsService,
+    OverrideSettingsService,
     MessageService,
     provideHighlightOptions({
       coreLibraryLoader: () => import('highlight.js/lib/core'),

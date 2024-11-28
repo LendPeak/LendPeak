@@ -172,12 +172,15 @@ export class AppComponent implements OnChanges {
       ],
     },
     {
-      version: '1.11.0',
-      date: '2024-11-09',
+      version: '1.12.0',
+      date: '2024-11-27',
       details: [
-        'Added tab state to the URL, allowing users to share links that open directly to specific tabs within the application.',
-        "Implemented browser navigation event handling, so that the active tab updates correctly when using the browser's back and forward buttons.",
-        'Enhanced the user experience by maintaining tab state across sessions and shared links.',
+        'Refactored the AppComponent by externalizing advanced settings into separate components.',
+        'Added support to load and retrieve overrides and advanced settings.',
+        'Implemented versioning support and preview for settings.',
+        'Reorganized the toolbar in the OverridesComponent and AdvancedSettingsComponent for improved usability.',
+        'Fixed an issue where date fields were not correctly restored when loading settings from JSON by converting date strings back to Date objects upon deserialization.',
+        'Enhanced user experience by simplifying the workflow for saving and updating settings, reducing confusion with button placement and functionality.',
       ],
     },
   ];
@@ -783,15 +786,6 @@ export class AppComponent implements OnChanges {
   markBillAsPaid(bill: Bill) {
     bill.isPaid = true;
     // Optionally, update any backend or perform additional actions
-  }
-
-  onTermPaymentAmountChange(value: any) {
-    // if (!value) {
-    //   this.loan.termPaymentAmount = undefined;
-    // } else {
-    //   this.loan.termPaymentAmount = parseFloat(this.loan.termPaymentAmount);
-    // }
-    this.submitLoan();
   }
 
   termPeriodDefinitionChange() {

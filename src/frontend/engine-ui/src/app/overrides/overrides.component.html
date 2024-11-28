@@ -1,3 +1,183 @@
+<!-- Toolbar -->
+<p-toolbar class="p-mb-3">
+  <!-- Left Group: Settings Management -->
+  <div class="p-toolbar-group-left">
+    <p-button
+      label="New"
+      icon="pi pi-file"
+      class="p-button-secondary mr-3"
+      (click)="startWithNewSettings()"
+      pTooltip="Start with default settings"
+    ></p-button>
+    <p-button
+      label="Load"
+      icon="pi pi-folder-open"
+      class="p-button-primary mr-3"
+      (click)="openLoadSettingsDialog()"
+      pTooltip="Load saved settings"
+    ></p-button>
+  </div>
+
+  <!-- Center Group: Save Operations -->
+  <div class="p-toolbar-group-center">
+    <p-button
+      label="Save"
+      icon="pi pi-save"
+      class="p-button-success"
+      (click)="saveSettings()"
+      [disabled]="!isModified"
+      pTooltip="Save changes"
+    ></p-button>
+  </div>
+
+  <!-- Right Group: Editing Tools -->
+  <div class="p-toolbar-group-right">
+    <p-button
+      label="Reset"
+      icon="pi pi-undo"
+      class="p-button-warning mr-3"
+      (click)="resetToOriginalSettings()"
+      [disabled]="!isModified"
+      pTooltip="Reset changes"
+    ></p-button>
+    <!-- Display Loaded Settings Info -->
+    <span *ngIf="loadedSettingName" class="p-mr-2 loaded-settings">
+      <i class="pi pi-cog"></i>
+      {{ loadedSettingName }}
+      <span *ngIf="currentSettingVersion">
+        (v{{ currentSettingVersion }})
+      </span>
+    </span>
+    <!-- Modified Indicator -->
+    <span *ngIf="isModified" class="p-mr-2 modified-indicator">
+      <i class="pi pi-info-circle"></i> Modified
+    </span>
+  </div>
+</p-toolbar>
+
+
+<!-- Save Settings Dialog -->
+<p-dialog
+  header="Save Settings"
+  [(visible)]="showSaveSettingsDialog"
+  [modal]="true"
+  [style]="{ width: '400px' }"
+  [closable]="false"
+>
+  <div class="p-fluid">
+    <div class="field">
+      <label for="settingName">Setting Name</label>
+      <input
+        id="settingName"
+        type="text"
+        pInputText
+        [(ngModel)]="newSetting.name"
+      />
+    </div>
+    <div class="field-checkbox">
+      <p-checkbox [(ngModel)]="newSetting.isDefault" binary="true"></p-checkbox>
+      <label for="isDefault">Set as default</label>
+    </div>
+  </div>
+  <p-footer>
+    <button
+      pButton
+      label="Cancel"
+      class="p-button-text"
+      (click)="showSaveSettingsDialog = false"
+    ></button>
+    <button
+      pButton
+      label="Save"
+      class="p-button-primary"
+      (click)="confirmSaveSettings()"
+    ></button>
+  </p-footer>
+</p-dialog>
+
+<!-- Load Settings Dialog -->
+<p-dialog
+  header="Load Settings"
+  [(visible)]="showLoadSettingsDialog"
+  [modal]="true"
+  [style]="{ width: '600px' }"
+  [closable]="false"
+>
+  <p-table
+    [value]="savedSettings"
+    selectionMode="single"
+    [(selection)]="selectedSetting"
+    [paginator]="true"
+    [rows]="5"
+  >
+    <ng-template pTemplate="header">
+      <tr>
+        <th>Name</th>
+        <th>Version</th>
+        <th>Previous Version</th>
+
+        <th>Created At</th>
+        <th>Actions</th>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="body" let-setting>
+      <tr [pSelectableRow]="setting">
+        <td>{{ setting.name }}</td>
+        <td>{{ setting.version }}</td>
+        <td>
+          {{ getVersionById(setting.previousVersionId)?.version || "N/A" }}
+        </td>
+        <td>{{ setting.createdAt | date: "short" }}</td>
+        <td>
+          <p-button
+            icon="pi pi-eye"
+            class="p-button-rounded p-button-info mr-2"
+            (click)="previewSettings(setting)"
+          ></p-button>
+          <p-button
+            icon="pi pi-trash"
+            class="p-button-rounded p-button-danger"
+            (click)="deleteSetting(setting.id)"
+          ></p-button>
+        </td>
+      </tr>
+    </ng-template>
+  </p-table>
+  <p-footer>
+    <button
+      pButton
+      label="Cancel"
+      class="p-button-text mr-2"
+      (click)="showLoadSettingsDialog = false"
+    ></button>
+    <button
+      pButton
+      label="Load"
+      class="p-button-primary"
+      [disabled]="!selectedSetting"
+      (click)="confirmLoadSettings()"
+    ></button>
+  </p-footer>
+</p-dialog>
+
+<!-- Preview Settings Dialog -->
+<p-dialog
+  header="Settings Preview"
+  [(visible)]="showPreviewSettingsDialog"
+  [modal]="true"
+  [style]="{ width: '600px' }"
+>
+  <pre>{{ selectedSetting | json }}</pre>
+  <p-footer>
+    <button
+      pButton
+      label="Close"
+      class="p-button-text"
+      (click)="showPreviewSettingsDialog = false"
+    ></button>
+  </p-footer>
+</p-dialog>
+
 <div class="grid">
   <div class="col-12">
     <p-accordion multiple="true">
@@ -41,7 +221,7 @@
                                 padding: '5px',
                                 display: 'inline-block',
                                 textAlign: 'center',
-                                width: '24px'
+                                width: '24px',
                               }
                             : {}
                         "
@@ -71,7 +251,7 @@
                                 padding: '5px',
                                 display: 'inline-block',
                                 textAlign: 'center',
-                                width: '24px'
+                                width: '24px',
                               }
                             : {}
                         "
@@ -110,6 +290,36 @@
               class="p-button-success"
               (click)="addRateOverride()"
             ></p-button>
+          </div>
+        </div>
+      </p-accordionTab>
+
+      <!-- Payment Settings Section -->
+      <p-accordionTab header="Equated Installment Payments (EIP)">
+        <div class="p-fluid">
+          <!-- Term Payment Amount -->
+          <div class="field">
+            <label for="termPaymentAmount">
+              Term Payment Amount
+              <i
+                class="pi pi-info-circle tooltip-icon"
+                (click)="showTooltip($event, termPaymentAmountTooltip)"
+              ></i>
+            </label>
+            <p-inputNumber
+              id="termPaymentAmount"
+              [(ngModel)]="loan.termPaymentAmount"
+              name="termPaymentAmount"
+              mode="currency"
+              currency="USD"
+              locale="en-US"
+              (ngModelChange)="onInputChange()"
+            ></p-inputNumber>
+            <!-- Tooltip Overlay -->
+            <p-overlayPanel #termPaymentAmountTooltip>
+              Override the calculated payment amount per term. For example,
+              enter "$1,200" to set a fixed payment amount.
+            </p-overlayPanel>
           </div>
         </div>
       </p-accordionTab>
@@ -498,7 +708,7 @@
                     [(ngModel)]="fee.type"
                     [options]="[
                       { label: 'Fixed', value: 'fixed' },
-                      { label: 'Percentage', value: 'percentage' }
+                      { label: 'Percentage', value: 'percentage' },
                     ]"
                     (ngModelChange)="onInputChange()"
                   ></p-dropdown>
@@ -533,7 +743,7 @@
                       [options]="[
                         { label: 'Interest', value: 'interest' },
                         { label: 'Principal', value: 'principal' },
-                        { label: 'Total Payment', value: 'totalPayment' }
+                        { label: 'Total Payment', value: 'totalPayment' },
                       ]"
                       (ngModelChange)="onInputChange()"
                     ></p-dropdown>
@@ -607,7 +817,7 @@
                     [(ngModel)]="fee.type"
                     [options]="[
                       { label: 'Fixed', value: 'fixed' },
-                      { label: 'Percentage', value: 'percentage' }
+                      { label: 'Percentage', value: 'percentage' },
                     ]"
                     (ngModelChange)="onInputChange()"
                   ></p-dropdown>
@@ -642,7 +852,7 @@
                       [options]="[
                         { label: 'Interest', value: 'interest' },
                         { label: 'Principal', value: 'principal' },
-                        { label: 'Total Payment', value: 'totalPayment' }
+                        { label: 'Total Payment', value: 'totalPayment' },
                       ]"
                       (ngModelChange)="onInputChange()"
                     ></p-dropdown>

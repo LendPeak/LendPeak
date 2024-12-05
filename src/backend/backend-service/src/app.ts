@@ -11,9 +11,10 @@ const app = new Koa();
 
 app.use(async (ctx, next) => {
   const start = Date.now();
+  logger.info(`START: ${ctx.method} ${ctx.url}`);
   await next();
   const responseTime = Date.now() - start;
-  logger.info(`${ctx.method} ${ctx.url} - ${responseTime}ms`);
+  logger.info(`DONE: ${ctx.method} ${ctx.url} - ${responseTime}ms`);
 });
 
 app.use(errorHandler);
@@ -22,7 +23,17 @@ app.use(
   cors({
     origin: "https://demo.engine.lendpeak.io",
     credentials: true,
-    allowHeaders: ["Content-Type", "Authorization", "x-target-domain", "Autopal-Instance-Id", "x-forward-headers"],
+    allowHeaders: [
+      "Content-Type",
+      "Authorization",
+      "x-target-domain",
+      "Autopal-Instance-Id",
+      "x-forward-headers",
+      "LendPeak-Authorization",
+      "LendPeak-Autopal-Instance-Id",
+      "LendPeak-Forward-Headers",
+      "LendPeak-Target-Domain",
+    ],
     allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   })
 );

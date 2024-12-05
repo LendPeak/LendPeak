@@ -1,10 +1,10 @@
-import { Context } from "koa";
+import { Context, Next } from "koa";
 import axios from "axios";
 import logger from "../utils/logger";
 
 type Method = "get" | "delete" | "head" | "options" | "post" | "put" | "patch" | "purge" | "link" | "unlink";
 
-export const proxyController = async (ctx: Context) => {
+export const proxyController = async (ctx: Context, next: Next) => {
   let targetUrl = "";
   try {
     const targetDomainHeaderKey = Object.keys(ctx.headers).find((h) => /^lendpeak-target-domain$/i.test(h));
@@ -12,9 +12,10 @@ export const proxyController = async (ctx: Context) => {
 
     if (!targetDomain) {
       logger.error("Missing lendpeak-target-domain header");
+      logger.warn(`Request headers: ${JSON.stringify(ctx.headers)}`);
       ctx.status = 400;
       ctx.body = { error: "Missing lendpeak-target-domain header" };
-      return;
+      return next();
     }
 
     const forwardHeadersKey = Object.keys(ctx.headers).find((h) => /^lendpeak-forward-headers$/i.test(h));

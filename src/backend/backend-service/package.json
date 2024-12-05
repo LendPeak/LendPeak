@@ -5,7 +5,6 @@
   "scripts": {
     "build": "tsc",
     "dev": "nodemon --watch 'src/**/*.ts' --exec 'ts-node' src/index.ts",
-    "deploy": "./deploy.sh",
     "build:lambda": "npm run build && cp package*.json dist/ && npm install --only=production --prefix dist",
     "start": "node dist/lambda.js"
   },

@@ -34,8 +34,8 @@ export class LoanProService {
     // Set up headers
     const headers = new HttpHeaders({
       'Content-Type': 'application/json',
-      'x-target-domain': connector.credentials.apiUrl || '',
-      'x-forward-headers': forwardHeaders.join(','),
+      'LendPeak-target-domain': connector.credentials.apiUrl || '',
+      'LendPeak-forward-headers': forwardHeaders.join(','),
       'LendPeak-Autopal-Instance-Id': connector.credentials.autopalId || '',
       'LendPeak-Authorization': `Bearer ${connector.credentials.apiToken || ''}`,
     });

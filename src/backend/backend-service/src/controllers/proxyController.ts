@@ -7,21 +7,24 @@ type Method = "get" | "delete" | "head" | "options" | "post" | "put" | "patch" |
 export const proxyController = async (ctx: Context) => {
   let targetUrl = "";
   try {
-    const targetDomain = ctx.headers["x-target-domain"];
-    const forwardHeaders = typeof ctx.headers["x-forward-headers"] === "string" ? ctx.headers["x-forward-headers"].split(",") : [];
+    const targetDomainHeaderKey = Object.keys(ctx.headers).find((h) => /^lendpeak-target-domain$/i.test(h));
+    const targetDomain = targetDomainHeaderKey ? ctx.headers[targetDomainHeaderKey] : undefined;
 
     if (!targetDomain) {
+      logger.error("Missing lendpeak-target-domain header");
       ctx.status = 400;
-      ctx.body = { error: "Missing x-target-domain header" };
+      ctx.body = { error: "Missing lendpeak-target-domain header" };
       return;
     }
 
+    const forwardHeadersKey = Object.keys(ctx.headers).find((h) => /^lendpeak-forward-headers$/i.test(h));
+    const forwardHeaders = forwardHeadersKey && typeof ctx.headers[forwardHeadersKey] === "string" ? ctx.headers[forwardHeadersKey].split(",") : [];
     // Prepare headers to forward
     const headers: Record<string, string> = {};
     forwardHeaders.forEach((header) => {
       const headerKey = Object.keys(ctx.headers).find((h) => h.toLowerCase() === header.toLowerCase());
       if (headerKey) {
-        const newHeaderKey = headerKey.startsWith("LendPeak-") ? headerKey.replace("LendPeak-", "") : headerKey;
+        const newHeaderKey = headerKey.match(/^lendpeak-/i) ? headerKey.replace(/^lendpeak-/i, "") : headerKey;
         headers[newHeaderKey] = ctx.headers[headerKey] as string;
       }
     });

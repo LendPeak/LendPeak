@@ -7,6 +7,7 @@ import * as integrations from "aws-cdk-lib/aws-apigatewayv2-integrations";
 import * as certificatemanager from "aws-cdk-lib/aws-certificatemanager";
 import * as route53 from "aws-cdk-lib/aws-route53";
 import * as targets from "aws-cdk-lib/aws-route53-targets";
+import * as logs from "aws-cdk-lib/aws-logs";
 import { CorsHttpMethod, HttpMethod } from "aws-cdk-lib/aws-apigatewayv2";
 
 export class InfraStack extends cdk.Stack {
@@ -24,7 +25,7 @@ export class InfraStack extends cdk.Stack {
       validation: certificatemanager.CertificateValidation.fromDns(hostedZone),
     });
 
-    // Define Lambda function
+    // Define the Lambda function
     const backendLambda = new lambda.Function(this, "BackendLambda", {
       runtime: lambda.Runtime.NODEJS_18_X,
       handler: "lambda.handler",
@@ -36,7 +37,15 @@ export class InfraStack extends cdk.Stack {
       },
     });
 
+    // Create a log group for API Gateway access logs
+    const logGroup = new logs.LogGroup(this, "HttpApiAccessLogs", {
+      retention: logs.RetentionDays.ONE_WEEK,
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+    });
+
+    // Create an HTTP API without an automatic default stage
     const httpApi = new apigatewayv2.HttpApi(this, "HttpApi", {
+      createDefaultStage: false,
       corsPreflight: {
         allowHeaders: ["Content-Type", "LendPeak-Authorization", "LendPeak-Autopal-Instance-Id", "Authorization", "LendPeak-target-domain", "LendPeak-forward-headers"],
         allowMethods: [CorsHttpMethod.GET, CorsHttpMethod.POST, CorsHttpMethod.PUT, CorsHttpMethod.DELETE, CorsHttpMethod.OPTIONS],
@@ -45,6 +54,7 @@ export class InfraStack extends cdk.Stack {
       },
     });
 
+    // Add routes to the HTTP API
     httpApi.addRoutes({
       path: "/{proxy+}",
       methods: [
@@ -53,10 +63,36 @@ export class InfraStack extends cdk.Stack {
         HttpMethod.PUT,
         HttpMethod.DELETE,
         HttpMethod.PATCH,
-        // OPTIONS method is removed
+        // No OPTIONS here; let API Gateway handle preflight
       ],
       integration: new integrations.HttpLambdaIntegration("LambdaIntegration", backendLambda),
     });
+
+    // Create a custom $default stage
+    const stage = new apigatewayv2.HttpStage(this, "DefaultStage", {
+      httpApi,
+      stageName: "$default",
+      autoDeploy: true,
+    });
+
+    // Access the underlying CfnStage to set accessLogSettings
+    const cfnStage = stage.node.defaultChild as apigatewayv2.CfnStage;
+    cfnStage.accessLogSettings = {
+      destinationArn: logGroup.logGroupArn,
+      format: JSON.stringify({
+        requestId: "$context.requestId",
+        sourceIp: "$context.identity.sourceIp",
+        requestTime: "$context.requestTime",
+        httpMethod: "$context.httpMethod",
+        routeKey: "$context.routeKey",
+        status: "$context.status",
+        protocol: "$context.protocol",
+        responseLength: "$context.responseLength",
+        integrationStatus: "$context.integrationStatus",
+        integrationErrorMessage: "$context.integrationErrorMessage",
+        integrationLatency: "$context.integrationLatency",
+      }),
+    };
 
     // Define the custom domain for the API Gateway
     const domainName = new apigatewayv2.DomainName(this, "DomainName", {
@@ -64,11 +100,11 @@ export class InfraStack extends cdk.Stack {
       certificate: certificate,
     });
 
-    // Map the custom domain to the API stage
+    // Map the custom domain to the newly created custom stage
     new apigatewayv2.ApiMapping(this, "ApiMapping", {
       api: httpApi,
       domainName: domainName,
-      stage: httpApi.defaultStage!,
+      stage: stage,
     });
 
     // Create a Route 53 alias record
@@ -78,7 +114,7 @@ export class InfraStack extends cdk.Stack {
       target: route53.RecordTarget.fromAlias(new targets.ApiGatewayv2DomainProperties(domainName.regionalDomainName, domainName.regionalHostedZoneId)),
     });
 
-    // Output API URL
+    // Output API endpoint
     new cdk.CfnOutput(this, "ApiUrl", {
       value: httpApi.apiEndpoint,
     });

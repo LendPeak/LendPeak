@@ -1,26 +1,31 @@
-// loan-import.component.ts
-
-import { Component, OnInit, Output, EventEmitter } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  OnDestroy,
+  Output,
+  EventEmitter,
+} from '@angular/core';
 import { ConnectorService } from '../services/connector.service';
 import { Connector } from '../models/connector.model';
 import { LoanProService } from '../services/loanpro.service';
 import { MessageService } from 'primeng/api';
 import { UILoan } from '../models/loan.model';
 import { parseODataDate } from '../models/loanpro.model';
-import dayjs, { Dayjs } from 'dayjs';
+import dayjs from 'dayjs';
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter';
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore';
 import { DepositRecord } from 'lendpeak-engine/models/Deposit';
-import { parse } from 'uuid';
+import { Subscription } from 'rxjs';
 
 dayjs.extend(isSameOrAfter);
 dayjs.extend(isSameOrBefore);
+
 @Component({
   selector: 'app-loan-import',
   templateUrl: './loan-import.component.html',
   styleUrls: ['./loan-import.component.css'],
 })
-export class LoanImportComponent implements OnInit {
+export class LoanImportComponent implements OnInit, OnDestroy {
   connectors: Connector[] = [];
   selectedConnectorId: string = '';
   searchType: 'displayId' | 'systemId' = 'systemId';
@@ -28,6 +33,8 @@ export class LoanImportComponent implements OnInit {
   isLoading: boolean = false;
 
   @Output() loanImported = new EventEmitter<UILoan>();
+
+  private connectorsSubscription!: Subscription;
 
   constructor(
     private connectorService: ConnectorService,
@@ -39,8 +46,17 @@ export class LoanImportComponent implements OnInit {
     this.loadConnectors();
   }
 
+  ngOnDestroy(): void {
+    if (this.connectorsSubscription) {
+      this.connectorsSubscription.unsubscribe();
+    }
+  }
   loadConnectors() {
-    this.connectors = this.connectorService.getAllConnectors();
+    this.connectorsSubscription = this.connectorService.connectors$.subscribe(
+      (connectors: Connector[]) => {
+        this.connectors = connectors;
+      },
+    );
   }
 
   importLoan() {
@@ -73,7 +89,6 @@ export class LoanImportComponent implements OnInit {
         .importLoan(connector, this.searchType, this.searchValue)
         .subscribe(
           (loanData) => {
-            // Handle imported loan data
             this.isLoading = false;
             this.messageService.add({
               severity: 'success',
@@ -81,8 +96,7 @@ export class LoanImportComponent implements OnInit {
               detail: 'Loan imported successfully.',
             });
 
-            // now we need to map LoanPro data to our internal model
-            // and emit the imported loan data
+            // Map LoanPro data to internal model and emit
             const uiLoan: UILoan = {
               objectVersion: 9,
               id: loanData.d.id.toString(),

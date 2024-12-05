@@ -1,40 +1,70 @@
 import { Injectable } from '@angular/core';
 import { Connector } from '../models/connector.model';
+import { BehaviorSubject } from 'rxjs';
 
 @Injectable({
   providedIn: 'root',
 })
 export class ConnectorService {
-  private storageKey = 'connectors';
+  private connectorsSubject = new BehaviorSubject<Connector[]>([]);
+  public connectors$ = this.connectorsSubject.asObservable();
 
-  constructor() {}
+  constructor() {
+    const initialConnectors = this.loadConnectorsFromStorage();
+    this.connectorsSubject.next(initialConnectors);
+  }
 
   getAllConnectors(): Connector[] {
-    const data = localStorage.getItem(this.storageKey);
-    return data ? JSON.parse(data) : [];
-  }
-
-  saveConnector(connector: Connector): void {
-    const connectors = this.getAllConnectors();
-    const index = connectors.findIndex((c) => c.id === connector.id);
-    if (index !== -1) {
-      // Update existing connector
-      connectors[index] = connector;
-    } else {
-      // Add new connector
-      connectors.push(connector);
-    }
-    localStorage.setItem(this.storageKey, JSON.stringify(connectors));
-  }
-
-  deleteConnector(id: string): void {
-    let connectors = this.getAllConnectors();
-    connectors = connectors.filter((c) => c.id !== id);
-    localStorage.setItem(this.storageKey, JSON.stringify(connectors));
+    return this.connectorsSubject.getValue();
   }
 
   getConnectorById(id: string): Connector | undefined {
-    const connectors = this.getAllConnectors();
-    return connectors.find((c) => c.id === id);
+    return this.connectorsSubject
+      .getValue()
+      .find((connector) => connector.id === id);
+  }
+
+  addConnector(connector: Connector) {
+    const currentConnectors = this.connectorsSubject.getValue();
+    const updatedConnectors = [...currentConnectors, connector];
+    this.connectorsSubject.next(updatedConnectors);
+    this.saveConnectorsToStorage(updatedConnectors);
+  }
+
+  updateConnector(connector: Connector) {
+    const currentConnectors = this.connectorsSubject.getValue();
+    const index = currentConnectors.findIndex((c) => c.id === connector.id);
+    if (index !== -1) {
+      currentConnectors[index] = connector;
+      this.connectorsSubject.next([...currentConnectors]);
+      this.saveConnectorsToStorage(currentConnectors);
+    }
+  }
+
+  saveConnector(connector: Connector) {
+    const existingConnector = this.getConnectorById(connector.id);
+    if (existingConnector) {
+      this.updateConnector(connector);
+    } else {
+      this.addConnector(connector);
+    }
+  }
+
+  deleteConnector(id: string) {
+    const currentConnectors = this.connectorsSubject.getValue();
+    const updatedConnectors = currentConnectors.filter(
+      (connector) => connector.id !== id,
+    );
+    this.connectorsSubject.next(updatedConnectors);
+    this.saveConnectorsToStorage(updatedConnectors);
+  }
+
+  private loadConnectorsFromStorage(): Connector[] {
+    const storedConnectors = localStorage.getItem('connectors');
+    return storedConnectors ? JSON.parse(storedConnectors) : [];
+  }
+
+  private saveConnectorsToStorage(connectors: Connector[]): void {
+    localStorage.setItem('connectors', JSON.stringify(connectors));
   }
 }

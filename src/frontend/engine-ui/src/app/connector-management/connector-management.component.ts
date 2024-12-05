@@ -1,8 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { ConnectorService } from '../services/connector.service';
 import { Connector, ConnectorType } from '../models/connector.model';
 import { v4 as uuidv4 } from 'uuid';
 import { ConfirmationService, MessageService } from 'primeng/api';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-connector-management',
@@ -10,13 +11,15 @@ import { ConfirmationService, MessageService } from 'primeng/api';
   styleUrls: ['./connector-management.component.css'],
   providers: [ConfirmationService, MessageService],
 })
-export class ConnectorManagementComponent implements OnInit {
+export class ConnectorManagementComponent implements OnInit, OnDestroy {
   connectors: Connector[] = [];
   showConnectorDialog: boolean = false;
   connectorTypes: ConnectorType[] = ['LoanPro']; // Extendable for future connectors
   connectorDialogTitle: string = 'Add New Connector';
 
   newConnector: Connector = this.getEmptyConnector();
+
+  private connectorsSubscription!: Subscription;
 
   constructor(
     private connectorService: ConnectorService,
@@ -25,11 +28,17 @@ export class ConnectorManagementComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.loadConnectors();
+    this.connectorsSubscription = this.connectorService.connectors$.subscribe(
+      (connectors: Connector[]) => {
+        this.connectors = connectors;
+      },
+    );
   }
 
-  loadConnectors() {
-    this.connectors = this.connectorService.getAllConnectors();
+  ngOnDestroy(): void {
+    if (this.connectorsSubscription) {
+      this.connectorsSubscription.unsubscribe();
+    }
   }
 
   isEditMode(): boolean {
@@ -77,7 +86,6 @@ export class ConnectorManagementComponent implements OnInit {
 
     // Save or update the connector
     this.connectorService.saveConnector(this.newConnector);
-    this.loadConnectors();
     this.showConnectorDialog = false;
 
     this.messageService.add({
@@ -92,7 +100,6 @@ export class ConnectorManagementComponent implements OnInit {
       message: `Are you sure you want to delete connector "${connector.name}"?`,
       accept: () => {
         this.connectorService.deleteConnector(connector.id);
-        this.loadConnectors();
         this.messageService.add({
           severity: 'success',
           summary: 'Deleted',

@@ -18,12 +18,26 @@ app.use(async (ctx, next) => {
 
 app.use(errorHandler);
 
-// Apply CORS middleware
+app.use(async (ctx, next) => {
+  if (ctx.method === "OPTIONS") {
+    ctx.status = 204; // No Content
+  } else {
+    await next();
+  }
+});
+
+const allowedOrigins = ["https://demo.engine.lendpeak.io", "http://localhost:4200", "*"];
+
 app.use(
   cors({
-    origin: "*", // Or specify your Angular app's origin
-    allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowHeaders: ["Content-Type", "Authorization", "x-target-domain", "x-forward-headers", "Autopal-Instance-Id"],
+    origin: (ctx) => {
+      const requestOrigin = ctx.headers.origin;
+      if (requestOrigin && allowedOrigins.includes(requestOrigin as string)) {
+        return requestOrigin; // Reflect the origin if it's allowed
+      }
+      return "https://demo.engine.lendpeak.io"; // Default origin
+    },
+    credentials: true,
   })
 );
 

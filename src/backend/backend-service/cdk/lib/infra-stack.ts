@@ -38,7 +38,7 @@ export class InfraStack extends cdk.Stack {
 
     const httpApi = new apigatewayv2.HttpApi(this, "HttpApi", {
       corsPreflight: {
-        allowHeaders: ["Content-Type", "Authorization", "x-target-domain", "Autopal-Instance-Id", "x-forward-headers"],
+        allowHeaders: ["Content-Type", "LendPeak-Authorization", "LendPeak-Autopal-Instance-Id", "Authorization", "x-target-domain", "Autopal-Instance-Id", "x-forward-headers"],
         allowMethods: [CorsHttpMethod.GET, CorsHttpMethod.POST, CorsHttpMethod.PUT, CorsHttpMethod.DELETE, CorsHttpMethod.OPTIONS],
         allowOrigins: ["https://demo.engine.lendpeak.io"],
         allowCredentials: true,

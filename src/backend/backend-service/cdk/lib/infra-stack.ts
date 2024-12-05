@@ -7,7 +7,7 @@ import * as integrations from "aws-cdk-lib/aws-apigatewayv2-integrations";
 import * as certificatemanager from "aws-cdk-lib/aws-certificatemanager";
 import * as route53 from "aws-cdk-lib/aws-route53";
 import * as targets from "aws-cdk-lib/aws-route53-targets";
-import { CorsHttpMethod } from "aws-cdk-lib/aws-apigatewayv2";
+import { CorsHttpMethod, HttpMethod } from "aws-cdk-lib/aws-apigatewayv2";
 
 export class InfraStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
@@ -36,15 +36,26 @@ export class InfraStack extends cdk.Stack {
       },
     });
 
-    // Define API Gateway with CORS configuration
     const httpApi = new apigatewayv2.HttpApi(this, "HttpApi", {
-      defaultIntegration: new integrations.HttpLambdaIntegration("LambdaIntegration", backendLambda),
       corsPreflight: {
         allowHeaders: ["Content-Type", "Authorization", "x-target-domain", "Autopal-Instance-Id", "x-forward-headers"],
-        allowMethods: [apigatewayv2.CorsHttpMethod.GET, apigatewayv2.CorsHttpMethod.POST, apigatewayv2.CorsHttpMethod.PUT, apigatewayv2.CorsHttpMethod.DELETE, apigatewayv2.CorsHttpMethod.OPTIONS],
+        allowMethods: [CorsHttpMethod.GET, CorsHttpMethod.POST, CorsHttpMethod.PUT, CorsHttpMethod.DELETE, CorsHttpMethod.OPTIONS],
         allowOrigins: ["https://demo.engine.lendpeak.io"],
         allowCredentials: true,
       },
+    });
+
+    httpApi.addRoutes({
+      path: "/{proxy+}",
+      methods: [
+        HttpMethod.GET,
+        HttpMethod.POST,
+        HttpMethod.PUT,
+        HttpMethod.DELETE,
+        HttpMethod.PATCH,
+        // OPTIONS method is removed
+      ],
+      integration: new integrations.HttpLambdaIntegration("LambdaIntegration", backendLambda),
     });
 
     // Define the custom domain for the API Gateway

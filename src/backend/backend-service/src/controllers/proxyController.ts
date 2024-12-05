@@ -21,7 +21,8 @@ export const proxyController = async (ctx: Context) => {
     forwardHeaders.forEach((header) => {
       const headerKey = Object.keys(ctx.headers).find((h) => h.toLowerCase() === header.toLowerCase());
       if (headerKey) {
-        headers[header] = ctx.headers[headerKey] as string;
+        const newHeaderKey = headerKey.startsWith("LendPeak-") ? headerKey.replace("LendPeak-", "") : headerKey;
+        headers[newHeaderKey] = ctx.headers[headerKey] as string;
       }
     });
 

@@ -26,15 +26,18 @@ export class LoanProService {
     const fullProxyUrl = `${this.proxyUrl}${apiPath}`;
 
     // Headers to forward
-    const forwardHeaders = ['Autopal-Instance-Id', 'Authorization'];
+    const forwardHeaders = [
+      'LendPeak-Autopal-Instance-Id',
+      'LendPeak-Authorization',
+    ];
 
     // Set up headers
     const headers = new HttpHeaders({
       'Content-Type': 'application/json',
       'x-target-domain': connector.credentials.apiUrl || '',
       'x-forward-headers': forwardHeaders.join(','),
-      'Autopal-Instance-Id': connector.credentials.autopalId || '',
-      Authorization: `Bearer ${connector.credentials.apiToken || ''}`,
+      'LendPeak-Autopal-Instance-Id': connector.credentials.autopalId || '',
+      'LendPeak-Authorization': `Bearer ${connector.credentials.apiToken || ''}`,
     });
 
     // Construct the request body

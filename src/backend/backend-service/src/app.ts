@@ -12,7 +12,11 @@ const app = new Koa();
 app.use(async (ctx, next) => {
   const start = Date.now();
   logger.info(`START: ${ctx.method} ${ctx.url}`);
-  await next();
+  try {
+    await next();
+  } catch (error: any) {
+    logger.error(`Caught error: ${error.message}: ${error.stack}`);
+  }
   const responseTime = Date.now() - start;
   logger.info(`DONE: ${ctx.method} ${ctx.url} - ${responseTime}ms`);
 });

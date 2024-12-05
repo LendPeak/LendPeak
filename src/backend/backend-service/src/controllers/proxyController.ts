@@ -15,7 +15,7 @@ export const proxyController = async (ctx: Context, next: Next) => {
       logger.warn(`Request headers: ${JSON.stringify(ctx.headers)}`);
       ctx.status = 400;
       ctx.body = { error: "Missing lendpeak-target-domain header" };
-      return next();
+      return await next();
     }
 
     const forwardHeadersKey = Object.keys(ctx.headers).find((h) => /^lendpeak-forward-headers$/i.test(h));

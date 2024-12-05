@@ -1,0 +1,42 @@
+{
+  "name": "backend-service",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc",
+    "dev": "nodemon --watch 'src/**/*.ts' --exec 'ts-node' src/index.ts",
+    "deploy": "./deploy.sh",
+    "build:lambda": "npm run build && cp package*.json dist/ && npm install --only=production --prefix dist",
+    "start": "node dist/lambda.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@koa/router": "^13.1.0",
+    "@vendia/serverless-express": "^4.12.6",
+    "aws-cdk-lib": "^2.171.1",
+    "aws-serverless-koa": "^1.0.2",
+    "axios": "^1.7.8",
+    "dotenv": "^16.4.7",
+    "koa": "^2.15.3",
+    "koa-bodyparser": "^4.4.1",
+    "koa2-cors": "^2.0.6",
+    "winston": "^3.17.0"
+  },
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.146",
+    "@types/axios": "^0.9.36",
+    "@types/dotenv": "^6.1.1",
+    "@types/koa": "^2.15.0",
+    "@types/koa__router": "^12.0.4",
+    "@types/koa-bodyparser": "^4.3.12",
+    "@types/koa2-cors": "^2.0.5",
+    "@types/node": "^22.10.1",
+    "@types/winston": "^2.4.4",
+    "nodemon": "^3.1.7",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.7.2"
+  }
+}

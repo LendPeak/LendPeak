@@ -34,6 +34,9 @@ export interface LoanFeePerTerm extends LoanFeeForAllTerms {
 
 export interface UILoan {
   objectVersion: number;
+  id?: string;
+  name?: string;
+  description?: string;
   principal: number;
   originationFee: number;
   interestRate: number;

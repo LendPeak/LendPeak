@@ -1,6 +1,10 @@
-import dayjs, { Dayjs } from "dayjs";
 import { Currency } from "../utils/Currency";
 import { UsageDetail } from "./Bill/Deposit/UsageDetail";
+
+import dayjs, { Dayjs } from "dayjs";
+import utc from "dayjs/plugin/utc";
+
+dayjs.extend(utc);
 
 export interface DepositMetadata {
   [key: string]: any; // Allows arbitrary key-value pairs
@@ -103,18 +107,19 @@ export class DepositRecord implements Deposit {
     this.amount = Currency.of(params.amount);
     this.currency = params.currency;
     this.insertedDate = dayjs();
-    this.effectiveDate = dayjs(params.effectiveDate).startOf("day");
+    this.effectiveDate = dayjs.utc(params.effectiveDate).startOf("day");
     if (params.clearingDate) {
-      this.clearingDate = dayjs(params.clearingDate).startOf("day");
+      console.log(`clearing date is passed as ${params.clearingDate}`);
+      this.clearingDate = dayjs.utc(params.clearingDate).startOf("day");
     }
     if (params.systemDate) {
-      this.systemDate = dayjs(params.systemDate).startOf("day");
+      this.systemDate = dayjs.utc(params.systemDate).startOf("day");
     } else {
       this.systemDate = dayjs();
     }
 
     if (params.createdDate) {
-      this.createdDate = dayjs(params.createdDate).startOf("day");
+      this.createdDate = dayjs.utc(params.createdDate).startOf("day");
     } else {
       this.createdDate = dayjs();
     }
@@ -126,7 +131,7 @@ export class DepositRecord implements Deposit {
     if (this.applyExcessToPrincipal && !params.excessAppliedDate) {
       this.excessAppliedDate = this.effectiveDate;
     } else if (params.excessAppliedDate) {
-      this.excessAppliedDate = dayjs(params.excessAppliedDate).startOf("day");
+      this.excessAppliedDate = dayjs.utc(params.excessAppliedDate).startOf("day");
     }
     this.usageDetails = params.usageDetails || [];
     this.unusedAmount = params.unusedAmount ? Currency.of(params.unusedAmount) : Currency.of(0);

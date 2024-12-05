@@ -140,12 +140,34 @@
     </p-footer>
   </p-dialog>
 
+  <!-- Connector Management Dialog -->
+  <p-dialog
+    header="Manage Connectors"
+    [(visible)]="showConnectorManagementDialog"
+    [modal]="true"
+    [style]="{ width: '80%', height: '80%' }"
+    (onHide)="showConnectorManagementDialog = false"
+  >
+    <app-connector-management></app-connector-management>
+  </p-dialog>
+
+  <!-- Loan Import Dialog -->
+  <p-dialog
+    header="Import Loan"
+    [(visible)]="showLoanImportDialog"
+    [modal]="true"
+    [style]="{ width: '80%', height: '80%' }"
+    (onHide)="showLoanImportDialog = false"
+  >
+    <app-loan-import (loanImported)="onLoanImported($event)"></app-loan-import>
+  </p-dialog>
+
   <!-- Edit Loan Dialog -->
   <p-dialog
     header="Edit Loan Details"
     [(visible)]="showEditLoanDialog"
     [modal]="true"
-    [style]="{ width: '400px' }"
+    [style]="{ width: '80%', height: '80%' }"
     [closable]="false"
   >
     <div class="p-fluid">
@@ -214,6 +236,7 @@
         </a>
         <p class="loan-description" *ngIf="currentLoanDescription">
           {{ currentLoanDescription }}
+          <span *ngIf="currentLoanId"> (ID: {{ currentLoanId }})</span>
         </p>
       </div>
       <!-- Right Section: Loan Actions -->

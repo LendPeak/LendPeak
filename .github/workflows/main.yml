@@ -1,4 +1,4 @@
-name: Build and Deploy Angular App to S3
+name: Build and Deploy Application
 
 on:
   push:
@@ -6,50 +6,45 @@ on:
       - main
 
 jobs:
-  build-deploy:
+  build-deploy-frontend:
+    name: Build and Deploy Frontend
     runs-on: ubuntu-latest
 
     steps:
       # Checkout the repository
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
+
+      # Cache npm dependencies
+      - name: Cache npm dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-frontend-${{ hashFiles('src/frontend/engine-ui/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-frontend-
 
       # Set up Node.js environment
       - name: Set up Node.js
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v3
         with:
           node-version: "22"
+          cache: "npm"
 
       # Install dependencies and build the engine in src/engine
       - name: Install dependencies for engine and build
         working-directory: src/engine
         run: |
-          npm install
+          npm ci
           echo "Building engine..."
           npm run build
           echo "Engine build completed!"
-
-      # List the contents of the dist directory to check if files were generated
-      - name: List dist directory
-        run: |
-          ls -alh src/engine/dist/
-          ls -alh src/engine/dist/esm/utils/
-
-      # Check if Currency.js exists in the correct directory
-      - name: Check build output
-        run: |
-          if [ ! -f ./src/engine/dist/esm/utils/Currency.js ]; then
-            echo "Currency.js not found!"
-            exit 1
-          else
-            echo "Currency.js found!"
-          fi
 
       # Install dependencies and build the Angular project in src/frontend/engine-ui
       - name: Install dependencies and build Angular app
         working-directory: src/frontend/engine-ui
         run: |
-          npm install
+          npm ci
           npm run build --prod
 
       # Verify AWS Credentials
@@ -58,12 +53,63 @@ jobs:
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: us-east-1
+          AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION || 'us-east-1' }}
 
-      # Deploy to S3
-      - name: Deploy to S3
+      # Deploy Frontend to S3
+      - name: Deploy Frontend to S3
         run: aws s3 sync ./src/frontend/engine-ui/dist/engine-ui/browser s3://engine-ui-app --delete
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_DEFAULT_REGION: us-east-1
+          AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION || 'us-east-1'  }}
+
+  build-deploy-backend:
+    name: Build and Deploy Backend
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout the repository
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Cache npm dependencies
+      - name: Cache npm dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-backend-${{ hashFiles('src/backend/backend-service/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-backend-
+
+      # Set up Node.js environment
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "18"
+          cache: "npm"
+
+      # Install dependencies and build the backend
+      - name: Install dependencies and build backend
+        working-directory: src/backend/backend-service
+        run: |
+          npm ci
+          npm run build:lambda
+
+      # Verify AWS Credentials
+      - name: Verify AWS Credentials
+        run: aws sts get-caller-identity
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION || 'us-east-1' }}
+
+      # Deploy backend using AWS CDK
+      - name: Deploy backend with CDK
+        working-directory: src/backend/backend-service/cdk
+        run: |
+          npm ci
+          npx cdk deploy --require-approval never
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION || 'us-east-1' }}

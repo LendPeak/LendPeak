@@ -14,6 +14,7 @@ export class BillPaymentDetail {
   allocatedPrincipal: Currency;
   allocatedInterest: Currency;
   allocatedFees: Currency;
+  allocatedTotal: Currency;
   date: Dayjs;
 
   constructor(params: IBillPaymentDetail) {
@@ -21,6 +22,7 @@ export class BillPaymentDetail {
     this.allocatedPrincipal = Currency.of(params.allocatedPrincipal);
     this.allocatedInterest = Currency.of(params.allocatedInterest);
     this.allocatedFees = Currency.of(params.allocatedFees);
+    this.allocatedTotal = this.allocatedPrincipal.add(this.allocatedInterest).add(this.allocatedFees);
     this.date = dayjs(params.date);
   }
 
@@ -34,6 +36,10 @@ export class BillPaymentDetail {
 
   get jsAllocatedFees(): number {
     return this.allocatedFees.toNumber();
+  }
+
+  get jsAllocatedTotal(): number {
+    return this.allocatedTotal.toNumber();
   }
 
   get jsDate(): Date {

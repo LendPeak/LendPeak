@@ -1,0 +1,42 @@
+<!-- loan-import/loan-import.component.html -->
+<div class="p-fluid">
+  <div class="field">
+    <label for="connector">Select Connector</label>
+    <p-dropdown
+      id="connector"
+      [options]="connectors"
+      optionLabel="name"
+      optionValue="id"
+      [(ngModel)]="selectedConnectorId"
+      placeholder="Select a Connector"
+    ></p-dropdown>
+  </div>
+  <div class="field">
+    <label for="searchType">Search By</label>
+    <p-dropdown
+      id="searchType"
+      [options]="[
+        { label: 'System ID', value: 'systemId' },
+        { label: 'Display ID', value: 'displayId' },
+      ]"
+      [(ngModel)]="searchType"
+      placeholder="Select Search Type"
+    ></p-dropdown>
+  </div>
+  <div class="field">
+    <label for="searchValue">Search Value</label>
+    <input
+      id="searchValue"
+      type="text"
+      pInputText
+      [(ngModel)]="searchValue"
+      placeholder="Enter Display ID or System ID"
+    />
+  </div>
+  <p-button
+    label="Import Loan"
+    icon="pi pi-cloud-download"
+    (click)="importLoan()"
+    [loading]="isLoading"
+  ></p-button>
+</div>

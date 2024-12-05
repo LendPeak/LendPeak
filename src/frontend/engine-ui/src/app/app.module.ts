@@ -39,16 +39,27 @@ import { OverridesComponent } from './overrides/overrides.component';
 import { AdvancedSettingsComponent } from './advanced-settings/advanced-settings.component';
 import { AdvancedSettingsService } from './services/advanced-settings.service';
 import { OverrideSettingsService } from './services/override-settings.service';
+import { LoanProService } from './services/loanpro.service';
 
 import { ToastModule } from 'primeng/toast';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
+
 import { MessageModule } from 'primeng/message';
-import { MessageService } from 'primeng/api';
+import { MessageService, ConfirmationService } from 'primeng/api';
+
+import { ConnectorManagementComponent } from './connector-management/connector-management.component';
+import { LoanImportComponent } from './loan-import/loan-import.component';
 
 import { HighlightModule, LineNumbersOptions } from 'ngx-highlightjs';
 import { provideHighlightOptions } from 'ngx-highlightjs';
 
 import { RouterModule } from '@angular/router';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
+
+import {
+  provideHttpClient,
+  withInterceptorsFromDi,
+} from '@angular/common/http';
 
 @NgModule({
   declarations: [
@@ -60,6 +71,8 @@ import { provideAnimationsAsync } from '@angular/platform-browser/animations/asy
     BasicLoanInfoComponent,
     OverridesComponent,
     AdvancedSettingsComponent,
+    ConnectorManagementComponent,
+    LoanImportComponent,
   ],
   imports: [
     BrowserModule,
@@ -93,12 +106,16 @@ import { provideAnimationsAsync } from '@angular/platform-browser/animations/asy
     ToastModule,
     MessageModule,
     HighlightModule,
+    ConfirmDialogModule,
     RouterModule.forRoot([]),
   ],
   providers: [
     AdvancedSettingsService,
     OverrideSettingsService,
+    LoanProService,
     MessageService,
+    ConfirmationService,
+    provideHttpClient(withInterceptorsFromDi()),
     provideHighlightOptions({
       coreLibraryLoader: () => import('highlight.js/lib/core'),
       lineNumbersLoader: () => import('ngx-highlightjs/line-numbers'),

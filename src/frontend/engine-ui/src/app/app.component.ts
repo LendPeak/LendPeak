@@ -183,7 +183,21 @@ export class AppComponent implements OnChanges {
         'Enhanced user experience by simplifying the workflow for saving and updating settings, reducing confusion with button placement and functionality.',
       ],
     },
+    {
+      version: '1.13.0',
+      date: '2024-11-30',
+      details: [
+        'Implemented logging with Winston, enhancing application monitoring and error tracking.',
+        'Updated LoanProService to utilize the `$expand` parameter for systemId searches, allowing retrieval of LoanSetup, LoanSettings, and Payments in a single API call.',
+        'Refactored Proxy Controller to improve error handling and prevent circular JSON serialization errors.',
+        'Created comprehensive TypeScript interfaces for loan data responses, ensuring type safety and improving code maintainability.',
+        'Enhanced AppComponent to integrate new LoanProService functionalities, including loan import by displayId and systemId, and updated the UI to display detailed loan information with related entities.',
+      ],
+    },
   ];
+
+  showConnectorManagementDialog: boolean = false;
+  showLoanImportDialog: boolean = false;
 
   selectedVersion: string = this.currentVersion;
   selectedReleaseNotes: any;
@@ -243,6 +257,33 @@ export class AppComponent implements OnChanges {
 
   bills: Bill[] = [];
 
+  // Method to open Connector Management Dialog
+  openConnectorManagement() {
+    this.showConnectorManagementDialog = true;
+  }
+
+  // Method to open Loan Import Dialog
+  openLoanImport() {
+    this.showLoanImportDialog = true;
+  }
+
+  // Method to handle when a loan is imported
+  onLoanImported(loanData: UILoan) {
+    // Update the loan in AppComponent
+    this.loan = loanData;
+    this.loanModified = true;
+    this.loanName = this.loan.name || 'Imported Loan';
+    this.currentLoanName = this.loanName;
+    this.currentLoanId = this.loan.id || '';
+    this.currentLoanDescription =
+      this.loan.description || 'Imported from LoanPro';
+    // save loan
+    this.saveLoan();
+    this.loadLoan(this.loanName);
+    // this.submitLoan();
+    this.showLoanImportDialog = false;
+  }
+
   // Handle any actions emitted by the bills component
   onBillAction() {
     // Implement any logic needed when a bill action occurs
@@ -291,6 +332,7 @@ export class AppComponent implements OnChanges {
 
   paymentApplicationResults: PaymentApplicationResult[] = [];
 
+  currentLoanId: string = '';
   currentLoanName: string = 'New Loan';
   currentLoanDescription: string = 'New Loan';
   loanModified: boolean = false;
@@ -550,8 +592,10 @@ export class AppComponent implements OnChanges {
       this.parseLoanData(this.loan);
 
       // Set the current loan name and description
-      this.currentLoanName = loanData.name || 'Loaded Loan';
-      this.currentLoanDescription = loanData.description || '';
+      this.currentLoanName =
+        loanData.name || loanData.loan.name || 'Loaded Loan';
+      this.currentLoanId = loanData.loan.id || '111';
+      this.currentLoanDescription = loanData.loan.description || '222';
 
       this.updateTermOptions();
       this.generateBills();
@@ -913,6 +957,16 @@ export class AppComponent implements OnChanges {
       command: () => this.openManageLoansDialog(),
     },
     {
+      label: 'Import Loan',
+      icon: 'pi pi-cloud-download',
+      command: () => this.openLoanImport(),
+    },
+    {
+      label: 'Manage Connectors',
+      icon: 'pi pi-link',
+      command: () => this.openConnectorManagement(),
+    },
+    {
       label: 'Export Data',
       icon: 'pi pi-file-export',
       command: () => this.exportData(),
@@ -1031,6 +1085,10 @@ export class AppComponent implements OnChanges {
         return;
       }
     }
+    // check if key starts with loan_ if not lets add it
+    if (!key.startsWith('loan_')) {
+      key = `loan_${key}`;
+    }
     const loanData = JSON.parse(localStorage.getItem(key)!);
     if (loanData) {
       this.loan = loanData.loan;
@@ -1040,7 +1098,8 @@ export class AppComponent implements OnChanges {
 
       // Set the current loan name
       this.currentLoanName = loanData.name || 'Loaded Loan';
-      this.currentLoanDescription = loanData.description || '';
+      this.currentLoanDescription = loanData.loan.description || '';
+      this.currentLoanId = loanData.loan.id || '';
 
       this.submitLoan();
       this.showManageLoansDialog = false;

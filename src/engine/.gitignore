@@ -35,10 +35,6 @@ coverage/
 .env.test.local
 .env.production.local
 
-# npm package lock file
-package-lock.json
-yarn.lock
-
 # Optional npm cache directory
 .npm/
 

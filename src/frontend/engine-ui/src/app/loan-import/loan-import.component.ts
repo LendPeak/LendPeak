@@ -108,14 +108,19 @@ export class LoanImportComponent implements OnInit, OnDestroy {
               term: parseFloat(loanData.d.LoanSetup.loanTerm),
               feesForAllTerms: [],
               feesPerTerm: [],
-              startDate: parseODataDate(loanData.d.LoanSetup.contractDate),
+              startDate: parseODataDate(
+                loanData.d.LoanSetup.contractDate,
+                false,
+              ),
 
               firstPaymentDate: parseODataDate(
                 loanData.d.LoanSetup.firstPaymentDate,
+                false,
               ),
 
               endDate: parseODataDate(
                 loanData.d.LoanSetup.origFinalPaymentDate,
+                false,
               ),
 
               calendarType: 'THIRTY_360',
@@ -147,9 +152,9 @@ export class LoanImportComponent implements OnInit, OnDestroy {
                   return new DepositRecord({
                     amount: parseFloat(payment.amount),
                     currency: 'USD',
-                    effectiveDate: parseODataDate(payment.date),
-                    clearingDate: parseODataDate(payment.date),
-                    systemDate: parseODataDate(payment.created),
+                    effectiveDate: parseODataDate(payment.date, true),
+                    clearingDate: parseODataDate(payment.date, true),
+                    systemDate: parseODataDate(payment.created, true),
                     id: `(${payment.id}) ${payment.info}`,
                   });
                 }),

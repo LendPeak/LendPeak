@@ -108,21 +108,16 @@ export class LoanImportComponent implements OnInit, OnDestroy {
               term: parseFloat(loanData.d.LoanSetup.loanTerm),
               feesForAllTerms: [],
               feesPerTerm: [],
-              startDate: dayjs(
-                parseODataDate(loanData.d.LoanSetup.contractDate),
-              )
-                .startOf('day')
-                .toDate(),
-              firstPaymentDate: dayjs(
-                parseODataDate(loanData.d.LoanSetup.firstPaymentDate),
-              )
-                .startOf('day')
-                .toDate(),
-              endDate: dayjs(
-                parseODataDate(loanData.d.LoanSetup.origFinalPaymentDate),
-              )
-                .startOf('day')
-                .toDate(),
+              startDate: parseODataDate(loanData.d.LoanSetup.contractDate),
+
+              firstPaymentDate: parseODataDate(
+                loanData.d.LoanSetup.firstPaymentDate,
+              ),
+
+              endDate: parseODataDate(
+                loanData.d.LoanSetup.origFinalPaymentDate,
+              ),
+
               calendarType: 'THIRTY_360',
               roundingMethod: 'ROUND_HALF_EVEN',
               flushMethod: 'at_threshold',

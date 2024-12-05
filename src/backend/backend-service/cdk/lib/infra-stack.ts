@@ -27,7 +27,7 @@ export class InfraStack extends cdk.Stack {
 
     // Define the Lambda function
     const backendLambda = new lambda.Function(this, "BackendLambda", {
-      runtime: lambda.Runtime.NODEJS_18_X,
+      runtime: lambda.Runtime.NODEJS_22_X,
       handler: "lambda.handler",
       code: lambda.Code.fromAsset(path.join(__dirname, "../../dist")),
       memorySize: 1024,

@@ -69,9 +69,9 @@ export class InfraStack extends cdk.Stack {
     });
 
     // Create a custom $default stage
-    const stage = new apigatewayv2.HttpStage(this, "DefaultStage", {
+    const stage = new apigatewayv2.HttpStage(this, "ProdStage", {
       httpApi,
-      stageName: "$default",
+      stageName: "prod",
       autoDeploy: true,
     });
 

@@ -2,62 +2,61 @@ import { createLogger, format, transports } from "winston";
 
 const { combine, timestamp, printf, colorize, errors } = format;
 
-// Define your custom format
+const isLambda = !!process.env.LAMBDA_TASK_ROOT;
+
+// Define a custom format function
 const customFormat = printf(({ level, message, timestamp, stack }) => {
   return `${timestamp} ${level}: ${stack || message}`;
 });
 
-// Determine if the code is running in AWS Lambda
-const isLambda = !!process.env.LAMBDA_TASK_ROOT;
+// Create a format with no color (for Lambda)
+const lambdaFormat = combine(errors({ stack: true }), timestamp({ format: "YYYY-MM-DD HH:mm:ss" }), customFormat);
 
-// Create an array of transports
+// Create a format with color (for local development)
+const localFormat = combine(errors({ stack: true }), timestamp({ format: "YYYY-MM-DD HH:mm:ss" }), colorize(), customFormat);
+
+// Decide which format to use based on environment
+const chosenFormat = isLambda ? lambdaFormat : localFormat;
+
+// Base transports
 const loggerTransports: (transports.ConsoleTransportInstance | transports.FileTransportInstance)[] = [
-  // Console transport
   new transports.Console({
-    format: combine(
-      colorize(), // Colorize output in console
-      customFormat
-    ),
+    format: chosenFormat,
   }),
 ];
 
-// Optionally add File transports if not running in Lambda
+// Add file transports only if not in Lambda
 if (!isLambda) {
-  // File transport for regular logs
   loggerTransports.push(
     new transports.File({
       filename: "logs/app.log",
       level: "info",
+      format: lambdaFormat, // no color in file logs either
     })
   );
 
-  // Exception handler transport for uncaught exceptions
   loggerTransports.push(
     new transports.File({
       filename: "logs/exceptions.log",
       level: "error",
       handleExceptions: true,
+      format: lambdaFormat,
     })
   );
 }
 
-// Create the logger instance
 const logger = createLogger({
-  level: "info", // Set the minimum level of messages that this logger will handle
-  format: combine(
-    errors({ stack: true }), // <-- use errors format
-    timestamp({ format: "YYYY-MM-DD HH:mm:ss" }),
-    customFormat
-  ),
+  level: "info",
+  format: chosenFormat,
   transports: loggerTransports,
-  exitOnError: false, // Do not exit on handled exceptions
+  exitOnError: false,
 });
 
-// Handle uncaught exceptions in Lambda by logging to console
+// Handle uncaught exceptions
 if (isLambda) {
   logger.exceptions.handle(
     new transports.Console({
-      format: combine(colorize(), customFormat),
+      format: lambdaFormat, // no color in exception logs either
     })
   );
 }

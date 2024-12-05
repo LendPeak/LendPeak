@@ -37,6 +37,10 @@ app.use(
       "LendPeak-Autopal-Instance-Id",
       "LendPeak-Forward-Headers",
       "LendPeak-Target-Domain",
+      "lendpeak-authorization",
+      "lendpeak-autopal-instance-id",
+      "lendpeak-forward-headers",
+      "lendpeak-target-domain",
     ],
     allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   })

@@ -47,25 +47,19 @@ export class InfraStack extends cdk.Stack {
     const httpApi = new apigatewayv2.HttpApi(this, "HttpApi", {
       createDefaultStage: false,
       corsPreflight: {
-        allowHeaders: ["Content-Type", "LendPeak-Authorization", "LendPeak-Autopal-Instance-Id", "Authorization", "LendPeak-target-domain", "LendPeak-forward-headers"],
+        allowHeaders: ["Content-Type", "Authorization", "lendpeak-authorization", "lendpeak-autopal-instance-id", "lendpeak-forward-headers", "lendpeak-target-domain"],
         allowMethods: [CorsHttpMethod.GET, CorsHttpMethod.POST, CorsHttpMethod.PUT, CorsHttpMethod.DELETE, CorsHttpMethod.OPTIONS],
         allowOrigins: ["https://demo.engine.lendpeak.io"],
         allowCredentials: true,
       },
     });
 
-    // Add routes to the HTTP API
     httpApi.addRoutes({
       path: "/{proxy+}",
-      methods: [
-        HttpMethod.GET,
-        HttpMethod.POST,
-        HttpMethod.PUT,
-        HttpMethod.DELETE,
-        HttpMethod.PATCH,
-        // No OPTIONS here; let API Gateway handle preflight
-      ],
-      integration: new integrations.HttpLambdaIntegration("LambdaIntegration", backendLambda),
+      methods: [HttpMethod.GET, HttpMethod.POST, HttpMethod.PUT, HttpMethod.DELETE, HttpMethod.PATCH],
+      integration: new integrations.HttpLambdaIntegration("LambdaIntegration", backendLambda, {
+        payloadFormatVersion: apigatewayv2.PayloadFormatVersion.VERSION_1_0,
+      }),
     });
 
     // Create a custom $default stage

@@ -1,4 +1,8 @@
-<p-toast position="top-center" class="wide-toast"></p-toast>
+<p-toast
+  position="top-center"
+  [style]="{ width: '60%' }"
+  [life]="7000"
+></p-toast>
 
 <!-- Loan Not Found Message -->
 <div *ngIf="loanNotFound" class="loan-not-found">

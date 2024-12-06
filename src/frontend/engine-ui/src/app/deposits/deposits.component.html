@@ -32,9 +32,9 @@
               <th pSortableColumn="clearingDate">
                 Clearing Date <p-sortIcon field="clearingDate"></p-sortIcon>
               </th>
-              <th>Payment Method</th>
+              <!-- <th>Payment Method</th>
               <th>Depositor</th>
-              <th>Deposit Location</th>
+              <th>Deposit Location</th> -->
               <th>Unused Amount</th>
               <th>Apply Excess to Principal</th>
               <th>Excess Applied Date</th>
@@ -58,11 +58,11 @@
                 {{ deposit.jsClearingDate | date: "MM/dd/yyyy" : "UTC" }}
               </td>
               <!-- Payment Method -->
-              <td>{{ deposit.paymentMethod }}</td>
+              <!-- <td>{{ deposit.paymentMethod }}</td> -->
               <!-- Depositor -->
-              <td>{{ deposit.depositor }}</td>
+              <!-- <td>{{ deposit.depositor }}</td> -->
               <!-- Deposit Location -->
-              <td>{{ deposit.depositLocation }}</td>
+              <!-- <td>{{ deposit.depositLocation }}</td> -->
               <!-- Unused Amount -->
               <td>
                 {{

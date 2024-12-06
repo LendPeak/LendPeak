@@ -34,6 +34,7 @@ export class InterestCalculator {
   private annualInterestRate: Decimal;
   private perDiemCalculationType: PerDiemCalculationType;
   private daysInAMonth?: number;
+  private _perDiem?: Currency;
 
   constructor(annualInterestRate: Decimal, calendarType: CalendarType = CalendarType.ACTUAL_ACTUAL, perDiemCalculationType: PerDiemCalculationType = "AnnualRateDividedByDaysInYear", daysInAMonth?: number) {
     this.annualInterestRate = annualInterestRate;
@@ -166,6 +167,17 @@ export class InterestCalculator {
     return Currency.of(interestAmount);
   }
 
+  get perDiem(): Currency {
+    if (this._perDiem === undefined) {
+      throw new Error("Per diem is not set.");
+    }
+    return this._perDiem;
+  }
+
+  set perDiem(value: Currency) {
+    this._perDiem = value;
+  }
+
   /**
    * Calculate the daily interest value based on the principal and annual interest rate.
    * @param principal - The principal amount on which daily interest is calculated (Currency).
@@ -186,6 +198,7 @@ export class InterestCalculator {
       throw new Error(`Invalid per diem calculation type: ${this.perDiemCalculationType}`);
     }
     const dailyInterestAmount = principal.multiply(dailyInterestRate);
+    this.perDiem = dailyInterestAmount;
     return dailyInterestAmount;
   }
 

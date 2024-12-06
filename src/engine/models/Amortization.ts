@@ -806,6 +806,8 @@ export class Amortization {
     if (this.perDiemCalculationType === "AnnualRateDividedByDaysInYear") {
       return rates;
     } else if (this.perDiemCalculationType === "MonthlyRateDividedByDaysInMonth") {
+      return rates;
+    } else if (this.perDiemCalculationType === "MonthlyRateDividedByDaysInMonthComplex") {
       const splitRates: RateSchedule[] = [];
       // we will split the rates into smaller schedules based on the month
       for (let rate of rates) {
@@ -1012,6 +1014,7 @@ export class Amortization {
           } else {
             interestForPeriod = interestCalculator.calculateInterestForDays(startBalance, daysInPeriod);
           }
+          const perDiem = interestForPeriod.isZero() ? Currency.Zero() : interestCalculator.perDiem;
 
           // Handle unbilled interest due to rounding error if applicable
           if (this.flushUnbilledInterestRoundingErrorMethod === FlushUnbilledInterestDueToRoundingErrorType.AT_THRESHOLD) {
@@ -1081,7 +1084,8 @@ export class Amortization {
                 endBalance: Currency.of(endBalance),
                 startBalance: Currency.of(startBalance),
                 totalPayment: Currency.of(0),
-                perDiem: accruedInterestForPeriod.divide(daysInPeriod || 1),
+                //perDiem: accruedInterestForPeriod.divide(daysInPeriod || 1),
+                perDiem: perDiem,
                 daysInPeriod: daysInPeriod,
                 metadata,
               })
@@ -1210,7 +1214,8 @@ export class Amortization {
               endBalance: balanceAfterPayment,
               startBalance: balanceBeforePayment,
               totalPayment: totalPayment,
-              perDiem: accruedInterestForPeriod.divide(daysInPeriod),
+              //perDiem: accruedInterestForPeriod.divide(daysInPeriod),
+              perDiem: perDiem,
               daysInPeriod: daysInPeriod,
               unbilledTotalDeferredInterest: this.unbilledDeferredInterest,
               interestRoundingError: roundedInterest.getRoundingErrorAsCurrency(),

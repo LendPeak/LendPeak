@@ -5,10 +5,10 @@ import timezone from 'dayjs/plugin/timezone';
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
-export function parseODataDate(
-  dateString: string,
-  isUTC: boolean = true,
-): Date {
+export function parseODataDate(dateString: string, isUTC?: boolean): Date {
+  if (isUTC !== true) {
+    isUTC = false;
+  }
   const timestamp = parseInt(
     dateString.replace('/Date(', '').replace(')/', ''),
     10,
@@ -16,17 +16,19 @@ export function parseODataDate(
 
   let dateToReturn: Date;
   if (isUTC) {
-    dateToReturn = dayjs.utc(timestamp * 1000).toDate();
+    dateToReturn = dayjs
+      .utc(timestamp * 1000)
+      .hour(12)
+      .toDate();
   } else {
     // if it is not UTC it is pacific time
     dateToReturn = dayjs(timestamp * 1000)
-      .tz('America/Los_Angeles')
+      .hour(12)
       .toDate();
-    //dateToReturn = dayjs(timestamp * 1000).toDate();
   }
 
   //   console.log(
-  //     `timestamp: ${timestamp} dateString: ${dateString} dateToReturn: ${dateToReturn.toISOString()}`,
+  //     `TIME: timestamp: ${timestamp} dateString: ${dateString} dateToReturn: ${dateToReturn.toISOString()}`,
   //   );
   return dateToReturn;
 }

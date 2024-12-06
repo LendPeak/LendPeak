@@ -25,7 +25,8 @@ app.use(errorHandler);
 
 app.use(
   cors({
-    origin: "https://demo.engine.lendpeak.io",
+    //origin: "https://demo.engine.lendpeak.io",
+    origin: "*",
     credentials: true,
     allowHeaders: [
       "Content-Type",

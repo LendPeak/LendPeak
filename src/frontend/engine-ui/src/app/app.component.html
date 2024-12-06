@@ -1,4 +1,4 @@
-<p-toast position="top-center"></p-toast>
+<p-toast position="top-center" class="wide-toast"></p-toast>
 
 <!-- Loan Not Found Message -->
 <div *ngIf="loanNotFound" class="loan-not-found">
@@ -459,8 +459,6 @@
         #repaymentPlanTable
         [value]="repaymentPlan"
         [autoLayout]="true"
-        [scrollable]="true"
-        scrollHeight="600px"
         class="repayment-plan-table"
       >
         <ng-template pTemplate="header">

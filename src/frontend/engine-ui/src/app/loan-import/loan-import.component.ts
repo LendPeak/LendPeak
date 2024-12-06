@@ -110,17 +110,17 @@ export class LoanImportComponent implements OnInit, OnDestroy {
               feesPerTerm: [],
               startDate: parseODataDate(
                 loanData.d.LoanSetup.contractDate,
-                false,
+                true,
               ),
 
               firstPaymentDate: parseODataDate(
                 loanData.d.LoanSetup.firstPaymentDate,
-                false,
+                true,
               ),
 
               endDate: parseODataDate(
                 loanData.d.LoanSetup.origFinalPaymentDate,
-                false,
+                true,
               ),
 
               calendarType: 'THIRTY_360',

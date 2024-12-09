@@ -1426,7 +1426,6 @@ export class AppComponent implements OnChanges {
       // Update existing balance modification
       balanceModification.amount = Currency.of(excessAmount);
       balanceModification.date = dayjs(dateToApply);
-      // Update other properties if needed
     } else {
       // Create new balance modification
       const newBalanceModification = new BalanceModification({

@@ -16,6 +16,8 @@ import isSameOrAfter from 'dayjs/plugin/isSameOrAfter';
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore';
 import { DepositRecord } from 'lendpeak-engine/models/Deposit';
 import { Subscription } from 'rxjs';
+import { PerDiemCalculationType } from 'lendpeak-engine/models/InterestCalculator';
+import { FlushUnbilledInterestDueToRoundingErrorType } from 'lendpeak-engine/models/Amortization';
 
 dayjs.extend(isSameOrAfter);
 dayjs.extend(isSameOrBefore);
@@ -90,11 +92,30 @@ export class LoanImportComponent implements OnInit, OnDestroy {
         .subscribe(
           (loanData) => {
             this.isLoading = false;
-            this.messageService.add({
-              severity: 'success',
-              summary: 'Success',
-              detail: 'Loan imported successfully.',
-            });
+            // this.messageService.add({
+            //   severity: 'success',
+            //   summary: 'Success',
+            //   detail: 'Loan imported successfully.',
+            // });
+
+            let perDiemCalculationType: PerDiemCalculationType =
+              'AnnualRateDividedByDaysInYear';
+            if (
+              loanData.d.LoanSetup.calcType === 'loan.calcType.simpleInterest'
+            ) {
+              perDiemCalculationType = 'MonthlyRateDividedByDaysInMonth';
+            }
+
+            let calendarType = 'THIRTY_360';
+
+            if (
+              loanData.d.LoanSetup.daysInYear === 'loan.daysInYear.frequency'
+            ) {
+              calendarType = 'ACTUAL_360';
+            }
+
+            let flushMethod: FlushUnbilledInterestDueToRoundingErrorType =
+              FlushUnbilledInterestDueToRoundingErrorType.NONE;
 
             // Map LoanPro data to internal model and emit
             const uiLoan: UILoan = {
@@ -123,11 +144,11 @@ export class LoanImportComponent implements OnInit, OnDestroy {
                 true,
               ),
 
-              calendarType: 'THIRTY_360',
+              calendarType: calendarType,
               roundingMethod: 'ROUND_HALF_EVEN',
-              flushMethod: 'at_threshold',
-              perDiemCalculationType: 'AnnualRateDividedByDaysInYear',
+              perDiemCalculationType: perDiemCalculationType,
               roundingPrecision: 2,
+              flushMethod: flushMethod,
               flushThreshold: 0.01,
               ratesSchedule: [],
               termPaymentAmountOverride: [],

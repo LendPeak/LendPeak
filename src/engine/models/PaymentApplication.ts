@@ -289,10 +289,6 @@ export class EqualDistributionStrategy implements AllocationStrategy {
       unpaidBills = unpaidBills.filter((bill) => bill.openDate.isSameOrBefore(excessAppliedDate));
     }
 
-    if (deposit.applyExcessToPrincipal) {
-      const excessAppliedDate = deposit.excessAppliedDate || deposit.effectiveDate;
-      unpaidBills = unpaidBills.filter((bill) => bill.openDate.isSameOrBefore(excessAppliedDate));
-    }
     const numOfBills = unpaidBills.length;
 
     if (numOfBills === 0) {
@@ -313,7 +309,6 @@ export class EqualDistributionStrategy implements AllocationStrategy {
 
     for (const bill of unpaidBills) {
       const { allocation, remainingAmount: unusedAmount } = AllocationHelper.allocateToBill(bill, sharePerBill, paymentPriority, deposit.id);
-
       allocations.push(allocation);
       totalAllocated = totalAllocated.add(allocation.allocatedPrincipal.add(allocation.allocatedInterest).add(allocation.allocatedFees));
     }
@@ -325,7 +320,7 @@ export class EqualDistributionStrategy implements AllocationStrategy {
       totalAllocated,
       allocations,
       unallocatedAmount,
-      excessAmount: Currency.Zero(), // Handle excess according to business rules
+      excessAmount: Currency.Zero(),
     };
   }
 }
@@ -382,7 +377,6 @@ export class CustomOrderStrategy implements AllocationStrategy {
 // The Proportional Strategy allocates the payment proportionally across all outstanding bills based on the total amount due for each bill.
 export class ProportionalStrategy implements AllocationStrategy {
   apply(deposit: DepositRecord, bills: Bill[], paymentPriority: PaymentPriority): PaymentApplicationResult {
-    const remainingAmount = deposit.amount;
     const allocations: PaymentAllocation[] = [];
 
     // Filter unpaid bills
@@ -416,7 +410,6 @@ export class ProportionalStrategy implements AllocationStrategy {
       const allocationAmount = deposit.amount.multiply(proportion).round(2);
 
       const { allocation, remainingAmount: unusedAmount } = AllocationHelper.allocateToBill(bill, allocationAmount, paymentPriority, deposit.id);
-
       allocations.push(allocation);
       totalAllocated = totalAllocated.add(allocation.allocatedPrincipal.add(allocation.allocatedInterest).add(allocation.allocatedFees));
     }
@@ -428,7 +421,7 @@ export class ProportionalStrategy implements AllocationStrategy {
       totalAllocated,
       allocations,
       unallocatedAmount,
-      excessAmount: Currency.Zero(), // Handle excess according to business rules
+      excessAmount: Currency.Zero(),
     };
   }
 }

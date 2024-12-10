@@ -54,6 +54,8 @@ import {
   LoanFeeForAllTerms,
   LoanFeePerTerm,
   UILoan,
+  PastDueSummary,
+  ActualLoanSummary,
 } from './models/loan.model';
 import { UsageDetail } from 'lendpeak-engine/models/Bill/Deposit/UsageDetail';
 
@@ -70,6 +72,9 @@ export class AppComponent implements OnChanges {
     private location: Location,
     private messageService: MessageService,
   ) {}
+
+  actualLoanSummary?: ActualLoanSummary;
+  pastDueSummary?: PastDueSummary;
 
   showCodeDialogVisible: boolean = false;
   generatedCode: string = ''; // Use SafeHtml to safely bind HTML content
@@ -312,6 +317,59 @@ export class AppComponent implements OnChanges {
   // Handle any actions emitted by the bills component
   onBillAction() {
     // Implement any logic needed when a bill action occurs
+  }
+
+  private getActualLoanSummary(): ActualLoanSummary {
+    let actualPrincipalPaid = Currency.Zero();
+    let actualInterestPaid = Currency.Zero();
+    let lastPaymentDate: Dayjs | null = null;
+    let lastPaymentAmount = Currency.Zero();
+
+    // Sum principal and interest actually paid from bills
+    for (const bill of this.bills) {
+      if (bill.paymentDetails && bill.paymentDetails.length > 0) {
+        for (const pd of bill.paymentDetails) {
+          actualPrincipalPaid = actualPrincipalPaid.add(pd.allocatedPrincipal);
+          actualInterestPaid = actualInterestPaid.add(pd.allocatedInterest);
+          const pdDate = dayjs(pd.date);
+          if (!lastPaymentDate || pdDate.isAfter(lastPaymentDate)) {
+            lastPaymentDate = pdDate;
+            lastPaymentAmount = pd.allocatedPrincipal
+              .add(pd.allocatedInterest)
+              .add(pd.allocatedFees);
+          }
+        }
+      }
+    }
+
+    // Determine next unpaid bill
+    const unpaidBills = this.bills.filter((b) => !b.isPaid);
+    let nextBillDate: Date | undefined = undefined;
+    if (unpaidBills.length > 0) {
+      // sort by dueDate
+      unpaidBills.sort((a, b) => (a.dueDate.isAfter(b.dueDate) ? 1 : -1));
+      nextBillDate = unpaidBills[0].dueDate.toDate();
+    }
+
+    const originalPrincipal = Currency.of(this.loan.principal);
+    const actualRemainingPrincipal =
+      originalPrincipal.subtract(actualPrincipalPaid);
+
+    const accruedInterestNow = this.amortization
+      ? this.amortization.getAccruedInterestByDate(this.snapshotDate)
+      : Currency.Zero();
+    const actualCurrentPayoff =
+      actualRemainingPrincipal.add(accruedInterestNow);
+
+    return {
+      nextBillDate,
+      actualPrincipalPaid,
+      actualInterestPaid,
+      lastPaymentDate: lastPaymentDate ? lastPaymentDate.toDate() : undefined,
+      lastPaymentAmount,
+      actualRemainingPrincipal,
+      actualCurrentPayoff,
+    };
   }
 
   newLoan() {
@@ -1953,6 +2011,9 @@ export class AppComponent implements OnChanges {
     this.loanSummary = this.amortization.getLoanSummary(
       dayjs(this.snapshotDate),
     );
+
+    this.actualLoanSummary = this.getActualLoanSummary(); // If already implemented
+    this.pastDueSummary = this.getPastDueSummary();
   }
 
   makeReactive(obj: any, callback: Function): any {
@@ -1977,5 +2038,65 @@ export class AppComponent implements OnChanges {
     };
 
     return new Proxy(obj, handler);
+  }
+
+  private getPastDueSummary(): PastDueSummary {
+    const snapshot = dayjs(this.snapshotDate).startOf('day');
+    let pastDueCount = 0;
+    let totalPastDuePrincipal = Currency.Zero();
+    let totalPastDueInterest = Currency.Zero();
+    let totalPastDueFees = Currency.Zero();
+    let totalPastDueAmount = Currency.Zero();
+
+    let earliestPastDueBillDate: Dayjs | null = null;
+
+    for (const bill of this.bills) {
+      // A bill is past due if it's not fully paid and due before the snapshot date
+      if (!bill.isPaid && bill.dueDate.isBefore(snapshot)) {
+        // Calculate the currently unpaid amount of the bill
+        const unpaidPrincipal = bill.principalDue;
+        const unpaidInterest = bill.interestDue;
+        const unpaidFees = bill.feesDue;
+
+        // If nothing is unpaid (fully satisfied), skip
+        if (
+          unpaidPrincipal.getValue().isZero() &&
+          unpaidInterest.getValue().isZero() &&
+          unpaidFees.getValue().isZero()
+        ) {
+          continue;
+        }
+
+        pastDueCount++;
+        totalPastDuePrincipal = totalPastDuePrincipal.add(unpaidPrincipal);
+        totalPastDueInterest = totalPastDueInterest.add(unpaidInterest);
+        totalPastDueFees = totalPastDueFees.add(unpaidFees);
+        const unpaidTotal = unpaidPrincipal.add(unpaidInterest).add(unpaidFees);
+        totalPastDueAmount = totalPastDueAmount.add(unpaidTotal);
+
+        // Track the earliest (oldest) past due bill date
+        if (
+          earliestPastDueBillDate === null ||
+          bill.dueDate.isBefore(earliestPastDueBillDate)
+        ) {
+          earliestPastDueBillDate = bill.dueDate;
+        }
+      }
+    }
+
+    // Calculate days the contract is past due based on earliest past due bill date
+    let daysContractIsPastDue = 0;
+    if (earliestPastDueBillDate) {
+      daysContractIsPastDue = snapshot.diff(earliestPastDueBillDate, 'day');
+    }
+
+    return {
+      pastDueCount,
+      totalPastDuePrincipal,
+      totalPastDueInterest,
+      totalPastDueFees,
+      totalPastDueAmount,
+      daysContractIsPastDue,
+    };
   }
 }

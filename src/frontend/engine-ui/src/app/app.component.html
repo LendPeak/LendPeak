@@ -412,6 +412,93 @@
 
   <!-- Repayment Plan at the Bottom -->
   <div *ngIf="showTable">
+    <!-- Past Due Bills Status card -->
+    <p-card
+      header="Past Due Bills Status"
+      styleClass="mb-3"
+      *ngIf="pastDueSummary"
+    >
+      <div class="grid">
+        <div class="col-12" *ngIf="pastDueSummary.pastDueCount === 0">
+          <div class="flex flex-column">
+            <span class="text-600 font-semibold mb-1">No Past Due Bills</span>
+            <span>All bills are current as of the snapshot date.</span>
+          </div>
+        </div>
+        <div class="col-12" *ngIf="pastDueSummary.pastDueCount > 0">
+          <p-message
+            severity="error"
+            text="Attention: There are past due bills!"
+            class="mb-3"
+            [style]="{ width: '100%' }"
+          ></p-message>
+          <div
+            class="flex flex-column p-3"
+            style="background-color: #fff4e6; border-radius: 4px"
+          >
+            <span
+              class="text-600 font-semibold mb-2 pb-4"
+              style="text-align: center"
+              >Past Due Bills Details (as of
+              {{ snapshotDate | date: "MM/dd/yyyy" }}):</span
+            >
+            <div class="grid">
+              <div class="col-12 md:col-3">
+                <span class="text-600 font-semibold"
+                  >Unpaid Past Due Bills:</span
+                >
+                <span>{{ pastDueSummary.pastDueCount }}</span>
+              </div>
+
+              <!-- Add Days Contract Is Past Due here -->
+              <div class="col-12 md:col-3 mt-3">
+                <span class="text-600 font-semibold"
+                  >Days Contract Is Past Due:</span
+                >
+                <span>{{ pastDueSummary.daysContractIsPastDue }}</span>
+              </div>
+
+              <div class="col-12 md:col-3 mt-3">
+                <span class="text-600 font-semibold"
+                  >Total Past Due Principal:</span
+                >
+                <span>{{
+                  pastDueSummary.totalPastDuePrincipal.toNumber() | currency
+                }}</span>
+              </div>
+              <div class="col-12 md:col-3 mt-3">
+                <span class="text-600 font-semibold"
+                  >Total Past Due Interest:</span
+                >
+                <span>{{
+                  pastDueSummary.totalPastDueInterest.toNumber() | currency
+                }}</span>
+              </div>
+              <div class="col-12 md:col-3 mt-3">
+                <span class="text-600 font-semibold">Total Past Due Fees:</span>
+                <span>{{
+                  pastDueSummary.totalPastDueFees.toNumber() | currency
+                }}</span>
+              </div>
+              <div class="col-12 md:col-3 mt-3">
+                <span class="text-600 font-semibold"
+                  >Total Past Due Amount:</span
+                >
+                <span>{{
+                  pastDueSummary.totalPastDueAmount.toNumber() | currency
+                }}</span>
+              </div>
+            </div>
+            <p class="mt-2 pt-6" style="text-align: center; font-weight: bold">
+              Please note that these past due amounts reflect bills that should
+              have been paid before the snapshot date but remain unpaid.
+            </p>
+          </div>
+        </div>
+      </div>
+    </p-card>
+
+    <!-- Current Loan Status card-->
     <p-card header="Current Loan Status" styleClass="mb-3">
       <div class="grid">
         <!-- Row 1 -->
@@ -513,6 +600,90 @@
         <!-- Any additional fields can follow in the remaining columns of this row -->
       </div>
     </p-card>
+
+    <!-- Actual Payment-Based Status card -->
+    <p-card
+      header="Actual Payment-Based Status"
+      styleClass="mb-3"
+      *ngIf="actualLoanSummary"
+    >
+      <div class="grid">
+        <!-- Row 1 -->
+        <div class="col-12 md:col-3">
+          <div class="flex flex-column">
+            <span class="text-600 font-semibold mb-1"
+              >Next Bill Date (Actual):</span
+            >
+            <span>{{
+              actualLoanSummary.nextBillDate | date: "MM/dd/yyyy"
+            }}</span>
+          </div>
+        </div>
+        <div class="col-12 md:col-3">
+          <div class="flex flex-column">
+            <span class="text-600 font-semibold mb-1"
+              >Principal Paid (Actual):</span
+            >
+            <span>{{
+              actualLoanSummary.actualPrincipalPaid.toNumber() | currency
+            }}</span>
+          </div>
+        </div>
+        <div class="col-12 md:col-3">
+          <div class="flex flex-column">
+            <span class="text-600 font-semibold mb-1"
+              >Interest Paid (Actual):</span
+            >
+            <span>{{
+              actualLoanSummary.actualInterestPaid.toNumber() | currency
+            }}</span>
+          </div>
+        </div>
+        <div class="col-12 md:col-3">
+          <div class="flex flex-column">
+            <span class="text-600 font-semibold mb-1"
+              >Last Payment Date (Actual):</span
+            >
+            <span>{{
+              actualLoanSummary.lastPaymentDate | date: "MM/dd/yyyy"
+            }}</span>
+          </div>
+        </div>
+
+        <!-- Row 2 -->
+        <div class="col-12 md:col-3 mt-3">
+          <div class="flex flex-column">
+            <span class="text-600 font-semibold mb-1"
+              >Last Payment Amount (Actual):</span
+            >
+            <span>{{
+              actualLoanSummary.lastPaymentAmount.toNumber() | currency
+            }}</span>
+          </div>
+        </div>
+        <div class="col-12 md:col-3 mt-3">
+          <div class="flex flex-column">
+            <span class="text-600 font-semibold mb-1"
+              >Remaining Principal (Actual):</span
+            >
+            <span>{{
+              actualLoanSummary.actualRemainingPrincipal.toNumber() | currency
+            }}</span>
+          </div>
+        </div>
+        <div class="col-12 md:col-3 mt-3">
+          <div class="flex flex-column">
+            <span class="text-600 font-semibold mb-1"
+              >Current Payoff (Actual):</span
+            >
+            <span>{{
+              actualLoanSummary.actualCurrentPayoff.toNumber() | currency
+            }}</span>
+          </div>
+        </div>
+      </div>
+    </p-card>
+
     <!-- Repayment Plan Card -->
     <p-card header="Repayment Plan Summary" styleClass="mt-3">
       <!-- Summary Row -->

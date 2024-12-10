@@ -1948,31 +1948,26 @@ describe('Amortization Class', () => {
 
   /**
    * Computes the projected future interest if the loan runs to full maturity.
-   * This is total interest if held to maturity - interest accrued so far.
+   * This considers the given `date` as a reference point, finds the next upcoming
+   * repayment entry that starts after `date`, and sums all accruedInterestForPeriod
+   * from that entry forward until the end of the loan.
+   *
+   * @param date The reference date from which to consider future interest.
+   * @returns The projected future interest as a Currency object.
    */
-  getProjectedFutureInterest(): Currency {
-    // Total interest if held to maturity can be derived from the final repayment schedule
-    // sum of all billedInterestForTerm across all entries - accrued interest so far.
-    // But a simpler approach:
-    // totalOfPayments - amountFinanced = total interest + fees
-    // If fees are included, subtract them if needed.
-    // For simplicity, let's just sum interest from the repaymentSchedule.
+  getProjectedFutureInterest(date: Dayjs): Currency {
+    date = date.startOf("day");
 
-    let totalInterestAtMaturity = Currency.Zero();
+    let projectedFutureInterest = Currency.Zero();
+
     for (const entry of this.repaymentSchedule) {
-      // billedInterestForTerm accumulates over the term, but we want total interest from start to end
-      // accruedInterestForPeriod gives actual interest this period.
-      // Summation of accruedInterestForPeriod for all billable periods = total interest at maturity.
-      if (entry.billablePeriod) {
-        totalInterestAtMaturity = totalInterestAtMaturity.add(entry.accruedInterestForPeriod);
+      // Consider only billable periods that start after the given date
+      if (entry.billablePeriod && entry.periodStartDate.isAfter(date)) {
+        projectedFutureInterest = projectedFutureInterest.add(entry.accruedInterestForPeriod);
       }
     }
 
-    // totalInterestAtMaturity is full interest if loan runs to end
-    // If we want projectedFutureInterest relative to now, subtract accruedInterest to date.
-    const accruedSoFar = this.getAccruedInterestToDate(dayjs());
-    const projectedFutureInterest = totalInterestAtMaturity.subtract(accruedSoFar);
-    return projectedFutureInterest.greaterThan(Currency.Zero()) ? projectedFutureInterest : Currency.Zero();
+    return projectedFutureInterest;
   }
 
   /**
@@ -2059,7 +2054,7 @@ describe('Amortization Class', () => {
     const remainingPrincipal = activePeriod.startBalance;
 
     const accruedInterestToDate = this.getAccruedInterestToDate(date);
-    const projectedFutureInterest = this.getProjectedFutureInterest();
+    const projectedFutureInterest = this.getProjectedFutureInterest(date);
     const currentPayoffAmount = this.getCurrentPayoffAmount(date);
 
     return {

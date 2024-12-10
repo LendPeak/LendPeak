@@ -393,3 +393,39 @@ footer p {
     white-space: normal;
     word-wrap: break-word;
 }
+
+.loan-summary-list {
+    margin: 0;
+    padding: 0;
+}
+
+.loan-summary-list dt {
+    font-weight: bold;
+}
+
+.loan-summary-list dd {
+    margin: 0 0 1em 0;
+}
+
+.loan-summary-item {
+    margin-bottom: 0.5rem;
+}
+
+.loan-summary-grid .p-row {
+    margin-bottom: 0.5rem;
+}
+
+.loan-summary-grid .p-column {
+    display: flex;
+    align-items: center;
+}
+
+.loan-summary-grid strong {
+    display: inline-block;
+    width: 150px;
+    /* adjust as needed */
+}
+
+.repayment-plan-table {
+    width: 100%;
+}

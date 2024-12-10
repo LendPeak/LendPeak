@@ -16,6 +16,20 @@ dayjs.extend(isBetween);
 
 import cloneDeep from "lodash/cloneDeep";
 
+export interface LoanSummary {
+  totalTerms: number;
+  remainingTerms: number;
+  nextBillDate?: Date;
+  paidPrincipalToDate: Currency;
+  paidInterestToDate: Currency;
+  lastPaymentDate?: Date;
+  lastPaymentAmount: Currency;
+  remainingPrincipal: Currency;
+  currentPayoffAmount: Currency; // Principal + accrued interest to date
+  accruedInterestToDate: Currency;
+  projectedFutureInterest: Currency; // Interest yet to be accrued if held to maturity
+}
+
 /**
  * Interface representing each entry in the payment schedule.
  */
@@ -1920,5 +1934,173 @@ describe('Amortization Class', () => {
     const amortization = new Amortization(params);
 
     return amortization;
+  }
+
+  /**
+   * Computes the interest accrued up to the given date.
+   * Uses existing schedule and partial accrual calculations.
+   */
+  getAccruedInterestToDate(date: Dayjs): Currency {
+    // Use existing getAccruedInterestByDate
+    // This returns accrued interest for the active period and previous periods.
+    return this.getAccruedInterestByDate(date);
+  }
+
+  /**
+   * Computes the projected future interest if the loan runs to full maturity.
+   * This is total interest if held to maturity - interest accrued so far.
+   */
+  getProjectedFutureInterest(): Currency {
+    // Total interest if held to maturity can be derived from the final repayment schedule
+    // sum of all billedInterestForTerm across all entries - accrued interest so far.
+    // But a simpler approach:
+    // totalOfPayments - amountFinanced = total interest + fees
+    // If fees are included, subtract them if needed.
+    // For simplicity, let's just sum interest from the repaymentSchedule.
+
+    let totalInterestAtMaturity = Currency.Zero();
+    for (const entry of this.repaymentSchedule) {
+      // billedInterestForTerm accumulates over the term, but we want total interest from start to end
+      // accruedInterestForPeriod gives actual interest this period.
+      // Summation of accruedInterestForPeriod for all billable periods = total interest at maturity.
+      if (entry.billablePeriod) {
+        totalInterestAtMaturity = totalInterestAtMaturity.add(entry.accruedInterestForPeriod);
+      }
+    }
+
+    // totalInterestAtMaturity is full interest if loan runs to end
+    // If we want projectedFutureInterest relative to now, subtract accruedInterest to date.
+    const accruedSoFar = this.getAccruedInterestToDate(dayjs());
+    const projectedFutureInterest = totalInterestAtMaturity.subtract(accruedSoFar);
+    return projectedFutureInterest.greaterThan(Currency.Zero()) ? projectedFutureInterest : Currency.Zero();
+  }
+
+  /**
+   * Computes the current payoff amount (principal + accrued interest up to a given date).
+   * Current payoff = remaining principal + accrued interest to date.
+   */
+  getCurrentPayoffAmount(date: Dayjs): Currency {
+    // Find remaining principal as of date
+    // Remaining principal is just last entry's endBalance at date or project the loan forward.
+    // For a snapshot date, we can find the period and calculate what principal would be at that date.
+    // However, the simplest approach is to find the amortization entry that covers 'date',
+    // partially accrue interest, and calculate principal.
+
+    // If date is after the last scheduled payment, payoff = 0
+    if (date.isSameOrAfter(this.endDate, "day")) {
+      return Currency.Zero();
+    }
+
+    // Find the period containing 'date'
+    const activePeriod = this.getPeriodByDate(date);
+    if (!activePeriod) {
+      // If no active period (date is before start?), payoff = totalLoanAmount
+      if (date.isBefore(this.startDate)) {
+        return this.totalLoanAmount;
+      }
+    }
+
+    // The startBalance of the activePeriod gives remaining principal at that period start
+    // Add accrued interest for partial period to get current payoff
+    const accruedToDate = this.getAccruedInterestToDate(date);
+    // To find remaining principal at a snapshot date, we can approximate by using the activePeriod's startBalance
+    // and subtract any principal that would have been paid up to that exact date.
+    // However, principal is paid at the end of period. If date is mid-period, principal likely hasn't changed from startBalance (assuming interest-first allocation).
+    // For a more accurate mid-term calculation, you'd need more granular logic.
+    // For simplicity, assume principal changes only at period boundaries:
+    const remainingPrincipal = activePeriod.startBalance;
+    const payoff = remainingPrincipal.add(accruedToDate);
+    return payoff;
+  }
+
+  /**
+   * Computes a comprehensive LoanSummary object at a given snapshot date.
+   */
+  getLoanSummary(date: Dayjs): LoanSummary {
+    // total terms = this.term
+    const totalTerms = this.term;
+
+    // Determine how many terms have been fully paid
+    // A fully paid term is one where the billable period entries sum up to principal + interest paid
+    // For simplicity, count terms as completed if periodEndDate < date
+    const completedTerms = this.repaymentSchedule.filter((e) => e.billablePeriod && e.periodEndDate.isBefore(date, "day")).map((e) => e.term);
+    const maxCompletedTerm = completedTerms.length > 0 ? Math.max(...completedTerms) : 0;
+    const remainingTerms = totalTerms - maxCompletedTerm;
+
+    // Next bill date: the end date of the next unpaid period
+    const nextTermEntry = this.repaymentSchedule.find((e) => e.term === maxCompletedTerm + 1 && e.billablePeriod);
+    const nextBillDate = nextTermEntry ? nextTermEntry.periodBillDueDate.toDate() : undefined;
+
+    // Paid principal to date and paid interest to date
+    // Sum all principal and interest paid in periods fully before 'date'
+    let paidPrincipalToDate = Currency.Zero();
+    let paidInterestToDate = Currency.Zero();
+    let lastPaymentDate: Date | undefined = undefined;
+    let lastPaymentAmount = Currency.Zero();
+
+    // Iterate through all fully-paid periods
+    for (const entry of this.repaymentSchedule) {
+      if (entry.billablePeriod && entry.periodEndDate.isBefore(date, "day")) {
+        paidPrincipalToDate = paidPrincipalToDate.add(entry.principal);
+        // accruedInterestForPeriod is the interest charged this period
+        paidInterestToDate = paidInterestToDate.add(entry.accruedInterestForPeriod);
+        // lastPayment info
+        if (!lastPaymentDate || entry.periodEndDate.isAfter(dayjs(lastPaymentDate))) {
+          lastPaymentDate = entry.periodEndDate.toDate();
+          lastPaymentAmount = entry.totalPayment;
+        }
+      }
+    }
+
+    // Remaining Principal = last period that ended before 'date' endBalance of that period,
+    // or if date is mid-period use activePeriod startBalance minus principal if any partial calculation done
+    // For simplicity, use the active period's startBalance as remaining principal approximation
+    const activePeriod = this.getPeriodByDate(date) || this.repaymentSchedule[this.repaymentSchedule.length - 1];
+    const remainingPrincipal = activePeriod.startBalance;
+
+    const accruedInterestToDate = this.getAccruedInterestToDate(date);
+    const projectedFutureInterest = this.getProjectedFutureInterest();
+    const currentPayoffAmount = this.getCurrentPayoffAmount(date);
+
+    return {
+      totalTerms: totalTerms,
+      remainingTerms: remainingTerms,
+      nextBillDate: nextBillDate,
+      paidPrincipalToDate: paidPrincipalToDate,
+      paidInterestToDate: paidInterestToDate,
+      lastPaymentDate: lastPaymentDate,
+      lastPaymentAmount: lastPaymentAmount,
+      remainingPrincipal: remainingPrincipal,
+      currentPayoffAmount: currentPayoffAmount,
+      accruedInterestToDate: accruedInterestToDate,
+      projectedFutureInterest: projectedFutureInterest,
+    };
+  }
+
+  /**
+   * Returns the number of days left until the next billable term's due date,
+   * starting from the provided date (defaults to today).
+   *
+   * If there are no upcoming terms left (all are passed), it returns 0.
+   *
+   * @param now The reference date (defaults to today's date).
+   * @returns The number of days until the next billable period's due date.
+   */
+  getDaysLeftInTerm(now: Dayjs | Date = dayjs()): number {
+    if (now instanceof Date) {
+      now = dayjs(now);
+    }
+    now = now.startOf("day");
+
+    // Find the next upcoming billable period whose due date is after 'now'
+    const upcomingEntry = this.repaymentSchedule.find((entry) => entry.billablePeriod && entry.periodBillDueDate.isAfter(now));
+
+    if (!upcomingEntry) {
+      // No future billable terms remain, so 0 days left
+      return 0;
+    }
+
+    // Calculate and return the difference in whole days
+    return upcomingEntry.periodBillDueDate.diff(now, "day");
   }
 }

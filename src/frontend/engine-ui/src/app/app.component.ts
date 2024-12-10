@@ -24,6 +24,7 @@ import {
   FlushUnbilledInterestDueToRoundingErrorType,
   TILADisclosures,
   Fee,
+  LoanSummary,
 } from 'lendpeak-engine/models/Amortization';
 import { AmortizationEntry } from 'lendpeak-engine/models/Amortization/AmortizationEntry';
 import { BalanceModification } from 'lendpeak-engine/models/Amortization/BalanceModification';
@@ -1316,6 +1317,7 @@ export class AppComponent implements OnChanges {
   repaymentSchedule: AmortizationEntry[] = [];
   repaymentPlanEndDates: string[] = [];
   amortization: Amortization | undefined = undefined;
+  loanSummary?: LoanSummary;
 
   createLoanRepaymentPlan() {
     // we will reset current schedule and
@@ -1937,6 +1939,10 @@ export class AppComponent implements OnChanges {
     this.loan.balanceModifications = this.amortization.balanceModifications;
 
     this.loanModified = true; // Mark as modified
+
+    this.loanSummary = this.amortization.getLoanSummary(
+      dayjs(this.snapshotDate),
+    );
   }
 
   makeReactive(obj: any, callback: Function): any {

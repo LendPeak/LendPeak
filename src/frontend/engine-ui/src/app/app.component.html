@@ -412,45 +412,152 @@
 
   <!-- Repayment Plan at the Bottom -->
   <div *ngIf="showTable">
-    <!-- Repayment Plan Card -->
-    <p-card header="Repayment Plan Summary">
-      <!-- Summary Tags -->
+    <p-card header="Current Loan Status" styleClass="mb-3">
       <div class="grid">
-        <div class="col-2">
-          <p-tag
-            severity="success"
-            value="Term In Months: {{ amortization?.loanTermInMonths }}"
-          ></p-tag>
+        <!-- Row 1 -->
+        <div class="col-12 md:col-3">
+          <div class="flex flex-column">
+            <span class="text-600 font-semibold mb-1">Remaining Terms:</span>
+            <span
+              >{{ loanSummary?.remainingTerms }} /
+              {{ loanSummary?.totalTerms }}</span
+            >
+          </div>
         </div>
-        <div class="col-2">
-          <p-tag
-            severity="success"
-            value="APR: {{ amortization?.apr?.toDecimalPlaces(4) }}%"
-          ></p-tag>
+        <div class="col-12 md:col-3">
+          <div class="flex flex-column">
+            <span class="text-600 font-semibold mb-1">Next Bill Date:</span>
+            <span>{{ loanSummary?.nextBillDate | date: "MM/dd/yyyy" }}</span>
+          </div>
         </div>
-        <div class="col-2">
-          <p-tag
-            severity="success"
-            value="Accrued Interest: {{
-              accruedInterest.getRoundedNumber() | currency
-            }}"
-          ></p-tag>
+        <div class="col-12 md:col-3">
+          <div class="flex flex-column">
+            <span class="text-600 font-semibold mb-1"
+              >Paid Principal To Date:</span
+            >
+            <span>{{
+              loanSummary?.paidPrincipalToDate?.toNumber() | currency
+            }}</span>
+          </div>
         </div>
-        <div class="col-2">
-          <p-tag
-            severity="success"
-            value="Total Charged Interest: {{
+        <div class="col-12 md:col-3">
+          <div class="flex flex-column">
+            <span class="text-600 font-semibold mb-1"
+              >Paid Interest To Date:</span
+            >
+            <span>{{
+              loanSummary?.paidInterestToDate?.toNumber() | currency
+            }}</span>
+          </div>
+        </div>
+
+        <!-- Row 2 -->
+        <div class="col-12 md:col-3 mt-3">
+          <div class="flex flex-column">
+            <span class="text-600 font-semibold mb-1">Last Payment Date:</span>
+            <span>{{ loanSummary?.lastPaymentDate | date: "MM/dd/yyyy" }}</span>
+          </div>
+        </div>
+        <div class="col-12 md:col-3 mt-3">
+          <div class="flex flex-column">
+            <span class="text-600 font-semibold mb-1"
+              >Last Payment Amount:</span
+            >
+            <span>{{
+              loanSummary?.lastPaymentAmount?.toNumber() | currency
+            }}</span>
+          </div>
+        </div>
+        <div class="col-12 md:col-3 mt-3">
+          <div class="flex flex-column">
+            <span class="text-600 font-semibold mb-1"
+              >Remaining Principal:</span
+            >
+            <span>{{
+              loanSummary?.remainingPrincipal?.toNumber() | currency
+            }}</span>
+          </div>
+        </div>
+        <div class="col-12 md:col-3 mt-3">
+          <div class="flex flex-column">
+            <span class="text-600 font-semibold mb-1"
+              >Current Payoff (Principal + Accrued Interest):</span
+            >
+            <span>{{
+              loanSummary?.currentPayoffAmount?.toNumber() | currency
+            }}</span>
+          </div>
+        </div>
+
+        <!-- Row 3 -->
+        <div class="col-12 md:col-3 mt-3">
+          <div class="flex flex-column">
+            <span class="text-600 font-semibold mb-1"
+              >Accrued Interest To Date:</span
+            >
+            <span>{{
+              loanSummary?.accruedInterestToDate?.toNumber() | currency
+            }}</span>
+          </div>
+        </div>
+        <div class="col-12 md:col-3 mt-3">
+          <div class="flex flex-column">
+            <span class="text-600 font-semibold mb-1"
+              >Projected Future Interest (If Held To Maturity):</span
+            >
+            <span>{{
+              loanSummary?.projectedFutureInterest?.toNumber() | currency
+            }}</span>
+          </div>
+        </div>
+        <!-- Any additional fields can follow in the remaining columns of this row -->
+      </div>
+    </p-card>
+    <!-- Repayment Plan Card -->
+    <p-card header="Repayment Plan Summary" styleClass="mt-3">
+      <!-- Summary Row -->
+      <div class="grid p-2">
+        <div class="col-12 md:col-2">
+          <div class="flex flex-column">
+            <span class="text-600 font-semibold mb-1">Term In Months:</span>
+            <span>{{ amortization?.loanTermInMonths }}</span>
+          </div>
+        </div>
+        <div class="col-12 md:col-2">
+          <div class="flex flex-column">
+            <span class="text-600 font-semibold mb-1">Days Left in Term:</span>
+            <span>{{ amortization?.getDaysLeftInTerm(snapshotDate) }}</span>
+          </div>
+        </div>
+        <div class="col-12 md:col-2">
+          <div class="flex flex-column">
+            <span class="text-600 font-semibold mb-1">APR:</span>
+            <span>{{ amortization?.apr?.toDecimalPlaces(4) }}%</span>
+          </div>
+        </div>
+        <div class="col-12 md:col-2">
+          <div class="flex flex-column">
+            <span class="text-600 font-semibold mb-1">Accrued Interest:</span>
+            <span>{{ accruedInterest.getRoundedNumber() | currency }}</span>
+          </div>
+        </div>
+        <div class="col-12 md:col-2">
+          <div class="flex flex-column">
+            <span class="text-600 font-semibold mb-1"
+              >Total Charged Interest:</span
+            >
+            <span>{{
               amortization?.totalChargedInterestRounded?.toNumber() | currency
-            }}"
-          ></p-tag>
+            }}</span>
+          </div>
         </div>
-        <div class="col-2">
-          <p-tag
-            severity="success"
-            value="Total Loan Amount: {{
+        <div class="col-12 md:col-2">
+          <div class="flex flex-column">
+            <span class="text-600 font-semibold mb-1">Total Loan Amount:</span>
+            <span>{{
               amortization?.totalLoanAmount?.toNumber() | currency
-            }}"
-          ></p-tag>
+            }}</span>
+          </div>
         </div>
       </div>
 

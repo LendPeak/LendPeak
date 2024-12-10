@@ -224,6 +224,15 @@ export class AppComponent implements OnChanges {
         'These changes aim to increase transparency and clarity for the user, providing a more intuitive understanding of their loan status.',
       ],
     },
+    {
+      version: '1.16.0',
+      date: '2024-12-10',
+      details: [
+        'Added daysContractIsPastDue metric to Past Due Bills Status, reflecting contract-level delinquency from the earliest unpaid bill.',
+        'Improved partial payment handling for past due bills, now calculating unpaid amounts dynamically for greater accuracy.',
+        'Enhanced transparency and clarity in delinquency reporting, providing a more accurate and actionable status overview for all stakeholders.',
+      ],
+    },
   ];
 
   showConnectorManagementDialog: boolean = false;

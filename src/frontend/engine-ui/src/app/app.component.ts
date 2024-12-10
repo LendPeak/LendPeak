@@ -209,6 +209,16 @@ export class AppComponent implements OnChanges {
         'Improved integration with TILA disclosure components and overall user experience.',
       ],
     },
+    {
+      version: '1.15.0',
+      date: '2024-12-09',
+      details: [
+        'Refined calculation for days left in the current term to accurately reflect the next due date instead of the contract end date.',
+        'Enhanced the loan summary section to include payoff amount (principal + accrued interest), accrued interest to date, and projected future interest if the loan runs to maturity.',
+        'Improved UI layout to better utilize space and provide a cleaner, more modern look for the loan summary and repayment plan overview.',
+        'These changes aim to increase transparency and clarity for the user, providing a more intuitive understanding of their loan status.',
+      ],
+    },
   ];
 
   showConnectorManagementDialog: boolean = false;

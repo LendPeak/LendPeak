@@ -66,6 +66,9 @@ import { UsageDetail } from 'lendpeak-engine/models/Bill/Deposit/UsageDetail';
   providers: [MessageService],
 })
 export class AppComponent implements OnChanges {
+  @ViewChild('repaymentPlanTable', { static: false })
+  repaymentPlanTableRef!: ElementRef;
+
   constructor(
     private route: ActivatedRoute,
     private router: Router,
@@ -231,6 +234,15 @@ export class AppComponent implements OnChanges {
         'Added daysContractIsPastDue metric to Past Due Bills Status, reflecting contract-level delinquency from the earliest unpaid bill.',
         'Improved partial payment handling for past due bills, now calculating unpaid amounts dynamically for greater accuracy.',
         'Enhanced transparency and clarity in delinquency reporting, providing a more accurate and actionable status overview for all stakeholders.',
+      ],
+    },
+    {
+      version: '1.17.0',
+      date: '2024-12-10',
+      details: [
+        'Added a new feature that allows users to quickly scroll to the last due line in the repayment plan and automatically highlight it.',
+        'This improvement assists users in easily locating and reviewing the most recently due portion of their loan schedule.',
+        'Continued refinements to user experience and interface clarity to better guide users through their loan details.',
       ],
     },
   ];
@@ -2107,5 +2119,44 @@ export class AppComponent implements OnChanges {
       totalPastDueAmount,
       daysContractIsPastDue,
     };
+  }
+
+  scrollToLastDueLine(): void {
+    if (!this.repaymentPlan || this.repaymentPlan.length === 0) return;
+
+    const snapshot = dayjs(this.snapshotDate).startOf('day');
+
+    // Find the last period due on or before snapshot date
+    let lastDueIndex = -1;
+    for (let i = this.repaymentPlan.length - 1; i >= 0; i--) {
+      const plan = this.repaymentPlan[i];
+      const dueDate = dayjs(plan.periodBillDueDate);
+      if (dueDate.isSameOrBefore(snapshot)) {
+        lastDueIndex = i;
+        break;
+      }
+    }
+
+    if (lastDueIndex === -1) {
+      // No past due line found, maybe show a message or do nothing
+      this.messageService.add({
+        severity: 'info',
+        summary: 'No Past Due Lines',
+        detail:
+          'There are no repayment lines due on or before the snapshot date.',
+      });
+      return;
+    }
+
+    // Scroll to that row
+    const rowElement = document.getElementById('plan-row-' + lastDueIndex);
+    if (rowElement) {
+      rowElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+      // Simulate a click on the row to trigger your highlighting logic
+      setTimeout(() => {
+        rowElement.click();
+      }, 500); // a small delay to ensure scrolling completes
+    }
   }
 }

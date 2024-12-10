@@ -739,6 +739,16 @@
             label="Show {{ showAdvancedTable ? 'Simple' : 'Advanced' }} Table"
             icon="pi pi-table"
             (onClick)="toggleAdvancedTable()"
+            class="mr-2"
+          ></p-button>
+
+          <p-button
+            label="Go to Last Due Line"
+            icon="pi pi-arrow-down"
+            class="p-ml-2"
+            (onClick)="scrollToLastDueLine()"
+            pTooltip="Scroll to the last repayment plan line that is due as of the snapshot date."
+            tooltipPosition="top"
           ></p-button>
         </ng-template>
 
@@ -798,8 +808,10 @@
             <th *ngIf="showAdvancedTable">Metadata</th>
           </tr>
         </ng-template>
-        <ng-template pTemplate="body" let-plan>
+        <ng-template pTemplate="body" let-plan let-rowIndex="rowIndex">
           <tr
+            [attr.data-index]="rowIndex"
+            [id]="'plan-row-' + rowIndex"
             role="row"
             [attr.aria-selected]="selectedPeriods.includes(plan.period)"
             [class.even-row]="plan.period % 2 === 0"

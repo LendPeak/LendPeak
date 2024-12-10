@@ -61,6 +61,29 @@
     </p-footer>
   </p-dialog>
 
+  <!-- Explanation Dialog -->
+  <p-dialog
+    header="Loan Explanation and Transparency"
+    [(visible)]="showExplanationDialog"
+    [modal]="true"
+    [style]="{ width: '80%', height: '80%' }"
+    [contentStyle]="{ overflow: 'auto' }"
+    (onHide)="showExplanationDialog = false"
+  >
+    <pre style="white-space: pre-wrap; font-family: monospace; font-size: 14px"
+      >{{ loanExplanationText }}
+</pre
+    >
+    <p-footer>
+      <button
+        pButton
+        label="Close"
+        (click)="showExplanationDialog = false"
+        class="p-button-text"
+      ></button>
+    </p-footer>
+  </p-dialog>
+
   <!-- generated code -->
   <p-dialog
     header="Generated Code"
@@ -520,7 +543,27 @@
               {{ plan.billDueDaysAfterPeriodEndConfiguration }}
             </td>
             <td>{{ plan.periodBillDueDate | date: "MM/dd/yyyy" }}</td>
-            <td>{{ plan.periodInterestRate }}%</td>
+
+            <td>
+              {{ plan.periodInterestRate | number }}%
+              <ng-container
+                *ngIf="
+                  plan.metadata && plan.metadata.staticInterestOverrideApplied
+                "
+              >
+                <p-badge
+                  value="Manual"
+                  severity="warning"
+                  styleClass="mr-2"
+                  pTooltip="This term's interest was manually set. Equivalent Interest Rate: {{
+                    plan.metadata.equivalentAnnualRate * 100 | number: '1.2-8'
+                  }}%"
+                  tooltipPosition="top"
+                  tooltipStyleClass="wide-tooltip"
+                ></p-badge>
+              </ng-container>
+            </td>
+
             <td>{{ plan.fees | currency }}</td>
             <td>{{ plan.dueInterestForTerm | currency }}</td>
             <td>{{ plan.principal | currency }}</td>

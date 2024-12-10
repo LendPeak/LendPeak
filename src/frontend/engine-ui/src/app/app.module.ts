@@ -20,6 +20,7 @@ import { ToolbarModule } from 'primeng/toolbar';
 import { CheckboxModule } from 'primeng/checkbox';
 import { TagModule } from 'primeng/tag';
 import { DialogModule } from 'primeng/dialog';
+import { BadgeModule } from 'primeng/badge';
 
 import { PanelModule } from 'primeng/panel';
 import { TabViewModule } from 'primeng/tabview';
@@ -79,6 +80,7 @@ import {
     BrowserAnimationsModule, // Add this to enable animations
     FormsModule,
     ButtonModule,
+    BadgeModule,
     InputTextModule,
     CalendarModule,
     DropdownModule,

@@ -55,7 +55,6 @@
   </div>
 </p-toolbar>
 
-
 <!-- Save Settings Dialog -->
 <p-dialog
   header="Save Settings"
@@ -384,6 +383,75 @@
               icon="pi pi-plus"
               class="p-button-success"
               (click)="addTermPaymentAmountOverride()"
+            ></p-button>
+          </div>
+        </div>
+      </p-accordionTab>
+
+      <!-- Term Interest Override -->
+      <p-accordionTab
+        header="Term Interest Override"
+        [selected]="!!(
+          loan.termInterestOverride && loan.termInterestOverride.length > 0
+        )"
+      >
+        <div class="p-fluid">
+          <table
+            *ngIf="
+              loan.termInterestOverride && loan.termInterestOverride.length > 0
+            "
+            class="p-datatable p-component"
+          >
+            <thead>
+              <tr>
+                <th>Term Number</th>
+                <th>Interest Amount</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                *ngFor="
+                  let override of loan.termInterestOverride;
+                  let i = index
+                "
+              >
+                <!-- Term Number -->
+                <td>
+                  <p-inputNumber
+                    [(ngModel)]="override.termNumber"
+                    name="termInterestOverride-term{{ i }}"
+                    (ngModelChange)="onInputChange()"
+                  ></p-inputNumber>
+                </td>
+                <!-- Interest Amount -->
+                <td>
+                  <p-inputNumber
+                    [(ngModel)]="override.interestAmount"
+                    name="termInterestOverride-amount-{{ i }}"
+                    mode="currency"
+                    currency="USD"
+                    locale="en-US"
+                    (ngModelChange)="onInputChange()"
+                  ></p-inputNumber>
+                </td>
+                <!-- Remove Button -->
+                <td>
+                  <p-button
+                    icon="pi pi-trash"
+                    class="p-button-rounded p-button-danger"
+                    (click)="removeTermInterestOverride(i)"
+                  ></p-button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="p-mt-2">
+            <p-button
+              label="Add Interest Override"
+              icon="pi pi-plus"
+              class="p-button-success"
+              (click)="addTermInterestOverrideRow()"
             ></p-button>
           </div>
         </div>

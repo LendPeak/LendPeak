@@ -2,6 +2,8 @@ import { appVersion } from '../environments/version';
 import { MessageService } from 'primeng/api';
 import { ActivatedRoute, Router, NavigationEnd } from '@angular/router';
 import { Location } from '@angular/common';
+import { AmortizationExplainer }  from 'lendpeak-engine/models/AmortizationExplainer';
+
 
 import {
   Component,
@@ -76,6 +78,9 @@ export class AppComponent implements OnChanges {
 
   loanNotFound: boolean = false;
   requestedLoanName: string = '';
+
+  showExplanationDialog: boolean = false;
+  loanExplanationText: string = '';
 
   showNewVersionModal = false;
   currentReleaseNotes: any;
@@ -987,6 +992,12 @@ export class AppComponent implements OnChanges {
       command: () => this.openCodeDialog(),
     },
     {
+      label: 'Explain Loan',
+      icon: 'pi pi-info-circle',
+      command: () => this.showLoanExplanation(),
+      tooltip: 'Get a detailed explanation of loan calculations',
+    },
+    {
       label: 'Current Release Notes',
       icon: 'pi pi-sparkles',
       command: () => this.showCurrentReleaseNotes(),
@@ -1002,6 +1013,20 @@ export class AppComponent implements OnChanges {
   showManageLoansDialog: boolean = false;
   savedLoans: any[] = [];
 
+  showLoanExplanation() {
+    if (!this.amortization) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'No Amortization Data',
+        detail: 'Please calculate the amortization schedule first.',
+      });
+      return;
+    }
+    const explainer = new AmortizationExplainer(this.amortization);
+    this.loanExplanationText = explainer.getFullExplanation();
+    this.showExplanationDialog = true;
+  }
+  
   getLineNumbers(code: string): number[] {
     return Array.from({ length: code.split('\n').length }, (_, i) => i + 1);
   }
@@ -1406,56 +1431,6 @@ export class AppComponent implements OnChanges {
 
   balanceModificationRemoved = false;
 
-  createOrUpdateBalanceModificationForDeposit(
-    deposit: DepositRecord,
-    excessAmount: number,
-  ) {
-    if (excessAmount <= 0) {
-      // No excess amount to apply
-      return;
-    }
-    // Find existing balance modification linked to this deposit
-    let balanceModification = this.loan.balanceModifications.find(
-      (bm) => bm.metadata && bm.metadata.depositId === deposit.id,
-    );
-
-    // Determine the date to apply the balance modification
-    const dateToApply = this.determineBalanceModificationDate(deposit);
-
-    if (balanceModification) {
-      // Update existing balance modification
-      balanceModification.amount = Currency.of(excessAmount);
-      balanceModification.date = dayjs(dateToApply);
-    } else {
-      // Create new balance modification
-      const newBalanceModification = new BalanceModification({
-        id: this.generateUniqueId(),
-        amount: excessAmount,
-        date: dateToApply,
-        isSystemModification: true,
-        type: 'decrease',
-        description: `Excess funds applied to principal from deposit ${deposit.id}`,
-        metadata: {
-          depositId: deposit.id,
-        },
-      });
-      this.addBalanceModification(newBalanceModification);
-      deposit.balanceModificationId = newBalanceModification.id;
-    }
-
-    deposit.usageDetails.push(
-      new UsageDetail({
-        billId: 'Principal Prepayment',
-        period: 0,
-        billDueDate: dateToApply,
-        allocatedPrincipal: excessAmount,
-        allocatedInterest: 0,
-        allocatedFees: 0,
-        date: dateToApply,
-      }),
-    );
-  }
-
   generateUniqueId(): string {
     return uuidv4();
   }
@@ -1856,6 +1831,19 @@ export class AppComponent implements OnChanges {
           };
         },
       );
+    }
+
+    if (
+      this.loan.termInterestOverride &&
+      this.loan.termInterestOverride.length > 0
+    ) {
+      amortizationParams.termInterestOverride =
+        this.loan.termInterestOverride.map((o) => {
+          return {
+            termNumber: o.termNumber,
+            interestAmount: Currency.of(o.interestAmount),
+          };
+        });
     }
 
     let amortization: Amortization;

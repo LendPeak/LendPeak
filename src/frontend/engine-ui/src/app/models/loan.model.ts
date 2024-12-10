@@ -80,4 +80,5 @@ export interface UILoan {
   deposits: DepositRecord[];
   termPeriodDefinition: TermPeriodDefinition;
   paymentAllocationStrategy: PaymentAllocationStrategyName;
+  termInterestOverride?: { termNumber: number; interestAmount: number }[];
 }

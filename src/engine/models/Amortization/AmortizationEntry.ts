@@ -24,6 +24,8 @@ export interface AmortizationScheduleMetadata {
   amountAddedToDeferredInterest?: number;
   deferredFeesAppliedAmount?: number;
   amountAddedToDeferredFees?: number;
+  staticInterestOverrideApplied?: boolean;
+  equivalentAnnualRate?: number;
 }
 
 /**

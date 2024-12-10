@@ -387,3 +387,9 @@ footer p {
     transform-origin: bottom left;
 }
 
+.wide-tooltip {
+    max-width: 300px;
+    /* Adjust the width as needed */
+    white-space: normal;
+    word-wrap: break-word;
+}

@@ -193,6 +193,8 @@ export class OverridesComponent {
       balanceModifications: this.loan.balanceModifications,
       feesForAllTerms: this.loan.feesForAllTerms,
       feesPerTerm: this.loan.feesPerTerm,
+      termInterestOverride: this.loan.termInterestOverride || [],
+
       // Add other settings as needed
     };
   }
@@ -209,6 +211,8 @@ export class OverridesComponent {
     this.loan.balanceModifications = settings.balanceModifications || [];
     this.loan.feesForAllTerms = settings.feesForAllTerms || [];
     this.loan.feesPerTerm = settings.feesPerTerm || [];
+    this.loan.termInterestOverride = settings.termInterestOverride || [];
+
     // Apply other settings as needed
 
     this.emitLoanChange();
@@ -589,6 +593,42 @@ export class OverridesComponent {
     if (this.loan.feesPerTerm && this.loan.feesPerTerm.length > 0) {
       this.loan.feesPerTerm.splice(index, 1);
       this.emitLoanChange();
+    }
+  }
+
+  // Add row for termInterestOverride
+  addTermInterestOverrideRow() {
+    if (!this.loan.termInterestOverride) {
+      this.loan.termInterestOverride = [];
+    }
+
+    // Default values for a new row
+    const lastEntry =
+      this.loan.termInterestOverride[this.loan.termInterestOverride.length - 1];
+    let termNumber = 1;
+    let interestAmount = 0;
+
+    if (lastEntry) {
+      termNumber = lastEntry.termNumber + 1;
+      interestAmount = lastEntry.interestAmount;
+    }
+
+    this.loan.termInterestOverride.push({
+      termNumber: termNumber,
+      interestAmount: interestAmount,
+    });
+
+    this.onInputChange();
+  }
+
+  // Remove a specific termInterestOverride row
+  removeTermInterestOverride(index: number) {
+    if (
+      this.loan.termInterestOverride &&
+      this.loan.termInterestOverride.length > 0
+    ) {
+      this.loan.termInterestOverride.splice(index, 1);
+      this.onInputChange();
     }
   }
 

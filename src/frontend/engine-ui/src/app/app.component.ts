@@ -245,6 +245,16 @@ export class AppComponent implements OnChanges {
         'Continued refinements to user experience and interface clarity to better guide users through their loan details.',
       ],
     },
+    {
+      version: '1.18.0',
+      date: '2024-12-10',
+      details: [
+        'Enhanced the Bills and Deposits views with "Go to Last Due Bill" and "Go to Last Deposit" functionalities.',
+        'Implemented row highlighting on scroll to visually emphasize the relevant record.',
+        'Improved reliability of scrolling by ensuring DOM elements are accessible after view rendering.',
+        'Minor UI adjustments and code refactoring to maintain consistency across components.',
+      ],
+    },
   ];
 
   showConnectorManagementDialog: boolean = false;

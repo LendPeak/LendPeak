@@ -3,6 +3,17 @@
 <div class="grid">
   <div class="col-12">
     <p-card>
+      <p-toolbar styleClass="mb-4 gap-2">
+        <ng-template pTemplate="left">
+          <p-button
+            label="Go to Last Due Bill"
+            icon="pi pi-arrow-down"
+            (click)="scrollToLastDueBill()"
+            pTooltip="Scroll to the last due (unpaid) bill and highlight it"
+          ></p-button>
+        </ng-template>
+      </p-toolbar>
+
       <p-table
         [value]="bills"
         [paginator]="true"
@@ -28,8 +39,8 @@
             <th>Actions</th>
           </tr>
         </ng-template>
-        <ng-template pTemplate="body" let-bill>
-          <tr>
+        <ng-template pTemplate="body" let-bill let-rowIndex="rowIndex">
+          <tr #billRow [class.selected-row]="isBillHighlighted(bill)">
             <td>{{ bill.id }}</td>
             <td>{{ bill.period }}</td>
             <td>{{ bill.jsDueDate | date: "MM/dd/yyyy" }}</td>

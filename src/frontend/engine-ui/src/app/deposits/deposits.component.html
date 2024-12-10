@@ -6,8 +6,16 @@
         <p-button
           label="Add New Deposit"
           icon="pi pi-plus"
-          class="p-button-success"
+          class="p-button-success mr-2"
           (click)="openDepositDialog()"
+        ></p-button>
+
+        <p-button
+          label="Go to Last Deposit"
+          icon="pi pi-arrow-down"
+          class="p-button-info"
+          (click)="scrollToLastDeposit()"
+          pTooltip="Scroll to the last deposit and highlight it"
         ></p-button>
       </div>
       <p-divider></p-divider>
@@ -41,8 +49,11 @@
               <th>Actions</th>
             </tr>
           </ng-template>
-          <ng-template pTemplate="body" let-deposit>
-            <tr>
+          <ng-template pTemplate="body" let-deposit let-rowIndex="rowIndex">
+            <tr
+              #depositRow
+              [class.selected-row]="isDepositHighlighted(deposit)"
+            >
               <!-- ID -->
               <td>{{ deposit.id }}</td>
               <!-- Amount -->

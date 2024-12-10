@@ -1,5 +1,14 @@
 // deposits.component.ts
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import {
+  Component,
+  Input,
+  Output,
+  EventEmitter,
+  ViewChildren,
+  QueryList,
+  ElementRef,
+  AfterViewInit,
+} from '@angular/core';
 import { DropDownOptionString } from '../models/common.model';
 import { Currency } from 'lendpeak-engine/utils/Currency';
 import { DepositRecord } from 'lendpeak-engine/models/Deposit';
@@ -16,6 +25,9 @@ export class DepositsComponent {
   @Output() depositsChange = new EventEmitter<DepositRecord[]>();
   @Output() depositUpdated = new EventEmitter<void>();
 
+  @ViewChildren('depositRow', { read: ElementRef })
+  depositRows!: QueryList<ElementRef>;
+
   // For dialog control
   showDepositDialog: boolean = false;
   showDepositUsageDetailsDialog: boolean = false;
@@ -23,6 +35,37 @@ export class DepositsComponent {
   selectedDeposit: DepositRecord | null = null;
   depositData: DepositRecord = this.getEmptyDepositData();
 
+  highlightedDepositId?: string;
+
+  ngAfterViewInit(): void {
+    // After view init, rows are available if we need further logic
+  }
+
+  scrollToLastDeposit() {
+    if (this.deposits.length === 0) {
+      return;
+    }
+
+    // Last deposit is the last in the array
+    const lastDeposit = this.deposits[this.deposits.length - 1];
+    this.highlightedDepositId = lastDeposit.id;
+
+    // Wait a tick to ensure query list is updated if deposits changed
+    setTimeout(() => {
+      const lastRow = this.depositRows.last;
+      if (lastRow && lastRow.nativeElement) {
+        lastRow.nativeElement.scrollIntoView({
+          behavior: 'smooth',
+          block: 'center',
+        });
+      }
+    }, 0);
+  }
+
+  isDepositHighlighted(deposit: DepositRecord): boolean {
+    return this.highlightedDepositId === deposit.id;
+  }
+  
   getEmptyDepositData(): DepositRecord {
     return new DepositRecord({
       amount: 0,

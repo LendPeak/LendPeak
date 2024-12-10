@@ -2,8 +2,7 @@ import { appVersion } from '../environments/version';
 import { MessageService } from 'primeng/api';
 import { ActivatedRoute, Router, NavigationEnd } from '@angular/router';
 import { Location } from '@angular/common';
-import { AmortizationExplainer }  from 'lendpeak-engine/models/AmortizationExplainer';
-
+import { AmortizationExplainer } from 'lendpeak-engine/models/AmortizationExplainer';
 
 import {
   Component,
@@ -197,6 +196,16 @@ export class AppComponent implements OnChanges {
         'Refactored Proxy Controller to improve error handling and prevent circular JSON serialization errors.',
         'Created comprehensive TypeScript interfaces for loan data responses, ensuring type safety and improving code maintainability.',
         'Enhanced AppComponent to integrate new LoanProService functionalities, including loan import by displayId and systemId, and updated the UI to display detailed loan information with related entities.',
+      ],
+    },
+    {
+      version: '1.14.0',
+      date: '2024-12-09',
+      details: [
+        'Refined amortization calculations and interest rounding approaches.',
+        'Explored and then removed the AmortizationExplainer prototype after user feedback.',
+        'Enhanced UI transparency and pipeline stability.',
+        'Improved integration with TILA disclosure components and overall user experience.',
       ],
     },
   ];
@@ -1026,7 +1035,7 @@ export class AppComponent implements OnChanges {
     this.loanExplanationText = explainer.getFullExplanation();
     this.showExplanationDialog = true;
   }
-  
+
   getLineNumbers(code: string): number[] {
     return Array.from({ length: code.split('\n').length }, (_, i) => i + 1);
   }

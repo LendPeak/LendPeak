@@ -330,9 +330,35 @@ export class AppComponent implements OnChanges {
     this.showLoanImportDialog = true;
   }
 
-  // Method to handle when a loan is imported
-  onLoanImported(loanData: UILoan) {
-    // Update the loan in AppComponent
+
+
+  onLoanImported(loanData: UILoan | UILoan[]) {
+    if (Array.isArray(loanData)) {
+      // Multiple loans imported
+      // For example, save each loan individually under its own name
+      loanData.forEach((singleLoan) => {
+        this.saveAndLoadLoan(singleLoan);
+      });
+      this.messageService.add({
+        severity: 'success',
+        summary: 'Success',
+        detail: `${loanData.length} loans imported and saved successfully.`,
+      });
+    } else {
+      // Single loan imported
+      this.saveAndLoadLoan(loanData);
+      this.messageService.add({
+        severity: 'success',
+        summary: 'Success',
+        detail: `Loan "${loanData.name}" imported successfully`,
+      });
+    }
+
+    this.showLoanImportDialog = false;
+  }
+
+  // A helper function to avoid repeating code:
+  private saveAndLoadLoan(loanData: UILoan) {
     this.loan = loanData;
     this.loanModified = true;
     this.loanName = this.loan.name || 'Imported Loan';
@@ -340,11 +366,9 @@ export class AppComponent implements OnChanges {
     this.currentLoanId = this.loan.id || '';
     this.currentLoanDescription =
       this.loan.description || 'Imported from LoanPro';
-    // save loan
+
     this.saveLoan();
     this.loadLoan(this.loanName);
-    // this.submitLoan();
-    this.showLoanImportDialog = false;
   }
 
   // Handle any actions emitted by the bills component

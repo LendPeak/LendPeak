@@ -12,15 +12,11 @@ import { MessageService } from 'primeng/api';
 import { UILoan } from '../models/loan.model';
 import { parseODataDate } from '../models/loanpro.model';
 import dayjs from 'dayjs';
-import isSameOrAfter from 'dayjs/plugin/isSameOrAfter';
-import isSameOrBefore from 'dayjs/plugin/isSameOrBefore';
-import { DepositRecord } from 'lendpeak-engine/models/Deposit';
 import { Subscription } from 'rxjs';
 import { PerDiemCalculationType } from 'lendpeak-engine/models/InterestCalculator';
 import { FlushUnbilledInterestDueToRoundingErrorType } from 'lendpeak-engine/models/Amortization';
-
-dayjs.extend(isSameOrAfter);
-dayjs.extend(isSameOrBefore);
+import { LoanResponse } from '../models/loanpro.model';
+import { DepositRecord } from 'lendpeak-engine/models/Deposit';
 
 @Component({
   selector: 'app-loan-import',
@@ -30,17 +26,20 @@ dayjs.extend(isSameOrBefore);
 export class LoanImportComponent implements OnInit, OnDestroy {
   connectors: Connector[] = [];
   selectedConnectorId: string = '';
-  searchType: 'displayId' | 'systemId' = 'systemId';
-  searchValue: string = '';
-  isLoading: boolean = false;
 
-  @Output() loanImported = new EventEmitter<UILoan>();
+  searchType: 'displayId' | 'systemId' | 'systemIdRange' = 'systemId';
+  searchValue: string = '';
+  fromSystemId: string = '';
+  toSystemId: string = '';
+
+  isLoading: boolean = false;
+  showPreviewDialog: boolean = false;
+  previewLoans: LoanResponse[] = [];
+  errorMsg: string = '';
+
+  @Output() loanImported = new EventEmitter<UILoan | UILoan[]>();
 
   private connectorsSubscription!: Subscription;
-
-  // State for preview
-  showPreviewDialog: boolean = false;
-  previewLoanData: UILoan | null = null; // Store loan data for preview
 
   constructor(
     private connectorService: ConnectorService,
@@ -57,6 +56,7 @@ export class LoanImportComponent implements OnInit, OnDestroy {
       this.connectorsSubscription.unsubscribe();
     }
   }
+
   loadConnectors() {
     this.connectorsSubscription = this.connectorService.connectors$.subscribe(
       (connectors: Connector[]) => {
@@ -65,100 +65,158 @@ export class LoanImportComponent implements OnInit, OnDestroy {
     );
   }
 
+  onPreview() {
+    // Validate inputs
+    if (!this.validateInputs()) return;
+
+    const connector = this.getSelectedConnector();
+    if (!connector) return;
+
+    this.isLoading = true;
+    this.errorMsg = '';
+    this.previewLoans = [];
+
+    this.loanProService
+      .importLoan(
+        connector,
+        this.searchType,
+        this.searchType === 'systemIdRange'
+          ? this.fromSystemId
+          : this.searchValue,
+        this.searchType === 'systemIdRange' ? this.toSystemId : undefined,
+      )
+      .subscribe({
+        next: (loanData) => {
+          this.isLoading = false;
+          this.previewLoans = Array.isArray(loanData) ? loanData : [loanData];
+          if (this.previewLoans.length === 0) {
+            this.errorMsg = 'No loans found for the given criteria.';
+          }
+          this.showPreviewDialog = true;
+        },
+        error: (error) => {
+          this.isLoading = false;
+          console.error('Error fetching loan(s) for preview:', error);
+          this.errorMsg = 'Failed to fetch loan(s). Please check inputs.';
+        },
+      });
+  }
+
   importLoan() {
-    if (!this.selectedConnectorId || !this.searchValue) {
+    // Validate inputs
+    if (!this.validateInputs()) return;
+
+    const connector = this.getSelectedConnector();
+    if (!connector) return;
+
+    this.isLoading = true;
+    this.loanProService
+      .importLoan(
+        connector,
+        this.searchType,
+        this.searchType === 'systemIdRange'
+          ? this.fromSystemId
+          : this.searchValue,
+        this.searchType === 'systemIdRange' ? this.toSystemId : undefined,
+      )
+      .subscribe({
+        next: (loanData) => {
+          this.isLoading = false;
+          // loanData can be single or multiple loans
+          const loans = Array.isArray(loanData) ? loanData : [loanData];
+
+          if (loans.length === 0) {
+            this.messageService.add({
+              severity: 'warn',
+              summary: 'No Loans Found',
+              detail: 'No loans found to import.',
+            });
+            return;
+          }
+
+          const uiLoans = loans.map((l) => this.mapToUILoan(l));
+
+          if (uiLoans.length > 1) {
+            // Emit an array of UILoans
+            this.loanImported.emit(uiLoans);
+            this.messageService.add({
+              severity: 'success',
+              summary: 'Success',
+              detail: `${uiLoans.length} loans imported successfully.`,
+            });
+          } else {
+            // Just one loan
+            this.loanImported.emit(uiLoans[0]);
+            this.messageService.add({
+              severity: 'success',
+              summary: 'Success',
+              detail: 'Loan imported successfully.',
+            });
+          }
+        },
+        error: (error) => {
+          this.isLoading = false;
+          console.error('Error importing loan(s):', error);
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'Failed to import loan(s).',
+          });
+        },
+      });
+  }
+
+  private validateInputs(): boolean {
+    if (!this.selectedConnectorId) {
       this.messageService.add({
         severity: 'warn',
         summary: 'Warning',
-        detail: 'Please select a connector and enter a search value.',
+        detail: 'Please select a connector.',
       });
-      return;
+      return false;
     }
 
+    if (this.searchType === 'displayId' || this.searchType === 'systemId') {
+      if (!this.searchValue) {
+        this.messageService.add({
+          severity: 'warn',
+          summary: 'Warning',
+          detail: 'Please enter a search value.',
+        });
+        return false;
+      }
+    }
+
+    if (this.searchType === 'systemIdRange') {
+      if (!this.fromSystemId || !this.toSystemId) {
+        this.messageService.add({
+          severity: 'warn',
+          summary: 'Warning',
+          detail: 'Please enter both from and to system ID values.',
+        });
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  private getSelectedConnector(): Connector | null {
     const connector = this.connectorService.getConnectorById(
       this.selectedConnectorId,
     );
-
     if (!connector) {
       this.messageService.add({
         severity: 'error',
         summary: 'Error',
         detail: 'Selected connector not found.',
       });
-      return;
+      return null;
     }
-
-    this.isLoading = true;
-
-    if (connector.type === 'LoanPro') {
-      this.loanProService
-        .importLoan(connector, this.searchType, this.searchValue)
-        .subscribe(
-          (loanData) => {
-            this.isLoading = false;
-            const uiLoan = this.mapLoanProDataToUILoan(loanData);
-            this.loanImported.emit(uiLoan);
-          },
-          (error) => {
-            this.isLoading = false;
-            this.messageService.add({
-              severity: 'error',
-              summary: 'Error',
-              detail: 'Failed to import loan.',
-            });
-          },
-        );
-    }
+    return connector;
   }
 
-  previewLoan() {
-    if (!this.selectedConnectorId || !this.searchValue) {
-      this.messageService.add({
-        severity: 'warn',
-        summary: 'Warning',
-        detail: 'Please select a connector and enter a search value.',
-      });
-      return;
-    }
-
-    const connector = this.connectorService.getConnectorById(
-      this.selectedConnectorId,
-    );
-
-    if (!connector) {
-      this.messageService.add({
-        severity: 'error',
-        summary: 'Error',
-        detail: 'Selected connector not found.',
-      });
-      return;
-    }
-
-    this.isLoading = true;
-
-    if (connector.type === 'LoanPro') {
-      this.loanProService
-        .importLoan(connector, this.searchType, this.searchValue)
-        .subscribe(
-          (loanData) => {
-            this.isLoading = false;
-            const uiLoan = this.mapLoanProDataToUILoan(loanData);
-            this.previewLoanData = uiLoan;
-            this.showPreviewDialog = true;
-          },
-          (error) => {
-            this.isLoading = false;
-            this.messageService.add({
-              severity: 'error',
-              summary: 'Error',
-              detail: 'Failed to load loan preview.',
-            });
-          },
-        );
-    }
-  }
-
-  mapLoanProDataToUILoan(loanData: any): UILoan {
+  private mapToUILoan(loanData: any): UILoan {
     let perDiemCalculationType: PerDiemCalculationType =
       'AnnualRateDividedByDaysInYear';
     if (loanData.d.LoanSetup.calcType === 'loan.calcType.simpleInterest') {
@@ -166,7 +224,6 @@ export class LoanImportComponent implements OnInit, OnDestroy {
     }
 
     let calendarType = 'THIRTY_360';
-
     if (loanData.d.LoanSetup.daysInYear === 'loan.daysInYear.frequency') {
       calendarType = 'ACTUAL_360';
     }
@@ -186,14 +243,11 @@ export class LoanImportComponent implements OnInit, OnDestroy {
       feesForAllTerms: [],
       feesPerTerm: [],
       startDate: parseODataDate(loanData.d.LoanSetup.contractDate, true),
-
       firstPaymentDate: parseODataDate(
         loanData.d.LoanSetup.firstPaymentDate,
         true,
       ),
-
       endDate: parseODataDate(loanData.d.LoanSetup.origFinalPaymentDate, true),
-
       calendarType: calendarType,
       roundingMethod: 'ROUND_HALF_EVEN',
       perDiemCalculationType: perDiemCalculationType,
@@ -232,18 +286,5 @@ export class LoanImportComponent implements OnInit, OnDestroy {
     };
 
     return uiLoan;
-  }
-
-  closePreview() {
-    this.showPreviewDialog = false;
-    this.previewLoanData = null;
-  }
-
-  confirmImportFromPreview() {
-    if (this.previewLoanData) {
-      this.loanImported.emit(this.previewLoanData);
-      this.showPreviewDialog = false;
-      this.previewLoanData = null;
-    }
   }
 }

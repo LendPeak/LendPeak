@@ -23,6 +23,7 @@ import { DialogModule } from 'primeng/dialog';
 import { BadgeModule } from 'primeng/badge';
 
 import { PanelModule } from 'primeng/panel';
+import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { TabViewModule } from 'primeng/tabview';
 import { AccordionModule } from 'primeng/accordion';
 import { OverlayPanelModule } from 'primeng/overlaypanel';
@@ -77,7 +78,8 @@ import {
   ],
   imports: [
     BrowserModule,
-    BrowserAnimationsModule, // Add this to enable animations
+    BrowserAnimationsModule,
+    ProgressSpinnerModule,
     FormsModule,
     ButtonModule,
     BadgeModule,

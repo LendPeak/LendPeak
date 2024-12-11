@@ -47,11 +47,14 @@ export class BillsComponent implements AfterViewInit {
 
   scrollToLastDueBill() {
     // Filter unpaid due bills
-    const dueBills = this.bills.filter(
-      (bill) => !bill.isPaid && bill.dueDate.isBefore(this.snapshotDate, 'day'),
+    const dueBills = this.bills.filter((bill) =>
+      bill.dueDate.isBefore(this.snapshotDate, 'day'),
     );
 
-    if (dueBills.length === 0) return;
+    if (dueBills.length === 0) {
+      console.log('No due bills found');
+      return;
+    }
 
     // Sort to find the last due bill by date
     dueBills.sort((a, b) => a.dueDate.diff(b.dueDate));

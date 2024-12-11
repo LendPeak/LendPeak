@@ -5,7 +5,7 @@ import { OverlayPanel } from 'primeng/overlaypanel';
 import dayjs from 'dayjs';
 import { AmortizationEntry } from 'lendpeak-engine/models/Amortization/AmortizationEntry';
 import { BalanceModification } from 'lendpeak-engine/models/Amortization/BalanceModification';
-import { UILoan } from '../models/loan.model';
+import { UILoan } from 'lendpeak-engine/models/UIInterfaces';
 import { OverrideSettingsService } from '../services/override-settings.service';
 import { OverrideSettings } from '../models/override-settings.model';
 import { v4 as uuidv4 } from 'uuid';

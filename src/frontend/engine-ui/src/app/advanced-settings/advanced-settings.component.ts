@@ -3,7 +3,7 @@
 import { Component, Input, Output, EventEmitter, OnInit } from '@angular/core';
 import { AdvancedSettingsService } from '../services/advanced-settings.service';
 import { AdvancedSettings } from '../models/advanced-settings.model';
-import { UILoan } from '../models/loan.model';
+import { UILoan } from 'lendpeak-engine/models/UIInterfaces';
 import { v4 as uuidv4 } from 'uuid';
 import { OverlayPanel } from 'primeng/overlaypanel';
 import { DropDownOptionString } from '../models/common.model';

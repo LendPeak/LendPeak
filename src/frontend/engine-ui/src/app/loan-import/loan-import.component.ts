@@ -9,7 +9,7 @@ import { ConnectorService } from '../services/connector.service';
 import { Connector } from '../models/connector.model';
 import { LoanProService } from '../services/loanpro.service';
 import { MessageService } from 'primeng/api';
-import { UILoan } from '../models/loan.model';
+import { UILoan } from 'lendpeak-engine/models/UIInterfaces';
 import { parseODataDate } from '../models/loanpro.model';
 import dayjs from 'dayjs';
 import { Subscription } from 'rxjs';

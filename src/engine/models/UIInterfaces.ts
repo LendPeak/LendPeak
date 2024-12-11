@@ -9,21 +9,21 @@ import {
   TILADisclosures,
   Fee,
   BillingModel,
-} from 'lendpeak-engine/models/Amortization';
-import { AmortizationEntry } from 'lendpeak-engine/models/Amortization/AmortizationEntry';
-import { PerDiemCalculationType } from 'lendpeak-engine/models/InterestCalculator';
+} from "./Amortization";
+import { AmortizationEntry } from "./Amortization/AmortizationEntry";
+import { PerDiemCalculationType } from "./InterestCalculator";
 
-import { Currency } from 'lendpeak-engine/utils/Currency';
-import { Decimal } from 'decimal.js';
-import { BalanceModification } from 'lendpeak-engine/models/Amortization/BalanceModification';
-import { DepositRecord } from 'lendpeak-engine/models/Deposit';
-import { PaymentAllocationStrategyName } from 'lendpeak-engine/models/PaymentApplication';
+import { Currency } from "../utils/Currency";
+import { Decimal } from "decimal.js";
+import { BalanceModification } from "./Amortization/BalanceModification";
+import { DepositRecord } from "./Deposit";
+import { PaymentAllocationStrategyName } from "./PaymentApplication";
 
 export interface LoanFeeForAllTerms {
-  type: 'fixed' | 'percentage';
+  type: "fixed" | "percentage";
   amount?: number; // For fixed amount fees
   percentage?: number; // For percentage-based fees (as percentage, e.g., 5% is 5)
-  basedOn?: 'interest' | 'principal' | 'totalPayment';
+  basedOn?: "interest" | "principal" | "totalPayment";
   description?: string;
   metadata?: any;
 }

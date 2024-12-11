@@ -3,6 +3,7 @@ import { MessageService } from 'primeng/api';
 import { ActivatedRoute, Router, NavigationEnd } from '@angular/router';
 import { Location } from '@angular/common';
 import { AmortizationExplainer } from 'lendpeak-engine/models/AmortizationExplainer';
+import { LendPeakEngine } from 'lendpeak-engine/LendPeakEngine';
 
 import {
   Component,
@@ -58,7 +59,7 @@ import {
   UILoan,
   PastDueSummary,
   ActualLoanSummary,
-} from './models/loan.model';
+} from 'lendpeak-engine/models/UIInterfaces';
 import { UsageDetail } from 'lendpeak-engine/models/Bill/Deposit/UsageDetail';
 
 @Component({

@@ -6,6 +6,8 @@ import { BalanceModification } from "./Amortization/BalanceModification";
 import { UsageDetail } from "./Bill/Deposit/UsageDetail";
 import dayjs, { Dayjs } from "dayjs";
 import { v4 as uuidv4 } from "uuid"; // Import UUID
+import isBetween from "dayjs/plugin/isBetween";
+dayjs.extend(isBetween);
 
 // Payment components
 export type PaymentComponent = "interest" | "fees" | "principal";

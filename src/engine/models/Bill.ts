@@ -1,5 +1,8 @@
 // Bill.ts
 import dayjs, { Dayjs } from "dayjs";
+import isBetween from "dayjs/plugin/isBetween";
+dayjs.extend(isBetween);
+
 import { Currency } from "../utils/Currency";
 import { AmortizationEntry } from "./Amortization/AmortizationEntry";
 import { BillPaymentDetail } from "./Bill/BillPaymentDetail";

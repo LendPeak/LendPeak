@@ -5,6 +5,8 @@ import { Currency } from "../utils/Currency";
 import dayjs, { Dayjs } from "dayjs";
 import isSameOrAfter from "dayjs/plugin/isSameOrAfter";
 import isSameOrBefore from "dayjs/plugin/isSameOrBefore";
+import isBetween from "dayjs/plugin/isBetween";
+dayjs.extend(isBetween);
 
 dayjs.extend(isSameOrAfter);
 dayjs.extend(isSameOrBefore);

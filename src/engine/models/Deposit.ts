@@ -3,8 +3,10 @@ import { UsageDetail } from "./Bill/Deposit/UsageDetail";
 
 import dayjs, { Dayjs } from "dayjs";
 import utc from "dayjs/plugin/utc";
-
 dayjs.extend(utc);
+
+import isBetween from "dayjs/plugin/isBetween";
+dayjs.extend(isBetween);
 
 export interface DepositMetadata {
   [key: string]: any; // Allows arbitrary key-value pairs

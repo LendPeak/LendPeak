@@ -33,10 +33,103 @@
       placeholder="Enter Display ID or System ID"
     />
   </div>
-  <p-button
-    label="Import Loan"
-    icon="pi pi-cloud-download"
-    (click)="importLoan()"
-    [loading]="isLoading"
-  ></p-button>
+  <div style="display: flex; gap: 1rem; margin-top: 1rem">
+    <p-button
+      label="Preview"
+      icon="pi pi-search"
+      (click)="previewLoan()"
+      [loading]="isLoading"
+      class="p-button-info p-mr-2 mr-2"
+    ></p-button>
+    <p-button
+      label="Import Loan"
+      icon="pi pi-cloud-download"
+      (click)="importLoan()"
+      [loading]="isLoading"
+      class="p-button-success"
+    ></p-button>
+  </div>
 </div>
+
+<p-dialog
+  header="Loan Preview"
+  [(visible)]="showPreviewDialog"
+  [modal]="true"
+  [style]="{ width: '70vw', height: '70vh' }"
+  (onHide)="closePreview()"
+>
+  <div *ngIf="previewLoanData">
+    <h3>Loan Details</h3>
+    <div class="grid">
+      <div class="col-6">
+        <strong>Loan ID:</strong> {{ previewLoanData.id }}
+      </div>
+      <div class="col-6"><strong>Name:</strong> {{ previewLoanData.name }}</div>
+      <div class="col-6">
+        <strong>Principal:</strong> {{ previewLoanData.principal | currency }}
+      </div>
+      <div class="col-6">
+        <strong>Interest Rate:</strong> {{ previewLoanData.interestRate }}%
+      </div>
+      <div class="col-6">
+        <strong>Term:</strong> {{ previewLoanData.term }} months
+      </div>
+      <div class="col-6">
+        <strong>Start Date:</strong>
+        {{ previewLoanData.startDate | date: "MM/dd/yyyy" }}
+      </div>
+      <div class="col-6">
+        <strong>First Payment Date:</strong>
+        {{ previewLoanData.firstPaymentDate | date: "MM/dd/yyyy" }}
+      </div>
+      <div class="col-6">
+        <strong>End Date:</strong>
+        {{ previewLoanData.endDate | date: "MM/dd/yyyy" }}
+      </div>
+    </div>
+
+    <h3 class="p-mt-3">Payments</h3>
+    <p-table
+      [value]="previewLoanData.deposits"
+      *ngIf="previewLoanData.deposits && previewLoanData.deposits.length > 0"
+    >
+      <ng-template pTemplate="header">
+        <tr>
+          <th>ID/Info</th>
+          <th>Amount</th>
+          <th>Effective Date</th>
+          <th>Clearing Date</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-deposit>
+        <tr>
+          <td>{{ deposit.id }}</td>
+          <td>{{ deposit.jsAmount | currency }}</td>
+          <td>{{ deposit.jsEffectiveDate | date: "MM/dd/yyyy" }}</td>
+          <td>{{ deposit.jsClearingDate | date: "MM/dd/yyyy" }}</td>
+        </tr>
+      </ng-template>
+    </p-table>
+    <p
+      *ngIf="!previewLoanData.deposits || previewLoanData.deposits.length === 0"
+    >
+      No payments found.
+    </p>
+  </div>
+
+  <p-footer>
+    <button
+      pButton
+      label="Close"
+      class="p-button-text"
+      (click)="closePreview()"
+    ></button>
+    <button
+      pButton
+      label="Import"
+      icon="pi pi-check"
+      class="p-button-success"
+      (click)="confirmImportFromPreview()"
+    ></button>
+  </p-footer>
+</p-dialog>

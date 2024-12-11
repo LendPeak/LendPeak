@@ -257,6 +257,17 @@ export class AppComponent implements OnChanges {
         'Minor UI adjustments and code refactoring to maintain consistency across components.',
       ],
     },
+    {
+      version: '1.19.0',
+      date: '2024-12-11',
+      details: [
+        'Added bulk import functionality from systemId range, allowing multi-loan imports in a single action.',
+        'Enhanced loan preview dialog to display multiple loans and aid in selecting the correct ones before import.',
+        'Updated onLoanImported method to handle single or multiple loans seamlessly, saving and loading each accordingly.',
+        'Fixed UI layout of preview and import buttons to appear side by side for better user experience.',
+        'General UI and code improvements for clarity, consistency, and easier maintenance.',
+      ],
+    },
   ];
 
   showConnectorManagementDialog: boolean = false;
@@ -329,8 +340,6 @@ export class AppComponent implements OnChanges {
   openLoanImport() {
     this.showLoanImportDialog = true;
   }
-
-
 
   onLoanImported(loanData: UILoan | UILoan[]) {
     if (Array.isArray(loanData)) {

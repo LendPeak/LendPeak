@@ -1,6 +1,6 @@
 {
   "name": "engine-ui",
-  "version": "1.17.0",
+  "version": "1.19.0",
   "scripts": {
     "prebuild": "node ./scripts/version.js",
     "ng": "ng",

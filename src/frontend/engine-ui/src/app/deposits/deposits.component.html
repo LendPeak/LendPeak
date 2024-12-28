@@ -2,14 +2,12 @@
   <div class="col-12">
     <p-card header="Manage Deposits">
       <div class="p-mb-3">
-        <!-- Button to Add New Deposit -->
         <p-button
           label="Add New Deposit"
           icon="pi pi-plus"
           class="p-button-success mr-2"
           (click)="openDepositDialog()"
         ></p-button>
-
         <p-button
           label="Go to Last Deposit"
           icon="pi pi-arrow-down"
@@ -19,9 +17,7 @@
         ></p-button>
       </div>
       <p-divider></p-divider>
-
       <div class="p-fluid">
-        <!-- Deposits Table -->
         <p-table
           [hidden]="deposits.length === 0"
           [value]="deposits"
@@ -40,9 +36,6 @@
               <th pSortableColumn="clearingDate">
                 Clearing Date <p-sortIcon field="clearingDate"></p-sortIcon>
               </th>
-              <!-- <th>Payment Method</th>
-              <th>Depositor</th>
-              <th>Deposit Location</th> -->
               <th>Unused Amount</th>
               <th>Apply Excess to Principal</th>
               <th>Excess Applied Date</th>
@@ -54,34 +47,19 @@
               #depositRow
               [class.selected-row]="isDepositHighlighted(deposit)"
             >
-              <!-- ID -->
               <td>{{ deposit.id }}</td>
-              <!-- Amount -->
               <td>{{ deposit.jsAmount | currency }}</td>
-              <!-- Currency -->
               <td>{{ deposit.currency }}</td>
-              <!-- Effective Date -->
               <td>
                 {{ deposit.jsEffectiveDate | date: "MM/dd/yyyy" : "UTC" }}
               </td>
-              <!-- Clearing Date -->
-              <td>
-                {{ deposit.jsClearingDate | date: "MM/dd/yyyy" : "UTC" }}
-              </td>
-              <!-- Payment Method -->
-              <!-- <td>{{ deposit.paymentMethod }}</td> -->
-              <!-- Depositor -->
-              <!-- <td>{{ deposit.depositor }}</td> -->
-              <!-- Deposit Location -->
-              <!-- <td>{{ deposit.depositLocation }}</td> -->
-              <!-- Unused Amount -->
+              <td>{{ deposit.jsClearingDate | date: "MM/dd/yyyy" : "UTC" }}</td>
               <td>
                 {{
                   (deposit.applyExcessToPrincipal ? 0 : deposit.jsUnusedAmount)
                     | currency
                 }}
               </td>
-              <!-- Apply Excess to Principal -->
               <td>
                 <i
                   class="pi"
@@ -94,11 +72,7 @@
                   "
                 ></i>
               </td>
-              <!-- Excess Applied Date -->
-              <td>
-                {{ deposit.jsExcessAppliedDate | date: "MM/dd/yyyy" }}
-              </td>
-              <!-- Actions -->
+              <td>{{ deposit.jsExcessAppliedDate | date: "MM/dd/yyyy" }}</td>
               <td>
                 <div class="action-buttons">
                   <p-button
@@ -140,140 +114,143 @@
   header="{{ selectedDepositForEdit ? 'Edit Deposit' : 'Add New Deposit' }}"
   [(visible)]="showDepositDialog"
   [modal]="true"
-  [style]="{ width: '80vw', minHeight: '80vh' }"
+  [style]="{ width: '90vw', maxHeight: '80vh' }"
   [closable]="true"
   (onHide)="onDepositDialogHide()"
 >
-  <form #depositForm="ngForm" (ngSubmit)="saveDeposit()">
-    <div class="p-fluid grid">
-      <!-- Amount -->
-      <div class="field col-6">
-        <label for="amount">Amount</label>
-        <p-inputNumber
-          id="amount"
-          [(ngModel)]="depositData.jsAmount"
-          name="amount"
-          mode="currency"
-          currency="USD"
-          locale="en-US"
-          (ngModelChange)="onDataChange($event)"
-          required
-        ></p-inputNumber>
-      </div>
-      <!-- Currency -->
-      <div class="field col-6">
-        <label for="currency">Currency</label>
-        <p-dropdown
-          id="currency"
-          [(ngModel)]="depositData.currency"
-          name="currency"
-          [options]="currencyOptions"
-          optionLabel="label"
-          optionValue="value"
-          placeholder="Select Currency"
-          (ngModelChange)="onDataChange($event)"
-          required
-        ></p-dropdown>
-      </div>
-      <!-- Effective Date -->
-      <div class="field col-6">
-        <label for="effectiveDate">Effective Date</label>
-        <p-calendar
-          id="effectiveDate"
-          [(ngModel)]="depositData.jsEffectiveDate"
-          (ngModelChange)="onDataChange($event)"
-          name="effectiveDate"
-          dateFormat="mm/dd/yy"
-          showIcon
-          required
-          [appendTo]="'body'"
-        ></p-calendar>
-      </div>
-      <!-- Clearing Date -->
-      <div class="field col-6">
-        <label for="clearingDate">Clearing Date</label>
-        <p-calendar
-          id="clearingDate"
-          [(ngModel)]="depositData.jsClearingDate"
-          (ngModelChange)="onDataChange($event)"
-          [minDate]="depositData.jsEffectiveDate"
-          name="clearingDate"
-          dateFormat="mm/dd/yy"
-          [appendTo]="'body'"
-          showIcon
-        ></p-calendar>
-      </div>
-      <!-- Payment Method -->
-      <div class="field col-12">
-        <label for="paymentMethod">Payment Method</label>
-        <input
-          pInputText
-          id="paymentMethod"
-          type="text"
-          [(ngModel)]="depositData.paymentMethod"
-          name="paymentMethod"
-        />
-      </div>
-      <!-- Depositor -->
-      <div class="field col-6">
-        <label for="depositor">Depositor</label>
-        <input
-          pInputText
-          id="depositor"
-          type="text"
-          [(ngModel)]="depositData.depositor"
-          name="depositor"
-        />
-      </div>
-      <!-- Deposit Location -->
-      <div class="field col-6">
-        <label for="depositLocation">Deposit Location</label>
-        <input
-          pInputText
-          id="depositLocation"
-          type="text"
-          [(ngModel)]="depositData.depositLocation"
-          name="depositLocation"
-        />
-      </div>
-      <!-- Apply Excess to Principal Balance and Date After Which Excess is Applied to Principal -->
-      <div class="field col-12">
-        <div class="p-fluid grid">
-          <div class="field col-6" style="display: flex; align-items: center">
-            <p-checkbox
-              inputId="applyExcessToPrincipal"
-              [(ngModel)]="depositData.applyExcessToPrincipal"
-              name="applyExcessToPrincipal"
-              binary="true"
-              (onChange)="onApplyExcessToPrincipalChange($event)"
-            ></p-checkbox>
-            <label
-              for="applyExcessToPrincipal"
-              style="margin-left: 0.5em; margin-bottom: 0"
-            >
-              Apply Excess to Principal Balance
-            </label>
-          </div>
-          <div class="field col-6" *ngIf="depositData.applyExcessToPrincipal">
-            <label for="excessAppliedDate"
-              >Date On Which Excess is Applied to Principal</label
-            >
-            <p-calendar
-              id="excessAppliedDate"
-              [(ngModel)]="depositData.jsExcessAppliedDate"
+  <div class="p-grid p-nogutter" style="height: 65vh">
+    <!-- Form (Right Column) -->
+    <div class="p-col-12 p-md-6" style="overflow: auto; padding: 0.5rem">
+      <form #depositForm="ngForm" (ngSubmit)="saveDeposit()">
+        <div class="p-fluid grid p-m-0">
+          <div class="field col-6 p-m-0">
+            <label for="amount">Amount</label>
+            <p-inputNumber
+              id="amount"
+              [(ngModel)]="depositData.jsAmount"
+              name="amount"
+              mode="currency"
+              currency="USD"
+              locale="en-US"
               (ngModelChange)="onDataChange($event)"
-              name="excessAppliedDate"
+              required
+            ></p-inputNumber>
+          </div>
+          <div class="field col-6 p-m-0">
+            <label for="currency">Currency</label>
+            <p-dropdown
+              id="currency"
+              [(ngModel)]="depositData.currency"
+              name="currency"
+              [options]="currencyOptions"
+              optionLabel="label"
+              optionValue="value"
+              placeholder="Select Currency"
+              (ngModelChange)="onDataChange($event)"
+              required
+            ></p-dropdown>
+          </div>
+
+          <div class="field col-6 p-m-0">
+            <label for="effectiveDate">Effective Date</label>
+            <p-calendar
+              id="effectiveDate"
+              [(ngModel)]="depositData.jsEffectiveDate"
+              (ngModelChange)="onDataChange($event)"
+              name="effectiveDate"
               dateFormat="mm/dd/yy"
               showIcon
-              [minDate]="depositData.jsEffectiveDate"
-              [required]="depositData.applyExcessToPrincipal"
+              required
               [appendTo]="'body'"
             ></p-calendar>
           </div>
+          <div class="field col-6 p-m-0">
+            <label for="clearingDate">Clearing Date</label>
+            <p-calendar
+              id="clearingDate"
+              [(ngModel)]="depositData.jsClearingDate"
+              (ngModelChange)="onDataChange($event)"
+              [minDate]="depositData.jsEffectiveDate"
+              name="clearingDate"
+              dateFormat="mm/dd/yy"
+              [appendTo]="'body'"
+              showIcon
+            ></p-calendar>
+          </div>
+          <div class="field col-12 p-m-0">
+            <label for="paymentMethod">Payment Method</label>
+            <input
+              pInputText
+              id="paymentMethod"
+              type="text"
+              [(ngModel)]="depositData.paymentMethod"
+              name="paymentMethod"
+            />
+          </div>
+          <div class="field col-6 p-m-0">
+            <label for="depositor">Depositor</label>
+            <input
+              pInputText
+              id="depositor"
+              type="text"
+              [(ngModel)]="depositData.depositor"
+              name="depositor"
+            />
+          </div>
+          <div class="field col-6 p-m-0">
+            <label for="depositLocation">Deposit Location</label>
+            <input
+              pInputText
+              id="depositLocation"
+              type="text"
+              [(ngModel)]="depositData.depositLocation"
+              name="depositLocation"
+            />
+          </div>
+          <div class="field col-12 p-m-0">
+            <div class="p-formgrid p-grid">
+              <div
+                class="field col-6 p-m-0"
+                style="display: flex; align-items: center"
+              >
+                <p-checkbox
+                  inputId="applyExcessToPrincipal"
+                  [(ngModel)]="depositData.applyExcessToPrincipal"
+                  name="applyExcessToPrincipal"
+                  binary="true"
+                  (onChange)="onApplyExcessToPrincipalChange($event)"
+                ></p-checkbox>
+                <label
+                  for="applyExcessToPrincipal"
+                  style="margin-left: 0.5em; margin-bottom: 0"
+                >
+                  Apply Excess to Principal
+                </label>
+              </div>
+              <div
+                class="field col-6 p-m-0"
+                *ngIf="depositData.applyExcessToPrincipal"
+              >
+                <label for="excessAppliedDate">Excess Applied Date</label>
+                <p-calendar
+                  id="excessAppliedDate"
+                  [(ngModel)]="depositData.jsExcessAppliedDate"
+                  (ngModelChange)="onDataChange($event)"
+                  name="excessAppliedDate"
+                  dateFormat="mm/dd/yy"
+                  showIcon
+                  [minDate]="depositData.jsEffectiveDate"
+                  [required]="depositData.applyExcessToPrincipal"
+                  [appendTo]="'body'"
+                ></p-calendar>
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
+      </form>
     </div>
-  </form>
+  </div>
+
   <p-footer>
     <p-button
       label="Cancel"

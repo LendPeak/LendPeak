@@ -21,6 +21,7 @@ import { CheckboxModule } from 'primeng/checkbox';
 import { TagModule } from 'primeng/tag';
 import { DialogModule } from 'primeng/dialog';
 import { BadgeModule } from 'primeng/badge';
+import { ProgressBarModule } from 'primeng/progressbar';
 
 import { PanelModule } from 'primeng/panel';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
@@ -82,6 +83,7 @@ import {
     ProgressSpinnerModule,
     FormsModule,
     ButtonModule,
+    ProgressBarModule,
     BadgeModule,
     InputTextModule,
     CalendarModule,

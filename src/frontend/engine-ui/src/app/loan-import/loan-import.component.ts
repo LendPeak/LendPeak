@@ -10,7 +10,7 @@ import { Connector } from '../models/connector.model';
 import { LoanProService } from '../services/loanpro.service';
 import { MessageService } from 'primeng/api';
 import { UILoan } from 'lendpeak-engine/models/UIInterfaces';
-import { parseODataDate } from '../models/loanpro.model';
+import { parseODataDate, Payment } from '../models/loanpro.model';
 import dayjs from 'dayjs';
 import { Subscription } from 'rxjs';
 import { PerDiemCalculationType } from 'lendpeak-engine/models/InterestCalculator';
@@ -88,7 +88,21 @@ export class LoanImportComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (loanData) => {
           this.isLoading = false;
-          this.previewLoans = Array.isArray(loanData) ? loanData : [loanData];
+          let previewLoans = Array.isArray(loanData) ? loanData : [loanData];
+
+          for (let loan of previewLoans) {
+            loan.d.Payments.results
+              .filter((payment: any) => payment.active === 1)
+              .map((payment: any) => {
+                payment.date = parseODataDate(payment.date, true);
+                payment.created = parseODataDate(payment.created, true);
+              });
+            loan.d.LoanSetup.contractDate = parseODataDate(
+              loan.d.LoanSetup.contractDate,
+              true,
+            ).toDateString();
+          }
+          this.previewLoans = previewLoans;
           if (this.previewLoans.length === 0) {
             this.errorMsg = 'No loans found for the given criteria.';
           }

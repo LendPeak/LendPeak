@@ -522,6 +522,9 @@ export class AppComponent implements OnChanges {
 
   activeTabIndex: number = 0;
 
+  accruedInterestToDate: Currency = Currency.Zero();
+  payoffAmount: Currency = Currency.Zero();
+
   tabIndices: { [key: string]: number } = {
     basicInfo: 0,
     overrides: 1,
@@ -1807,20 +1810,6 @@ export class AppComponent implements OnChanges {
 
     const interestRateAsDecimal = new Decimal(this.loan.interestRate);
 
-    console.log({
-      loanAmount: this.loan.principal,
-      interestRate: interestRateAsDecimal.toNumber(),
-      term: this.loan.term,
-      startDate: this.loan.startDate,
-      calendarType: this.loan.calendarType,
-      roundingMethod: this.loan.roundingMethod,
-      flushUnbilledInterestRoundingErrorMethod: this.loan.flushMethod,
-      roundingPrecision: this.loan.roundingPrecision,
-      flushThreshold: this.loan.flushThreshold,
-      firstPaymentDate: this.loan.firstPaymentDate,
-      endDate: this.loan.endDate,
-    });
-
     let amortizationParams: AmortizationParams = {
       loanAmount: Currency.of(this.loan.principal),
       originationFee: Currency.of(this.loan.originationFee),
@@ -2081,6 +2070,13 @@ export class AppComponent implements OnChanges {
 
     this.actualLoanSummary = this.getActualLoanSummary(); // If already implemented
     this.pastDueSummary = this.getPastDueSummary();
+
+    this.accruedInterestToDate = this.amortization.getAccruedInterestByDate(
+      this.snapshotDate,
+    );
+    this.payoffAmount = this.amortization.getCurrentPayoffAmount(
+      dayjs(this.snapshotDate),
+    );
   }
 
   makeReactive(obj: any, callback: Function): any {

@@ -118,7 +118,6 @@
     maximizable="true"
     closable="true"
     closeOnEscape="true"
-    [closable]="false"
   >
     <p-table [value]="savedLoans">
       <ng-template pTemplate="header">
@@ -694,32 +693,16 @@
       <div class="grid p-2">
         <div class="col-12 md:col-2">
           <div class="flex flex-column">
-            <span class="text-600 font-semibold mb-1">Term In Months:</span>
-            <span>{{ amortization?.loanTermInMonths }}</span>
-          </div>
-        </div>
-        <div class="col-12 md:col-2">
-          <div class="flex flex-column">
-            <span class="text-600 font-semibold mb-1">Days Left in Term:</span>
-            <span>{{ amortization?.getDaysLeftInTerm(snapshotDate) }}</span>
-          </div>
-        </div>
-        <div class="col-12 md:col-2">
-          <div class="flex flex-column">
-            <span class="text-600 font-semibold mb-1">APR:</span>
-            <span>{{ amortization?.apr?.toDecimalPlaces(4) }}%</span>
-          </div>
-        </div>
-        <div class="col-12 md:col-2">
-          <div class="flex flex-column">
-            <span class="text-600 font-semibold mb-1">Accrued Interest:</span>
-            <span>{{ accruedInterest.getRoundedNumber() | currency }}</span>
+            <span class="text-600 font-semibold mb-1">Total Loan Amount:</span>
+            <span>{{
+              amortization?.totalLoanAmount?.toNumber() | currency
+            }}</span>
           </div>
         </div>
         <div class="col-12 md:col-2">
           <div class="flex flex-column">
             <span class="text-600 font-semibold mb-1"
-              >Total Charged Interest:</span
+              >Cumulative Interest:</span
             >
             <span>{{
               amortization?.totalChargedInterestRounded?.toNumber() | currency
@@ -728,10 +711,36 @@
         </div>
         <div class="col-12 md:col-2">
           <div class="flex flex-column">
-            <span class="text-600 font-semibold mb-1">Total Loan Amount:</span>
+            <span class="text-600 font-semibold mb-1">Term In Months:</span>
+            <span>{{ amortization?.loanTermInMonths }}</span>
+          </div>
+        </div>
+        <div class="col-12 md:col-1">
+          <div class="flex flex-column">
+            <span class="text-600 font-semibold mb-1">APR:</span>
+            <span>{{ amortization?.apr?.toDecimalPlaces(4) }}%</span>
+          </div>
+        </div>
+        <div class="col-12 md:col-2">
+          <div class="flex flex-column">
+            <span class="text-600 font-semibold mb-1">Days Left in Term:</span>
+            <span>{{ amortization?.getDaysLeftInTerm(snapshotDate) }}</span>
+          </div>
+        </div>
+
+        <div class="col-12 md:col-1">
+          <div class="flex flex-column">
+            <span class="text-600 font-semibold mb-1">Per Diem:</span>
             <span>{{
-              amortization?.totalLoanAmount?.toNumber() | currency
+              amortization?.getPerDiemForPeriodByDate(snapshotDate)?.toNumber()
+                | currency
             }}</span>
+          </div>
+        </div>
+        <div class="col-12 md:col-2">
+          <div class="flex flex-column">
+            <span class="text-600 font-semibold mb-1">Accrued Interest:</span>
+            <span>{{ accruedInterest.getRoundedNumber() | currency }}</span>
           </div>
         </div>
       </div>

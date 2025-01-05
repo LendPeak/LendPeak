@@ -37,7 +37,7 @@ export class DepositsComponent {
   @ViewChildren('depositRow', { read: ElementRef })
   depositRows!: QueryList<ElementRef>;
 
-  showDepositDialog: boolean = true;
+  showDepositDialog: boolean = false;
   selectedDepositForEdit: DepositRecord | null = null;
   depositData: DepositRecord = this.getEmptyDepositData();
 

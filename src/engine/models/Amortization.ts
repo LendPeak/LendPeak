@@ -1412,6 +1412,22 @@ export class Amortization {
     return this.repaymentSchedule.find((period) => date.isBetween(period.periodStartDate, period.periodEndDate, null, "[]"))!;
   }
 
+  getPerDiemForPeriodByDate(date: Dayjs | Date): Currency {
+    if (date instanceof Date) {
+      date = dayjs(date);
+    }
+    date = date.startOf("day");
+
+    // first we get the period where the date is
+    const activePeriod = this.getPeriodByDate(date);
+
+    if (!activePeriod) {
+      return Currency.Zero();
+    }
+
+    return activePeriod.perDiem;
+  }
+
   getAccruedInterestByDate(date: Dayjs | Date): Currency {
     if (date instanceof Date) {
       date = dayjs(date);

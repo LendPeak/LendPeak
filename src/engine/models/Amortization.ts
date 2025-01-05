@@ -453,6 +453,18 @@ export class Amortization {
     this.repaymentSchedule = this.generateSchedule();
   }
 
+  get cumulativeInterest(): Currency {
+    return this.repaymentSchedule.reduce((acc, entry) => {
+      return acc.add(entry.dueInterestForTerm.getRoundedValue());
+    }, Currency.Zero());
+  }
+
+  get cumulativeInterestNotRounded(): Currency {
+    return this.repaymentSchedule.reduce((acc, entry) => {
+      return acc.add(entry.dueInterestForTerm);
+    }, Currency.Zero());
+  }
+
   public getInputParams(): AmortizationParams {
     return cloneDeep(this._inputParams);
   }

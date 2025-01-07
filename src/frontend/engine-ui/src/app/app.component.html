@@ -442,57 +442,50 @@
             <span
               class="text-600 font-semibold mb-2 pb-4"
               style="text-align: center"
-              >Past Due Bills Details (as of
-              {{ snapshotDate | date: "MM/dd/yyyy" }}):</span
-            >
+              >Past Due Details as of
+              {{ snapshotDate | date: "MM/dd/yyyy" }}
+              <p-divider />
+            </span>
             <div class="grid">
               <div class="col-12 md:col-3">
-                <span class="text-600 font-semibold"
-                  >Unpaid Past Due Bills:</span
-                >
+                <span class="text-600 font-semibold">Past Due Bills:</span>
                 <span>{{ pastDueSummary.pastDueCount }}</span>
               </div>
 
               <!-- Add Days Contract Is Past Due here -->
-              <div class="col-12 md:col-3 mt-3">
-                <span class="text-600 font-semibold"
-                  >Days Contract Is Past Due:</span
-                >
+              <div class="col-12 md:col-3">
+                <span class="text-600 font-semibold">Days Past Due:</span>
                 <span>{{ pastDueSummary.daysContractIsPastDue }}</span>
               </div>
 
-              <div class="col-12 md:col-3 mt-3">
-                <span class="text-600 font-semibold"
-                  >Total Past Due Principal:</span
-                >
+              <div class="col-12 md:col-3">
+                <span class="text-600 font-semibold">Past Due Principal:</span>
                 <span>{{
                   pastDueSummary.totalPastDuePrincipal.toNumber() | currency
                 }}</span>
               </div>
-              <div class="col-12 md:col-3 mt-3">
-                <span class="text-600 font-semibold"
-                  >Total Past Due Interest:</span
-                >
+              <div class="col-12 md:col-3">
+                <span class="text-600 font-semibold">Past Due Interest:</span>
                 <span>{{
                   pastDueSummary.totalPastDueInterest.toNumber() | currency
                 }}</span>
               </div>
               <div class="col-12 md:col-3 mt-3">
-                <span class="text-600 font-semibold">Total Past Due Fees:</span>
+                <span class="text-600 font-semibold">Past Due Fees:</span>
                 <span>{{
                   pastDueSummary.totalPastDueFees.toNumber() | currency
                 }}</span>
               </div>
               <div class="col-12 md:col-3 mt-3">
-                <span class="text-600 font-semibold"
-                  >Total Past Due Amount:</span
-                >
+                <span class="text-600 font-semibold">Past Due Amount:</span>
                 <span>{{
                   pastDueSummary.totalPastDueAmount.toNumber() | currency
                 }}</span>
               </div>
             </div>
             <p class="mt-2 pt-6" style="text-align: center; font-weight: bold">
+              <p-divider />
+
               Please note that these past due amounts reflect bills that should
               have been paid before the snapshot date but remain unpaid.
             </p>

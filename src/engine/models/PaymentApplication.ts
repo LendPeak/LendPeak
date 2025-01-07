@@ -207,7 +207,7 @@ export class LIFOStrategy implements AllocationStrategy {
     }
 
     for (const bill of sortedBills) {
-      if (remainingAmount.getValue().isZero()) break;
+      if (remainingAmount.round().isZero()) break;
 
       const { allocation, remainingAmount: newRemainingAmount } = AllocationHelper.allocateToBill(
         bill,
@@ -249,7 +249,7 @@ export class FIFOStrategy implements AllocationStrategy {
     }
 
     for (const bill of sortedBills) {
-      if (remainingAmount.isZero()) break;
+      if (remainingAmount.round().isZero()) break;
 
       const { allocation, remainingAmount: newRemainingAmount } = AllocationHelper.allocateToBill(bill, remainingAmount, paymentPriority, deposit.id);
 
@@ -355,7 +355,7 @@ export class CustomOrderStrategy implements AllocationStrategy {
     }
 
     for (const bill of sortedBills) {
-      if (remainingAmount.getValue().isZero()) break;
+      if (remainingAmount.round().isZero()) break;
 
       const { allocation, remainingAmount: newRemainingAmount } = AllocationHelper.allocateToBill(bill, remainingAmount, paymentPriority, deposit.id);
 
@@ -436,7 +436,7 @@ class AllocationHelper {
     let remainingAmount = amount;
 
     for (const component of paymentPriority) {
-      if (remainingAmount.getValue().isZero()) break;
+      if (remainingAmount.round().isZero()) break;
 
       switch (component) {
         case "interest":

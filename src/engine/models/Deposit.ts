@@ -149,12 +149,19 @@ export class DepositRecord implements Deposit {
       acc[newKey] = (json as any)[key];
       return acc;
     }, {} as any);
-    rehydrated.usageDetails = (json._usageDetails || []).map((detail: any) => UsageDetail.rehydrateFromJSON(detail));
+    rehydrated.usageDetails = (json._usageDetails || [])
+      .filter((detail: any) => detail.allocatedInterest !== 0 || detail.allocatedPrincipal !== 0 || detail.allocatedFees !== 0)
+      .map((detail: any) => UsageDetail.rehydrateFromJSON(detail));
     rehydrated.metadata = json._metadata;
     return new DepositRecord(rehydrated);
   }
 
   addUsageDetail(detail: UsageDetail): void {
+    // lets ignore if all amounts are zeros
+    if (detail.allocatedPrincipal.isZero() && detail.allocatedInterest.isZero() && detail.allocatedFees.isZero()) {
+      console.warn("Ignoring usage detail with all zero amounts");
+      return;
+    }
     this._usageDetails.push(detail);
   }
 

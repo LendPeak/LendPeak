@@ -1745,69 +1745,6 @@ export class AppComponent implements OnChanges {
     }
     this.cleanupBalanceModifications();
 
-    let calendarType: CalendarType;
-    switch (this.loan.calendarType) {
-      case 'ACTUAL_ACTUAL':
-        calendarType = CalendarType.ACTUAL_ACTUAL;
-        break;
-      case 'ACTUAL_360':
-        calendarType = CalendarType.ACTUAL_360;
-        break;
-      case 'ACTUAL_365':
-        calendarType = CalendarType.ACTUAL_365;
-        break;
-      case 'THIRTY_360':
-        calendarType = CalendarType.THIRTY_360;
-        break;
-      case 'THIRTY_ACTUAL':
-        calendarType = CalendarType.THIRTY_ACTUAL;
-        break;
-      default:
-        calendarType = CalendarType.THIRTY_360;
-    }
-
-    let roundingMethod: RoundingMethod;
-    switch (this.loan.roundingMethod) {
-      case 'ROUND_UP':
-        roundingMethod = RoundingMethod.ROUND_UP;
-        break;
-      case 'ROUND_DOWN':
-        roundingMethod = RoundingMethod.ROUND_DOWN;
-        break;
-      case 'ROUND_HALF_UP':
-        roundingMethod = RoundingMethod.ROUND_HALF_UP;
-        break;
-      case 'ROUND_HALF_DOWN':
-        roundingMethod = RoundingMethod.ROUND_HALF_DOWN;
-        break;
-      case 'ROUND_HALF_EVEN':
-        roundingMethod = RoundingMethod.ROUND_HALF_EVEN;
-        break;
-      case 'ROUND_HALF_CEIL':
-        roundingMethod = RoundingMethod.ROUND_HALF_CEIL;
-        break;
-      case 'ROUND_HALF_FLOOR':
-        roundingMethod = RoundingMethod.ROUND_HALF_FLOOR;
-        break;
-      default:
-        roundingMethod = RoundingMethod.ROUND_HALF_EVEN;
-    }
-
-    let flushMethod: FlushUnbilledInterestDueToRoundingErrorType;
-    switch (this.loan.flushMethod) {
-      case 'none':
-        flushMethod = FlushUnbilledInterestDueToRoundingErrorType.NONE;
-        break;
-      case 'at_end':
-        flushMethod = FlushUnbilledInterestDueToRoundingErrorType.AT_END;
-        break;
-      case 'at_threshold':
-        flushMethod = FlushUnbilledInterestDueToRoundingErrorType.AT_THRESHOLD;
-        break;
-      default:
-        flushMethod = FlushUnbilledInterestDueToRoundingErrorType.AT_THRESHOLD;
-    }
-
     const interestRateAsDecimal = new Decimal(this.loan.interestRate);
 
     let amortizationParams: AmortizationParams = {
@@ -1818,9 +1755,9 @@ export class AppComponent implements OnChanges {
       startDate: dayjs(this.loan.startDate),
       endDate: dayjs(this.loan.endDate),
       firstPaymentDate: dayjs(this.loan.firstPaymentDate),
-      calendarType: calendarType,
-      roundingMethod: roundingMethod,
-      flushUnbilledInterestRoundingErrorMethod: flushMethod,
+      calendarType: this.loan.calendarType,
+      roundingMethod: this.loan.roundingMethod,
+      flushUnbilledInterestRoundingErrorMethod: this.loan.flushMethod,
       roundingPrecision: this.loan.roundingPrecision,
       flushThreshold: Currency.of(this.loan.flushThreshold),
       termPeriodDefinition: this.loan.termPeriodDefinition,
@@ -1842,88 +1779,34 @@ export class AppComponent implements OnChanges {
     }
 
     if (this.loan.termPaymentAmount) {
-      console.log('Term payment amount:', this.loan.termPaymentAmount);
-      amortizationParams.termPaymentAmount = Currency.of(
-        this.loan.termPaymentAmount,
-      );
+      amortizationParams.termPaymentAmount = this.loan.termPaymentAmount;
     }
 
     if (this.loan.changePaymentDates.length > 0) {
-      amortizationParams.changePaymentDates = this.loan.changePaymentDates.map(
-        (changePaymentDate) => {
-          return {
-            termNumber: changePaymentDate.termNumber,
-            newDate: dayjs(changePaymentDate.newDate),
-          };
-        },
-      );
+      amortizationParams.changePaymentDates = this.loan.changePaymentDates;
     }
 
     if (this.loan.ratesSchedule.length > 0) {
-      amortizationParams.ratesSchedule = this.loan.ratesSchedule.map((rate) => {
-        const interestAsDecimal = new Decimal(rate.annualInterestRate);
-        return {
-          startDate: dayjs(rate.startDate),
-          endDate: dayjs(rate.endDate),
-          annualInterestRate: interestAsDecimal.dividedBy(100),
-        };
-      });
+      amortizationParams.ratesSchedule = this.loan.ratesSchedule;
     }
 
     if (this.loan.termPaymentAmountOverride.length > 0) {
       amortizationParams.termPaymentAmountOverride =
-        this.loan.termPaymentAmountOverride.map(
-          (termPaymentAmountConfiguration) => {
-            return {
-              termNumber: termPaymentAmountConfiguration.termNumber,
-              paymentAmount: Currency.of(
-                termPaymentAmountConfiguration.paymentAmount,
-              ),
-            };
-          },
-        );
+        this.loan.termPaymentAmountOverride;
     }
 
     if (this.loan.periodsSchedule.length > 0) {
-      amortizationParams.periodsSchedule = this.loan.periodsSchedule.map(
-        (period) => {
-          const interestAsDecimal = new Decimal(period.interestRate);
-          return {
-            period: period.period,
-            startDate: dayjs(period.startDate),
-            endDate: dayjs(period.endDate),
-            interestRate: interestAsDecimal.dividedBy(100),
-            paymentAmount: Currency.of(period.paymentAmount),
-          };
-        },
-      );
+      amortizationParams.periodsSchedule = this.loan.periodsSchedule;
     }
 
     if (this.loan.balanceModifications.length > 0) {
-      console.log('Balance modifications:', this.loan.balanceModifications);
       amortizationParams.balanceModifications = this.loan.balanceModifications;
     }
-    // Process feesForAllTerms
+
     if (this.loan.feesForAllTerms.length > 0) {
-      amortizationParams.feesForAllTerms = this.loan.feesForAllTerms.map(
-        (fee) => {
-          return {
-            type: fee.type,
-            amount:
-              fee.amount !== undefined ? Currency.of(fee.amount) : undefined,
-            percentage:
-              fee.percentage !== undefined
-                ? new Decimal(fee.percentage).dividedBy(100)
-                : undefined,
-            basedOn: fee.basedOn,
-            description: fee.description,
-            metadata: fee.metadata,
-          } as Fee;
-        },
-      );
+      amortizationParams.feesForAllTerms = this.loan.feesForAllTerms;
     }
 
-    // Process feesPerTerm
     if (this.loan.feesPerTerm.length > 0) {
       // Group fees by term number
       const feesGroupedByTerm = this.loan.feesPerTerm.reduce(

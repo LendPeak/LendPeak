@@ -47,6 +47,36 @@ export class Currency {
     };
   }
 
+  static RoundingMethodFromString(roundingMethodString: string): RoundingMethod {
+    let roundingMethod: RoundingMethod;
+    switch (roundingMethodString) {
+      case "ROUND_UP":
+        roundingMethod = RoundingMethod.ROUND_UP;
+        break;
+      case "ROUND_DOWN":
+        roundingMethod = RoundingMethod.ROUND_DOWN;
+        break;
+      case "ROUND_HALF_UP":
+        roundingMethod = RoundingMethod.ROUND_HALF_UP;
+        break;
+      case "ROUND_HALF_DOWN":
+        roundingMethod = RoundingMethod.ROUND_HALF_DOWN;
+        break;
+      case "ROUND_HALF_EVEN":
+        roundingMethod = RoundingMethod.ROUND_HALF_EVEN;
+        break;
+      case "ROUND_HALF_CEIL":
+        roundingMethod = RoundingMethod.ROUND_HALF_CEIL;
+        break;
+      case "ROUND_HALF_FLOOR":
+        roundingMethod = RoundingMethod.ROUND_HALF_FLOOR;
+        break;
+      default:
+        roundingMethod = RoundingMethod.ROUND_HALF_EVEN;
+    }
+    return roundingMethod;
+  }
+
   static fromJSON(data: any): Currency {
     if (!data) {
       console.warn("Currency.fromJSON: No data provided");

@@ -58,16 +58,36 @@ export interface PeriodSchedule {
   endDate: Dayjs;
 }
 
+export interface JSPeriodSchedule {
+  startDate: Date;
+  endDate: Date;
+}
+
 export interface RateSchedule {
   annualInterestRate: Decimal;
   startDate: Dayjs;
   endDate: Dayjs;
 }
 
+export interface JSRateSchedule {
+  annualInterestRate: Decimal | number;
+  startDate: Dayjs | Date;
+  endDate: Dayjs | Date;
+}
+
 export interface Fee {
   type: "fixed" | "percentage";
   amount?: Currency; // For fixed amount fees
   percentage?: Decimal; // For percentage-based fees
+  basedOn?: "interest" | "principal" | "totalPayment"; // What the percentage is applied to
+  description?: string;
+  metadata?: any;
+}
+
+export interface JSFee {
+  type: "fixed" | "percentage";
+  amount?: Currency | number; // For fixed amount fees
+  percentage?: Decimal | number; // For percentage-based fees
   basedOn?: "interest" | "principal" | "totalPayment"; // What the percentage is applied to
   description?: string;
   metadata?: any;
@@ -92,9 +112,20 @@ export interface TermPaymentAmount {
   paymentAmount: Currency;
 }
 
+export interface JSTermPaymentAmount {
+  termNumber: number;
+  paymentAmount: number;
+}
+
 export interface ChangePaymentDate {
   termNumber: number;
   newDate: Dayjs;
+  oneTimeChange?: boolean;
+}
+
+export interface JSChangePaymentDate {
+  termNumber: number;
+  newDate: Dayjs | Date;
   oneTimeChange?: boolean;
 }
 
@@ -120,19 +151,19 @@ export interface AmortizationParams {
   defaultBillDueDaysAfterPeriodEndConfiguration?: number;
   startDate: Dayjs;
   endDate?: Dayjs;
-  calendarType?: CalendarType;
-  roundingMethod?: RoundingMethod;
-  flushUnbilledInterestRoundingErrorMethod?: FlushUnbilledInterestDueToRoundingErrorType;
+  calendarType?: CalendarType | string;
+  roundingMethod?: RoundingMethod | string;
+  flushUnbilledInterestRoundingErrorMethod?: FlushUnbilledInterestDueToRoundingErrorType | string;
   roundingPrecision?: number;
   flushThreshold?: Currency;
-  periodsSchedule?: PeriodSchedule[];
-  ratesSchedule?: RateSchedule[];
+  periodsSchedule?: JSPeriodSchedule[];
+  ratesSchedule?: JSRateSchedule[];
   allowRateAbove100?: boolean;
-  termPaymentAmountOverride?: TermPaymentAmount[];
-  termPaymentAmount?: Currency; // allows one to specify EMI manually instead of calculating it
+  termPaymentAmountOverride?: JSTermPaymentAmount[];
+  termPaymentAmount?: Currency | number | Decimal; // allows one to specify EMI manually instead of calculating it
   firstPaymentDate?: Dayjs;
   termPeriodDefinition?: TermPeriodDefinition;
-  changePaymentDates?: ChangePaymentDate[];
+  changePaymentDates?: JSChangePaymentDate[];
   balanceModifications?: BalanceModification[];
   perDiemCalculationType?: PerDiemCalculationType;
   // staticFeePerBill?: Currency; // A fixed fee amount applied to each bill.
@@ -140,7 +171,7 @@ export interface AmortizationParams {
   // feePercentageOfTotalPayment?: Decimal; // A percentage of the total payment to be applied as a fee.
   // customFeePercentagesPerTerm?: { termNumber: number; feePercentage: Decimal }[]; // An array specifying custom percentages per term.
   feesPerTerm?: { termNumber: number; fees: Fee[] }[];
-  feesForAllTerms?: Fee[];
+  feesForAllTerms?: JSFee[];
   billingModel?: BillingModel;
   termInterestOverride?: { termNumber: number; interestAmount: Currency }[];
 }
@@ -195,7 +226,7 @@ export class Amortization {
   // private feePercentageOfTotalPayment: Decimal;
   // private customFeePercentagesPerTerm: Map<number, Decimal>;
   private feesPerTerm: Map<number, Fee[]>;
-  private feesForAllTerms: Fee[]; // New property for global fees
+  private feesForAllTerms: Fee[] = [];
 
   private _inputParams: AmortizationParams;
 
@@ -247,7 +278,19 @@ export class Amortization {
     }
 
     // Initialize feesForAllTerms
-    this.feesForAllTerms = params.feesForAllTerms || [];
+
+    if (params.feesForAllTerms) {
+      this.feesForAllTerms = params.feesForAllTerms.map((fee) => {
+        return {
+          type: fee.type,
+          amount: fee.amount !== undefined ? Currency.of(fee.amount) : undefined,
+          percentage: fee.percentage !== undefined ? new Decimal(fee.percentage).dividedBy(100) : undefined,
+          basedOn: fee.basedOn,
+          description: fee.description,
+          metadata: fee.metadata,
+        } as Fee;
+      });
+    }
 
     if (params.termPeriodDefinition) {
       this.termPeriodDefinition = params.termPeriodDefinition;
@@ -256,9 +299,9 @@ export class Amortization {
     }
 
     if (params.changePaymentDates) {
-      this.changePaymentDates = params.changePaymentDates;
-      this.changePaymentDates = this.changePaymentDates.map((changePaymentDate) => {
-        return { termNumber: changePaymentDate.termNumber, newDate: changePaymentDate.newDate.startOf("day") };
+      const changePaymentDates = params.changePaymentDates;
+      this.changePaymentDates = changePaymentDates.map((changePaymentDate) => {
+        return { termNumber: changePaymentDate.termNumber, newDate: dayjs(changePaymentDate.newDate).startOf("day") };
       });
     }
 
@@ -302,7 +345,9 @@ export class Amortization {
     }
 
     if (params.termPaymentAmountOverride) {
-      this.termPaymentAmountOverride = params.termPaymentAmountOverride;
+      this.termPaymentAmountOverride = params.termPaymentAmountOverride.map((override) => {
+        return { termNumber: override.termNumber, paymentAmount: Currency.of(override.paymentAmount) };
+      });
     }
 
     if (params.termInterestOverride) {
@@ -318,8 +363,41 @@ export class Amortization {
     }
 
     this.calendar = new Calendar(params.calendarType || CalendarType.ACTUAL_ACTUAL);
-    this.roundingMethod = params.roundingMethod || RoundingMethod.ROUND_HALF_UP;
-    this.flushUnbilledInterestRoundingErrorMethod = params.flushUnbilledInterestRoundingErrorMethod || FlushUnbilledInterestDueToRoundingErrorType.NONE;
+
+    if (params.roundingMethod) {
+      if (typeof params.roundingMethod === "string") {
+        this.roundingMethod = Currency.RoundingMethodFromString(params.roundingMethod);
+      } else {
+        this.roundingMethod = params.roundingMethod;
+      }
+    } else {
+      this.roundingMethod = RoundingMethod.ROUND_HALF_EVEN;
+    }
+
+    if (params.flushUnbilledInterestRoundingErrorMethod) {
+      if (typeof params.flushUnbilledInterestRoundingErrorMethod === "string") {
+        let flushMethod: FlushUnbilledInterestDueToRoundingErrorType;
+        switch (params.flushUnbilledInterestRoundingErrorMethod) {
+          case "none":
+            flushMethod = FlushUnbilledInterestDueToRoundingErrorType.NONE;
+            break;
+          case "at_end":
+            flushMethod = FlushUnbilledInterestDueToRoundingErrorType.AT_END;
+            break;
+          case "at_threshold":
+            flushMethod = FlushUnbilledInterestDueToRoundingErrorType.AT_THRESHOLD;
+            break;
+          default:
+            flushMethod = FlushUnbilledInterestDueToRoundingErrorType.NONE;
+        }
+        this.flushUnbilledInterestRoundingErrorMethod = flushMethod;
+      } else {
+        this.flushUnbilledInterestRoundingErrorMethod = params.flushUnbilledInterestRoundingErrorMethod;
+      }
+    } else {
+      this.flushUnbilledInterestRoundingErrorMethod = FlushUnbilledInterestDueToRoundingErrorType.NONE;
+    }
+
     this.totalChargedInterestRounded = Currency.of(0);
     this.totalChargedInterestUnrounded = Currency.of(0);
     this.unbilledInterestDueToRounding = Currency.of(0);
@@ -334,18 +412,25 @@ export class Amortization {
     if (!params.periodsSchedule) {
       this.generatePeriodicSchedule();
     } else {
-      this.periodsSchedule = params.periodsSchedule;
-
-      for (let period of this.periodsSchedule) {
-        period.startDate = period.startDate.startOf("day");
-        period.endDate = period.endDate.startOf("day");
-      }
+      this.periodsSchedule = params.periodsSchedule.map((period) => {
+        return {
+          startDate: dayjs(period.startDate).startOf("day"),
+          endDate: dayjs(period.endDate).startOf("day"),
+        };
+      });
     }
 
     if (!params.ratesSchedule) {
       this.generateRatesSchedule();
     } else {
-      this.rateSchedules = params.ratesSchedule;
+      this.rateSchedules = params.ratesSchedule.map((rate) => {
+        const interestAsDecimal = new Decimal(rate.annualInterestRate);
+        return {
+          startDate: dayjs(rate.startDate),
+          endDate: dayjs(rate.endDate),
+          annualInterestRate: interestAsDecimal.dividedBy(100),
+        };
+      });
 
       // all start and end dates must be at the start of the day, we dont want to count hours
       // at least not just yet... maybe in the future
@@ -381,7 +466,7 @@ export class Amortization {
     }
 
     if (params.termPaymentAmount !== undefined) {
-      this.equitedMonthlyPayment = params.termPaymentAmount;
+      this.equitedMonthlyPayment = new Currency(params.termPaymentAmount);
     } else {
       this.equitedMonthlyPayment = this.calculateFixedMonthlyPayment();
     }

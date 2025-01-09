@@ -38,7 +38,28 @@ export class Calendar {
    *
    * @param calendarType - The type of calendar convention to use. Defaults to `ACTUAL_ACTUAL`.
    */
-  constructor(calendarType: CalendarType = CalendarType.ACTUAL_ACTUAL) {
+  constructor(calendarType: CalendarType | string = CalendarType.ACTUAL_ACTUAL) {
+    if (typeof calendarType === "string") {
+      switch (calendarType) {
+        case "ACTUAL_ACTUAL":
+          calendarType = CalendarType.ACTUAL_ACTUAL;
+          break;
+        case "ACTUAL_360":
+          calendarType = CalendarType.ACTUAL_360;
+          break;
+        case "ACTUAL_365":
+          calendarType = CalendarType.ACTUAL_365;
+          break;
+        case "THIRTY_360":
+          calendarType = CalendarType.THIRTY_360;
+          break;
+        case "THIRTY_ACTUAL":
+          calendarType = CalendarType.THIRTY_ACTUAL;
+          break;
+        default:
+          calendarType = CalendarType.THIRTY_360;
+      }
+    }
     this.calendarType = calendarType;
   }
 

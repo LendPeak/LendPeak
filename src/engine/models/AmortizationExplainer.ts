@@ -37,7 +37,7 @@ export class AmortizationExplainer {
   getCalendarExplanation(): string {
     const params = this.params;
     let explanation = `Calendar and Day Counting:\n`;
-    explanation += `- Calendar Type: ${CalendarType[params.calendarType!]}.\n`;
+    explanation += `- Calendar Type: ${this.amortization.calendar.calendarType}.\n`;
     explanation += `  This defines how days between dates are counted.\n`;
 
     explanation += `- Per Diem Calculation: ${params.perDiemCalculationType}\n`;
@@ -80,7 +80,7 @@ export class AmortizationExplainer {
     let explanation = `Interest Calculation and Rounding:\n`;
     explanation += `- Interest is computed based on the calendar and annual rate.\n`;
 
-    explanation += `- Rounding Method: ${RoundingMethod[params.roundingMethod!]}.\n`;
+    explanation += `- Rounding Method: ${this.amortization.roundingMethod}.\n`;
     explanation += `  This method is used to round interest and other financial values.\n`;
 
     explanation += `- Unbilled Interest Due to Rounding: `;

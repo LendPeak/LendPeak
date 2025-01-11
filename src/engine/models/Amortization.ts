@@ -1495,8 +1495,8 @@ export class Amortization {
         const adjustedInterestRounded = this.round(adjustedInterest);
         if (adjustedInterest.getValue().greaterThanOrEqualTo(0)) {
           lastPayment.accruedInterestForPeriod = adjustedInterestRounded;
-          lastPayment.billedInterestForTerm = lastPayment.billedInterestForTerm.add(this.unbilledInterestDueToRounding);
-          lastPayment.dueInterestForTerm = lastPayment.dueInterestForTerm.add(this.unbilledInterestDueToRounding);
+          lastPayment.billedInterestForTerm = this.round(lastPayment.billedInterestForTerm.add(this.unbilledInterestDueToRounding));
+          lastPayment.dueInterestForTerm = this.round(lastPayment.dueInterestForTerm.add(this.unbilledInterestDueToRounding));
           lastPayment.interestRoundingError = adjustedInterestRounded.getRoundingErrorAsCurrency();
           lastPayment.totalPayment = lastPayment.principal.add(lastPayment.accruedInterestForPeriod).add(lastPayment.fees);
           lastPayment.metadata.unbilledInterestApplied = true;

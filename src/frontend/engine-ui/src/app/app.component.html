@@ -748,6 +748,15 @@
           ></p-button>
 
           <p-button
+            (onClick)="toggleFullNumberDisplay()"
+            [icon]="showFullNumbers ? 'pi pi-money-bill' : 'pi pi-hashtag'"
+            label="Show {{ showFullNumbers ? 'Currency' : 'Full' }} Values"
+            pTooltip="Toggle display between raw numbers and currency values"
+            tooltipPosition="top"
+            class="mr-2"
+          ></p-button>
+
+          <p-button
             label="Go to Last Due Line"
             icon="pi pi-arrow-down"
             class="p-ml-2"
@@ -764,6 +773,7 @@
             (onClick)="downloadRepaymentPlanAsCSV()"
             class="mr-2 inline-block"
           />
+
           <p-button
             severity="help"
             (onClick)="copyRepaymentPlanAsCSV()"
@@ -780,6 +790,8 @@
         [value]="repaymentPlan"
         [autoLayout]="true"
         class="repayment-plan-table"
+        [scrollable]="true"
+        scrollHeight="600px"
       >
         <ng-template pTemplate="header">
           <tr>
@@ -859,30 +871,76 @@
               </ng-container>
             </td>
 
-            <td>{{ plan.fees | currency }}</td>
-            <td>{{ plan.dueInterestForTerm | currency }}</td>
-            <td>{{ plan.principal | currency }}</td>
-            <td>{{ plan.totalPayment | currency }}</td>
-            <td>{{ plan.startBalance | currency }}</td>
-            <td>{{ plan.endBalance | currency }}</td>
+            <td>{{ showFullNumbers ? plan.fees : (plan.fees | currency) }}</td>
+            <td>
+              {{
+                showFullNumbers
+                  ? plan.dueInterestForTerm
+                  : (plan.dueInterestForTerm | currency)
+              }}
+            </td>
+            <td>
+              {{
+                showFullNumbers ? plan.principal : (plan.principal | currency)
+              }}
+            </td>
+            <td>
+              {{
+                showFullNumbers
+                  ? plan.totalPayment
+                  : (plan.totalPayment | currency)
+              }}
+            </td>
+            <td>
+              {{
+                showFullNumbers
+                  ? plan.startBalance
+                  : (plan.startBalance | currency)
+              }}
+            </td>
+            <td>
+              {{
+                showFullNumbers ? plan.endBalance : (plan.endBalance | currency)
+              }}
+            </td>
             <!-- Advanced Columns -->
 
             <td *ngIf="showAdvancedTable">
-              {{ plan.balanceModificationAmount | currency }}
+              {{
+                showFullNumbers
+                  ? plan.balanceModificationAmount
+                  : (plan.balanceModificationAmount | currency)
+              }}
             </td>
 
             <!-- start of interest values -->
             <td *ngIf="showAdvancedTable">
-              {{ plan.accruedInterestForPeriod | currency }}
+              {{
+                showFullNumbers
+                  ? plan.accruedInterestForPeriod
+                  : (plan.accruedInterestForPeriod | currency)
+              }}
             </td>
             <td *ngIf="showAdvancedTable">
-              {{ plan.billedInterestForTerm | currency }}
+              {{
+                showFullNumbers
+                  ? plan.billedInterestForTerm
+                  : (plan.billedInterestForTerm | currency)
+              }}
             </td>
             <td *ngIf="showAdvancedTable">
-              {{ plan.billedDeferredInterest | currency }}
+              {{
+                showFullNumbers
+                  ? plan.billedDeferredInterest
+                  : (plan.billedDeferredInterest | currency)
+              }}
             </td>
             <td *ngIf="showAdvancedTable">
-              {{ plan.unbilledTotalDeferredInterest | currency }}
+              {{
+                showFullNumbers
+                  ? plan.unbilledTotalDeferredInterest
+                  : (plan.unbilledTotalDeferredInterest | currency)
+              }}
             </td>
             <!-- end of interest values -->
 
@@ -890,7 +948,11 @@
               {{ plan.interestRoundingError }}
             </td>
             <td *ngIf="showAdvancedTable">
-              {{ plan.perDiem.getRoundedNumber() | currency }}
+              {{
+                showFullNumbers
+                  ? plan.perDiem.toNumber()
+                  : (plan.perDiem.getRoundedNumber() | currency)
+              }}
             </td>
             <td *ngIf="showAdvancedTable">{{ plan.daysInPeriod }}</td>
 

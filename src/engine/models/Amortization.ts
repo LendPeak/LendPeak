@@ -1285,6 +1285,7 @@ export class Amortization {
             interestForPeriod = Currency.Zero();
           } else {
             interestForPeriod = interestCalculator.calculateInterestForDays(startBalance, daysInPeriod);
+            // interestForPeriod = this.round(interestForPeriod);
           }
 
           const perDiem = interestForPeriod.isZero() ? Currency.Zero() : interestCalculator.perDiem;
@@ -1314,6 +1315,8 @@ export class Amortization {
             metadata.unbilledInterestAmount = interestRoundingError.toNumber();
             this.unbilledInterestDueToRounding = this.unbilledInterestDueToRounding.add(interestRoundingError);
           }
+
+          interestForPeriod = roundedInterest;
 
           billedInterestForTerm = billedInterestForTerm.add(interestForPeriod);
 
@@ -1492,6 +1495,8 @@ export class Amortization {
         const adjustedInterestRounded = this.round(adjustedInterest);
         if (adjustedInterest.getValue().greaterThanOrEqualTo(0)) {
           lastPayment.accruedInterestForPeriod = adjustedInterestRounded;
+          lastPayment.billedInterestForTerm = lastPayment.billedInterestForTerm.add(this.unbilledInterestDueToRounding);
+          lastPayment.dueInterestForTerm = lastPayment.dueInterestForTerm.add(this.unbilledInterestDueToRounding);
           lastPayment.interestRoundingError = adjustedInterestRounded.getRoundingErrorAsCurrency();
           lastPayment.totalPayment = lastPayment.principal.add(lastPayment.accruedInterestForPeriod).add(lastPayment.fees);
           lastPayment.metadata.unbilledInterestApplied = true;

@@ -282,6 +282,8 @@ export class AppComponent implements OnChanges {
 
   CURRENT_OBJECT_VERSION = 9;
 
+  showFullNumbers: boolean = false;
+
   defaultLoan: UILoan = {
     objectVersion: this.CURRENT_OBJECT_VERSION,
     principal: 10000,
@@ -330,6 +332,10 @@ export class AppComponent implements OnChanges {
   };
 
   bills: Bill[] = [];
+
+  toggleFullNumberDisplay() {
+    this.showFullNumbers = !this.showFullNumbers;
+  }
 
   // Method to open Connector Management Dialog
   openConnectorManagement() {
@@ -1430,6 +1436,8 @@ export class AppComponent implements OnChanges {
     { label: 'At End', value: 'at_end' },
     { label: 'At Threshold', value: 'at_threshold' },
   ];
+
+  lockedRepaymentPlan: any[] = [];
 
   repaymentPlan: any[] = [
     // {

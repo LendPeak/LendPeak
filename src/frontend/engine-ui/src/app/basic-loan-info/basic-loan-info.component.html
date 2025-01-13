@@ -124,54 +124,82 @@
             </p-overlayPanel>
           </div>
 
-          <!-- First Payment Date -->
+          <!-- First Payment Date (with checkbox) -->
           <div class="field col-4">
-            <label for="firstPaymentDate">
-              First Payment Date
+            <label
+              >First Payment Date
               <i
-                class="pi pi-info-circle tooltip-icon"
+                class="pi pi-info-circle tooltip-icon p-ml-2"
                 (click)="showTooltip($event, firstPaymentDateTooltip)"
-              ></i>
-            </label>
-            <p-calendar
-              id="firstPaymentDate"
-              [(ngModel)]="loan.firstPaymentDate"
-              name="firstPaymentDate"
-              dateFormat="mm/dd/yy"
-              showIcon
-              [numberOfMonths]="2"
-              [showButtonBar]="true"
-              (ngModelChange)="submitLoan()"
-            ></p-calendar>
-            <!-- Tooltip Overlay -->
-            <p-overlayPanel #firstPaymentDateTooltip>
-              The date of the first payment. E.g., 02/01/2024
-            </p-overlayPanel>
+              ></i
+            ></label>
+            <div class="p-inputgroup">
+              <span class="p-inputgroup-addon">
+                <p-checkbox
+                  [(ngModel)]="enableFirstPaymentDate"
+                  binary="true"
+                  inputId="enableFirstPaymentDate"
+                  (onChange)="onFirstPaymentToggle()"
+                ></p-checkbox>
+                <label for="enableFirstPaymentDate" class="p-ml-2">
+                  Enable
+                </label>
+              </span>
+
+              <p-calendar
+                id="firstPaymentDate"
+                [(ngModel)]="loan.firstPaymentDate"
+                name="firstPaymentDate"
+                dateFormat="mm/dd/yy"
+                [numberOfMonths]="2"
+                [showButtonBar]="true"
+                showIcon
+                (ngModelChange)="submitLoan()"
+                [disabled]="!enableFirstPaymentDate"
+              >
+              </p-calendar>
+              <p-overlayPanel #firstPaymentDateTooltip>
+                The date of the first payment. E.g., 02/01/2024
+              </p-overlayPanel>
+            </div>
           </div>
 
-          <!-- End Date -->
+          <!-- End Date (with checkbox) -->
           <div class="field col-4">
-            <label for="endDate">
-              End Date
+            <label
+              >End Date
               <i
-                class="pi pi-info-circle tooltip-icon"
+                class="pi pi-info-circle tooltip-icon p-ml-2"
                 (click)="showTooltip($event, endDateTooltip)"
               ></i>
             </label>
-            <p-calendar
-              id="endDate"
-              [(ngModel)]="loan.endDate"
-              name="endDate"
-              dateFormat="mm/dd/yy"
-              showIcon
-              [numberOfMonths]="2"
-              [showButtonBar]="true"
-              (ngModelChange)="submitLoan()"
-            ></p-calendar>
-            <!-- Tooltip Overlay -->
-            <p-overlayPanel #endDateTooltip>
-              The date when the loan ends. Calculated automatically if not set.
-            </p-overlayPanel>
+            <p-inputgroup>
+              <p-inputgroup-addon>
+                <p-checkbox
+                  [(ngModel)]="enableEndDate"
+                  binary="true"
+                  inputId="enableEndDate"
+                  (onChange)="onEndDateToggle()"
+                ></p-checkbox>
+              </p-inputgroup-addon>
+
+              <p-calendar
+                id="endDate"
+                [(ngModel)]="loan.endDate"
+                name="endDate"
+                dateFormat="mm/dd/yy"
+                showIcon
+                [numberOfMonths]="2"
+                [showButtonBar]="true"
+                (ngModelChange)="submitLoan()"
+                [disabled]="!enableEndDate"
+              >
+              </p-calendar>
+              <p-overlayPanel #endDateTooltip>
+                The date when the loan ends. Calculated automatically if not
+                set.
+              </p-overlayPanel>
+            </p-inputgroup>
           </div>
         </div>
       </p-card>

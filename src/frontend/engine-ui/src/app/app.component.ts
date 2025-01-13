@@ -1855,6 +1855,8 @@ export class AppComponent implements OnChanges {
     try {
       const engineParams = toAmortizationParams(uiAmortizationParams);
       amortization = new Amortization(engineParams);
+      this.loan.firstPaymentDate = amortization.firstPaymentDate.toDate();
+      this.loan.endDate = amortization.endDate.toDate();
     } catch (error) {
       console.error('Error creating Amortization:', error);
 

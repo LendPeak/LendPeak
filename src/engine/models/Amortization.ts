@@ -212,7 +212,7 @@ export class Amortization {
   allowRateAbove100: boolean = false;
   termPaymentAmountOverride: TermPaymentAmount[] = [];
   equitedMonthlyPayment: Currency;
-  firstPaymentDate?: Dayjs;
+  firstPaymentDate: Dayjs;
   termPeriodDefinition: TermPeriodDefinition;
   changePaymentDates: ChangePaymentDate[] = [];
   repaymentSchedule: AmortizationEntry[];
@@ -310,12 +310,6 @@ export class Amortization {
       this.allowRateAbove100 = params.allowRateAbove100;
     }
 
-    if (params.firstPaymentDate) {
-      this.firstPaymentDate = params.firstPaymentDate;
-    } else {
-      this.firstPaymentDate = params.startDate.add(1, "month");
-    }
-
     // validate annual interest rate, it should not be negative or greater than 100%
     if (params.annualInterestRate.isNegative()) {
       throw new Error("Invalid annual interest rate, value cannot be negative");
@@ -333,11 +327,20 @@ export class Amortization {
     this.term = params.term;
     this.startDate = dayjs(params.startDate).startOf("day");
 
+    if (params.firstPaymentDate) {
+      this.firstPaymentDate = params.firstPaymentDate;
+    } else {
+      const termUnit = this.termPeriodDefinition.unit === "complex" ? "day" : this.termPeriodDefinition.unit;
+      this.firstPaymentDate = this.startDate.add(1 * this.termPeriodDefinition.count[0], termUnit);
+
+      //this.firstPaymentDate = params.startDate.add(1, "month");
+    }
+
     if (params.endDate) {
       this.endDate = dayjs(params.endDate).startOf("day");
     } else {
       const termUnit = this.termPeriodDefinition.unit === "complex" ? "day" : this.termPeriodDefinition.unit;
-      this.endDate = params.endDate ? dayjs(params.endDate).startOf("day") : this.startDate.add(this.term * this.termPeriodDefinition.count[0], termUnit);
+      this.endDate = this.startDate.add(this.term * this.termPeriodDefinition.count[0], termUnit);
     }
 
     // validate that the end date is after the start date

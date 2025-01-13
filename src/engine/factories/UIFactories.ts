@@ -260,7 +260,7 @@ export interface UIAmortizationParams {
   termPaymentAmountOverride?: UITermPaymentAmount[];
   termPaymentAmount?: number; // raw number
   changePaymentDates?: UIChangePaymentDate[];
-  balanceModifications?: UIBalanceModification[];
+  balanceModifications?: BalanceModification[];
 
   // Fee-related:
   feesForAllTerms?: UIFee[];

@@ -79,7 +79,7 @@ export class Currency {
 
   static fromJSON(data: any): Currency {
     if (!data) {
-      console.warn("Currency.fromJSON: No data provided");
+      console.trace("Currency.fromJSON: No data provided");
       return Currency.Zero();
     }
     if (typeof data === "string") {

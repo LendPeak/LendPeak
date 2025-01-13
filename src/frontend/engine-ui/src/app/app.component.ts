@@ -26,6 +26,13 @@ import {
   Fee,
   LoanSummary,
 } from 'lendpeak-engine/models/Amortization';
+import {
+  UIAmortizationParams,
+  toAmortizationParams,
+  UIBalanceModification,
+  LoanFeePerTerm,
+} from 'lendpeak-engine/factories/UIFactories';
+
 import { AmortizationEntry } from 'lendpeak-engine/models/Amortization/AmortizationEntry';
 import { BalanceModification } from 'lendpeak-engine/models/Amortization/BalanceModification';
 import { Deposit, DepositRecord } from 'lendpeak-engine/models/Deposit';
@@ -53,8 +60,6 @@ dayjs.extend(isSameOrBefore);
 
 import { v4 as uuidv4 } from 'uuid'; // For generating unique IDs
 import {
-  LoanFeeForAllTerms,
-  LoanFeePerTerm,
   UILoan,
   PastDueSummary,
   ActualLoanSummary,
@@ -890,7 +895,6 @@ export class AppComponent implements OnChanges {
       daysDueAfterPeriodEnd: dueBillDay.daysDueAfterPeriodEnd,
     }));
 
-    // Parse balanceModifications
     loan.balanceModifications = BalanceModification.parseJSONArray(
       loan.balanceModifications,
     );
@@ -1007,7 +1011,7 @@ export class AppComponent implements OnChanges {
   }
 
   ngOnChanges(changes: SimpleChanges) {
-    console.log('Changes detected:', changes);
+    //console.log('Changes detected:', changes);
   }
   billingModelOptions: DropDownOptionString[] = [
     { label: 'Amortized Loan', value: 'amortized' },
@@ -1478,20 +1482,20 @@ export class AppComponent implements OnChanges {
       };
     });
 
-    console.log('Loan repayment plan refreshed', this.loan.periodsSchedule);
+    //console.log('Loan repayment plan refreshed', this.loan.periodsSchedule);
     this.submitLoan();
   }
 
   removeLoanRepaymentPlan() {
     // Logic to remove schedule override
     this.loan.periodsSchedule = [];
-    console.log('Loan repayment plan removed');
+    // console.log('Loan repayment plan removed');
     this.submitLoan();
   }
 
   deletePlan(index: number) {
     this.loan.periodsSchedule.splice(index, 1);
-    console.log('Plan deleted at index:', index);
+    // console.log('Plan deleted at index:', index);
     this.submitLoan();
   }
 
@@ -1602,7 +1606,7 @@ export class AppComponent implements OnChanges {
         );
         if (!deposit) {
           // Deposit not found; remove this balance modification
-          console.log('Removing balance modification', balanceModification);
+          // console.log('Removing balance modification', balanceModification);
           this.balanceModificationRemoved = true;
           return;
         }
@@ -1652,23 +1656,28 @@ export class AppComponent implements OnChanges {
 
       deposit.usageDetails = deposit.usageDetails || [];
 
-      // Apply balance modification if present
       if (result.balanceModification) {
-        console.log(
-          'Applying balance modification',
-          result.balanceModification,
-        );
-        // Remove existing balance modifications linked to this deposit
+        // console.log(
+        //   'Applying balance modification',
+        //   result.balanceModification,
+        // );
+
+        // 1) Remove existing UI modifications for this deposit
         this.loan.balanceModifications = this.loan.balanceModifications.filter(
-          (bm) => !(bm.metadata && bm.metadata.depositId === deposit.id),
+          (uiMod) =>
+            !(uiMod.metadata && uiMod.metadata.depositId === deposit.id),
         );
-        // Add the new balance modification
+
+        // 2) Push the new UI object
         this.loan.balanceModifications.push(result.balanceModification);
+
+        // 3) Also store the ID
         deposit.balanceModificationId = result.balanceModification.id;
       } else {
-        // Remove any existing balance modification for this deposit
+        // Remove any existing UI modifications for this deposit
         this.loan.balanceModifications = this.loan.balanceModifications.filter(
-          (bm) => !(bm.metadata && bm.metadata.depositId === deposit.id),
+          (uiMod) =>
+            !(uiMod.metadata && uiMod.metadata.depositId === deposit.id),
         );
         deposit.balanceModificationId = undefined;
       }
@@ -1726,7 +1735,7 @@ export class AppComponent implements OnChanges {
       return bill;
     });
 
-    console.log('Payments applied');
+    // console.log('Payments applied');
   }
 
   onPaymentPriorityChange() {
@@ -1754,19 +1763,19 @@ export class AppComponent implements OnChanges {
 
     const interestRateAsDecimal = new Decimal(this.loan.interestRate);
 
-    let amortizationParams: AmortizationParams = {
-      loanAmount: Currency.of(this.loan.principal),
-      originationFee: Currency.of(this.loan.originationFee),
-      annualInterestRate: interestRateAsDecimal.dividedBy(100),
+    let uiAmortizationParams: UIAmortizationParams = {
+      loanAmount: this.loan.principal,
+      originationFee: this.loan.originationFee,
+      annualInterestRate: this.loan.interestRate,
       term: this.loan.term,
-      startDate: dayjs(this.loan.startDate),
-      endDate: dayjs(this.loan.endDate),
-      firstPaymentDate: dayjs(this.loan.firstPaymentDate),
+      startDate: this.loan.startDate,
+      endDate: this.loan.endDate,
+      firstPaymentDate: this.loan.firstPaymentDate,
       calendarType: this.loan.calendarType,
       roundingMethod: this.loan.roundingMethod,
       flushUnbilledInterestRoundingErrorMethod: this.loan.flushMethod,
       roundingPrecision: this.loan.roundingPrecision,
-      flushThreshold: Currency.of(this.loan.flushThreshold),
+      flushThreshold: this.loan.flushThreshold,
       termPeriodDefinition: this.loan.termPeriodDefinition,
       defaultPreBillDaysConfiguration:
         this.loan.defaultPreBillDaysConfiguration,
@@ -1781,100 +1790,71 @@ export class AppComponent implements OnChanges {
     // if billing model is Daily Simple Interest Loan then we will remove pre bill days and due bill days
     // configurations
     if (this.loan.billingModel === 'dailySimpleInterest') {
-      delete amortizationParams.defaultPreBillDaysConfiguration;
-      delete amortizationParams.defaultBillDueDaysAfterPeriodEndConfiguration;
+      delete uiAmortizationParams.defaultPreBillDaysConfiguration;
+      delete uiAmortizationParams.defaultBillDueDaysAfterPeriodEndConfiguration;
     }
 
     if (this.loan.termPaymentAmount) {
-      amortizationParams.termPaymentAmount = this.loan.termPaymentAmount;
+      uiAmortizationParams.termPaymentAmount = this.loan.termPaymentAmount;
     }
 
     if (this.loan.changePaymentDates.length > 0) {
-      amortizationParams.changePaymentDates = this.loan.changePaymentDates;
+      uiAmortizationParams.changePaymentDates = this.loan.changePaymentDates;
     }
 
     if (this.loan.ratesSchedule.length > 0) {
-      amortizationParams.ratesSchedule = this.loan.ratesSchedule;
+      uiAmortizationParams.ratesSchedule = this.loan.ratesSchedule;
     }
 
     if (this.loan.termPaymentAmountOverride.length > 0) {
-      amortizationParams.termPaymentAmountOverride =
+      uiAmortizationParams.termPaymentAmountOverride =
         this.loan.termPaymentAmountOverride;
     }
 
     if (this.loan.periodsSchedule.length > 0) {
-      amortizationParams.periodsSchedule = this.loan.periodsSchedule;
+      uiAmortizationParams.periodsSchedule = this.loan.periodsSchedule;
     }
 
     if (this.loan.balanceModifications.length > 0) {
-      amortizationParams.balanceModifications = this.loan.balanceModifications;
+      uiAmortizationParams.balanceModifications =
+        this.loan.balanceModifications;
     }
 
     if (this.loan.feesForAllTerms.length > 0) {
-      amortizationParams.feesForAllTerms = this.loan.feesForAllTerms;
+      uiAmortizationParams.feesForAllTerms = this.loan.feesForAllTerms;
     }
 
     if (this.loan.feesPerTerm.length > 0) {
       // Group fees by term number
-      const feesGroupedByTerm = this.loan.feesPerTerm.reduce(
-        (acc, fee) => {
-          const termNumber = fee.termNumber;
-          if (!acc[termNumber]) {
-            acc[termNumber] = [];
-          }
-          acc[termNumber].push(fee);
-          return acc;
-        },
-        {} as { [key: number]: LoanFeePerTerm[] },
-      );
+      // const feesGroupedByTerm = this.loan.feesPerTerm.reduce(
+      //   (acc, fee) => {
+      //     const termNumber = fee.termNumber;
+      //     if (!acc[termNumber]) {
+      //       acc[termNumber] = [];
+      //     }
+      //     acc[termNumber].push(fee);
+      //     return acc;
+      //   },
+      //   {} as { [key: number]: LoanFeePerTerm[] },
+      // );
 
       // Build amortizationParams.feesPerTerm
-      amortizationParams.feesPerTerm = Object.keys(feesGroupedByTerm).map(
-        (termNumberStr) => {
-          const termNumber = parseInt(termNumberStr, 10);
-          const feesForTerm = feesGroupedByTerm[termNumber];
-
-          return {
-            termNumber: termNumber,
-            fees: feesForTerm.map(
-              (fee) =>
-                ({
-                  type: fee.type,
-                  amount:
-                    fee.amount !== undefined
-                      ? Currency.of(fee.amount)
-                      : undefined,
-                  percentage:
-                    fee.percentage !== undefined
-                      ? new Decimal(fee.percentage).dividedBy(100)
-                      : undefined,
-                  basedOn: fee.basedOn,
-                  description: fee.description,
-                  metadata: fee.metadata,
-                }) as Fee,
-            ),
-          };
-        },
-      );
+      uiAmortizationParams.feesPerTerm = this.loan.feesPerTerm;
     }
 
     if (
       this.loan.termInterestOverride &&
       this.loan.termInterestOverride.length > 0
     ) {
-      amortizationParams.termInterestOverride =
-        this.loan.termInterestOverride.map((o) => {
-          return {
-            termNumber: o.termNumber,
-            interestAmount: Currency.of(o.interestAmount),
-          };
-        });
+      uiAmortizationParams.termInterestOverride =
+        this.loan.termInterestOverride;
     }
 
     let amortization: Amortization;
 
     try {
-      amortization = new Amortization(amortizationParams);
+      const engineParams = toAmortizationParams(uiAmortizationParams);
+      amortization = new Amortization(engineParams);
     } catch (error) {
       console.error('Error creating Amortization:', error);
 

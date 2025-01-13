@@ -46,14 +46,14 @@ export class UsageDetail {
   }
 
   static rehydrateFromJSON(json: any): UsageDetail {
-    console.log("rehydrating usage details", json);
+    // console.log("rehydrating usage details", json);
     return new UsageDetail({
       billId: json.jsBillId,
       period: json.period,
       billDueDate: json.jsBillDueDate,
-      allocatedPrincipal: Currency.fromJSON(json.allocatedPrincipal),
-      allocatedInterest: Currency.fromJSON(json.allocatedInterest),
-      allocatedFees: Currency.fromJSON(json.allocatedFees),
+      allocatedPrincipal: json.allocatedPrincipal ? Currency.fromJSON(json.allocatedPrincipal) : Currency.Zero(),
+      allocatedInterest: json.allocatedInterest ? Currency.fromJSON(json.allocatedInterest) : Currency.Zero(),
+      allocatedFees: json.allocatedFees ? Currency.fromJSON(json.allocatedFees) : Currency.Zero(),
       date: json.jsDate,
     });
   }

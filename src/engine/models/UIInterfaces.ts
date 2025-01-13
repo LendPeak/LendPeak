@@ -10,6 +10,9 @@ import {
   Fee,
   BillingModel,
 } from "./Amortization";
+
+import { UIBalanceModification, LoanFeePerTerm, UIFee } from "../factories/UIFactories";
+
 import { AmortizationEntry } from "./Amortization/AmortizationEntry";
 import { PerDiemCalculationType } from "./InterestCalculator";
 
@@ -18,19 +21,6 @@ import { Decimal } from "decimal.js";
 import { BalanceModification } from "./Amortization/BalanceModification";
 import { DepositRecord } from "./Deposit";
 import { PaymentAllocationStrategyName } from "./PaymentApplication";
-
-export interface LoanFeeForAllTerms {
-  type: "fixed" | "percentage";
-  amount?: number; // For fixed amount fees
-  percentage?: number; // For percentage-based fees (as percentage, e.g., 5% is 5)
-  basedOn?: "interest" | "principal" | "totalPayment";
-  description?: string;
-  metadata?: any;
-}
-
-export interface LoanFeePerTerm extends LoanFeeForAllTerms {
-  termNumber: number;
-}
 
 export interface UILoan {
   objectVersion: number;
@@ -47,7 +37,7 @@ export interface UILoan {
   calendarType: string;
   roundingMethod: string;
   flushMethod: string;
-  feesForAllTerms: LoanFeeForAllTerms[];
+  feesForAllTerms: UIFee[];
   feesPerTerm: LoanFeePerTerm[];
   perDiemCalculationType: PerDiemCalculationType;
   roundingPrecision: number;

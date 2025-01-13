@@ -99,7 +99,7 @@ export class DepositRecord implements Deposit {
     balanceModificationId?: string;
     metadata?: DepositMetadata;
   }) {
-    console.log("params in deposit record", params);
+    // console.log("params in deposit record", params);
     if (params.id) {
       this.id = params.id;
     } else {
@@ -111,7 +111,7 @@ export class DepositRecord implements Deposit {
     this.insertedDate = dayjs();
     this.effectiveDate = dayjs.utc(params.effectiveDate).startOf("day");
     if (params.clearingDate) {
-      console.log(`clearing date is passed as ${params.clearingDate}`);
+      //console.log(`clearing date is passed as ${params.clearingDate}`);
       this.clearingDate = dayjs.utc(params.clearingDate).startOf("day");
     }
     if (params.systemDate) {

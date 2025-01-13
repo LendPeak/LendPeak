@@ -24,6 +24,7 @@ export class OverridesComponent {
   @Output() loanChange = new EventEmitter<any>();
   @Output() loanUpdated = new EventEmitter<void>();
 
+  balanceModifications: BalanceModification[] = [];
   savedSettings: OverrideSettings[] = [];
   selectedSettingId: string | null = null;
   isModified: boolean = false;
@@ -70,6 +71,8 @@ export class OverridesComponent {
         JSON.stringify(this.getCurrentSettings()),
       );
     }
+
+    this.balanceModifications = this.loan.balanceModifications;
   }
 
   startWithNewSettings() {
@@ -490,13 +493,15 @@ export class OverridesComponent {
       type: 'decrease',
     });
 
-    this.loan.balanceModifications.push(balanceModificationToAdd);
+    // this.loan.balanceModifications.push(balanceModificationToAdd);
+    this.balanceModifications.push(balanceModificationToAdd);
     this.emitLoanChange();
   }
 
   deleteBalanceModificationRow(index: number) {
     if (this.loan.balanceModifications.length > 0) {
       this.loan.balanceModifications.splice(index, 1);
+      this.balanceModifications.splice(index, 1);
       this.emitLoanChange();
     }
   }
@@ -506,6 +511,9 @@ export class OverridesComponent {
     // so i need to manually update the date. I've added jsDate as a simple
     // Date and in this code we know that p-calendar is updating jsDate
     // so we will do a date update here
+
+    this.loan.balanceModifications = this.balanceModifications;
+
     this.loan.balanceModifications.forEach((balanceModification) => {
       balanceModification.syncValuesFromJSProperties();
     });

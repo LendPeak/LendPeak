@@ -391,9 +391,9 @@
       <!-- Term Interest Override -->
       <p-accordionTab
         header="Term Interest Override"
-        [selected]="!!(
-          loan.termInterestOverride && loan.termInterestOverride.length > 0
-        )"
+        [selected]="
+          !!(loan.termInterestOverride && loan.termInterestOverride.length > 0)
+        "
       >
         <div class="p-fluid">
           <table
@@ -640,11 +640,11 @@
       <!-- Balance Modifications -->
       <p-accordionTab
         header="Balance Modifications"
-        [selected]="loan.balanceModifications.length > 0"
+        [selected]="balanceModifications.length > 0"
       >
         <div class="grid">
           <div class="col-12">
-            <p-table [value]="loan.balanceModifications">
+            <p-table [value]="balanceModifications">
               <ng-template pTemplate="header">
                 <tr>
                   <th style="width: 10%">Date</th>

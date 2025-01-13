@@ -3,6 +3,7 @@ import { Calendar, CalendarType } from "./Calendar";
 import { InterestCalculator, PerDiemCalculationType } from "./InterestCalculator";
 import { BalanceModification } from "./Amortization/BalanceModification";
 import Decimal from "decimal.js";
+import { toAmortizationParams, UIAmortizationParams } from "../factories/UIFactories";
 
 import { AmortizationEntry, AmortizationScheduleMetadata } from "./Amortization/AmortizationEntry";
 import dayjs, { Dayjs } from "dayjs";
@@ -156,10 +157,10 @@ export interface AmortizationParams {
   flushUnbilledInterestRoundingErrorMethod?: FlushUnbilledInterestDueToRoundingErrorType | string;
   roundingPrecision?: number;
   flushThreshold?: Currency;
-  periodsSchedule?: JSPeriodSchedule[];
-  ratesSchedule?: JSRateSchedule[];
+  periodsSchedule?: PeriodSchedule[];
+  ratesSchedule?: RateSchedule[];
   allowRateAbove100?: boolean;
-  termPaymentAmountOverride?: JSTermPaymentAmount[];
+  termPaymentAmountOverride?: TermPaymentAmount[];
   termPaymentAmount?: Currency | number | Decimal; // allows one to specify EMI manually instead of calculating it
   firstPaymentDate?: Dayjs;
   termPeriodDefinition?: TermPeriodDefinition;
@@ -536,6 +537,11 @@ export class Amortization {
     this.validateRatesSchedule();
 
     this.repaymentSchedule = this.generateSchedule();
+  }
+
+  public static fromUI(uiParams: UIAmortizationParams): Amortization {
+    const engineParams = toAmortizationParams(uiParams);
+    return new Amortization(engineParams);
   }
 
   get cumulativeInterest(): Currency {
@@ -2108,7 +2114,7 @@ describe('Amortization Class', () => {
     const activePeriod = this.getPeriodByDate(date);
     if (!activePeriod) {
       // If no active period (date is before start?), payoff = totalLoanAmount
-      if (date.isBefore(this.startDate)) {
+      if (date.isSameOrBefore(this.startDate)) {
         return this.totalLoanAmount;
       }
     }

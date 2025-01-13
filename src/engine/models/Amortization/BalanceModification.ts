@@ -107,6 +107,7 @@ export class BalanceModification {
 
   set amount(amount: Currency | number | Decimal) {
     this._amount = Currency.of(amount);
+    const amountAsNumber = this._amount.toNumber();
     this.jsAmount = this._amount.toNumber();
     this.unusedAmount = this._amount;
   }

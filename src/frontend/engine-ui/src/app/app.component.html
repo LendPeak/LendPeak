@@ -425,7 +425,7 @@
       <div class="grid">
         <div class="col-12" *ngIf="pastDueSummary.pastDueCount === 0">
           <div class="flex flex-column">
-            <span class="text-600 font-semibold mb-1">No Past Due Bills</span>
+            <span class="text-300 font-semibold mb-1">No Past Due Bills</span>
             <span>All bills are current as of the snapshot date.</span>
           </div>
         </div>
@@ -441,7 +441,7 @@
             style="background-color: #fff4e6; border-radius: 4px"
           >
             <span
-              class="text-600 font-semibold mb-2 pb-4"
+              class="text-300 font-semibold mb-2 pb-4"
               style="text-align: center"
               >Past Due Details as of
               {{ snapshotDate | date: "MM/dd/yyyy" }}
@@ -449,36 +449,36 @@
             </span>
             <div class="grid">
               <div class="col-12 md:col-3">
-                <span class="text-600 font-semibold">Past Due Bills:</span>
+                <span class="text-300 font-semibold">Past Due Bills:</span>
                 <span>{{ pastDueSummary.pastDueCount }}</span>
               </div>
 
               <!-- Add Days Contract Is Past Due here -->
               <div class="col-12 md:col-3">
-                <span class="text-600 font-semibold">Days Past Due:</span>
+                <span class="text-300 font-semibold">Days Past Due:</span>
                 <span>{{ pastDueSummary.daysContractIsPastDue }}</span>
               </div>
 
               <div class="col-12 md:col-3">
-                <span class="text-600 font-semibold">Past Due Principal:</span>
+                <span class="text-300 font-semibold">Past Due Principal:</span>
                 <span>{{
                   pastDueSummary.totalPastDuePrincipal.toNumber() | currency
                 }}</span>
               </div>
               <div class="col-12 md:col-3">
-                <span class="text-600 font-semibold">Past Due Interest:</span>
+                <span class="text-300 font-semibold">Past Due Interest:</span>
                 <span>{{
                   pastDueSummary.totalPastDueInterest.toNumber() | currency
                 }}</span>
               </div>
               <div class="col-12 md:col-3">
-                <span class="text-600 font-semibold">Past Due Fees:</span>
+                <span class="text-300 font-semibold">Past Due Fees:</span>
                 <span>{{
                   pastDueSummary.totalPastDueFees.toNumber() | currency
                 }}</span>
               </div>
               <div class="col-12 md:col-3">
-                <span class="text-600 font-semibold">Past Due Amount:</span>
+                <span class="text-300 font-semibold">Past Due Amount:</span>
                 <span>{{
                   pastDueSummary.totalPastDueAmount.toNumber() | currency
                 }}</span>
@@ -500,7 +500,7 @@
         <!-- Row 1 -->
         <div class="col-12 md:col-3">
           <div class="flex flex-column">
-            <span class="text-600 font-semibold mb-1">Remaining Terms:</span>
+            <span class="text-300 font-semibold mb-1">Remaining Terms:</span>
             <span
               >{{ loanSummary?.remainingTerms }} /
               {{ loanSummary?.totalTerms }}</span
@@ -509,13 +509,13 @@
         </div>
         <div class="col-12 md:col-3">
           <div class="flex flex-column">
-            <span class="text-600 font-semibold mb-1">Next Bill Date:</span>
+            <span class="text-300 font-semibold mb-1">Next Bill Date:</span>
             <span>{{ loanSummary?.nextBillDate | date: "MM/dd/yyyy" }}</span>
           </div>
         </div>
         <div class="col-12 md:col-3">
           <div class="flex flex-column">
-            <span class="text-600 font-semibold mb-1"
+            <span class="text-300 font-semibold mb-1"
               >Paid Principal To Date:</span
             >
             <span>{{
@@ -525,7 +525,7 @@
         </div>
         <div class="col-12 md:col-3">
           <div class="flex flex-column">
-            <span class="text-600 font-semibold mb-1"
+            <span class="text-300 font-semibold mb-1"
               >Paid Interest To Date:</span
             >
             <span>{{
@@ -537,13 +537,13 @@
         <!-- Row 2 -->
         <div class="col-12 md:col-3 mt-3">
           <div class="flex flex-column">
-            <span class="text-600 font-semibold mb-1">Last Payment Date:</span>
+            <span class="text-300 font-semibold mb-1">Last Payment Date:</span>
             <span>{{ loanSummary?.lastPaymentDate | date: "MM/dd/yyyy" }}</span>
           </div>
         </div>
         <div class="col-12 md:col-3 mt-3">
           <div class="flex flex-column">
-            <span class="text-600 font-semibold mb-1"
+            <span class="text-300 font-semibold mb-1"
               >Last Payment Amount:</span
             >
             <span>{{
@@ -553,7 +553,7 @@
         </div>
         <div class="col-12 md:col-3 mt-3">
           <div class="flex flex-column">
-            <span class="text-600 font-semibold mb-1"
+            <span class="text-300 font-semibold mb-1"
               >Remaining Principal:</span
             >
             <span>{{
@@ -563,7 +563,7 @@
         </div>
         <div class="col-12 md:col-3 mt-3">
           <div class="flex flex-column">
-            <span class="text-600 font-semibold mb-1"
+            <span class="text-300 font-semibold mb-1"
               >Current Payoff (Principal + Accrued Interest):</span
             >
             <span>{{
@@ -575,7 +575,7 @@
         <!-- Row 3 -->
         <div class="col-12 md:col-3 mt-3">
           <div class="flex flex-column">
-            <span class="text-600 font-semibold mb-1"
+            <span class="text-300 font-semibold mb-1"
               >Accrued Interest To Date:</span
             >
             <span>{{
@@ -585,7 +585,7 @@
         </div>
         <div class="col-12 md:col-3 mt-3">
           <div class="flex flex-column">
-            <span class="text-600 font-semibold mb-1"
+            <span class="text-300 font-semibold mb-1"
               >Projected Future Interest (If Held To Maturity):</span
             >
             <span>{{
@@ -607,7 +607,7 @@
         <!-- Row 1 -->
         <div class="col-12 md:col-3">
           <div class="flex flex-column">
-            <span class="text-600 font-semibold mb-1"
+            <span class="text-300 font-semibold mb-1"
               >Next Unpaid Bill Due Date (Actual):</span
             >
             <span>{{
@@ -617,7 +617,7 @@
         </div>
         <div class="col-12 md:col-3">
           <div class="flex flex-column">
-            <span class="text-600 font-semibold mb-1"
+            <span class="text-300 font-semibold mb-1"
               >Cumulative Principal Paid (Actual):</span
             >
             <span>{{
@@ -627,7 +627,7 @@
         </div>
         <div class="col-12 md:col-3">
           <div class="flex flex-column">
-            <span class="text-600 font-semibold mb-1"
+            <span class="text-300 font-semibold mb-1"
               >Cumulative Interest Paid (Actual):</span
             >
             <span>{{
@@ -637,7 +637,7 @@
         </div>
         <div class="col-12 md:col-3">
           <div class="flex flex-column">
-            <span class="text-600 font-semibold mb-1"
+            <span class="text-300 font-semibold mb-1"
               >Last Bill Due Date with Payment Applied (Actual):</span
             >
             <span>{{
@@ -649,7 +649,7 @@
         <!-- Row 2 -->
         <div class="col-12 md:col-3 mt-3">
           <div class="flex flex-column">
-            <span class="text-600 font-semibold mb-1"
+            <span class="text-300 font-semibold mb-1"
               >Last Allocated Payment Amount (Actual):</span
             >
             <span>{{
@@ -659,7 +659,7 @@
         </div>
         <div class="col-12 md:col-3 mt-3">
           <div class="flex flex-column">
-            <span class="text-600 font-semibold mb-1"
+            <span class="text-300 font-semibold mb-1"
               >Remaining Principal Balance (Actual):</span
             >
             <span>{{
@@ -669,7 +669,7 @@
         </div>
         <div class="col-12 md:col-3 mt-3">
           <div class="flex flex-column">
-            <span class="text-600 font-semibold mb-1"
+            <span class="text-300 font-semibold mb-1"
               >Current Full Payoff Amount (Actual):</span
             >
             <span>{{
@@ -686,7 +686,7 @@
       <div class="grid p-2">
         <div class="col-12 md:col-2">
           <div class="flex flex-column">
-            <span class="text-600 font-semibold mb-1">Total Loan Amount:</span>
+            <span class="text-300 font-semibold mb-1">Total Loan Amount:</span>
             <span>{{
               amortization?.totalLoanAmount?.toNumber() | currency
             }}</span>
@@ -694,7 +694,7 @@
         </div>
         <div class="col-12 md:col-2">
           <div class="flex flex-column">
-            <span class="text-600 font-semibold mb-1"
+            <span class="text-300 font-semibold mb-1"
               >Cumulative Interest:</span
             >
             <span>{{
@@ -704,26 +704,26 @@
         </div>
         <div class="col-12 md:col-2">
           <div class="flex flex-column">
-            <span class="text-600 font-semibold mb-1">Term In Months:</span>
+            <span class="text-300 font-semibold mb-1">Term In Months:</span>
             <span>{{ amortization?.loanTermInMonths }}</span>
           </div>
         </div>
         <div class="col-12 md:col-1">
           <div class="flex flex-column">
-            <span class="text-600 font-semibold mb-1">APR:</span>
+            <span class="text-300 font-semibold mb-1">APR:</span>
             <span>{{ amortization?.apr?.toDecimalPlaces(4) }}%</span>
           </div>
         </div>
         <div class="col-12 md:col-2">
           <div class="flex flex-column">
-            <span class="text-600 font-semibold mb-1">Days Left in Term:</span>
+            <span class="text-300 font-semibold mb-1">Days Left in Term:</span>
             <span>{{ amortization?.getDaysLeftInTerm(snapshotDate) }}</span>
           </div>
         </div>
 
         <div class="col-12 md:col-1">
           <div class="flex flex-column">
-            <span class="text-600 font-semibold mb-1">Per Diem:</span>
+            <span class="text-300 font-semibold mb-1">Per Diem:</span>
             <span>{{
               amortization?.getPerDiemForPeriodByDate(snapshotDate)?.toNumber()
                 | currency
@@ -732,7 +732,7 @@
         </div>
         <div class="col-12 md:col-2">
           <div class="flex flex-column">
-            <span class="text-600 font-semibold mb-1">Accrued Interest:</span>
+            <span class="text-300 font-semibold mb-1">Accrued Interest:</span>
             <span>{{ accruedInterest.getRoundedNumber() | currency }}</span>
           </div>
         </div>

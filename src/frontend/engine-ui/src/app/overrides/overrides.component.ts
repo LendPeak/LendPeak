@@ -559,9 +559,11 @@ export class OverridesComponent {
   deleteBalanceModificationRow(index: number) {
     if (this.loan.balanceModifications.length > 0) {
       this.loan.balanceModifications.splice(index, 1);
-      this.balanceModifications.splice(index, 1);
-      this.emitLoanChange();
     }
+    if (this.balanceModifications.length === 0) {
+      this.balanceModifications.splice(index, 1);
+    }
+    this.emitLoanChange();
   }
 
   balanceModificationChanged() {

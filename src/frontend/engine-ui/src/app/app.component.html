@@ -52,12 +52,7 @@
         class="p-button-text"
         (click)="showSaveLoanDialog = false"
       ></button>
-      <button
-        pButton
-        label="Save"
-        class="p-button-primary"
-        (click)="saveLoan()"
-      ></button>
+      <button pButton label="Save" (click)="saveLoan()"></button>
     </p-footer>
   </p-dialog>
 
@@ -141,14 +136,14 @@
             <button
               pButton
               icon="pi pi-trash"
-              class="p-button-danger p-button-sm mr-2"
+              severity="danger"
+              class="mr-2"
               (click)="deleteLoan(loan.key)"
               pTooltip="Delete Loan"
             ></button>
             <button
               pButton
               icon="pi pi-folder-open"
-              class="p-button-primary p-button-sm"
               (click)="loadLoan(loan.key)"
               pTooltip="Load Loan"
             ></button>
@@ -223,12 +218,7 @@
         class="p-button-text"
         (click)="showEditLoanDialog = false"
       ></button>
-      <button
-        pButton
-        label="Save"
-        class="p-button-primary"
-        (click)="saveEditedLoanDetails()"
-      ></button>
+      <button pButton label="Save" (click)="saveEditedLoanDetails()"></button>
     </p-footer>
   </p-dialog>
 
@@ -271,7 +261,7 @@
           pButton
           label="Edit Loan Details"
           icon="pi pi-pencil"
-          class="p-button-text p-button-sm"
+          class="p-button-text"
           (click)="openEditLoanDialog()"
         ></button>
         <button
@@ -279,139 +269,150 @@
           pButton
           label="Save Loan"
           icon="pi pi-save"
-          class="p-button-primary p-button-sm"
           (click)="openSaveLoanDialog()"
         ></button>
       </div>
     </div>
   </div>
 
-  <!-- TabView -->
-  <p-tabView [(activeIndex)]="activeTabIndex" (onChange)="onTabChange($event)">
-    <!-- Basic Loan Info Tab -->
-    <p-tabPanel header="Basic Loan Info">
-      <app-basic-loan-info
-        [loan]="loan"
-        [amortization]="amortization"
-        (loanChange)="onLoanChange($event)"
-        (loanUpdated)="submitLoan()"
-      ></app-basic-loan-info>
-    </p-tabPanel>
+  <!-- Tabsw -->
+  <p-tabs [(value)]="activeTabIndex" (valueChange)="onTabChange($event)">
+    <p-tablist>
+      <p-tab [value]="0">Basic Loan Info</p-tab>
+      <p-tab [value]="1">Overrides</p-tab>
+      <p-tab [value]="2">Advanced Settings</p-tab>
+      <p-tab [value]="3">Custom Periods Schedule</p-tab>
+      <p-tab [value]="4">Deposits</p-tab>
+      <p-tab [value]="5">Bills</p-tab>
+    </p-tablist>
+    <p-tabpanels>
+      <!-- Basic Loan Info Tab -->
+      <p-tabpanel [value]="0">
+        <app-basic-loan-info
+          [loan]="loan"
+          [amortization]="amortization"
+          (loanChange)="onLoanChange($event)"
+          (loanUpdated)="submitLoan()"
+        ></app-basic-loan-info>
+      </p-tabpanel>
 
-    <!-- Overrides Tab -->
-    <p-tabPanel header="Overrides">
-      <app-overrides
-        [loan]="loan"
-        [loanRepaymentPlan]="repaymentSchedule"
-        [termOptions]="termOptions"
-        [balanceIncreaseType]="balanceIncreaseType"
-        (loanChange)="onLoanChange($event)"
-        (loanUpdated)="submitLoan()"
-      ></app-overrides>
-    </p-tabPanel>
+      <!-- Overrides Tab -->
+      <p-tabpanel [value]="1">
+        <app-overrides
+          [loan]="loan"
+          [loanRepaymentPlan]="repaymentSchedule"
+          [termOptions]="termOptions"
+          [balanceIncreaseType]="balanceIncreaseType"
+          (loanChange)="onLoanChange($event)"
+          (loanUpdated)="submitLoan()"
+        ></app-overrides>
+      </p-tabpanel>
 
-    <!-- Advanced Settings Tab -->
-    <p-tabPanel header="Advanced Settings">
-      <app-advanced-settings
-        [loan]="loan"
-        (loanChange)="onLoanChange($event)"
-        (loanUpdated)="submitLoan()"
-      ></app-advanced-settings>
-    </p-tabPanel>
+      <!-- Advanced Settings Tab -->
+      <p-tabpanel [value]="2">
+        <app-advanced-settings
+          [loan]="loan"
+          (loanChange)="onLoanChange($event)"
+          (loanUpdated)="submitLoan()"
+        ></app-advanced-settings>
+      </p-tabpanel>
 
-    <!-- Custom Periods Schedule Tab -->
-    <p-tabPanel header="Custom Periods Schedule">
-      <div class="grid">
-        <div class="col-12">
-          <p-card>
-            <div class="p-mb-3">
-              <p-button
-                label="Create Custom Schedule"
-                icon="pi pi-plus p-ml-2"
-                class="p-button-success create-schedule-buttons"
-                (onClick)="createLoanRepaymentPlan()"
-                pTooltip="Generate a custom periods schedule based on your inputs."
-                tooltipPosition="top"
-              ></p-button>
-              <p-button
-                label="Remove Schedule Override"
-                icon="pi pi-minus"
-                class="p-button-danger p-ml-2 create-schedule-buttons"
-                (onClick)="removeLoanRepaymentPlan()"
-                pTooltip="Remove the custom periods schedule override."
-                tooltipPosition="top"
-              ></p-button>
-            </div>
-            <p-divider></p-divider>
-            <div class="p-fluid">
-              <table
-                *ngIf="loan.periodsSchedule.length > 0"
-                class="p-datatable p-component"
-              >
-                <thead>
-                  <tr>
-                    <th>Term</th>
-                    <th>Start Date</th>
-                    <th>End Date</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr *ngFor="let plan of loan.periodsSchedule; let i = index">
-                    <td>{{ i + 1 }}</td>
-                    <td>
-                      <p-calendar
-                        [(ngModel)]="plan.startDate"
-                        dateFormat="mm/dd/yy"
-                        name="periodStartDate-{{ i }}"
-                        showIcon
-                        (onSelect)="submitLoan()"
-                        pTooltip="Custom start date for term {{ i + 1 }}."
-                        tooltipPosition="top"
-                      ></p-calendar>
-                    </td>
-                    <td>
-                      <p-calendar
-                        [(ngModel)]="plan.endDate"
-                        dateFormat="mm/dd/yy"
-                        name="periodEndDate-{{ i }}"
-                        showIcon
-                        (onSelect)="repaymentPlanEndDateChange(i)"
-                        pTooltip="Custom end date for term {{ i + 1 }}."
-                        tooltipPosition="top"
-                      ></p-calendar>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </p-card>
+      <!-- Custom Periods Schedule Tab -->
+      <p-tabpanel [value]="3">
+        <div class="grid">
+          <div class="col-12">
+            <p-card>
+              <div class="p-mb-3">
+                <p-button
+                  label="Create Custom Schedule"
+                  icon="pi pi-plus p-ml-2"
+                  class="create-schedule-buttons"
+                  (onClick)="createLoanRepaymentPlan()"
+                  pTooltip="Generate a custom periods schedule based on your inputs."
+                  tooltipPosition="top"
+                ></p-button>
+                <p-button
+                  label="Remove Schedule Override"
+                  icon="pi pi-minus"
+                  class="p-ml-2 create-schedule-buttons"
+                  (onClick)="removeLoanRepaymentPlan()"
+                  pTooltip="Remove the custom periods schedule override."
+                  tooltipPosition="top"
+                ></p-button>
+              </div>
+              <p-divider></p-divider>
+              <div class="p-fluid">
+                <table
+                  *ngIf="loan.periodsSchedule.length > 0"
+                  class="p-datatable p-component"
+                >
+                  <thead>
+                    <tr>
+                      <th>Term</th>
+                      <th>Start Date</th>
+                      <th>End Date</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr
+                      *ngFor="let plan of loan.periodsSchedule; let i = index"
+                    >
+                      <td>{{ i + 1 }}</td>
+                      <td>
+                        <p-calendar
+                          [(ngModel)]="plan.startDate"
+                          dateFormat="mm/dd/yy"
+                          name="periodStartDate-{{ i }}"
+                          showIcon
+                          (onSelect)="submitLoan()"
+                          pTooltip="Custom start date for term {{ i + 1 }}."
+                          tooltipPosition="top"
+                        ></p-calendar>
+                      </td>
+                      <td>
+                        <p-calendar
+                          [(ngModel)]="plan.endDate"
+                          dateFormat="mm/dd/yy"
+                          name="periodEndDate-{{ i }}"
+                          showIcon
+                          (onSelect)="repaymentPlanEndDateChange(i)"
+                          pTooltip="Custom end date for term {{ i + 1 }}."
+                          tooltipPosition="top"
+                        ></p-calendar>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </p-card>
+          </div>
         </div>
-      </div>
-    </p-tabPanel>
+      </p-tabpanel>
 
-    <!-- Deposits Tab -->
-    <p-tabPanel header="Deposits">
-      <app-deposits
-        [deposits]="loan.deposits"
-        [currencyOptions]="currencyOptions"
-        (depositsChange)="onDepositsChange($event)"
-        (depositUpdated)="onDepositUpdated()"
-        [snapshotDate]="snapshotDate"
-        [bills]="bills"
-        [payoffAmount]="payoffAmount"
-        [accruedInterestToDate]="accruedInterestToDate"
-      ></app-deposits>
-    </p-tabPanel>
+      <!-- Deposits Tab -->
+      <p-tabpanel [value]="4">
+        <app-deposits
+          [deposits]="loan.deposits"
+          [currencyOptions]="currencyOptions"
+          (depositsChange)="onDepositsChange($event)"
+          (depositUpdated)="onDepositUpdated()"
+          [snapshotDate]="snapshotDate"
+          [bills]="bills"
+          [payoffAmount]="payoffAmount"
+          [accruedInterestToDate]="accruedInterestToDate"
+        ></app-deposits>
+      </p-tabpanel>
 
-    <!-- Bills -->
-    <p-tabPanel header="Bills">
-      <app-bills
-        [bills]="bills"
-        [snapshotDate]="snapshotDate"
-        (billAction)="onBillAction()"
-      ></app-bills>
-    </p-tabPanel>
-  </p-tabView>
+      <!-- Bills -->
+      <p-tabpanel [value]="5">
+        <app-bills
+          [bills]="bills"
+          [snapshotDate]="snapshotDate"
+          (billAction)="onBillAction()"
+        ></app-bills>
+      </p-tabpanel>
+    </p-tabpanels>
+  </p-tabs>
 
   <!-- Repayment Plan at the Bottom -->
   <div *ngIf="showTable">
@@ -860,7 +861,7 @@
               >
                 <p-badge
                   value="Manual"
-                  severity="warning"
+                  severity="warn"
                   styleClass="mr-2"
                   pTooltip="This term's interest was manually set. Equivalent Interest Rate: {{
                     plan.metadata.equivalentAnnualRate * 100 | number: '1.2-8'
@@ -1028,7 +1029,7 @@
       <!-- Version Selector -->
       <div class="version-selector">
         <label for="versionSelect">Select Version:</label>
-        <p-dropdown
+        <p-select
           [options]="releaseNotes"
           [(ngModel)]="selectedVersion"
           optionLabel="version"
@@ -1036,7 +1037,7 @@
           (onChange)="onVersionChange($event)"
           placeholder="Select Version"
           styleClass="version-dropdown"
-        ></p-dropdown>
+        ></p-select>
       </div>
 
       <div *ngIf="selectedReleaseNotes">
@@ -1057,7 +1058,7 @@
         type="button"
         label="Continue"
         (click)="closeNewVersionModal()"
-        class="p-button-rounded p-button-success"
+        class="p-button-rounded"
       ></button>
     </p-footer>
   </p-dialog>

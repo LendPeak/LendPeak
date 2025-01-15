@@ -20,13 +20,13 @@
     </div>
     <div class="field">
       <label for="type">Connector Type</label>
-      <p-dropdown
+      <p-select
         id="type"
         [options]="connectorTypes"
         [(ngModel)]="newConnector.type"
         placeholder="Select a Connector Type"
         [disabled]="isEditMode()"
-      ></p-dropdown>
+      ></p-select>
     </div>
     <!-- LoanPro Credentials -->
     <div *ngIf="newConnector.type === 'LoanPro'">

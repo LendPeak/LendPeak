@@ -12,7 +12,7 @@
     <p-button
       label="Load"
       icon="pi pi-folder-open"
-      class="p-button-primary mr-3"
+      class="mr-3"
       (click)="openLoadSettingsDialog()"
       pTooltip="Load saved settings"
     ></p-button>
@@ -23,7 +23,6 @@
     <p-button
       label="Save"
       icon="pi pi-save"
-      class="p-button-success"
       (click)="saveSettings()"
       [disabled]="!isModified"
       pTooltip="Save changes"
@@ -44,9 +43,7 @@
     <span *ngIf="loadedSettingName" class="p-mr-2 loaded-settings">
       <i class="pi pi-cog"></i>
       {{ loadedSettingName }}
-      <span *ngIf="currentSettingVersion">
-        (v{{ currentSettingVersion }})
-      </span>
+      <span *ngIf="currentSettingVersion">(v{{ currentSettingVersion }})</span>
     </span>
     <!-- Modified Indicator -->
     <span *ngIf="isModified" class="p-mr-2 modified-indicator">
@@ -88,7 +85,7 @@
     <button
       pButton
       label="Save"
-      class="p-button-primary"
+      class=""
       (click)="confirmSaveSettings()"
     ></button>
   </p-footer>
@@ -114,7 +111,6 @@
         <th>Name</th>
         <th>Version</th>
         <th>Previous Version</th>
-
         <th>Created At</th>
         <th>Actions</th>
       </tr>
@@ -135,7 +131,8 @@
           ></p-button>
           <p-button
             icon="pi pi-trash"
-            class="p-button-rounded p-button-danger"
+            class="p-button-rounded"
+            severity="danger"
             (click)="deleteSetting(setting.id)"
           ></p-button>
         </td>
@@ -152,7 +149,7 @@
     <button
       pButton
       label="Load"
-      class="p-button-primary"
+      class=""
       [disabled]="!selectedSetting"
       (click)="confirmLoadSettings()"
     ></button>
@@ -177,744 +174,751 @@
   </p-footer>
 </p-dialog>
 
+<!-- 
+  Updated p-accordion using the new structure:
+  - [multiple]="true" means multiple panels can be opened at the same time.
+  - [value]="openPanels" is an array of panel identifiers you want expanded.
+  - Each <p-accordion-panel> sets a unique value="someId" to match the array entries.
+-->
 <div class="grid">
   <div class="col-12">
-    <p-accordion multiple="true">
+    <p-accordion [multiple]="true" [value]="openPanels">
       <!-- Interest Rate -->
-      <p-accordionTab
-        header="Interest Rate"
-        [selected]="loan.ratesSchedule.length > 0"
-      >
-        <div class="p-fluid">
-          <table
-            *ngIf="loan.ratesSchedule.length > 0"
-            class="p-datatable p-component"
-          >
-            <thead>
-              <tr>
-                <th>Start Date</th>
-                <th>End Date</th>
-                <th>Interest Rate (%)</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let rate of loan.ratesSchedule; let i = index">
-                <!-- Start Date -->
-                <td>
-                  <p-calendar
-                    [(ngModel)]="rate.startDate"
-                    name="overrideStartDate-{{ i }}"
-                    dateFormat="mm/dd/yy"
-                    showIcon
-                    (ngModelChange)="onInputChange()"
-                  >
-                    <ng-template pTemplate="date" let-date>
-                      <span
-                        [ngStyle]="
-                          isPeriodEndDate(date)
-                            ? {
-                                backgroundColor: 'orange',
-                                color: 'white',
-                                borderRadius: '50%',
-                                padding: '5px',
-                                display: 'inline-block',
-                                textAlign: 'center',
-                                width: '24px',
-                              }
-                            : {}
-                        "
-                      >
-                        {{ date.day }}
-                      </span>
-                    </ng-template>
-                  </p-calendar>
-                </td>
-                <!-- End Date -->
-                <td>
-                  <p-calendar
-                    [(ngModel)]="rate.endDate"
-                    name="overrideEndDate-{{ i }}"
-                    dateFormat="mm/dd/yy"
-                    showIcon
-                    (ngModelChange)="onInputChange()"
-                  >
-                    <ng-template pTemplate="date" let-date>
-                      <span
-                        [ngStyle]="
-                          isPeriodEndDate(date)
-                            ? {
-                                backgroundColor: 'orange',
-                                color: 'white',
-                                borderRadius: '50%',
-                                padding: '5px',
-                                display: 'inline-block',
-                                textAlign: 'center',
-                                width: '24px',
-                              }
-                            : {}
-                        "
-                      >
-                        {{ date.day }}
-                      </span>
-                    </ng-template>
-                  </p-calendar>
-                </td>
-                <!-- Interest Rate -->
-                <td>
-                  <p-inputNumber
-                    [(ngModel)]="rate.annualInterestRate"
-                    name="overrideInterestRate-{{ i }}"
-                    mode="decimal"
-                    minFractionDigits="2"
-                    suffix="%"
-                    (ngModelChange)="onInputChange()"
-                  ></p-inputNumber>
-                </td>
-                <!-- Remove Button -->
-                <td>
-                  <p-button
-                    icon="pi pi-trash"
-                    class="p-button-rounded p-button-danger"
-                    (click)="removeRateOverride(i)"
-                  ></p-button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-          <div class="p-mt-2">
-            <p-button
-              label="Add New Rate Row"
-              icon="pi pi-plus"
-              class="p-button-success"
-              (click)="addRateOverride()"
-            ></p-button>
+      <p-accordion-panel value="interestRate">
+        <p-accordion-header>Interest Rate</p-accordion-header>
+        <p-accordion-content>
+          <div class="p-fluid">
+            <table
+              *ngIf="loan.ratesSchedule.length > 0"
+              class="p-datatable p-component"
+            >
+              <thead>
+                <tr>
+                  <th>Start Date</th>
+                  <th>End Date</th>
+                  <th>Interest Rate (%)</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let rate of loan.ratesSchedule; let i = index">
+                  <!-- Start Date -->
+                  <td>
+                    <p-datepicker
+                      [(ngModel)]="rate.startDate"
+                      name="overrideStartDate-{{ i }}"
+                      dateFormat="mm/dd/yy"
+                      showIcon
+                      (ngModelChange)="onInputChange()"
+                    >
+                      <ng-template pTemplate="date" let-date>
+                        <span
+                          [ngStyle]="
+                            isPeriodEndDate(date)
+                              ? {
+                                  backgroundColor: 'orange',
+                                  color: 'white',
+                                  borderRadius: '50%',
+                                  padding: '5px',
+                                  display: 'inline-block',
+                                  textAlign: 'center',
+                                  width: '24px',
+                                }
+                              : {}
+                          "
+                        >
+                          {{ date.day }}
+                        </span>
+                      </ng-template>
+                    </p-datepicker>
+                  </td>
+                  <!-- End Date -->
+                  <td>
+                    <p-datepicker
+                      [(ngModel)]="rate.endDate"
+                      name="overrideEndDate-{{ i }}"
+                      dateFormat="mm/dd/yy"
+                      showIcon
+                      (ngModelChange)="onInputChange()"
+                    >
+                      <ng-template pTemplate="date" let-date>
+                        <span
+                          [ngStyle]="
+                            isPeriodEndDate(date)
+                              ? {
+                                  backgroundColor: 'orange',
+                                  color: 'white',
+                                  borderRadius: '50%',
+                                  padding: '5px',
+                                  display: 'inline-block',
+                                  textAlign: 'center',
+                                  width: '24px',
+                                }
+                              : {}
+                          "
+                        >
+                          {{ date.day }}
+                        </span>
+                      </ng-template>
+                    </p-datepicker>
+                  </td>
+                  <!-- Interest Rate -->
+                  <td>
+                    <p-inputNumber
+                      [(ngModel)]="rate.annualInterestRate"
+                      name="overrideInterestRate-{{ i }}"
+                      mode="decimal"
+                      minFractionDigits="2"
+                      suffix="%"
+                      (ngModelChange)="onInputChange()"
+                    ></p-inputNumber>
+                  </td>
+                  <!-- Remove Button -->
+                  <td>
+                    <p-button
+                      icon="pi pi-trash"
+                      class="p-button-rounded"
+                      severity="danger"
+                      (click)="removeRateOverride(i)"
+                    ></p-button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <div class="p-mt-2">
+              <p-button
+                label="Add New Rate Row"
+                icon="pi pi-plus"
+                (click)="addRateOverride()"
+              ></p-button>
+            </div>
           </div>
-        </div>
-      </p-accordionTab>
+        </p-accordion-content>
+      </p-accordion-panel>
 
       <!-- Payment Settings Section -->
-      <p-accordionTab header="Equated Installment Payments (EIP)">
-        <div class="p-fluid">
-          <!-- Term Payment Amount -->
-          <div class="field">
-            <label for="termPaymentAmount">
-              Term Payment Amount
-              <i
-                class="pi pi-info-circle tooltip-icon"
-                (click)="showTooltip($event, termPaymentAmountTooltip)"
-              ></i>
-            </label>
-            <p-inputNumber
-              id="termPaymentAmount"
-              [(ngModel)]="loan.termPaymentAmount"
-              name="termPaymentAmount"
-              mode="currency"
-              currency="USD"
-              locale="en-US"
-              (ngModelChange)="onInputChange()"
-            ></p-inputNumber>
-            <!-- Tooltip Overlay -->
-            <p-overlayPanel #termPaymentAmountTooltip>
-              Override the calculated payment amount per term. For example,
-              enter "$1,200" to set a fixed payment amount.
-            </p-overlayPanel>
+      <p-accordion-panel value="paymentSettings">
+        <p-accordion-header
+          >Equated Installment Payments (EIP)</p-accordion-header
+        >
+        <p-accordion-content>
+          <div class="p-fluid">
+            <!-- Term Payment Amount -->
+            <div class="field">
+              <label for="termPaymentAmount">
+                Term Payment Amount
+                <i
+                  class="pi pi-info-circle tooltip-icon"
+                  (click)="showTooltip($event, termPaymentAmountTooltip)"
+                ></i>
+              </label>
+              <p-inputNumber
+                id="termPaymentAmount"
+                [(ngModel)]="loan.termPaymentAmount"
+                name="termPaymentAmount"
+                mode="currency"
+                currency="USD"
+                locale="en-US"
+                (ngModelChange)="onInputChange()"
+              ></p-inputNumber>
+              <!-- Tooltip Overlay -->
+              <p-popover #termPaymentAmountTooltip>
+                <ng-template pTemplate="content">
+                  Override the calculated payment amount per term. For example,
+                  enter "$1,200" to set a fixed payment amount.
+                </ng-template>
+              </p-popover>
+            </div>
           </div>
-        </div>
-      </p-accordionTab>
+        </p-accordion-content>
+      </p-accordion-panel>
 
       <!-- Term Payment Amount -->
-      <p-accordionTab
-        header="Term Payment Amount"
-        [selected]="loan.termPaymentAmountOverride.length > 0"
-      >
-        <div class="p-fluid">
-          <table
-            *ngIf="loan.termPaymentAmountOverride.length > 0"
-            class="p-datatable p-component"
-          >
-            <thead>
-              <tr>
-                <th>Term Number</th>
-                <th>Payment Amount</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr
-                *ngFor="
-                  let paymentConfiguration of loan.termPaymentAmountOverride;
-                  let i = index
-                "
-              >
-                <!-- Term Number -->
-                <td>
-                  <p-inputNumber
-                    [(ngModel)]="paymentConfiguration.termNumber"
-                    name="overrideTermPayment-term{{ i }}"
-                    (ngModelChange)="onInputChange()"
-                  ></p-inputNumber>
-                </td>
-                <!-- Payment Amount -->
-                <td>
-                  <p-inputNumber
-                    [(ngModel)]="paymentConfiguration.paymentAmount"
-                    name="overrideTermPaymentAmount-{{ i }}"
-                    mode="currency"
-                    currency="USD"
-                    locale="en-US"
-                    (ngModelChange)="onInputChange()"
-                  ></p-inputNumber>
-                </td>
-                <!-- Remove Button -->
-                <td>
-                  <p-button
-                    icon="pi pi-trash"
-                    class="p-button-rounded p-button-danger"
-                    (click)="removeTermPaymentAmountOverride(i)"
-                  ></p-button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-          <div class="p-mt-2">
-            <p-button
-              label="Add New Term Row"
-              icon="pi pi-plus"
-              class="p-button-success"
-              (click)="addTermPaymentAmountOverride()"
-            ></p-button>
+      <p-accordion-panel value="termPaymentAmount">
+        <p-accordion-header>Term Payment Amount</p-accordion-header>
+        <p-accordion-content>
+          <div class="p-fluid">
+            <table
+              *ngIf="loan.termPaymentAmountOverride.length > 0"
+              class="p-datatable p-component"
+            >
+              <thead>
+                <tr>
+                  <th>Term Number</th>
+                  <th>Payment Amount</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr
+                  *ngFor="
+                    let paymentConfiguration of loan.termPaymentAmountOverride;
+                    let i = index
+                  "
+                >
+                  <!-- Term Number -->
+                  <td>
+                    <p-inputNumber
+                      [(ngModel)]="paymentConfiguration.termNumber"
+                      name="overrideTermPayment-term{{ i }}"
+                      (ngModelChange)="onInputChange()"
+                    ></p-inputNumber>
+                  </td>
+                  <!-- Payment Amount -->
+                  <td>
+                    <p-inputNumber
+                      [(ngModel)]="paymentConfiguration.paymentAmount"
+                      name="overrideTermPaymentAmount-{{ i }}"
+                      mode="currency"
+                      currency="USD"
+                      locale="en-US"
+                      (ngModelChange)="onInputChange()"
+                    ></p-inputNumber>
+                  </td>
+                  <!-- Remove Button -->
+                  <td>
+                    <p-button
+                      icon="pi pi-trash"
+                      class="p-button-rounded"
+                      severity="danger"
+                      (click)="removeTermPaymentAmountOverride(i)"
+                    ></p-button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <div class="p-mt-2">
+              <p-button
+                label="Add New Term Row"
+                icon="pi pi-plus"
+                (click)="addTermPaymentAmountOverride()"
+              ></p-button>
+            </div>
           </div>
-        </div>
-      </p-accordionTab>
+        </p-accordion-content>
+      </p-accordion-panel>
 
       <!-- Term Interest Override -->
-      <p-accordionTab
-        header="Term Interest Override"
-        [selected]="
-          !!(loan.termInterestOverride && loan.termInterestOverride.length > 0)
-        "
-      >
-        <div class="p-fluid">
-          <table
-            *ngIf="
-              loan.termInterestOverride && loan.termInterestOverride.length > 0
-            "
-            class="p-datatable p-component"
-          >
-            <thead>
-              <tr>
-                <th>Term Number</th>
-                <th>Interest Amount</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr
-                *ngFor="
-                  let override of loan.termInterestOverride;
-                  let i = index
-                "
-              >
-                <!-- Term Number -->
-                <td>
-                  <p-inputNumber
-                    [(ngModel)]="override.termNumber"
-                    name="termInterestOverride-term{{ i }}"
-                    (ngModelChange)="onInputChange()"
-                  ></p-inputNumber>
-                </td>
-                <!-- Interest Amount -->
-                <td>
-                  <p-inputNumber
-                    [(ngModel)]="override.interestAmount"
-                    name="termInterestOverride-amount-{{ i }}"
-                    mode="currency"
-                    currency="USD"
-                    locale="en-US"
-                    (ngModelChange)="onInputChange()"
-                  ></p-inputNumber>
-                </td>
-                <!-- Remove Button -->
-                <td>
-                  <p-button
-                    icon="pi pi-trash"
-                    class="p-button-rounded p-button-danger"
-                    (click)="removeTermInterestOverride(i)"
-                  ></p-button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-          <div class="p-mt-2">
-            <p-button
-              label="Add Interest Override"
-              icon="pi pi-plus"
-              class="p-button-success"
-              (click)="addTermInterestOverrideRow()"
-            ></p-button>
+      <p-accordion-panel value="termInterestOverride">
+        <p-accordion-header>Term Interest Override</p-accordion-header>
+        <p-accordion-content>
+          <div class="p-fluid">
+            <table
+              *ngIf="
+                loan.termInterestOverride &&
+                loan.termInterestOverride.length > 0
+              "
+              class="p-datatable p-component"
+            >
+              <thead>
+                <tr>
+                  <th>Term Number</th>
+                  <th>Interest Amount</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr
+                  *ngFor="
+                    let override of loan.termInterestOverride;
+                    let i = index
+                  "
+                >
+                  <!-- Term Number -->
+                  <td>
+                    <p-inputNumber
+                      [(ngModel)]="override.termNumber"
+                      name="termInterestOverride-term{{ i }}"
+                      (ngModelChange)="onInputChange()"
+                    ></p-inputNumber>
+                  </td>
+                  <!-- Interest Amount -->
+                  <td>
+                    <p-inputNumber
+                      [(ngModel)]="override.interestAmount"
+                      name="termInterestOverride-amount-{{ i }}"
+                      mode="currency"
+                      currency="USD"
+                      locale="en-US"
+                      (ngModelChange)="onInputChange()"
+                    ></p-inputNumber>
+                  </td>
+                  <!-- Remove Button -->
+                  <td>
+                    <p-button
+                      icon="pi pi-trash"
+                      class="p-button-rounded"
+                      severity="danger"
+                      (click)="removeTermInterestOverride(i)"
+                    ></p-button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <div class="p-mt-2">
+              <p-button
+                label="Add Interest Override"
+                icon="pi pi-plus"
+                (click)="addTermInterestOverrideRow()"
+              ></p-button>
+            </div>
           </div>
-        </div>
-      </p-accordionTab>
+        </p-accordion-content>
+      </p-accordion-panel>
 
       <!-- Change Payment Date -->
-      <p-accordionTab
-        header="Change Payment Date"
-        [selected]="loan.changePaymentDates.length > 0"
-      >
-        <div class="p-fluid">
-          <table
-            *ngIf="loan.changePaymentDates.length > 0"
-            class="p-datatable p-component"
-          >
-            <thead>
-              <tr>
-                <th>Term Number</th>
-                <th>New Date</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr
-                *ngFor="
-                  let changePaymentDate of loan.changePaymentDates;
-                  let i = index
-                "
-              >
-                <!-- Term Number -->
-                <td>
-                  <p-inputNumber
-                    [(ngModel)]="changePaymentDate.termNumber"
-                    name="changePaymentDate-term{{ i }}"
-                    (ngModelChange)="
-                      updateTermForCPD(i, changePaymentDate.termNumber)
-                    "
-                  ></p-inputNumber>
-                </td>
-                <!-- New Date -->
-                <td>
-                  <p-calendar
-                    [(ngModel)]="changePaymentDate.newDate"
-                    name="changePaymentDateNewDate-{{ i }}"
-                    dateFormat="mm/dd/yy"
-                    showIcon
-                    (ngModelChange)="onInputChange()"
-                  ></p-calendar>
-                </td>
-                <!-- Remove Button -->
-                <td>
-                  <p-button
-                    icon="pi pi-trash"
-                    class="p-button-rounded p-button-danger"
-                    (click)="removeChangePaymentDate(i)"
-                  ></p-button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-          <div class="p-mt-2">
-            <p-button
-              label="Add Change Payment Date Row"
-              icon="pi pi-plus"
-              class="p-button-success"
-              (click)="addNewChangePaymentTermRow()"
-            ></p-button>
+      <p-accordion-panel value="changePaymentDates">
+        <p-accordion-header>Change Payment Date</p-accordion-header>
+        <p-accordion-content>
+          <div class="p-fluid">
+            <table
+              *ngIf="loan.changePaymentDates.length > 0"
+              class="p-datatable p-component"
+            >
+              <thead>
+                <tr>
+                  <th>Term Number</th>
+                  <th>New Date</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr
+                  *ngFor="
+                    let changePaymentDate of loan.changePaymentDates;
+                    let i = index
+                  "
+                >
+                  <!-- Term Number -->
+                  <td>
+                    <p-inputNumber
+                      [(ngModel)]="changePaymentDate.termNumber"
+                      name="changePaymentDate-term{{ i }}"
+                      (ngModelChange)="
+                        updateTermForCPD(i, changePaymentDate.termNumber)
+                      "
+                    ></p-inputNumber>
+                  </td>
+                  <!-- New Date -->
+                  <td>
+                    <p-datepicker
+                      [(ngModel)]="changePaymentDate.newDate"
+                      name="changePaymentDateNewDate-{{ i }}"
+                      dateFormat="mm/dd/yy"
+                      showIcon
+                      (ngModelChange)="onInputChange()"
+                    ></p-datepicker>
+                  </td>
+                  <!-- Remove Button -->
+                  <td>
+                    <p-button
+                      icon="pi pi-trash"
+                      class="p-button-rounded"
+                      severity="danger"
+                      (click)="removeChangePaymentDate(i)"
+                    ></p-button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <div class="p-mt-2">
+              <p-button
+                label="Add Change Payment Date Row"
+                icon="pi pi-plus"
+                (click)="addNewChangePaymentTermRow()"
+              ></p-button>
+            </div>
           </div>
-        </div>
-      </p-accordionTab>
+        </p-accordion-content>
+      </p-accordion-panel>
 
       <!-- Pre Bill Day Term -->
-      <p-accordionTab
-        header="Pre Bill Day Term"
-        [selected]="loan.preBillDays.length > 0"
-      >
-        <div class="p-fluid">
-          <table
-            *ngIf="loan.preBillDays.length > 0"
-            class="p-datatable p-component"
-          >
-            <thead>
-              <tr>
-                <th>Term Number</th>
-                <th>Days</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let preBillDay of loan.preBillDays; let i = index">
-                <!-- Term Number -->
-                <td>
-                  <p-inputNumber
-                    [(ngModel)]="preBillDay.termNumber"
-                    name="preBillDayConfiguration-term{{ i }}"
-                    (ngModelChange)="onInputChange()"
-                  ></p-inputNumber>
-                </td>
-                <!-- Days -->
-                <td>
-                  <p-inputNumber
-                    [(ngModel)]="preBillDay.preBillDays"
-                    name="prebillDays-day-{{ i }}"
-                    (ngModelChange)="onInputChange()"
-                  ></p-inputNumber>
-                </td>
-                <!-- Remove Button -->
-                <td>
-                  <p-button
-                    icon="pi pi-trash"
-                    class="p-button-rounded p-button-danger"
-                    (click)="removePreBillDayTerm(i)"
-                  ></p-button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-          <div class="p-mt-2">
-            <p-button
-              label="Add New Term Row"
-              icon="pi pi-plus"
-              class="p-button-success"
-              (click)="addPrebillDayTermRow()"
-            ></p-button>
+      <p-accordion-panel value="preBillDayTerm">
+        <p-accordion-header>Pre Bill Day Term</p-accordion-header>
+        <p-accordion-content>
+          <div class="p-fluid">
+            <table
+              *ngIf="loan.preBillDays.length > 0"
+              class="p-datatable p-component"
+            >
+              <thead>
+                <tr>
+                  <th>Term Number</th>
+                  <th>Days</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let preBillDay of loan.preBillDays; let i = index">
+                  <!-- Term Number -->
+                  <td>
+                    <p-inputNumber
+                      [(ngModel)]="preBillDay.termNumber"
+                      name="preBillDayConfiguration-term{{ i }}"
+                      (ngModelChange)="onInputChange()"
+                    ></p-inputNumber>
+                  </td>
+                  <!-- Days -->
+                  <td>
+                    <p-inputNumber
+                      [(ngModel)]="preBillDay.preBillDays"
+                      name="prebillDays-day-{{ i }}"
+                      (ngModelChange)="onInputChange()"
+                    ></p-inputNumber>
+                  </td>
+                  <!-- Remove Button -->
+                  <td>
+                    <p-button
+                      icon="pi pi-trash"
+                      class="p-button-rounded"
+                      severity="danger"
+                      (click)="removePreBillDayTerm(i)"
+                    ></p-button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <div class="p-mt-2">
+              <p-button
+                label="Add New Term Row"
+                icon="pi pi-plus"
+                (click)="addPrebillDayTermRow()"
+              ></p-button>
+            </div>
           </div>
-        </div>
-      </p-accordionTab>
+        </p-accordion-content>
+      </p-accordion-panel>
 
       <!-- Due Bill Day Term -->
-      <p-accordionTab
-        header="Due Bill Day Term"
-        [selected]="loan.dueBillDays.length > 0"
-      >
-        <div class="p-fluid">
-          <table
-            *ngIf="loan.dueBillDays.length > 0"
-            class="p-datatable p-component"
-          >
-            <thead>
-              <tr>
-                <th>Term Number</th>
-                <th>Days</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let dueBillDay of loan.dueBillDays; let i = index">
-                <!-- Term Number -->
-                <td>
-                  <p-inputNumber
-                    [(ngModel)]="dueBillDay.termNumber"
-                    name="dueBillDayConfiguration-term{{ i }}"
-                    (ngModelChange)="onInputChange()"
-                  ></p-inputNumber>
-                </td>
-                <!-- Days -->
-                <td>
-                  <p-inputNumber
-                    [(ngModel)]="dueBillDay.daysDueAfterPeriodEnd"
-                    name="duebillDays-day-{{ i }}"
-                    (ngModelChange)="onInputChange()"
-                  ></p-inputNumber>
-                </td>
-                <!-- Remove Button -->
-                <td>
-                  <p-button
-                    icon="pi pi-trash"
-                    class="p-button-rounded p-button-danger"
-                    (click)="removeDueBillDayTerm(i)"
-                  ></p-button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-          <div class="p-mt-2">
-            <p-button
-              label="Add New Term Row"
-              icon="pi pi-plus"
-              class="p-button-success"
-              (click)="addDueBillDayTermRow()"
-            ></p-button>
+      <p-accordion-panel value="dueBillDayTerm">
+        <p-accordion-header>Due Bill Day Term</p-accordion-header>
+        <p-accordion-content>
+          <div class="p-fluid">
+            <table
+              *ngIf="loan.dueBillDays.length > 0"
+              class="p-datatable p-component"
+            >
+              <thead>
+                <tr>
+                  <th>Term Number</th>
+                  <th>Days</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let dueBillDay of loan.dueBillDays; let i = index">
+                  <!-- Term Number -->
+                  <td>
+                    <p-inputNumber
+                      [(ngModel)]="dueBillDay.termNumber"
+                      name="dueBillDayConfiguration-term{{ i }}"
+                      (ngModelChange)="onInputChange()"
+                    ></p-inputNumber>
+                  </td>
+                  <!-- Days -->
+                  <td>
+                    <p-inputNumber
+                      [(ngModel)]="dueBillDay.daysDueAfterPeriodEnd"
+                      name="duebillDays-day-{{ i }}"
+                      (ngModelChange)="onInputChange()"
+                    ></p-inputNumber>
+                  </td>
+                  <!-- Remove Button -->
+                  <td>
+                    <p-button
+                      icon="pi pi-trash"
+                      class="p-button-rounded"
+                      severity="danger"
+                      (click)="removeDueBillDayTerm(i)"
+                    ></p-button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <div class="p-mt-2">
+              <p-button
+                label="Add New Term Row"
+                icon="pi pi-plus"
+                (click)="addDueBillDayTermRow()"
+              ></p-button>
+            </div>
           </div>
-        </div>
-      </p-accordionTab>
+        </p-accordion-content>
+      </p-accordion-panel>
 
       <!-- Balance Modifications -->
-      <p-accordionTab
-        header="Balance Modifications"
-        [selected]="balanceModifications.length > 0"
-      >
-        <div class="grid">
-          <div class="col-12">
-            <p-table [value]="balanceModifications">
-              <ng-template pTemplate="header">
+      <p-accordion-panel value="balanceModifications">
+        <p-accordion-header>Balance Modifications</p-accordion-header>
+        <p-accordion-content>
+          <div class="grid">
+            <div class="col-12">
+              <p-table [value]="balanceModifications">
+                <ng-template pTemplate="header">
+                  <tr>
+                    <th style="width: 10%">Date</th>
+                    <th style="width: 10%">Type</th>
+                    <th style="width: 10%">Amount</th>
+                    <th style="width: 10%">Unused Amount</th>
+                    <th style="width: 10%">System Generated</th>
+                    <th style="width: 40%">Description</th>
+                    <th style="width: 20%">Actions</th>
+                  </tr>
+                </ng-template>
+                <ng-template
+                  pTemplate="body"
+                  let-balanceModification
+                  let-i="rowIndex"
+                >
+                  <tr>
+                    <!-- Date -->
+                    <td>
+                      <p-datepicker
+                        [(ngModel)]="balanceModification.jsDate"
+                        dateFormat="mm/dd/yy"
+                        name="balanceModificationDate-{{ i }}"
+                        showIcon
+                        (ngModelChange)="balanceModificationChanged()"
+                        [disabled]="balanceModification.isSystemModification"
+                        [appendTo]="'body'"
+                      ></p-datepicker>
+                    </td>
+                    <!-- Type -->
+                    <td>
+                      <p-select
+                        [(ngModel)]="balanceModification.type"
+                        name="balanceModificationType-{{ i }}"
+                        [options]="balanceIncreaseType"
+                        placeholder="Select a type"
+                        (ngModelChange)="balanceModificationChanged()"
+                        [disabled]="balanceModification.isSystemModification"
+                      ></p-select>
+                    </td>
+                    <!-- Amount -->
+                    <td>
+                      <p-inputNumber
+                        [(ngModel)]="balanceModification.jsAmount"
+                        name="balanceModificationAmount-{{ i }}"
+                        mode="currency"
+                        currency="USD"
+                        locale="en-US"
+                        (ngModelChange)="balanceModificationChanged()"
+                        [disabled]="balanceModification.isSystemModification"
+                      ></p-inputNumber>
+                    </td>
+                    <!-- Unused Amount -->
+                    <td>
+                      <p-inputNumber
+                        [disabled]="true"
+                        [(ngModel)]="balanceModification.jsUnusedAmount"
+                        name="balanceModificationAmount-{{ i }}"
+                        mode="currency"
+                        currency="USD"
+                        locale="en-US"
+                      ></p-inputNumber>
+                    </td>
+                    <!-- System Generated -->
+                    <td>
+                      <span>{{
+                        balanceModification.isSystemModification ? "Yes" : "No"
+                      }}</span>
+                    </td>
+                    <!-- Description -->
+                    <td>
+                      <input
+                        style="width: 100%"
+                        pInputText
+                        type="text"
+                        [(ngModel)]="balanceModification.description"
+                        name="balanceModificationDescription-{{ i }}"
+                        [disabled]="balanceModification.isSystemModification"
+                      />
+                    </td>
+                    <!-- Remove Button -->
+                    <td>
+                      <p-button
+                        icon="pi pi-trash"
+                        class="p-button-rounded"
+                        severity="danger"
+                        (click)="deleteBalanceModificationRow(i)"
+                        [disabled]="balanceModification.isSystemModification"
+                      ></p-button>
+                    </td>
+                  </tr>
+                </ng-template>
+              </p-table>
+              <div class="p-mt-2">
+                <p-button
+                  label="Add Balance Modification Row"
+                  icon="pi pi-plus"
+                  (click)="addBalanceModificationRow()"
+                ></p-button>
+              </div>
+            </div>
+          </div>
+        </p-accordion-content>
+      </p-accordion-panel>
+
+      <!-- Fees That Apply to All Terms -->
+      <p-accordion-panel value="feesForAllTerms">
+        <p-accordion-header>Fees That Apply to All Terms</p-accordion-header>
+        <p-accordion-content>
+          <div class="p-fluid">
+            <table
+              *ngIf="loan.feesForAllTerms.length > 0"
+              class="p-datatable p-component p-datatable-responsive"
+            >
+              <thead>
                 <tr>
-                  <th style="width: 10%">Date</th>
-                  <th style="width: 10%">Type</th>
-                  <th style="width: 10%">Amount</th>
-                  <th style="width: 10%">Unused Amount</th>
-                  <th style="width: 10%">System Generated</th>
-                  <th style="width: 40%">Description</th>
-                  <th style="width: 20%">Actions</th>
+                  <th>Type</th>
+                  <th>Amount / Percentage</th>
+                  <th>Based On</th>
+                  <th>Description</th>
+                  <th>Actions</th>
                 </tr>
-              </ng-template>
-              <ng-template
-                pTemplate="body"
-                let-balanceModification
-                let-i="rowIndex"
-              >
-                <tr>
-                  <!-- Date -->
+              </thead>
+              <tbody>
+                <tr *ngFor="let fee of loan.feesForAllTerms; let i = index">
+                  <!-- Fee Type -->
                   <td>
-                    <p-calendar
-                      [(ngModel)]="balanceModification.jsDate"
-                      dateFormat="mm/dd/yy"
-                      name="balanceModificationDate-{{ i }}"
-                      showIcon
-                      (ngModelChange)="balanceModificationChanged()"
-                      [disabled]="balanceModification.isSystemModification"
-                      [appendTo]="'body'"
-                    ></p-calendar>
+                    <p-select
+                      [(ngModel)]="fee.type"
+                      [options]="[
+                        { label: 'Fixed', value: 'fixed' },
+                        { label: 'Percentage', value: 'percentage' },
+                      ]"
+                      (ngModelChange)="onInputChange()"
+                    ></p-select>
                   </td>
-                  <!-- Type -->
+                  <!-- Amount or Percentage -->
                   <td>
-                    <p-dropdown
-                      [(ngModel)]="balanceModification.type"
-                      name="balanceModificationType-{{ i }}"
-                      [options]="balanceIncreaseType"
-                      placeholder="Select a type"
-                      (ngModelChange)="balanceModificationChanged()"
-                      [disabled]="balanceModification.isSystemModification"
-                    ></p-dropdown>
+                    <ng-container *ngIf="fee.type === 'fixed'">
+                      <p-inputNumber
+                        [(ngModel)]="fee.amount"
+                        mode="currency"
+                        currency="USD"
+                        locale="en-US"
+                        (ngModelChange)="onInputChange()"
+                      ></p-inputNumber>
+                    </ng-container>
+                    <ng-container *ngIf="fee.type === 'percentage'">
+                      <p-inputNumber
+                        [(ngModel)]="fee.percentage"
+                        mode="decimal"
+                        minFractionDigits="2"
+                        suffix="%"
+                        (ngModelChange)="onInputChange()"
+                      ></p-inputNumber>
+                    </ng-container>
                   </td>
-                  <!-- Amount -->
+                  <!-- Based On -->
                   <td>
-                    <p-inputNumber
-                      [(ngModel)]="balanceModification.jsAmount"
-                      name="balanceModificationAmount-{{ i }}"
-                      mode="currency"
-                      currency="USD"
-                      locale="en-US"
-                      (ngModelChange)="balanceModificationChanged()"
-                      [disabled]="balanceModification.isSystemModification"
-                    ></p-inputNumber>
-                  </td>
-                  <!-- Unused Amount -->
-                  <td>
-                    <p-inputNumber
-                      [disabled]="true"
-                      [(ngModel)]="balanceModification.jsUnusedAmount"
-                      name="balanceModificationAmount-{{ i }}"
-                      mode="currency"
-                      currency="USD"
-                      locale="en-US"
-                    ></p-inputNumber>
-                  </td>
-                  <!-- System Generated -->
-                  <td>
-                    <span>{{
-                      balanceModification.isSystemModification ? "Yes" : "No"
-                    }}</span>
+                    <p-select
+                      [disabled]="fee.type !== 'percentage'"
+                      [(ngModel)]="fee.basedOn"
+                      [options]="[
+                        { label: 'Interest', value: 'interest' },
+                        { label: 'Principal', value: 'principal' },
+                        { label: 'Total Payment', value: 'totalPayment' },
+                      ]"
+                      (ngModelChange)="onInputChange()"
+                    ></p-select>
                   </td>
                   <!-- Description -->
                   <td>
                     <input
-                      style="width: 100%"
                       pInputText
                       type="text"
-                      [(ngModel)]="balanceModification.description"
-                      name="balanceModificationDescription-{{ i }}"
-                      [disabled]="balanceModification.isSystemModification"
+                      [(ngModel)]="fee.description"
+                      (ngModelChange)="onInputChange()"
                     />
                   </td>
                   <!-- Remove Button -->
                   <td>
                     <p-button
                       icon="pi pi-trash"
-                      class="p-button-rounded p-button-danger"
-                      (click)="deleteBalanceModificationRow(i)"
-                      [disabled]="balanceModification.isSystemModification"
+                      class="p-button-rounded"
+                      severity="danger"
+                      (click)="removeFeeForAllTerms(i)"
                     ></p-button>
                   </td>
                 </tr>
-              </ng-template>
-            </p-table>
+              </tbody>
+            </table>
+            <p-divider></p-divider>
             <div class="p-mt-2">
               <p-button
-                label="Add Balance Modification Row"
+                label="Add Fee"
                 icon="pi pi-plus"
-                class="p-button-success"
-                (click)="addBalanceModificationRow()"
+                (click)="addFeeForAllTerms()"
               ></p-button>
             </div>
           </div>
-        </div>
-      </p-accordionTab>
-
-      <!-- Fees That Apply to All Terms -->
-      <p-accordionTab
-        header="Fees That Apply to All Terms"
-        [selected]="loan.feesForAllTerms.length > 0"
-      >
-        <div class="p-fluid">
-          <table
-            *ngIf="loan.feesForAllTerms.length > 0"
-            class="p-datatable p-component p-datatable-responsive"
-          >
-            <thead>
-              <tr>
-                <th>Type</th>
-                <th>Amount / Percentage</th>
-                <th>Based On</th>
-                <th>Description</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let fee of loan.feesForAllTerms; let i = index">
-                <!-- Fee Type -->
-                <td>
-                  <p-dropdown
-                    [(ngModel)]="fee.type"
-                    [options]="[
-                      { label: 'Fixed', value: 'fixed' },
-                      { label: 'Percentage', value: 'percentage' },
-                    ]"
-                    (ngModelChange)="onInputChange()"
-                  ></p-dropdown>
-                </td>
-                <!-- Amount or Percentage -->
-                <td>
-                  <ng-container *ngIf="fee.type === 'fixed'">
-                    <p-inputNumber
-                      [(ngModel)]="fee.amount"
-                      mode="currency"
-                      currency="USD"
-                      locale="en-US"
-                      (ngModelChange)="onInputChange()"
-                    ></p-inputNumber>
-                  </ng-container>
-                  <ng-container *ngIf="fee.type === 'percentage'">
-                    <p-inputNumber
-                      [(ngModel)]="fee.percentage"
-                      mode="decimal"
-                      minFractionDigits="2"
-                      suffix="%"
-                      (ngModelChange)="onInputChange()"
-                    ></p-inputNumber>
-                  </ng-container>
-                </td>
-                <!-- Based On -->
-                <td>
-                  <ng-container>
-                    <p-dropdown
-                      [disabled]="fee.type !== 'percentage'"
-                      [(ngModel)]="fee.basedOn"
-                      [options]="[
-                        { label: 'Interest', value: 'interest' },
-                        { label: 'Principal', value: 'principal' },
-                        { label: 'Total Payment', value: 'totalPayment' },
-                      ]"
-                      (ngModelChange)="onInputChange()"
-                    ></p-dropdown>
-                  </ng-container>
-                </td>
-                <!-- Description -->
-                <td>
-                  <input
-                    pInputText
-                    type="text"
-                    [(ngModel)]="fee.description"
-                    (ngModelChange)="onInputChange()"
-                  />
-                </td>
-                <!-- Remove Button -->
-                <td>
-                  <p-button
-                    icon="pi pi-trash"
-                    class="p-button-rounded p-button-danger"
-                    (click)="removeFeeForAllTerms(i)"
-                  ></p-button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-          <p-divider></p-divider>
-
-          <div class="p-mt-2">
-            <p-button
-              label="Add Fee"
-              icon="pi pi-plus"
-              class="p-button-success"
-              (click)="addFeeForAllTerms()"
-            ></p-button>
-          </div>
-        </div>
-      </p-accordionTab>
+        </p-accordion-content>
+      </p-accordion-panel>
 
       <!-- Fees Per Term -->
-      <p-accordionTab
-        header="Fees Per Term"
-        [selected]="loan.feesPerTerm.length > 0"
-      >
-        <div class="p-fluid">
-          <table
-            class="p-datatable p-component"
-            *ngIf="loan.feesPerTerm.length > 0"
-          >
-            <thead>
-              <tr>
-                <th>Term Number</th>
-                <th>Type</th>
-                <th>Amount / Percentage</th>
-                <th>Based On</th>
-                <th>Description</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngFor="let fee of loan.feesPerTerm; let i = index">
-                <!-- Term Number -->
-                <td>
-                  <p-inputNumber
-                    [(ngModel)]="fee.termNumber"
-                    (ngModelChange)="onInputChange()"
-                  ></p-inputNumber>
-                </td>
-                <!-- Fee Type -->
-                <td>
-                  <p-dropdown
-                    [(ngModel)]="fee.type"
-                    [options]="[
-                      { label: 'Fixed', value: 'fixed' },
-                      { label: 'Percentage', value: 'percentage' },
-                    ]"
-                    (ngModelChange)="onInputChange()"
-                  ></p-dropdown>
-                </td>
-                <!-- Amount or Percentage -->
-                <td>
-                  <ng-container *ngIf="fee.type === 'fixed'">
+      <p-accordion-panel value="feesPerTerm">
+        <p-accordion-header>Fees Per Term</p-accordion-header>
+        <p-accordion-content>
+          <div class="p-fluid">
+            <table
+              class="p-datatable p-component"
+              *ngIf="loan.feesPerTerm.length > 0"
+            >
+              <thead>
+                <tr>
+                  <th>Term Number</th>
+                  <th>Type</th>
+                  <th>Amount / Percentage</th>
+                  <th>Based On</th>
+                  <th>Description</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let fee of loan.feesPerTerm; let i = index">
+                  <!-- Term Number -->
+                  <td>
                     <p-inputNumber
-                      [(ngModel)]="fee.amount"
-                      mode="currency"
-                      currency="USD"
-                      locale="en-US"
+                      [(ngModel)]="fee.termNumber"
                       (ngModelChange)="onInputChange()"
                     ></p-inputNumber>
-                  </ng-container>
-                  <ng-container *ngIf="fee.type === 'percentage'">
-                    <p-inputNumber
-                      [(ngModel)]="fee.percentage"
-                      mode="decimal"
-                      minFractionDigits="2"
-                      suffix="%"
+                  </td>
+                  <!-- Fee Type -->
+                  <td>
+                    <p-select
+                      [(ngModel)]="fee.type"
+                      [options]="[
+                        { label: 'Fixed', value: 'fixed' },
+                        { label: 'Percentage', value: 'percentage' },
+                      ]"
                       (ngModelChange)="onInputChange()"
-                    ></p-inputNumber>
-                  </ng-container>
-                </td>
-                <!-- Based On -->
-                <td>
-                  <ng-container>
-                    <p-dropdown
+                    ></p-select>
+                  </td>
+                  <!-- Amount or Percentage -->
+                  <td>
+                    <ng-container *ngIf="fee.type === 'fixed'">
+                      <p-inputNumber
+                        [(ngModel)]="fee.amount"
+                        mode="currency"
+                        currency="USD"
+                        locale="en-US"
+                        (ngModelChange)="onInputChange()"
+                      ></p-inputNumber>
+                    </ng-container>
+                    <ng-container *ngIf="fee.type === 'percentage'">
+                      <p-inputNumber
+                        [(ngModel)]="fee.percentage"
+                        mode="decimal"
+                        minFractionDigits="2"
+                        suffix="%"
+                        (ngModelChange)="onInputChange()"
+                      ></p-inputNumber>
+                    </ng-container>
+                  </td>
+                  <!-- Based On -->
+                  <td>
+                    <p-select
                       [disabled]="fee.type !== 'percentage'"
                       [(ngModel)]="fee.basedOn"
                       [options]="[
@@ -923,41 +927,41 @@
                         { label: 'Total Payment', value: 'totalPayment' },
                       ]"
                       (ngModelChange)="onInputChange()"
-                    ></p-dropdown>
-                  </ng-container>
-                </td>
-                <!-- Description -->
-                <td>
-                  <input
-                    pInputText
-                    type="text"
-                    [(ngModel)]="fee.description"
-                    (ngModelChange)="onInputChange()"
-                  />
-                </td>
-                <!-- Remove Button -->
-                <td>
-                  <p-button
-                    icon="pi pi-trash"
-                    class="p-button-rounded p-button-danger"
-                    (click)="removeFeePerTerm(i)"
-                  ></p-button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-          <p-divider></p-divider>
-
-          <div class="p-mt-2">
-            <p-button
-              label="Add Fee"
-              icon="pi pi-plus"
-              class="p-button-success"
-              (click)="addFeePerTerm()"
-            ></p-button>
+                    ></p-select>
+                  </td>
+                  <!-- Description -->
+                  <td>
+                    <input
+                      pInputText
+                      type="text"
+                      [(ngModel)]="fee.description"
+                      (ngModelChange)="onInputChange()"
+                    />
+                  </td>
+                  <!-- Remove Button -->
+                  <td>
+                    <p-button
+                      icon="pi pi-trash"
+                      class="p-button-rounded"
+                      severity="danger"
+                      (click)="removeFeePerTerm(i)"
+                    ></p-button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <p-divider></p-divider>
+            <div class="p-mt-2">
+              <p-button
+                label="Add Fee"
+                icon="pi pi-plus"
+                (click)="addFeePerTerm()"
+              ></p-button>
+            </div>
           </div>
-        </div>
-      </p-accordionTab>
+        </p-accordion-content>
+      </p-accordion-panel>
+      <!-- End of Accordion -->
     </p-accordion>
   </div>
 </div>

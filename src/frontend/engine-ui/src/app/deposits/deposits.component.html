@@ -5,13 +5,13 @@
         <p-button
           label="Add New Deposit"
           icon="pi pi-plus"
-          class="p-button-success mr-2"
+          class="mr-2"
           (click)="openDepositDialog()"
         ></p-button>
         <p-button
           label="Go to Last Deposit"
           icon="pi pi-arrow-down"
-          class="p-button-info"
+          severity="info"
           (click)="scrollToLastDeposit()"
           pTooltip="Scroll to the last deposit and highlight it"
         ></p-button>
@@ -79,21 +79,23 @@
                 <div class="action-buttons">
                   <p-button
                     icon="pi pi-pencil"
-                    class="p-button-rounded p-button-warning p-button-sm p-mr-1"
+                    class="p-button-rounded p-button-warning"
                     (click)="openDepositDialog(deposit)"
                     pTooltip="Edit Deposit"
                     tooltipPosition="top"
                   ></p-button>
                   <p-button
                     icon="pi pi-trash"
-                    class="p-button-rounded p-button-danger p-button-sm p-mr-1"
+                    class="p-button-rounded"
+                    severity="danger"
                     (click)="removeDeposit(deposit)"
                     pTooltip="Remove Deposit"
                     tooltipPosition="top"
                   ></p-button>
                   <p-button
                     icon="pi pi-eye"
-                    class="p-button-rounded p-button-info p-button-sm"
+                    class="p-button-rounded"
+                    severity="info"
                     [disabled]="
                       !deposit.usageDetails || deposit.usageDetails.length === 0
                     "
@@ -140,7 +142,7 @@
           </div>
           <div class="field col-6 p-m-0">
             <label for="currency">Currency</label>
-            <p-dropdown
+            <p-select
               id="currency"
               [(ngModel)]="depositData.currency"
               name="currency"
@@ -150,12 +152,12 @@
               placeholder="Select Currency"
               (ngModelChange)="onDataChange($event)"
               required
-            ></p-dropdown>
+            ></p-select>
           </div>
 
           <div class="field col-6 p-m-0">
             <label for="effectiveDate">Effective Date</label>
-            <p-calendar
+            <p-datepicker
               id="effectiveDate"
               [(ngModel)]="depositData.jsEffectiveDate"
               (ngModelChange)="onDataChange($event)"
@@ -164,11 +166,11 @@
               showIcon
               required
               [appendTo]="'body'"
-            ></p-calendar>
+            ></p-datepicker>
           </div>
           <div class="field col-6 p-m-0">
             <label for="clearingDate">Clearing Date</label>
-            <p-calendar
+            <p-datepicker
               id="clearingDate"
               [(ngModel)]="depositData.jsClearingDate"
               (ngModelChange)="onDataChange($event)"
@@ -177,7 +179,7 @@
               dateFormat="mm/dd/yy"
               [appendTo]="'body'"
               showIcon
-            ></p-calendar>
+            ></p-datepicker>
           </div>
           <div class="field col-12 p-m-0">
             <label for="paymentMethod">Payment Method</label>
@@ -234,7 +236,7 @@
                 *ngIf="depositData.applyExcessToPrincipal"
               >
                 <label for="excessAppliedDate">Excess Applied Date</label>
-                <p-calendar
+                <p-datepicker
                   id="excessAppliedDate"
                   [(ngModel)]="depositData.jsExcessAppliedDate"
                   (ngModelChange)="onDataChange($event)"
@@ -244,7 +246,7 @@
                   [minDate]="depositData.jsEffectiveDate"
                   [required]="depositData.applyExcessToPrincipal"
                   [appendTo]="'body'"
-                ></p-calendar>
+                ></p-datepicker>
               </div>
             </div>
           </div>

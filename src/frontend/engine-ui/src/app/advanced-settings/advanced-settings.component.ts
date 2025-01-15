@@ -1,11 +1,12 @@
-// advanced-settings.component.ts
-
 import { Component, Input, Output, EventEmitter, OnInit } from '@angular/core';
 import { AdvancedSettingsService } from '../services/advanced-settings.service';
 import { AdvancedSettings } from '../models/advanced-settings.model';
 import { UILoan } from 'lendpeak-engine/models/UIInterfaces';
 import { v4 as uuidv4 } from 'uuid';
-import { OverlayPanel } from 'primeng/overlaypanel';
+// REMOVE this import:
+// import { OverlayPanel } from 'primeng/overlaypanel';
+// ADD this import for p-popover:
+import { Popover } from 'primeng/popover';
 import { DropDownOptionString } from '../models/common.model';
 import { PaymentComponent } from 'lendpeak-engine/models/PaymentApplication';
 
@@ -13,6 +14,7 @@ import { PaymentComponent } from 'lendpeak-engine/models/PaymentApplication';
   selector: 'app-advanced-settings',
   templateUrl: './advanced-settings.component.html',
   styleUrls: ['./advanced-settings.component.css'],
+  standalone: false,
 })
 export class AdvancedSettingsComponent implements OnInit {
   @Input() loan!: UILoan;
@@ -423,7 +425,8 @@ export class AdvancedSettingsComponent implements OnInit {
   }
 
   // Tooltip display
-  showTooltip(event: Event, tooltipRef: OverlayPanel) {
+  // REPLACE 'OverlayPanel' with 'Popover' in the method signature:
+  showTooltip(event: Event, tooltipRef: Popover) {
     tooltipRef.toggle(event);
   }
 }

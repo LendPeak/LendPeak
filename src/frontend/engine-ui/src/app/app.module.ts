@@ -6,8 +6,13 @@ import { AppComponent } from './app.component';
 import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { InputNumberModule } from 'primeng/inputnumber';
-import { CalendarModule } from 'primeng/calendar';
-import { DropdownModule } from 'primeng/dropdown';
+import { DatePickerModule } from 'primeng/datepicker';
+
+import { SelectModule } from 'primeng/select';
+import { FluidModule } from 'primeng/fluid';
+import { PopoverModule } from 'primeng/popover';
+import { TabsModule } from 'primeng/tabs';
+
 import { TableModule } from 'primeng/table';
 import { FieldsetModule } from 'primeng/fieldset';
 import { CardModule } from 'primeng/card';
@@ -25,7 +30,6 @@ import { ProgressBarModule } from 'primeng/progressbar';
 
 import { PanelModule } from 'primeng/panel';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
-import { TabViewModule } from 'primeng/tabview';
 import { AccordionModule } from 'primeng/accordion';
 import { OverlayPanelModule } from 'primeng/overlaypanel';
 import { SplitButtonModule } from 'primeng/splitbutton';
@@ -59,6 +63,10 @@ import { provideHighlightOptions } from 'ngx-highlightjs';
 import { RouterModule } from '@angular/router';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 
+import { providePrimeNG } from 'primeng/config';
+import Lara from '@primeng/themes/lara';
+import Aura from '@primeng/themes/aura';
+
 import {
   provideHttpClient,
   withInterceptorsFromDi,
@@ -85,11 +93,13 @@ import {
     ButtonModule,
     ProgressBarModule,
     BadgeModule,
+    FluidModule,
     InputTextModule,
-    CalendarModule,
-    DropdownModule,
+    DatePickerModule,
+    SelectModule,
     TableModule,
     FieldsetModule,
+    PopoverModule,
     CardModule,
     InputGroupModule,
     InputGroupAddonModule,
@@ -101,7 +111,7 @@ import {
     TagModule,
     DialogModule,
     PanelModule,
-    TabViewModule,
+    TabsModule,
     AccordionModule,
     InputNumberModule,
     OverlayPanelModule,
@@ -131,6 +141,14 @@ import {
       },
     }),
     provideAnimationsAsync(),
+    providePrimeNG({
+      theme: {
+        preset: Lara,
+        options: {
+          darkModeSelector: false,
+        },
+      },
+    }),
   ],
   bootstrap: [AppComponent],
 })

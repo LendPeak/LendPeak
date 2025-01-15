@@ -12,7 +12,6 @@ import {
   ViewChild,
 } from '@angular/core';
 
-import { OverlayPanel } from 'primeng/overlaypanel';
 import {
   DropDownOptionString,
   DropDownOptionNumber,
@@ -71,6 +70,7 @@ import { UsageDetail } from 'lendpeak-engine/models/Bill/Deposit/UsageDetail';
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.css'],
   providers: [MessageService],
+  standalone: false,
 })
 export class AppComponent implements OnChanges {
   @ViewChild('repaymentPlanTable', { static: false })
@@ -553,8 +553,9 @@ export class AppComponent implements OnChanges {
     'bills',
   ];
 
-  onTabChange(event: any) {
-    this.activeTabIndex = event.index;
+  onTabChange(tabIndex: any) {
+    console.log('tab changed:', tabIndex);
+    this.activeTabIndex = tabIndex;
     const tabName = this.tabNames[this.activeTabIndex];
     const queryParams = { ...this.route.snapshot.queryParams, tab: tabName };
     const urlTree = this.router.createUrlTree([], {
@@ -572,10 +573,6 @@ export class AppComponent implements OnChanges {
       const termNumbers = this.loan.feesPerTerm.map((tf) => tf.termNumber);
       return Math.max(...termNumbers) + 1;
     }
-  }
-
-  showTooltip(event: Event, tooltipRef: OverlayPanel) {
-    tooltipRef.toggle(event);
   }
 
   selectedPeriods: number[] = [];

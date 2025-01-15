@@ -11,9 +11,10 @@ import {
 import { Bill } from 'lendpeak-engine/models/Bill';
 
 @Component({
-  selector: 'app-bills',
-  templateUrl: './bills.component.html',
-  styleUrls: ['./bills.component.css'],
+    selector: 'app-bills',
+    templateUrl: './bills.component.html',
+    styleUrls: ['./bills.component.css'],
+    standalone: false
 })
 export class BillsComponent implements AfterViewInit {
   @Input() bills: Bill[] = [];

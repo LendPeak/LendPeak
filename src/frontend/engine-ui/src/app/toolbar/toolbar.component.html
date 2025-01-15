@@ -20,7 +20,7 @@
         <i class="pi pi-calendar"></i>
         Snapshot Date:
       </label>
-      <p-calendar
+      <p-datepicker
         id="snapshotDate"
         [(ngModel)]="snapshotDate"
         [showIcon]="true"
@@ -28,7 +28,7 @@
         [showButtonBar]="true"
         [numberOfMonths]="3"
         (ngModelChange)="onSnapshotDateChange($event)"
-      ></p-calendar>
+      ></p-datepicker>
     </div>
 
     <!-- Time Machine Indicator -->
@@ -46,7 +46,7 @@
       label="More"
       icon="pi pi-ellipsis-v"
       [model]="toolbarActions"
-      class="p-button-secondary toolbar-button"
+      class="toolbar-button"
       pTooltip="More actions"
       tooltipPosition="bottom"
     ></p-splitButton>

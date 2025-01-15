@@ -40,15 +40,6 @@
     margin-left: 10px;
 }
 
-.loan-actions {
-    display: flex;
-    align-items: center;
-    margin-left: 10px;
-}
-
-.loan-actions .p-button {
-    margin-left: 5px;
-}
 
 /* Snapshot Date Container */
 .snapshot-date-container {
@@ -75,30 +66,4 @@
     font-weight: bold;
 }
 
-/* Toolbar Buttons */
-.toolbar-button {
-    margin-right: 0.5rem;
-}
 
-.toolbar-button:last-child {
-    margin-right: 0;
-}
-
-.p-button {
-    min-width: 6rem;
-}
-
-.p-button .pi {
-    margin-right: 0.5rem;
-}
-
-.p-button-secondary {
-    background-color: #6c757d;
-    border-color: #6c757d;
-}
-
-.p-button-warning {
-    background-color: #ffc107;
-    border-color: #ffc107;
-    color: #212529;
-}

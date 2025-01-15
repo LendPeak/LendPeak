@@ -19,9 +19,10 @@ dayjs.extend(isSameOrBefore);
 dayjs.extend(isBetween);
 
 @Component({
-  selector: 'app-deposits',
-  templateUrl: './deposits.component.html',
-  styleUrls: ['./deposits.component.css'],
+    selector: 'app-deposits',
+    templateUrl: './deposits.component.html',
+    styleUrls: ['./deposits.component.css'],
+    standalone: false
 })
 export class DepositsComponent {
   @Input() deposits: DepositRecord[] = [];

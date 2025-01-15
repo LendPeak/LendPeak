@@ -6,10 +6,11 @@ import { ConfirmationService, MessageService } from 'primeng/api';
 import { Subscription } from 'rxjs';
 
 @Component({
-  selector: 'app-connector-management',
-  templateUrl: './connector-management.component.html',
-  styleUrls: ['./connector-management.component.css'],
-  providers: [ConfirmationService, MessageService],
+    selector: 'app-connector-management',
+    templateUrl: './connector-management.component.html',
+    styleUrls: ['./connector-management.component.css'],
+    providers: [ConfirmationService, MessageService],
+    standalone: false
 })
 export class ConnectorManagementComponent implements OnInit, OnDestroy {
   connectors: Connector[] = [];

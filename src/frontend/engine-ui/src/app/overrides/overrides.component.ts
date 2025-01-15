@@ -1,7 +1,6 @@
 // overrides.component.ts
 
 import { Component, Input, Output, EventEmitter } from '@angular/core';
-import { OverlayPanel } from 'primeng/overlaypanel';
 import dayjs from 'dayjs';
 import { AmortizationEntry } from 'lendpeak-engine/models/Amortization/AmortizationEntry';
 import { BalanceModification } from 'lendpeak-engine/models/Amortization/BalanceModification';
@@ -9,11 +8,13 @@ import { UILoan } from 'lendpeak-engine/models/UIInterfaces';
 import { OverrideSettingsService } from '../services/override-settings.service';
 import { OverrideSettings } from '../models/override-settings.model';
 import { v4 as uuidv4 } from 'uuid';
+import { Popover } from 'primeng/popover';
 
 @Component({
   selector: 'app-overrides',
   templateUrl: './overrides.component.html',
   styleUrls: ['./overrides.component.css'],
+  standalone: false,
 })
 export class OverridesComponent {
   @Input() loan!: UILoan;
@@ -23,7 +24,7 @@ export class OverridesComponent {
 
   @Output() loanChange = new EventEmitter<any>();
   @Output() loanUpdated = new EventEmitter<void>();
-
+  openPanels: string[] = [];
   balanceModifications: BalanceModification[] = [];
   savedSettings: OverrideSettings[] = [];
   selectedSettingId: string | null = null;
@@ -73,6 +74,63 @@ export class OverridesComponent {
     }
 
     this.balanceModifications = this.loan.balanceModifications;
+
+    // Clear or initialize the array each time
+    this.openPanels = [];
+
+    // Panel: Interest Rate
+    if (this.loan?.ratesSchedule?.length > 0) {
+      this.openPanels.push('interestRate');
+    }
+
+    // Panel: Payment Settings (EIP)
+    // You might open this if a certain condition is met, e.g., loan.termPaymentAmount > 0
+    if (this.loan?.termPaymentAmount && this.loan.termPaymentAmount > 0) {
+      this.openPanels.push('paymentSettings');
+    }
+
+    // Panel: Term Payment Amount
+    if (this.loan?.termPaymentAmountOverride?.length > 0) {
+      this.openPanels.push('termPaymentAmount');
+    }
+
+    // Panel: Term Interest Override
+    if (
+      this.loan?.termInterestOverride &&
+      this.loan?.termInterestOverride?.length > 0
+    ) {
+      this.openPanels.push('termInterestOverride');
+    }
+
+    // Panel: Change Payment Date
+    if (this.loan?.changePaymentDates?.length > 0) {
+      this.openPanels.push('changePaymentDates');
+    }
+
+    // Panel: Pre Bill Day Term
+    if (this.loan?.preBillDays?.length > 0) {
+      this.openPanels.push('preBillDayTerm');
+    }
+
+    // Panel: Due Bill Day Term
+    if (this.loan?.dueBillDays?.length > 0) {
+      this.openPanels.push('dueBillDayTerm');
+    }
+
+    // Panel: Balance Modifications
+    if (this.balanceModifications?.length > 0) {
+      this.openPanels.push('balanceModifications');
+    }
+
+    // Panel: Fees That Apply to All Terms
+    if (this.loan?.feesForAllTerms?.length > 0) {
+      this.openPanels.push('feesForAllTerms');
+    }
+
+    // Panel: Fees Per Term
+    if (this.loan?.feesPerTerm?.length > 0) {
+      this.openPanels.push('feesPerTerm');
+    }
   }
 
   startWithNewSettings() {
@@ -640,7 +698,7 @@ export class OverridesComponent {
     }
   }
 
-  showTooltip(event: Event, tooltipRef: OverlayPanel) {
+  showTooltip(event: Event, tooltipRef: Popover) {
     tooltipRef.toggle(event);
   }
 

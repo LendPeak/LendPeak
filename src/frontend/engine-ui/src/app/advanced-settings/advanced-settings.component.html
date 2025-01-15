@@ -1,5 +1,3 @@
-<!-- advanced-settings.component.html -->
-
 <!-- Toolbar -->
 <p-toolbar class="p-mb-3">
   <!-- Left Group: Settings Management -->
@@ -25,7 +23,6 @@
     <p-button
       label="Save"
       icon="pi pi-save"
-      class="p-button-success"
       (click)="saveSettings()"
       [disabled]="!isModified"
       pTooltip="Save changes"
@@ -55,545 +52,447 @@
   </div>
 </p-toolbar>
 
-<!-- Accordion with Advanced Settings -->
-<p-accordion multiple="true">
+<!-- Accordion with Advanced Settings - Updated for PrimeNG 19+ -->
+<p-accordion [multiple]="true">
   <!-- Term Configuration Section -->
-  <p-accordionTab header="Term Configuration">
-    <div class="p-fluid">
-      <div class="field grid">
-        <!-- Term Period Unit -->
-        <div class="field col-6">
-          <label for="termPeriodUnit">
-            Term Period Unit
-            <i
-              class="pi pi-info-circle tooltip-icon"
-              (click)="showTooltip($event, termPeriodUnitTooltip)"
-            ></i>
-          </label>
-          <p-dropdown
-            id="termPeriodUnit"
-            [(ngModel)]="loan.termPeriodDefinition.unit"
-            name="termPeriodUnit"
-            [options]="termPeriodUnits"
-            placeholder="Select a term period unit"
-            (ngModelChange)="termPeriodDefinitionChange()"
-          ></p-dropdown>
-          <!-- Tooltip Overlay -->
-          <p-overlayPanel #termPeriodUnitTooltip>
-            Defines the unit of time for each term period. For example, select
-            "Month" for monthly payments.
-          </p-overlayPanel>
-        </div>
+  <p-accordion-panel value="termConfig">
+    <p-accordion-header>Term Configuration</p-accordion-header>
+    <p-accordion-content>
+      <div class="p-fluid">
+        <div class="field grid">
+          <!-- Term Period Unit -->
+          <div class="field col-6">
+            <label for="termPeriodUnit">
+              Term Period Unit
+              <i
+                class="pi pi-info-circle tooltip-icon"
+                (click)="showTooltip($event, termPeriodUnitTooltip)"
+              ></i>
+            </label>
+            <p-select
+              id="termPeriodUnit"
+              [(ngModel)]="loan.termPeriodDefinition.unit"
+              name="termPeriodUnit"
+              [options]="termPeriodUnits"
+              placeholder="Select a term period unit"
+              (ngModelChange)="termPeriodDefinitionChange()"
+            ></p-select>
+            <!-- Popover replacing OverlayPanel -->
+            <p-popover #termPeriodUnitTooltip>
+              <ng-template pTemplate="content">
+                Defines the unit of time for each term period. For example, select
+                "Month" for monthly payments.
+              </ng-template>
+            </p-popover>
+          </div>
 
-        <!-- Term Period Count -->
-        <div class="field col-6">
-          <label for="termPeriodCount">
-            Term Period Count
-            <i
-              class="pi pi-info-circle tooltip-icon"
-              (click)="showTooltip($event, termPeriodCountTooltip)"
-            ></i>
-          </label>
-          <p-inputNumber
-            id="termPeriodCount"
-            [(ngModel)]="loan.termPeriodDefinition.count[0]"
-            name="termPeriodCount"
-            (ngModelChange)="termPeriodDefinitionChange()"
-          ></p-inputNumber>
-          <!-- Tooltip Overlay -->
-          <p-overlayPanel #termPeriodCountTooltip>
-            Number of units per term period. For example, enter "1" for payments
-            every one unit (e.g., every 1 month).
-          </p-overlayPanel>
-        </div>
+          <!-- Term Period Count -->
+          <div class="field col-6">
+            <label for="termPeriodCount">
+              Term Period Count
+              <i
+                class="pi pi-info-circle tooltip-icon"
+                (click)="showTooltip($event, termPeriodCountTooltip)"
+              ></i>
+            </label>
+            <p-inputNumber
+              id="termPeriodCount"
+              [(ngModel)]="loan.termPeriodDefinition.count[0]"
+              name="termPeriodCount"
+              (ngModelChange)="termPeriodDefinitionChange()"
+            ></p-inputNumber>
+            <!-- Popover replacing OverlayPanel -->
+            <p-popover #termPeriodCountTooltip>
+              <ng-template pTemplate="content">
+                Number of units per term period. For example, enter "1" for
+                payments every 1 month.
+              </ng-template>
+            </p-popover>
+          </div>
 
-        <!-- Calendar Type -->
-        <div class="field col-6">
-          <label for="calendarType">
-            Calendar Type
-            <i
-              class="pi pi-info-circle tooltip-icon"
-              (click)="showTooltip($event, calendarTypeTooltip)"
-            ></i>
-          </label>
-          <p-dropdown
-            id="calendarType"
-            [(ngModel)]="loan.calendarType"
-            name="calendarType"
-            [options]="calendarTypes"
-            placeholder="Select a calendar type"
-            (ngModelChange)="onInputChange()"
-          ></p-dropdown>
-          <!-- Tooltip Overlay -->
-          <p-overlayPanel #calendarTypeTooltip>
-            <div class="tooltip-content">
-              <p>
-                Determines the calendar system used for the loan schedule.
-                Choose between different calendar conventions:
-              </p>
-              <ul>
-                <li>
-                  <strong>Actual/Actual</strong>: Calculates interest based on
-                  the actual number of days in each period and the actual number
-                  of days in the year.
-                </li>
-                <li>
-                  <strong>Actual/360</strong>: Calculates interest based on the
-                  actual number of days in each period but assumes a 360-day
-                  year.
-                </li>
-                <li>
-                  <strong>Actual/365</strong>: Calculates interest based on the
-                  actual number of days in each period but assumes a 365-day
-                  year.
-                </li>
-                <li>
-                  <strong>30/360</strong>: Assumes each month has 30 days and
-                  each year has 360 days.
-                </li>
-                <li>
-                  <strong>30/Actual</strong>: Assumes each month has 30 days but
-                  uses the actual number of days in the year.
-                </li>
-              </ul>
-            </div>
-          </p-overlayPanel>
+          <!-- Calendar Type -->
+          <div class="field col-6">
+            <label for="calendarType">
+              Calendar Type
+              <i
+                class="pi pi-info-circle tooltip-icon"
+                (click)="showTooltip($event, calendarTypeTooltip)"
+              ></i>
+            </label>
+            <p-select
+              id="calendarType"
+              [(ngModel)]="loan.calendarType"
+              name="calendarType"
+              [options]="calendarTypes"
+              placeholder="Select a calendar type"
+              (ngModelChange)="onInputChange()"
+            ></p-select>
+            <!-- Popover replacing OverlayPanel -->
+            <p-popover #calendarTypeTooltip>
+              <ng-template pTemplate="content">
+                <div class="tooltip-content">
+                  <p>
+                    Determines the calendar system used for the loan schedule...
+                  </p>
+                </div>
+              </ng-template>
+            </p-popover>
+          </div>
         </div>
       </div>
-    </div>
-  </p-accordionTab>
+    </p-accordion-content>
+  </p-accordion-panel>
 
   <!-- Payment Application Settings Section -->
-  <p-accordionTab header="Payment Application Settings">
-    <div class="p-fluid">
-      <!-- Allocation Strategy -->
-      <div class="field">
-        <label for="paymentAllocationStrategy">
-          Payment Allocation Strategy
-          <i
-            class="pi pi-info-circle tooltip-icon"
-            (click)="showTooltip($event, paymentAllocationStrategyTooltip)"
-          ></i>
-        </label>
-        <p-dropdown
-          id="paymentAllocationStrategy"
-          [(ngModel)]="loan.paymentAllocationStrategy"
-          name="paymentAllocationStrategy"
-          [options]="paymentAllocationStrategies"
-          placeholder="Select an allocation strategy"
-          (ngModelChange)="onInputChange()"
-        ></p-dropdown>
-        <!-- Tooltip Overlay -->
-        <p-overlayPanel #paymentAllocationStrategyTooltip>
-          <div class="tooltip-content">
-            <p>Select the strategy for allocating deposits to bills:</p>
-            <ul>
-              <li>
-                <strong>First In First Out (FIFO)</strong>: Apply payments to
-                the oldest bills first.
-              </li>
-              <li>
-                <strong>Last In First Out (LIFO)</strong>: Apply payments to the
-                most recent bills first.
-              </li>
-              <li>
-                <strong>Equal Distribution</strong>: Distribute payments equally
-                across all outstanding bills.
-              </li>
-              <li>
-                <strong>Proportional</strong>: Allocate payments proportionally
-                based on the total amount due for each bill.
-              </li>
-            </ul>
-          </div>
-        </p-overlayPanel>
-      </div>
-
-      <!-- Payment Priority -->
-      <div class="field">
-        <label for="paymentPriority">
-          Payment Priority
-          <i
-            class="pi pi-info-circle tooltip-icon"
-            (click)="showTooltip($event, paymentPriorityTooltip)"
-          ></i>
-        </label>
-        <!-- Payment Priority Selection -->
-        <div class="p-grid">
-          <div class="p-col-4">
-            <p-dropdown
-              [(ngModel)]="paymentPriority[0]"
-              [options]="paymentPriorityOptions"
-              placeholder="First"
-              (ngModelChange)="onPaymentPriorityChange()"
-            ></p-dropdown>
-          </div>
-          <div class="p-col-4">
-            <p-dropdown
-              [(ngModel)]="paymentPriority[1]"
-              [options]="paymentPriorityOptions"
-              placeholder="Second"
-              (ngModelChange)="onPaymentPriorityChange()"
-            ></p-dropdown>
-          </div>
-          <div class="p-col-4">
-            <p-dropdown
-              [(ngModel)]="paymentPriority[2]"
-              [options]="paymentPriorityOptions"
-              placeholder="Third"
-              (ngModelChange)="onPaymentPriorityChange()"
-            ></p-dropdown>
-          </div>
+  <p-accordion-panel value="paymentApp">
+    <p-accordion-header>Payment Application Settings</p-accordion-header>
+    <p-accordion-content>
+      <div class="p-fluid">
+        <!-- Allocation Strategy -->
+        <div class="field">
+          <label for="paymentAllocationStrategy">
+            Payment Allocation Strategy
+            <i
+              class="pi pi-info-circle tooltip-icon"
+              (click)="showTooltip($event, paymentAllocationStrategyTooltip)"
+            ></i>
+          </label>
+          <p-select
+            id="paymentAllocationStrategy"
+            [(ngModel)]="loan.paymentAllocationStrategy"
+            name="paymentAllocationStrategy"
+            [options]="paymentAllocationStrategies"
+            placeholder="Select an allocation strategy"
+            (ngModelChange)="onInputChange()"
+          ></p-select>
+          <!-- Popover replacing OverlayPanel -->
+          <p-popover #paymentAllocationStrategyTooltip>
+            <ng-template pTemplate="content">
+              <div class="tooltip-content">
+                <p>Select the strategy for allocating deposits to bills...</p>
+              </div>
+            </ng-template>
+          </p-popover>
         </div>
-        <!-- Tooltip Overlay -->
-        <p-overlayPanel #paymentPriorityTooltip>
-          <div class="tooltip-content">
-            <p>
-              Specify the order in which payments are applied to components:
-            </p>
-            <ul>
-              <li><strong>Interest</strong></li>
-              <li><strong>Fees</strong></li>
-              <li><strong>Principal</strong></li>
-            </ul>
+
+        <!-- Payment Priority -->
+        <div class="field">
+          <label for="paymentPriority">
+            Payment Priority
+            <i
+              class="pi pi-info-circle tooltip-icon"
+              (click)="showTooltip($event, paymentPriorityTooltip)"
+            ></i>
+          </label>
+          <!-- Payment Priority Selection -->
+          <div class="p-grid">
+            <div class="p-col-4">
+              <p-select
+                [(ngModel)]="paymentPriority[0]"
+                [options]="paymentPriorityOptions"
+                placeholder="First"
+                (ngModelChange)="onPaymentPriorityChange()"
+              ></p-select>
+            </div>
+            <div class="p-col-4">
+              <p-select
+                [(ngModel)]="paymentPriority[1]"
+                [options]="paymentPriorityOptions"
+                placeholder="Second"
+                (ngModelChange)="onPaymentPriorityChange()"
+              ></p-select>
+            </div>
+            <div class="p-col-4">
+              <p-select
+                [(ngModel)]="paymentPriority[2]"
+                [options]="paymentPriorityOptions"
+                placeholder="Third"
+                (ngModelChange)="onPaymentPriorityChange()"
+              ></p-select>
+            </div>
           </div>
-        </p-overlayPanel>
+          <!-- Popover replacing OverlayPanel -->
+          <p-popover #paymentPriorityTooltip>
+            <ng-template pTemplate="content">
+              <div class="tooltip-content">
+                <p>
+                  Specify the order in which payments are applied to components...
+                </p>
+              </div>
+            </ng-template>
+          </p-popover>
+        </div>
       </div>
-    </div>
-  </p-accordionTab>
+    </p-accordion-content>
+  </p-accordion-panel>
 
   <!-- Billing Settings Section -->
-  <p-accordionTab header="Billing Settings">
-    <div class="p-fluid">
-      <!-- Loan Type Selection -->
-      <div class="field">
-        <label for="billingModel">
-          Loan Type
-          <i
-            class="pi pi-info-circle tooltip-icon"
-            (click)="showTooltip($event, billingModelTooltip)"
-          ></i>
-        </label>
-        <p-dropdown
-          id="billingModel"
-          [(ngModel)]="loan.billingModel"
-          name="billingModel"
-          [options]="billingModelOptions"
-          placeholder="Select a loan type"
-          (ngModelChange)="onInputChange()"
-        ></p-dropdown>
-        <!-- Tooltip Overlay -->
-        <p-overlayPanel #billingModelTooltip>
-          <div class="tooltip-content">
-            <p>
-              <strong>Amortized Loan:</strong> An amortized loan has scheduled,
-              periodic payments applied to both principal and interest over the
-              loan's life. Each payment reduces the loan balance and covers
-              accrued interest.
-            </p>
-            <p>
-              <strong>Daily Simple Interest Loan:</strong> A daily simple
-              interest loan accrues interest daily on the outstanding principal.
-              Payments first cover the accrued interest, with any remaining
-              amount reducing the principal.
-            </p>
+  <p-accordion-panel value="billingSettings">
+    <p-accordion-header>Billing Settings</p-accordion-header>
+    <p-accordion-content>
+      <div class="p-fluid">
+        <!-- Loan Type Selection -->
+        <div class="field">
+          <label for="billingModel">
+            Loan Type
+            <i
+              class="pi pi-info-circle tooltip-icon"
+              (click)="showTooltip($event, billingModelTooltip)"
+            ></i>
+          </label>
+          <p-select
+            id="billingModel"
+            [(ngModel)]="loan.billingModel"
+            name="billingModel"
+            [options]="billingModelOptions"
+            placeholder="Select a loan type"
+            (ngModelChange)="onInputChange()"
+          ></p-select>
+          <!-- Popover replacing OverlayPanel -->
+          <p-popover #billingModelTooltip>
+            <ng-template pTemplate="content">
+              <div class="tooltip-content">
+                <p>
+                  <strong>Amortized Loan:</strong> An amortized loan has scheduled
+                  payments applied to both principal and interest over the life
+                  of the loan.
+                </p>
+                <p>
+                  <strong>Daily Simple Interest Loan:</strong> A daily simple
+                  interest loan accrues interest daily on the outstanding
+                  principal.
+                </p>
+              </div>
+            </ng-template>
+          </p-popover>
+        </div>
+
+        <!-- Conditionally display these fields only for 'amortized' loans -->
+        <div *ngIf="loan.billingModel === 'amortized'" class="field grid">
+          <!-- Default Pre Bill Days -->
+          <div class="field col-6">
+            <label for="defaultPreBillDaysConfiguration">
+              Default Pre Bill Days
+              <i
+                class="pi pi-info-circle tooltip-icon"
+                (click)="showTooltip($event, defaultPreBillDaysTooltip)"
+              ></i>
+            </label>
+            <p-inputNumber
+              id="defaultPreBillDaysConfiguration"
+              [(ngModel)]="loan.defaultPreBillDaysConfiguration"
+              name="defaultPreBillDaysConfiguration"
+              (ngModelChange)="onInputChange()"
+            ></p-inputNumber>
+            <!-- Popover replacing OverlayPanel -->
+            <p-popover #defaultPreBillDaysTooltip>
+              <ng-template pTemplate="content">
+                Number of days before the period end to open the bill by default.
+              </ng-template>
+            </p-popover>
           </div>
-        </p-overlayPanel>
-      </div>
 
-      <!-- Conditionally display these fields only for 'amortized' loans -->
-      <div *ngIf="loan.billingModel === 'amortized'" class="field grid">
-        <!-- Default Pre Bill Days -->
-        <div class="field col-6">
-          <label for="defaultPreBillDaysConfiguration">
-            Default Pre Bill Days
-            <i
-              class="pi pi-info-circle tooltip-icon"
-              (click)="showTooltip($event, defaultPreBillDaysTooltip)"
-            ></i>
-          </label>
-          <p-inputNumber
-            id="defaultPreBillDaysConfiguration"
-            [(ngModel)]="loan.defaultPreBillDaysConfiguration"
-            name="defaultPreBillDaysConfiguration"
-            (ngModelChange)="onInputChange()"
-          ></p-inputNumber>
-          <!-- Tooltip Overlay -->
-          <p-overlayPanel #defaultPreBillDaysTooltip>
-            Number of days before the period end to open the bill by default.
-            For example, enter "5" to open the bill 5 days before the period
-            ends.
-          </p-overlayPanel>
-        </div>
-
-        <!-- Default Due Date Days -->
-        <div class="field col-6">
-          <label for="defaultBillDueDaysAfterPeriodEndConfiguration">
-            Default Due Date Days
-            <i
-              class="pi pi-info-circle tooltip-icon"
-              (click)="showTooltip($event, defaultDueDateDaysTooltip)"
-            ></i>
-          </label>
-          <p-inputNumber
-            id="defaultBillDueDaysAfterPeriodEndConfiguration"
-            [(ngModel)]="loan.defaultBillDueDaysAfterPeriodEndConfiguration"
-            name="defaultBillDueDaysAfterPeriodEndConfiguration"
-            (ngModelChange)="onInputChange()"
-          ></p-inputNumber>
-          <!-- Tooltip Overlay -->
-          <p-overlayPanel #defaultDueDateDaysTooltip>
-            Number of days after the period end when the payment is due by
-            default. For example, enter "30" for payments due 30 days after the
-            period ends.
-          </p-overlayPanel>
+          <!-- Default Due Date Days -->
+          <div class="field col-6">
+            <label for="defaultBillDueDaysAfterPeriodEndConfiguration">
+              Default Due Date Days
+              <i
+                class="pi pi-info-circle tooltip-icon"
+                (click)="showTooltip($event, defaultDueDateDaysTooltip)"
+              ></i>
+            </label>
+            <p-inputNumber
+              id="defaultBillDueDaysAfterPeriodEndConfiguration"
+              [(ngModel)]="loan.defaultBillDueDaysAfterPeriodEndConfiguration"
+              name="defaultBillDueDaysAfterPeriodEndConfiguration"
+              (ngModelChange)="onInputChange()"
+            ></p-inputNumber>
+            <!-- Popover replacing OverlayPanel -->
+            <p-popover #defaultDueDateDaysTooltip>
+              <ng-template pTemplate="content">
+                Number of days after the period end when the payment is due by
+                default.
+              </ng-template>
+            </p-popover>
+          </div>
         </div>
       </div>
-    </div>
-  </p-accordionTab>
+    </p-accordion-content>
+  </p-accordion-panel>
 
   <!-- Interest Settings Section -->
-  <p-accordionTab header="Interest Settings">
-    <div class="p-fluid">
-      <!-- Per Diem Calculation Type -->
-      <div class="field">
-        <label for="perDiemCalculationType">
-          Per Diem Calculation Type
-          <i
-            class="pi pi-info-circle tooltip-icon"
-            (click)="showTooltip($event, perDiemCalculationTypeTooltip)"
-          ></i>
-        </label>
-        <p-dropdown
-          id="perDiemCalculationType"
-          [(ngModel)]="loan.perDiemCalculationType"
-          name="perDiemCalculationType"
-          [options]="perDiemCalculationTypes"
-          placeholder="Select a per diem calculation type"
-          (ngModelChange)="onInputChange()"
-        ></p-dropdown>
-        <!-- Tooltip Overlay -->
-        <p-overlayPanel #perDiemCalculationTypeTooltip>
-          <div class="tooltip-content">
-            <p><strong>Per Diem Calculation Types:</strong></p>
-            <ul>
-              <li>
-                <strong>Annual Rate Divided by Days in Year</strong>
+  <p-accordion-panel value="interestSettings">
+    <p-accordion-header>Interest Settings</p-accordion-header>
+    <p-accordion-content>
+      <div class="p-fluid">
+        <!-- Per Diem Calculation Type -->
+        <div class="field">
+          <label for="perDiemCalculationType">
+            Per Diem Calculation Type
+            <i
+              class="pi pi-info-circle tooltip-icon"
+              (click)="showTooltip($event, perDiemCalculationTypeTooltip)"
+            ></i>
+          </label>
+          <p-select
+            id="perDiemCalculationType"
+            [(ngModel)]="loan.perDiemCalculationType"
+            name="perDiemCalculationType"
+            [options]="perDiemCalculationTypes"
+            placeholder="Select a per diem calculation type"
+            (ngModelChange)="onInputChange()"
+          ></p-select>
+          <!-- Popover replacing OverlayPanel -->
+          <p-popover #perDiemCalculationTypeTooltip>
+            <ng-template pTemplate="content">
+              <div class="tooltip-content">
+                <p><strong>Per Diem Calculation Types:</strong></p>
                 <ul>
-                  <li>
-                    Calculate the daily interest rate by dividing the annual
-                    interest rate by the number of days in the year (usually
-                    360, 365, or 366).
-                  </li>
-                  <li>
-                    Multiply this daily rate by the principal amount to
-                    determine the per diem interest.
-                  </li>
+                  <li>Annual Rate / Days in Year</li>
+                  <li>Monthly Rate / Days in Month</li>
                 </ul>
-              </li>
-              <li>
-                <strong>Monthly Rate Divided by Days in Month</strong>
-                <ul>
-                  <li>
-                    First, divide the annual interest rate by 12 to get the
-                    monthly interest rate.
-                  </li>
-                  <li>
-                    Then, divide this monthly rate by the number of days in the
-                    month (28, 29, 30, or 31) to get the daily rate.
-                  </li>
-                  <li>
-                    Multiply this daily rate by the principal amount to
-                    calculate the per diem interest.
-                  </li>
-                </ul>
-              </li>
-            </ul>
-          </div>
-        </p-overlayPanel>
-      </div>
+              </div>
+            </ng-template>
+          </p-popover>
+        </div>
 
-      <!-- Allow Rates Above 100% -->
-      <div class="field-checkbox">
-        <p-checkbox
-          [(ngModel)]="loan.allowRateAbove100"
-          name="allowRateAbove100"
-          binary="true"
-          (ngModelChange)="onInputChange()"
-        ></p-checkbox>
-        <label for="allowRateAbove100">
-          Allow rates above 100%
-          <i
-            class="pi pi-info-circle tooltip-icon"
-            (click)="showTooltip($event, allowRateAbove100Tooltip)"
-          ></i>
-        </label>
-        <!-- Tooltip Overlay -->
-        <p-overlayPanel #allowRateAbove100Tooltip>
-          Enable this option to allow setting interest rates higher than 100%.
-        </p-overlayPanel>
-      </div>
+        <!-- Allow Rates Above 100% -->
+        <div class="field-checkbox">
+          <p-checkbox
+            [(ngModel)]="loan.allowRateAbove100"
+            name="allowRateAbove100"
+            binary="true"
+            (ngModelChange)="onInputChange()"
+          ></p-checkbox>
+          <label for="allowRateAbove100">
+            Allow rates above 100%
+            <i
+              class="pi pi-info-circle tooltip-icon"
+              (click)="showTooltip($event, allowRateAbove100Tooltip)"
+            ></i>
+          </label>
+          <!-- Popover replacing OverlayPanel -->
+          <p-popover #allowRateAbove100Tooltip>
+            <ng-template pTemplate="content">
+              Enable this option to allow setting interest rates higher than 100%.
+            </ng-template>
+          </p-popover>
+        </div>
 
-      <!-- Unbilled Interest Flush Method -->
-      <div class="field">
-        <label for="flushMethod">
-          Unbilled Interest Flush Method
-          <i
-            class="pi pi-info-circle tooltip-icon"
-            (click)="showTooltip($event, flushMethodTooltip)"
-          ></i>
-        </label>
-        <p-dropdown
-          id="flushMethod"
-          [(ngModel)]="loan.flushMethod"
-          name="flushMethod"
-          [options]="flushMethods"
-          placeholder="Select a flush method"
-          (ngModelChange)="onInputChange()"
-        ></p-dropdown>
-        <!-- Tooltip Overlay -->
-        <p-overlayPanel #flushMethodTooltip>
-          Determines how unbilled interest is handled. Choose a method to define
-          when unbilled interest should be flushed.
-        </p-overlayPanel>
-      </div>
+        <!-- Unbilled Interest Flush Method -->
+        <div class="field">
+          <label for="flushMethod">
+            Unbilled Interest Flush Method
+            <i
+              class="pi pi-info-circle tooltip-icon"
+              (click)="showTooltip($event, flushMethodTooltip)"
+            ></i>
+          </label>
+          <p-select
+            id="flushMethod"
+            [(ngModel)]="loan.flushMethod"
+            name="flushMethod"
+            [options]="flushMethods"
+            placeholder="Select a flush method"
+            (ngModelChange)="onInputChange()"
+          ></p-select>
+          <!-- Popover replacing OverlayPanel -->
+          <p-popover #flushMethodTooltip>
+            <ng-template pTemplate="content">
+              Determines how unbilled interest is handled. Choose a method to
+              define when unbilled interest should be flushed.
+            </ng-template>
+          </p-popover>
+        </div>
 
-      <!-- Flush Threshold -->
-      <div class="field" *ngIf="loan.flushMethod !== 'none'">
-        <label for="flushThreshold">
-          Unbilled Interest Flush Threshold
-          <i
-            class="pi pi-info-circle tooltip-icon"
-            (click)="showTooltip($event, flushThresholdTooltip)"
-          ></i>
-        </label>
-        <p-inputNumber
-          id="flushThreshold"
-          [(ngModel)]="loan.flushThreshold"
-          name="flushThreshold"
-          mode="currency"
-          currency="USD"
-          locale="en-US"
-          (ngModelChange)="onInputChange()"
-        ></p-inputNumber>
-        <!-- Tooltip Overlay -->
-        <p-overlayPanel #flushThresholdTooltip>
-          The threshold amount for flushing unbilled interest. For example,
-          enter "$0.01" to flush unbilled interest when it reaches one cent.
-        </p-overlayPanel>
+        <!-- Flush Threshold -->
+        <div class="field" *ngIf="loan.flushMethod !== 'none'">
+          <label for="flushThreshold">
+            Unbilled Interest Flush Threshold
+            <i
+              class="pi pi-info-circle tooltip-icon"
+              (click)="showTooltip($event, flushThresholdTooltip)"
+            ></i>
+          </label>
+          <p-inputNumber
+            id="flushThreshold"
+            [(ngModel)]="loan.flushThreshold"
+            name="flushThreshold"
+            mode="currency"
+            currency="USD"
+            locale="en-US"
+            (ngModelChange)="onInputChange()"
+          ></p-inputNumber>
+          <!-- Popover replacing OverlayPanel -->
+          <p-popover #flushThresholdTooltip>
+            <ng-template pTemplate="content">
+              The threshold amount for flushing unbilled interest. For example,
+              enter "$0.01" to flush unbilled interest when it reaches one cent.
+            </ng-template>
+          </p-popover>
+        </div>
       </div>
-    </div>
-  </p-accordionTab>
+    </p-accordion-content>
+  </p-accordion-panel>
 
   <!-- Rounding Settings Section -->
-  <p-accordionTab header="Rounding Settings">
-    <div class="p-fluid">
-      <!-- Rounding Method -->
-      <div class="field">
-        <label for="roundingMethod">
-          Rounding Method
-          <i
-            class="pi pi-info-circle tooltip-icon"
-            (click)="showTooltip($event, roundingMethodTooltip)"
-          ></i>
-        </label>
-        <p-dropdown
-          id="roundingMethod"
-          [(ngModel)]="loan.roundingMethod"
-          name="roundingMethod"
-          [options]="roundingMethods"
-          placeholder="Select a rounding method"
-          (ngModelChange)="onInputChange()"
-        ></p-dropdown>
-        <!-- Tooltip Overlay -->
-        <p-overlayPanel #roundingMethodTooltip>
-          <div class="tooltip-content">
-            <p>Specifies how to round calculated amounts. Options include:</p>
-            <ul>
-              <li>
-                <strong>Round Up:</strong> Always rounds the number up to the
-                nearest specified precision.
-                <br />
-                <em>Example:</em> If rounding to 2 decimal places:
-                <ul>
-                  <li>2.301 becomes <strong>2.31</strong></li>
-                  <li>2.374 becomes <strong>2.38</strong></li>
-                  <li>-2.301 becomes <strong>-2.30</strong></li>
-                </ul>
-              </li>
-              <li>
-                <strong>Round Down:</strong> Always rounds the number down to
-                the nearest specified precision.
-                <br />
-                <em>Example:</em> If rounding to 2 decimal places:
-                <ul>
-                  <li>2.399 becomes <strong>2.39</strong></li>
-                  <li>2.376 becomes <strong>2.37</strong></li>
-                  <li>-2.399 becomes <strong>-2.40</strong></li>
-                </ul>
-              </li>
-              <li>
-                <strong>Round Half Up:</strong> Rounds to the nearest neighbor;
-                if equidistant, rounds away from zero.
-                <br />
-                <em>Example:</em> If rounding to 2 decimal places:
-                <ul>
-                  <li>2.345 becomes <strong>2.35</strong></li>
-                  <li>2.344 becomes <strong>2.34</strong></li>
-                  <li>-2.345 becomes <strong>-2.35</strong></li>
-                </ul>
-              </li>
-              <li>
-                <strong>Round Half Down:</strong> Rounds to the nearest
-                neighbor; if equidistant, rounds towards zero.
-                <br />
-                <em>Example:</em> If rounding to 2 decimal places:
-                <ul>
-                  <li>2.345 becomes <strong>2.34</strong></li>
-                  <li>2.346 becomes <strong>2.35</strong></li>
-                  <li>-2.345 becomes <strong>-2.34</strong></li>
-                </ul>
-              </li>
-              <li>
-                <strong>Round Half Even (Bankers' Rounding):</strong> Rounds to
-                the nearest neighbor; if equidistant, rounds towards the nearest
-                even number.
-                <br />
-                <em>Example:</em> If rounding to 2 decimal places:
-                <ul>
-                  <li>2.345 becomes <strong>2.34</strong> (since 4 is even)</li>
-                  <li>2.355 becomes <strong>2.36</strong> (since 6 is even)</li>
-                  <li>-2.345 becomes <strong>-2.34</strong></li>
-                </ul>
-              </li>
-            </ul>
-          </div>
-        </p-overlayPanel>
-      </div>
+  <p-accordion-panel value="roundingSettings">
+    <p-accordion-header>Rounding Settings</p-accordion-header>
+    <p-accordion-content>
+      <div class="p-fluid">
+        <!-- Rounding Method -->
+        <div class="field">
+          <label for="roundingMethod">
+            Rounding Method
+            <i
+              class="pi pi-info-circle tooltip-icon"
+              (click)="showTooltip($event, roundingMethodTooltip)"
+            ></i>
+          </label>
+          <p-select
+            id="roundingMethod"
+            [(ngModel)]="loan.roundingMethod"
+            name="roundingMethod"
+            [options]="roundingMethods"
+            placeholder="Select a rounding method"
+            (ngModelChange)="onInputChange()"
+          ></p-select>
+          <!-- Popover replacing OverlayPanel -->
+          <p-popover #roundingMethodTooltip>
+            <ng-template pTemplate="content">
+              <div class="tooltip-content">
+                <p>Specifies how to round calculated amounts...</p>
+              </div>
+            </ng-template>
+          </p-popover>
+        </div>
 
-      <!-- Rounding Precision -->
-      <div class="field">
-        <label for="roundingPrecision">
-          Rounding Precision (decimal places)
-          <i
-            class="pi pi-info-circle tooltip-icon"
-            (click)="showTooltip($event, roundingPrecisionTooltip)"
-          ></i>
-        </label>
-        <p-inputNumber
-          id="roundingPrecision"
-          [(ngModel)]="loan.roundingPrecision"
-          name="roundingPrecision"
-          (ngModelChange)="onInputChange()"
-        ></p-inputNumber>
-        <!-- Tooltip Overlay -->
-        <p-overlayPanel #roundingPrecisionTooltip>
-          Number of decimal places to round to. For example, enter "2" to round
-          amounts to two decimal places.
-        </p-overlayPanel>
+        <!-- Rounding Precision -->
+        <div class="field">
+          <label for="roundingPrecision">
+            Rounding Precision (decimal places)
+            <i
+              class="pi pi-info-circle tooltip-icon"
+              (click)="showTooltip($event, roundingPrecisionTooltip)"
+            ></i>
+          </label>
+          <p-inputNumber
+            id="roundingPrecision"
+            [(ngModel)]="loan.roundingPrecision"
+            name="roundingPrecision"
+            (ngModelChange)="onInputChange()"
+          ></p-inputNumber>
+          <!-- Popover replacing OverlayPanel -->
+          <p-popover #roundingPrecisionTooltip>
+            <ng-template pTemplate="content">
+              Number of decimal places to round to. For example, enter "2" to
+              round amounts to two decimal places.
+            </ng-template>
+          </p-popover>
+        </div>
       </div>
-    </div>
-  </p-accordionTab>
+    </p-accordion-content>
+  </p-accordion-panel>
 </p-accordion>
 
 <!-- Save Settings Dialog -->
@@ -626,11 +525,7 @@
         class="p-button-text p-mr-2"
         (onClick)="showSaveSettingsDialog = false"
       ></p-button>
-      <p-button
-        label="Save"
-        class="p-button-primary"
-        (onClick)="confirmSaveSettings()"
-      ></p-button>
+      <p-button label="Save" (onClick)="confirmSaveSettings()"></p-button>
     </div>
   </p-footer>
 </p-dialog>
@@ -670,7 +565,6 @@
               class="p-button-rounded p-button-info p-mr-2"
               (onClick)="previewSettings(setting)"
               pTooltip="Preview Settings"
-              class="mr-2"
             ></p-button>
             <p-button
               icon="pi pi-trash"

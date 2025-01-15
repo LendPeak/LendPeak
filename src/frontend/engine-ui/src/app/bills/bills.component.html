@@ -72,7 +72,7 @@
               <p-tag
                 *ngIf="bill.jsTotalDue > 0"
                 value="{{ bill.isPaid ? 'Paid' : 'Unpaid' }}"
-                [severity]="bill.isPaid ? 'success' : 'warning'"
+                [severity]="bill.isPaid ? 'success' : 'warn'"
                 class="status-tag"
               ></p-tag>
               <p-tag
@@ -86,7 +86,7 @@
               <p-button
                 label="View Payment Details"
                 icon="pi pi-eye"
-                class="p-button-info"
+                severity="info"
                 [disabled]="
                   !bill.paymentDetails || bill.paymentDetails.length === 0
                 "

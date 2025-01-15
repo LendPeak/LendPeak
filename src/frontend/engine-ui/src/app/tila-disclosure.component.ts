@@ -9,9 +9,10 @@ import { Currency } from 'lendpeak-engine/utils/Currency';
 import Decimal from 'decimal.js';
 
 @Component({
-  selector: 'app-tila-disclosure',
-  templateUrl: './tila-disclosure.component.html',
-  styleUrls: ['./tila-disclosure.component.css'],
+    selector: 'app-tila-disclosure',
+    templateUrl: './tila-disclosure.component.html',
+    styleUrls: ['./tila-disclosure.component.css'],
+    standalone: false
 })
 export class TilaDisclosureComponent {
   @Input() tilaDisclosures: TILADisclosures = {

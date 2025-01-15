@@ -1,7 +1,7 @@
 <div class="p-fluid">
   <div class="field">
     <label for="connector">Select Connector</label>
-    <p-dropdown
+    <p-select
       id="connector"
       [options]="connectors"
       optionLabel="name"
@@ -9,12 +9,12 @@
       [(ngModel)]="selectedConnectorId"
       placeholder="Select a Connector"
       [showClear]="true"
-    ></p-dropdown>
+    ></p-select>
   </div>
 
   <div class="field">
     <label for="searchType">Search By</label>
-    <p-dropdown
+    <p-select
       id="searchType"
       [options]="[
         { label: 'System ID', value: 'systemId' },
@@ -23,7 +23,7 @@
       ]"
       [(ngModel)]="searchType"
       placeholder="Select Search Type"
-    ></p-dropdown>
+    ></p-select>
   </div>
 
   <!-- Conditional Inputs for Search -->

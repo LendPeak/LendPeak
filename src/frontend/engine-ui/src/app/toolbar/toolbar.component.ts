@@ -4,9 +4,10 @@ import { MenuItem } from 'primeng/api';
 import dayjs from 'dayjs';
 
 @Component({
-  selector: 'app-toolbar',
-  templateUrl: './toolbar.component.html',
-  styleUrls: ['./toolbar.component.css'],
+    selector: 'app-toolbar',
+    templateUrl: './toolbar.component.html',
+    styleUrls: ['./toolbar.component.css'],
+    standalone: false
 })
 export class ToolbarComponent {
   @Input() snapshotDate: Date = new Date();

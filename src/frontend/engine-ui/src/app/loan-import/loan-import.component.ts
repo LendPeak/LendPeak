@@ -19,9 +19,10 @@ import { LoanResponse } from '../models/loanpro.model';
 import { DepositRecord } from 'lendpeak-engine/models/Deposit';
 
 @Component({
-  selector: 'app-loan-import',
-  templateUrl: './loan-import.component.html',
-  styleUrls: ['./loan-import.component.css'],
+    selector: 'app-loan-import',
+    templateUrl: './loan-import.component.html',
+    styleUrls: ['./loan-import.component.css'],
+    standalone: false
 })
 export class LoanImportComponent implements OnInit, OnDestroy {
   connectors: Connector[] = [];

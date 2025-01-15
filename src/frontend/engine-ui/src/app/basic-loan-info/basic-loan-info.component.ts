@@ -1,12 +1,14 @@
 // basic-loan-info.component.ts
 import { Component, Input, Output, EventEmitter } from '@angular/core';
-import { OverlayPanel } from 'primeng/overlaypanel';
+// Removed OverlayPanel, now import Popover from primeng/popover
+import { Popover } from 'primeng/popover';
 import dayjs from 'dayjs';
 
 @Component({
   selector: 'app-basic-loan-info',
   templateUrl: './basic-loan-info.component.html',
   styleUrls: ['./basic-loan-info.component.css'],
+  standalone: false,
 })
 export class BasicLoanInfoComponent {
   @Input() loan: any;
@@ -18,16 +20,8 @@ export class BasicLoanInfoComponent {
   enableFirstPaymentDate = false;
   enableEndDate = false;
 
-  // ngOnInit() {
-  //   if (this.loan.firstPaymentDate) {
-  //     this.enableFirstPaymentDate = true;
-  //   }
-  //   if (this.loan.endDate) {
-  //     this.enableEndDate = true;
-  //   }
-  // }
-
-  showTooltip(event: Event, tooltipRef: OverlayPanel) {
+  showTooltip(event: Event, tooltipRef: Popover) {
+    // Same usage as OverlayPanel
     tooltipRef.toggle(event);
   }
 
@@ -39,7 +33,6 @@ export class BasicLoanInfoComponent {
   updateTerm() {
     // when term is updated we need to extend the end date
     this.updateStartDate();
-    // this.loanUpdated.emit();
   }
 
   updateStartDate() {
@@ -72,12 +65,8 @@ export class BasicLoanInfoComponent {
     if (!this.enableFirstPaymentDate) {
       // user just unchecked => set firstPaymentDate to undefined
       this.loan.firstPaymentDate = undefined;
-    } else {
-      // user just checked => optionally set a default
-      // this.loan.firstPaymentDate = dayjs(this.loan.startDate)
-      //   .add(this.loan.termPeriodDefinition.count[0], this.loan.termPeriodDefinition.unit)
-      //   .toDate();
     }
+    // else the user just checked => optionally set a default
     this.submitLoan();
   }
 
@@ -86,12 +75,8 @@ export class BasicLoanInfoComponent {
     if (!this.enableEndDate) {
       // user just unchecked => set endDate to undefined
       this.loan.endDate = undefined;
-    } else {
-      // user just checked => optionally set a default
-      // this.loan.endDate = dayjs(this.loan.startDate)
-      //   .add(this.loan.term * this.loan.termPeriodDefinition.count[0], this.loan.termPeriodDefinition.unit)
-      //   .toDate();
     }
+    // else the user just checked => optionally set a default
     this.submitLoan();
   }
 }

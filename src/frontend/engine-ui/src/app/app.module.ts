@@ -27,6 +27,7 @@ import { TagModule } from 'primeng/tag';
 import { DialogModule } from 'primeng/dialog';
 import { BadgeModule } from 'primeng/badge';
 import { ProgressBarModule } from 'primeng/progressbar';
+import { ConfirmPopupModule } from 'primeng/confirmpopup';
 
 import { PanelModule } from 'primeng/panel';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
@@ -92,6 +93,7 @@ import {
     FormsModule,
     ButtonModule,
     ProgressBarModule,
+    ConfirmPopupModule,
     BadgeModule,
     FluidModule,
     InputTextModule,

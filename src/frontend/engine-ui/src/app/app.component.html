@@ -3,6 +3,7 @@
   [style]="{ width: '60%' }"
   [life]="7000"
 ></p-toast>
+<p-confirmPopup #confirmPopup></p-confirmPopup>
 
 <!-- Loan Not Found Message -->
 <div *ngIf="loanNotFound" class="loan-not-found">
@@ -144,7 +145,7 @@
             <button
               pButton
               icon="pi pi-folder-open"
-              (click)="loadLoan(loan.key)"
+              (click)="loadLoan(loan.key, $event)"
               pTooltip="Load Loan"
             ></button>
           </td>

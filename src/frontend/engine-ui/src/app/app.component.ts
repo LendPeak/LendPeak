@@ -3,6 +3,8 @@ import { MessageService } from 'primeng/api';
 import { ActivatedRoute, Router, NavigationEnd } from '@angular/router';
 import { Location } from '@angular/common';
 import { AmortizationExplainer } from 'lendpeak-engine/models/AmortizationExplainer';
+import { ConfirmationService } from 'primeng/api';
+import { ConfirmPopup } from 'primeng/confirmpopup';
 
 import {
   Component,
@@ -69,10 +71,11 @@ import { UsageDetail } from 'lendpeak-engine/models/Bill/Deposit/UsageDetail';
   selector: 'app-root',
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.css'],
-  providers: [MessageService],
+  providers: [MessageService, ConfirmationService],
   standalone: false,
 })
 export class AppComponent implements OnChanges {
+  @ViewChild('confirmPopup') confirmPopup!: ConfirmPopup;
   @ViewChild('repaymentPlanTable', { static: false })
   repaymentPlanTableRef!: ElementRef;
 
@@ -81,6 +84,7 @@ export class AppComponent implements OnChanges {
     private router: Router,
     private location: Location,
     private messageService: MessageService,
+    private confirmationService: ConfirmationService,
   ) {}
 
   actualLoanSummary?: ActualLoanSummary;
@@ -388,7 +392,7 @@ export class AppComponent implements OnChanges {
       this.loan.description || 'Imported from LoanPro';
 
     this.saveLoan();
-    this.loadLoan(this.loanName);
+    this.executeLoadLoan(this.loanName);
   }
 
   // Handle any actions emitted by the bills component
@@ -1254,16 +1258,32 @@ export class AppComponent implements OnChanges {
     });
   }
 
-  loadLoan(key: string) {
-    if (this.loanModified) {
-      if (
-        !confirm(
-          'You have unsaved changes. Do you want to discard them and load a different loan?',
-        )
-      ) {
-        return;
-      }
+  loadLoan(key: string, event: Event) {
+    // If no unsaved changes, just do it directly
+    if (!this.loanModified) {
+      this.executeLoadLoan(key);
+      return;
     }
+
+    // If unsaved changes exist => show p-confirmPopup
+    this.confirmationService.confirm({
+      target: (event.currentTarget || event.target) as EventTarget, // anchor to the button
+      message:
+        'You have unsaved changes. Discard them and load a different loan?',
+      icon: 'pi pi-exclamation-triangle',
+      acceptLabel: 'Yes',
+      rejectLabel: 'Cancel',
+      accept: () => {
+        // user clicked 'Yes' => proceed to load
+        this.executeLoadLoan(key);
+      },
+      reject: () => {
+        // user clicked 'Cancel' => do nothing
+      },
+    });
+  }
+
+  executeLoadLoan(key: string) {
     // check if key starts with loan_ if not lets add it
     if (!key.startsWith('loan_')) {
       key = `loan_${key}`;

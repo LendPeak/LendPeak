@@ -210,6 +210,7 @@
                       dateFormat="mm/dd/yy"
                       showIcon
                       (ngModelChange)="onInputChange()"
+                      appendTo="body"
                     >
                       <ng-template pTemplate="date" let-date>
                         <span
@@ -235,6 +236,7 @@
                   <!-- End Date -->
                   <td>
                     <p-datepicker
+                      appendTo="body"
                       [(ngModel)]="rate.endDate"
                       name="overrideEndDate-{{ i }}"
                       dateFormat="mm/dd/yy"
@@ -507,6 +509,7 @@
                       dateFormat="mm/dd/yy"
                       showIcon
                       (ngModelChange)="onInputChange()"
+                      appendTo="body"
                     ></p-datepicker>
                   </td>
                   <!-- Remove Button -->
@@ -679,7 +682,7 @@
                         showIcon
                         (ngModelChange)="balanceModificationChanged()"
                         [disabled]="balanceModification.isSystemModification"
-                        [appendTo]="'body'"
+                        appendTo="body"
                       ></p-datepicker>
                     </td>
                     <!-- Type -->

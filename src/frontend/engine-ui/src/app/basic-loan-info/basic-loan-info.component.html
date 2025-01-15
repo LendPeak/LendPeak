@@ -125,6 +125,7 @@
       </label>
       <p-datepicker
         id="startDate"
+        appendTo="body"
         name="startDate"
         [(ngModel)]="loan.startDate"
         dateFormat="mm/dd/yy"
@@ -136,7 +137,7 @@
         [inputStyle]="{
           width: '100%',
           'border-radius': 'unset',
-          'font-size': '1.1rem'
+          'font-size': '1.1rem',
         }"
       ></p-datepicker>
 
@@ -149,7 +150,8 @@
     </div>
 
     <div class="col">
-      <label>First Payment Date
+      <label
+        >First Payment Date
         <i
           class="pi pi-info-circle tooltip-icon p-ml-2"
           (click)="showTooltip($event, firstPaymentDateTooltip)"
@@ -178,10 +180,11 @@
           (ngModelChange)="submitLoan()"
           [disabled]="!enableFirstPaymentDate"
           [style]="{ width: '100%' }"
+          appendTo="body"
           [inputStyle]="{
             width: '100%',
             'border-radius': 'unset',
-            'font-size': '1.1rem'
+            'font-size': '1.1rem',
           }"
           class="w-full"
         >
@@ -200,7 +203,8 @@
     </div>
 
     <div class="col">
-      <label>End Date
+      <label
+        >End Date
         <i
           class="pi pi-info-circle tooltip-icon p-ml-2"
           (click)="showTooltip($event, endDateTooltip)"
@@ -229,10 +233,11 @@
           (ngModelChange)="submitLoan()"
           [disabled]="!enableEndDate"
           [style]="{ width: '100%' }"
+          appendTo="body"
           [inputStyle]="{
             width: '100%',
             'border-radius': 'unset',
-            'font-size': '1.1rem'
+            'font-size': '1.1rem',
           }"
           class="w-full"
         >

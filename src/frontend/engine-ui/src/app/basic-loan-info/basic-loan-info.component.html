@@ -12,8 +12,7 @@
         ></i>
       </label>
       <p-inputNumber
-        id="principal"
-        name="principal"
+        inputId="principal"
         [(ngModel)]="loan.principal"
         mode="currency"
         currency="USD"
@@ -40,8 +39,7 @@
         ></i>
       </label>
       <p-inputNumber
-        id="originationFee"
-        name="originationFee"
+        inputId="originationFee"
         [(ngModel)]="loan.originationFee"
         mode="currency"
         currency="USD"
@@ -70,8 +68,7 @@
         ></i>
       </label>
       <p-inputNumber
-        id="interestRate"
-        name="interestRate"
+        inputId="interestRate"
         [(ngModel)]="loan.interestRate"
         mode="decimal"
         minFractionDigits="2"
@@ -98,8 +95,7 @@
         ></i>
       </label>
       <p-inputNumber
-        id="term"
-        name="term"
+        inputId="term"
         [(ngModel)]="loan.term"
         (ngModelChange)="updateTerm()"
         class="w-full"
@@ -124,9 +120,8 @@
         ></i>
       </label>
       <p-datepicker
-        id="startDate"
         appendTo="body"
-        name="startDate"
+        inputId="startDate"
         [(ngModel)]="loan.startDate"
         dateFormat="mm/dd/yy"
         [numberOfMonths]="2"
@@ -150,7 +145,7 @@
     </div>
 
     <div class="col">
-      <label
+      <label for="firstPaymentDate"
         >First Payment Date
         <i
           class="pi pi-info-circle tooltip-icon p-ml-2"
@@ -171,8 +166,7 @@
         </p-inputgroup-addon>
 
         <p-datepicker
-          id="firstPaymentDate"
-          name="firstPaymentDate"
+          inputId="firstPaymentDate"
           [(ngModel)]="loan.firstPaymentDate"
           dateFormat="mm/dd/yy"
           [numberOfMonths]="2"
@@ -203,7 +197,7 @@
     </div>
 
     <div class="col">
-      <label
+      <label for="enableEndDate"
         >End Date
         <i
           class="pi pi-info-circle tooltip-icon p-ml-2"
@@ -213,8 +207,7 @@
       <p-inputgroup>
         <p-inputgroup-addon>
           <p-checkbox
-            id="enableEndDate"
-            name="enableEndDate"
+            inputId="enableEndDate"
             [(ngModel)]="enableEndDate"
             binary="true"
             inputId="enableEndDate"

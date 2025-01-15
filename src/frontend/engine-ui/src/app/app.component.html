@@ -538,7 +538,13 @@
         <div class="col-12 md:col-3 mt-3">
           <div class="flex flex-column">
             <span class="text-300 font-semibold mb-1">Last Payment Date:</span>
-            <span>{{ loanSummary?.lastPaymentDate | date: "MM/dd/yyyy" }}</span>
+            <span>
+              {{
+                loanSummary?.lastPaymentDate
+                  ? (loanSummary?.lastPaymentDate | date: "MM/dd/yyyy")
+                  : "No payment has been made yet"
+              }}
+            </span>
           </div>
         </div>
         <div class="col-12 md:col-3 mt-3">
@@ -546,9 +552,13 @@
             <span class="text-300 font-semibold mb-1"
               >Last Payment Amount:</span
             >
-            <span>{{
-              loanSummary?.lastPaymentAmount?.toNumber() | currency
-            }}</span>
+            <span>
+              {{
+                loanSummary?.lastPaymentAmount
+                  ? (loanSummary?.lastPaymentAmount?.toNumber() | currency)
+                  : "No payment has been made yet"
+              }}
+            </span>
           </div>
         </div>
         <div class="col-12 md:col-3 mt-3">

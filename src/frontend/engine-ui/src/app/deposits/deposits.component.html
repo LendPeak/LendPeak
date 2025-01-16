@@ -118,146 +118,111 @@
   header="{{ selectedDepositForEdit ? 'Edit Deposit' : 'Add New Deposit' }}"
   [(visible)]="showDepositDialog"
   [modal]="true"
-  [style]="{ width: '90vw', maxHeight: '80vh' }"
   [closable]="true"
   (onHide)="onDepositDialogHide()"
 >
-  <div class="p-grid p-nogutter" style="height: 65vh">
-    <!-- Form (Right Column) -->
-    <div class="p-col-12 p-md-6" style="overflow: auto; padding: 0.5rem">
-      <form #depositForm="ngForm" (ngSubmit)="saveDeposit()">
-        <div class="p-fluid grid p-m-0">
-          <div class="field col-6 p-m-0">
-            <label for="amount">Amount</label>
-            <p-inputNumber
-              id="amount"
-              [(ngModel)]="depositData.jsAmount"
-              name="amount"
-              mode="currency"
-              currency="USD"
-              locale="en-US"
-              (ngModelChange)="onDataChange($event)"
-              required
-            ></p-inputNumber>
-          </div>
-          <div class="field col-6 p-m-0">
-            <label for="currency">Currency</label>
-            <p-select
-              id="currency"
-              [(ngModel)]="depositData.currency"
-              name="currency"
-              [options]="currencyOptions"
-              optionLabel="label"
-              optionValue="value"
-              placeholder="Select Currency"
-              (ngModelChange)="onDataChange($event)"
-              required
-            ></p-select>
-          </div>
+  <div class="p-grid p-nogutter">
+    <div class="field">
+      <label for="amount">Amount</label>
+      <p-inputNumber
+        inputId="amount"
+        [(ngModel)]="depositData.jsAmount"
+        name="amount"
+        mode="currency"
+        currency="USD"
+        locale="en-US"
+        (ngModelChange)="onDataChange($event)"
+        required
+        class="w-full"
+        inputStyleClass="w-full"
+      ></p-inputNumber>
+    </div>
+    <div class="field">
+      <label for="effectiveDate">Effective Date</label>
+      <p-datepicker
+        inputId="effectiveDate"
+        [(ngModel)]="depositData.jsEffectiveDate"
+        (ngModelChange)="onDataChange($event)"
+        dateFormat="mm/dd/yy"
+        [showClear]="false"
+        [showButtonBar]="true"
+        showIcon
+        required
+        appendTo="body"
+        inputStyleClass="w-full"
+        class="w-full"
+        [style]="{ width: '100%' }"
+        [inputStyle]="{
+          width: '100%',
+        }"
+      ></p-datepicker>
+    </div>
+    <div class="field">
+      <label for="clearingDate">Clearing Date</label>
+      <p-datepicker
+        inputId="clearingDate"
+        [(ngModel)]="depositData.jsClearingDate"
+        (ngModelChange)="onDataChange($event)"
+        [minDate]="depositData.jsEffectiveDate"
+        dateFormat="mm/dd/yy"
+        appendTo="body"
+        [showButtonBar]="true"
+        showIcon
+        inputStyleClass="w-full"
+        class="w-full"
+        [style]="{ width: '100%' }"
+        [inputStyle]="{
+          width: '100%',
+        }"
+      ></p-datepicker>
+    </div>
+    <div class="field">
+      <label for="excessAppliedDate">Excess Applied Date</label>
 
-          <div class="field col-6 p-m-0">
-            <label for="effectiveDate">Effective Date</label>
-            <p-datepicker
-              id="effectiveDate"
-              [(ngModel)]="depositData.jsEffectiveDate"
-              (ngModelChange)="onDataChange($event)"
-              name="effectiveDate"
-              dateFormat="mm/dd/yy"
-              showIcon
-              required
-              appendTo="body"
-            ></p-datepicker>
-          </div>
-          <div class="field col-6 p-m-0">
-            <label for="clearingDate">Clearing Date</label>
-            <p-datepicker
-              id="clearingDate"
-              [(ngModel)]="depositData.jsClearingDate"
-              (ngModelChange)="onDataChange($event)"
-              [minDate]="depositData.jsEffectiveDate"
-              name="clearingDate"
-              dateFormat="mm/dd/yy"
-              appendTo="body"
-              showIcon
-            ></p-datepicker>
-          </div>
-          <div class="field col-12 p-m-0">
-            <label for="paymentMethod">Payment Method</label>
-            <input
-              pInputText
-              id="paymentMethod"
-              type="text"
-              [(ngModel)]="depositData.paymentMethod"
-              name="paymentMethod"
-            />
-          </div>
-          <div class="field col-6 p-m-0">
-            <label for="depositor">Depositor</label>
-            <input
-              pInputText
-              id="depositor"
-              type="text"
-              [(ngModel)]="depositData.depositor"
-              name="depositor"
-            />
-          </div>
-          <div class="field col-6 p-m-0">
-            <label for="depositLocation">Deposit Location</label>
-            <input
-              pInputText
-              id="depositLocation"
-              type="text"
-              [(ngModel)]="depositData.depositLocation"
-              name="depositLocation"
-            />
-          </div>
-          <div class="field col-12 p-m-0">
-            <div class="p-formgrid p-grid">
-              <div
-                class="field col-6 p-m-0"
-                style="display: flex; align-items: center"
-              >
-                <p-checkbox
-                  inputId="applyExcessToPrincipal"
-                  [(ngModel)]="depositData.applyExcessToPrincipal"
-                  name="applyExcessToPrincipal"
-                  binary="true"
-                  (onChange)="onApplyExcessToPrincipalChange($event)"
-                ></p-checkbox>
-                <label
-                  for="applyExcessToPrincipal"
-                  style="margin-left: 0.5em; margin-bottom: 0"
-                >
-                  Apply Excess to Principal
-                </label>
-              </div>
-              <div
-                class="field col-6 p-m-0"
-                *ngIf="depositData.applyExcessToPrincipal"
-              >
-                <label for="excessAppliedDate">Excess Applied Date</label>
-                <p-datepicker
-                  id="excessAppliedDate"
-                  [(ngModel)]="depositData.jsExcessAppliedDate"
-                  (ngModelChange)="onDataChange($event)"
-                  name="excessAppliedDate"
-                  dateFormat="mm/dd/yy"
-                  showIcon
-                  [minDate]="depositData.jsEffectiveDate"
-                  [required]="depositData.applyExcessToPrincipal"
-                  appendTo="body"
-                ></p-datepicker>
-              </div>
-            </div>
-          </div>
-        </div>
-      </form>
+      <p-inputgroup>
+        <p-inputgroup-addon>
+          <p-checkbox
+            inputId="applyExcessToPrincipal"
+            [(ngModel)]="depositData.applyExcessToPrincipal"
+            name="applyExcessToPrincipal"
+            binary="true"
+            size="small"
+            (onChange)="onApplyExcessToPrincipalChange($event)"
+          ></p-checkbox>
+        </p-inputgroup-addon>
+
+        <p-datepicker
+          inputId="excessAppliedDate"
+          [disabled]="!depositData.applyExcessToPrincipal"
+          [(ngModel)]="depositData.jsExcessAppliedDate"
+          (ngModelChange)="onDataChange($event)"
+          name="excessAppliedDate"
+          dateFormat="mm/dd/yy"
+          [showButtonBar]="true"
+          [minDate]="depositData.jsEffectiveDate"
+          [required]="depositData.applyExcessToPrincipal"
+          appendTo="body"
+          [style]="{ width: '100%' }"
+          appendTo="body"
+          [inputStyle]="{
+            width: '100%',
+            'border-radius': 'unset',
+            'font-size': '1.1rem',
+          }"
+          class="w-full"
+        ></p-datepicker>
+
+        <p-inputgroup-addon>
+          <i class="pi pi-calendar"></i>
+        </p-inputgroup-addon>
+      </p-inputgroup>
     </div>
   </div>
 
-  <div class="flex justify-end gap-2">
+  <div class="flex justify-content-end gap-2">
     <p-button
       label="Cancel"
+      severity="warn"
       icon="pi pi-times"
       (click)="onDepositDialogHide()"
       class="p-button-text"
@@ -267,7 +232,6 @@
       icon="pi pi-check"
       type="submit"
       (click)="saveDeposit()"
-      [disabled]="!depositForm.form.valid"
     ></p-button>
   </div>
 </p-dialog>

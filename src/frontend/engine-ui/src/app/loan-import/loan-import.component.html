@@ -2,20 +2,21 @@
   <div class="field">
     <label for="connector">Select Connector</label>
     <p-select
-      id="connector"
+      inputId="connector"
       [options]="connectors"
       optionLabel="name"
       optionValue="id"
       [(ngModel)]="selectedConnectorId"
       placeholder="Select a Connector"
-      [showClear]="true"
+      class="w-full"
     ></p-select>
   </div>
 
   <div class="field">
     <label for="searchType">Search By</label>
     <p-select
-      id="searchType"
+      inputId="searchType"
+      class="w-full"
       [options]="[
         { label: 'System ID', value: 'systemId' },
         { label: 'Display ID', value: 'displayId' },
@@ -37,25 +38,28 @@
       type="text"
       pInputText
       [(ngModel)]="searchValue"
+      class="w-full"
       placeholder="Enter Display ID or System ID"
     />
   </div>
 
-  <div class="field grid gap-2" *ngIf="searchType === 'systemIdRange'">
-    <div class="col-6">
+  <div class="formgrid grid" *ngIf="searchType === 'systemIdRange'">
+    <div class="field col">
       <label for="fromSystemId">From System ID</label>
       <input
         id="fromSystemId"
         type="text"
+        class="w-full"
         pInputText
         [(ngModel)]="fromSystemId"
         placeholder="Enter starting System ID"
       />
     </div>
-    <div class="col-6">
+    <div class="field col">
       <label for="toSystemId">To System ID</label>
       <input
         id="toSystemId"
+        class="w-full"
         type="text"
         pInputText
         [(ngModel)]="toSystemId"
@@ -64,14 +68,14 @@
     </div>
   </div>
 
-  <div class="flex gap-2 mt-4">
+  <div class="flex gap-2 mt-4 justify-content-end">
     <!-- Preview and Import Buttons side by side -->
     <p-button
       label="Preview"
       icon="pi pi-eye"
       (click)="onPreview()"
       [loading]="isLoading"
-      class="p-button-info"
+      severity="info"
     ></p-button>
 
     <p-button
@@ -79,7 +83,6 @@
       icon="pi pi-cloud-download"
       (click)="importLoan()"
       [loading]="isLoading"
-      class="p-button-success"
     ></p-button>
   </div>
 </div>

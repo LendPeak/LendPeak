@@ -255,7 +255,7 @@
     </div>
   </div>
 
-  <p-footer>
+  <div class="flex justify-end gap-2">
     <p-button
       label="Cancel"
       icon="pi pi-times"
@@ -269,7 +269,7 @@
       (click)="saveDeposit()"
       [disabled]="!depositForm.form.valid"
     ></p-button>
-  </p-footer>
+  </div>
 </p-dialog>
 
 <!-- Deposit Usage Details Dialog -->

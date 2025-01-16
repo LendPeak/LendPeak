@@ -190,7 +190,7 @@
     [(visible)]="showEditLoanDialog"
     [modal]="true"
     [style]="{ width: '80%', height: '80%' }"
-    [closable]="false"
+    [closable]="true"
   >
     <div class="p-fluid">
       <div class="field">
@@ -212,7 +212,7 @@
         ></textarea>
       </div>
     </div>
-    <p-footer>
+    <div>
       <button
         pButton
         label="Cancel"
@@ -220,7 +220,7 @@
         (click)="showEditLoanDialog = false"
       ></button>
       <button pButton label="Save" (click)="saveEditedLoanDetails()"></button>
-    </p-footer>
+    </div>
   </p-dialog>
 
   <!-- Toolbar with Loan Name -->

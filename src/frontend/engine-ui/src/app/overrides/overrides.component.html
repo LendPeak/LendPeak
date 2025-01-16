@@ -728,6 +728,7 @@
                     <!-- Description -->
                     <td>
                       <input
+                        id="balanceModificationDescription-{{ i }}"
                         style="width: 100%"
                         pInputText
                         type="text"
@@ -796,6 +797,7 @@
                   <td>
                     <ng-container *ngIf="fee.type === 'fixed'">
                       <p-inputNumber
+                        inputId="feeAmountCurrency"
                         [(ngModel)]="fee.amount"
                         mode="currency"
                         currency="USD"
@@ -805,6 +807,7 @@
                     </ng-container>
                     <ng-container *ngIf="fee.type === 'percentage'">
                       <p-inputNumber
+                        inputId="feeAmountPercentage"
                         [(ngModel)]="fee.percentage"
                         mode="decimal"
                         minFractionDigits="2"
@@ -816,6 +819,7 @@
                   <!-- Based On -->
                   <td>
                     <p-select
+                      inputId="feeBasedOn"
                       [disabled]="fee.type !== 'percentage'"
                       [(ngModel)]="fee.basedOn"
                       [options]="[
@@ -829,6 +833,8 @@
                   <!-- Description -->
                   <td>
                     <input
+                      id="feeDescription"
+                      name="feeDescription"
                       pInputText
                       type="text"
                       [(ngModel)]="fee.description"
@@ -883,6 +889,7 @@
                   <!-- Term Number -->
                   <td>
                     <p-inputNumber
+                      inputId="feeTermNumber"
                       [(ngModel)]="fee.termNumber"
                       (ngModelChange)="onInputChange()"
                     ></p-inputNumber>
@@ -890,6 +897,7 @@
                   <!-- Fee Type -->
                   <td>
                     <p-select
+                      inputId="feeTermType"
                       [(ngModel)]="fee.type"
                       [options]="[
                         { label: 'Fixed', value: 'fixed' },
@@ -902,6 +910,7 @@
                   <td>
                     <ng-container *ngIf="fee.type === 'fixed'">
                       <p-inputNumber
+                        inputId="feeTermAmountCurrency"
                         [(ngModel)]="fee.amount"
                         mode="currency"
                         currency="USD"
@@ -911,6 +920,7 @@
                     </ng-container>
                     <ng-container *ngIf="fee.type === 'percentage'">
                       <p-inputNumber
+                        inputId="feeTermAmountPercentage"
                         [(ngModel)]="fee.percentage"
                         mode="decimal"
                         minFractionDigits="2"
@@ -922,6 +932,7 @@
                   <!-- Based On -->
                   <td>
                     <p-select
+                      inputId="feeTermBasedOn"
                       [disabled]="fee.type !== 'percentage'"
                       [(ngModel)]="fee.basedOn"
                       [options]="[
@@ -935,6 +946,7 @@
                   <!-- Description -->
                   <td>
                     <input
+                      id="feeTermDescription"
                       pInputText
                       type="text"
                       [(ngModel)]="fee.description"

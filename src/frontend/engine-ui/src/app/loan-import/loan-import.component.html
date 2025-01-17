@@ -68,21 +68,22 @@
     </div>
   </div>
 
-  <div class="flex gap-2 mt-4 justify-content-end">
-    <!-- Progress bar & tracker: only relevant for systemIdRange while loading -->
-    <div
-      class="flex align-items-center mr-2"
-      *ngIf="isLoading && searchType === 'systemIdRange'"
-    >
-      <p-progressbar
-        [value]="progressValue"
-        styleClass="w-20rem"
-        [showValue]="true"
-      >
-      </p-progressbar>
-      <span class="ml-2"> {{ loansLoaded }} / {{ totalLoans }} Loaded </span>
-    </div>
+  <!-- Progress bar & tracker: only relevant for systemIdRange while loading -->
 
+  <div class="field" *ngIf="isLoading && searchType === 'systemIdRange'">
+    <p-progressbar [value]="loansLoaded" [showValue]="true">
+      <ng-template #content let-value>
+        <span></span>
+          {{
+            (value / totalLoans) * 100).toFixed(1)
+
+          }}% ({{ value }}/{{ totalLoans }})</span
+        >
+      </ng-template>
+    </p-progressbar>
+  </div>
+
+  <div class="flex gap-2 mt-4 justify-content-end">
     <p-button
       label="Preview"
       icon="pi pi-eye"

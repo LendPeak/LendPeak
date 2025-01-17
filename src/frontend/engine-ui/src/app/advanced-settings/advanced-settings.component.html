@@ -525,7 +525,7 @@
     <div class="p-d-flex p-jc-end">
       <p-button
         label="Cancel"
-        class="p-button-text p-mr-2"
+        class="p-mr-2"
         (onClick)="showSaveSettingsDialog = false"
       ></p-button>
       <p-button label="Save" (onClick)="confirmSaveSettings()"></p-button>
@@ -565,13 +565,14 @@
           <div class="p-d-flex p-ai-center">
             <p-button
               icon="pi pi-eye"
-              class="p-button-rounded p-button-info p-mr-2"
+              class="p-mr-2"
+              severity="info"
               (onClick)="previewSettings(setting)"
               pTooltip="Preview Settings"
             ></p-button>
             <p-button
               icon="pi pi-trash"
-              class="p-button-rounded p-button-danger"
+              severity="danger"
               (onClick)="deleteSetting(setting.id)"
               pTooltip="Delete Settings"
             ></p-button>
@@ -584,12 +585,12 @@
     <div class="p-d-flex p-jc-end">
       <p-button
         label="Cancel"
-        class="p-button-text p-mr-2"
+        class="p-mr-2"
+        severity="warn"
         (onClick)="showLoadSettingsDialog = false"
       ></p-button>
       <p-button
         label="Load"
-        class="p-button-primary"
         [disabled]="!selectedSetting"
         (onClick)="confirmLoadSettings()"
       ></p-button>
@@ -610,7 +611,6 @@
     <button
       pButton
       label="Close"
-      class="p-button-text"
       (click)="showPreviewSettingsDialog = false"
     ></button>
   </div>

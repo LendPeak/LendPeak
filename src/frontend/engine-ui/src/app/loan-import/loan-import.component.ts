@@ -144,12 +144,7 @@ export class LoanImportComponent implements OnInit, OnDestroy {
     if (this.searchType !== 'systemIdRange') {
       this.isLoading = true;
       this.loanProService
-        .importLoan(
-          connector,
-          this.searchType,
-            this.fromSystemId,
-          this.toSystemId ,
-        )
+        .importLoan(connector, this.searchType, this.searchValue)
         .subscribe({
           next: (loanData) => {
             this.isLoading = false;

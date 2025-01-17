@@ -2119,6 +2119,9 @@ describe('Amortization Class', () => {
       // If no active period (date is before start?), payoff = totalLoanAmount
       if (date.isSameOrBefore(this.startDate)) {
         return this.totalLoanAmount;
+      } else {
+        console.warn("No active period found for date", date);
+        return this.totalLoanAmount;
       }
     }
 

@@ -73,12 +73,11 @@
   <div class="field" *ngIf="isLoading && searchType === 'systemIdRange'">
     <p-progressbar [value]="loansLoaded" [showValue]="true">
       <ng-template #content let-value>
-        <span></span>
-          {{
-            (value / totalLoans) * 100).toFixed(1)
-
-          }}% ({{ value }}/{{ totalLoans }})</span
-        >
+        <span>
+          {{ ((value / totalLoans) * 100).toFixed(1) }}% ({{ value }}/{{
+            totalLoans
+          }})
+        </span>
       </ng-template>
     </p-progressbar>
   </div>

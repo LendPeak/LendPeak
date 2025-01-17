@@ -12,7 +12,8 @@ import { MessageService } from 'primeng/api';
 import { UILoan } from 'lendpeak-engine/models/UIInterfaces';
 import { parseODataDate, Payment } from '../models/loanpro.model';
 import dayjs from 'dayjs';
-import { Subscription } from 'rxjs';
+import { Subscription, from } from 'rxjs';
+import { mergeMap, tap, finalize } from 'rxjs/operators';
 import { PerDiemCalculationType } from 'lendpeak-engine/models/InterestCalculator';
 import { FlushUnbilledInterestDueToRoundingErrorType } from 'lendpeak-engine/models/Amortization';
 import { LoanResponse } from '../models/loanpro.model';
@@ -41,6 +42,11 @@ export class LoanImportComponent implements OnInit, OnDestroy {
   @Output() loanImported = new EventEmitter<UILoan | UILoan[]>();
 
   private connectorsSubscription!: Subscription;
+
+  // NEW: Add these three properties for parallel progress
+  loansLoaded: number = 0;
+  totalLoans: number = 0;
+  progressValue: number = 0; // 0–100
 
   constructor(
     private connectorService: ConnectorService,
@@ -94,17 +100,20 @@ export class LoanImportComponent implements OnInit, OnDestroy {
           previewLoans = previewLoans.filter((loan) => loan.d);
 
           for (let loan of previewLoans) {
+            // convert payment dates
             loan.d.Payments.results
               .filter((payment: any) => payment.active === 1)
               .map((payment: any) => {
                 payment.date = parseODataDate(payment.date, true);
                 payment.created = parseODataDate(payment.created, true);
               });
+            // convert contractDate to string for display
             loan.d.LoanSetup.contractDate = parseODataDate(
               loan.d.LoanSetup.contractDate,
               true,
             ).toDateString();
           }
+
           this.previewLoans = previewLoans;
           if (this.previewLoans.length === 0) {
             this.errorMsg = 'No loans found for the given criteria.';
@@ -119,6 +128,11 @@ export class LoanImportComponent implements OnInit, OnDestroy {
       });
   }
 
+  /**
+   * The main import method.
+   * If the user picked systemIdRange, we fetch loans in parallel
+   * (browser-limited concurrency) instead of one-by-one.
+   */
   importLoan() {
     // Validate inputs
     if (!this.validateInputs()) return;
@@ -126,25 +140,100 @@ export class LoanImportComponent implements OnInit, OnDestroy {
     const connector = this.getSelectedConnector();
     if (!connector) return;
 
+    // If NOT systemIdRange => same approach as before (single or multi call).
+    if (this.searchType !== 'systemIdRange') {
+      this.isLoading = true;
+      this.loanProService
+        .importLoan(
+          connector,
+          this.searchType,
+            this.fromSystemId,
+          this.toSystemId ,
+        )
+        .subscribe({
+          next: (loanData) => {
+            this.isLoading = false;
+            this.handleImportedLoans(loanData);
+          },
+          error: (error) => {
+            this.isLoading = false;
+            console.error('Error importing loan(s):', error);
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Error',
+              detail: 'Failed to import loan(s).',
+            });
+          },
+        });
+
+      return;
+    }
+
+    // -------------------------------------------------
+    // NEW LOGIC for systemIdRange => parallel imports
+    // -------------------------------------------------
+    const start = parseInt(this.fromSystemId, 10);
+    const end = parseInt(this.toSystemId, 10);
+
+    // Prepare to track total & loaded
+    this.totalLoans = end - start + 1;
+    this.loansLoaded = 0;
+    this.progressValue = 0;
+
+    // We'll accumulate the fetched loans in this array
+    let loadedLoans: LoanResponse[] = [];
+
+    // Make an array of all system IDs in the range
+    const systemIds = Array.from(
+      { length: this.totalLoans },
+      (_, i) => start + i,
+    );
+
     this.isLoading = true;
-    this.loanProService
-      .importLoan(
-        connector,
-        this.searchType,
-        this.searchType === 'systemIdRange'
-          ? this.fromSystemId
-          : this.searchValue,
-        this.searchType === 'systemIdRange' ? this.toSystemId : undefined,
+    this.errorMsg = '';
+
+    // We'll load them in parallel so the browser fetches as many as it can
+    from(systemIds)
+      .pipe(
+        // You can specify a concurrency limit in mergeMap's 2nd argument, e.g. mergeMap(fn, 5)
+        // to fetch 5 at a time. By default, concurrency = Infinity => as many as browser permits.
+        mergeMap((id: number) => {
+          return this.loanProService
+            .importLoan(connector, 'systemId', id.toString())
+            .pipe(
+              tap((res: LoanResponse | LoanResponse[]) => {
+                this.loansLoaded++;
+                this.progressValue = Math.floor(
+                  (this.loansLoaded / this.totalLoans) * 100,
+                );
+                if (Array.isArray(res)) {
+                  loadedLoans.push(...res);
+                } else {
+                  loadedLoans.push(res);
+                }
+              }),
+            );
+        }),
+        finalize(() => {
+          // Called once everything completes or errors
+          this.isLoading = false;
+        }),
       )
       .subscribe({
-        next: (loanData) => {
-          this.isLoading = false;
-          // loanData can be single or multiple loans
-          let loans = Array.isArray(loanData) ? loanData : [loanData];
-
-          // filter out loans that are empty
-          loans = loans.filter((loan) => loan.d);
-
+        next: () => {
+          // We don't do anything here because it's handled in tap()
+        },
+        error: (error) => {
+          console.error('Error importing some loan(s):', error);
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'Failed to import some loan(s).',
+          });
+        },
+        complete: () => {
+          // All done => handle the final array of loans
+          let loans = loadedLoans.filter((loan) => loan.d);
           if (loans.length === 0) {
             this.messageService.add({
               severity: 'warn',
@@ -154,45 +243,66 @@ export class LoanImportComponent implements OnInit, OnDestroy {
             return;
           }
 
+          // Convert them to UILoan and emit
           const uiLoans = loans.map((l) => this.mapToUILoan(l));
-
-          if (uiLoans.length > 1) {
-            // Emit an array of UILoans
-            try {
-              this.loanImported.emit(uiLoans);
-              this.messageService.add({
-                severity: 'success',
-                summary: 'Success',
-                detail: `${uiLoans.length} loans imported successfully.`,
-              });
-            } catch (e) {
-              console.error('Error importing loan(s):', e);
-              this.messageService.add({
-                severity: 'error',
-                summary: 'Error',
-                detail: 'Failed to import loan(s).',
-              });
-            }
-          } else {
-            // Just one loan
-            this.loanImported.emit(uiLoans[0]);
-            this.messageService.add({
-              severity: 'success',
-              summary: 'Success',
-              detail: 'Loan imported successfully.',
-            });
-          }
-        },
-        error: (error) => {
-          this.isLoading = false;
-          console.error('Error importing loan(s):', error);
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Error',
-            detail: 'Failed to import loan(s).',
-          });
+          this.handleImportedLoans(uiLoans);
         },
       });
+  }
+
+  /**
+   * Takes raw LoanResponse | LoanResponse[] | UILoan[] and performs the final
+   * "imported" logic => i.e. filter empty, convert to UI objects, and emit.
+   */
+  private handleImportedLoans(
+    loanData: LoanResponse | LoanResponse[] | UILoan[],
+  ) {
+    // unify them into array
+    let loansArray = Array.isArray(loanData) ? loanData : [loanData];
+
+    // If they’re still raw LoanResponse, convert them to UILoan
+    if (loansArray.length > 0 && (loansArray[0] as any).d) {
+      // Filter out empties
+      loansArray = (loansArray as LoanResponse[]).filter((loan) => loan.d);
+      if (loansArray.length === 0) {
+        this.messageService.add({
+          severity: 'warn',
+          summary: 'No Loans Found',
+          detail: 'No loans found to import.',
+        });
+        return;
+      }
+      loansArray = loansArray.map((l) => this.mapToUILoan(l));
+    }
+
+    const uiLoans = loansArray as UILoan[];
+
+    if (uiLoans.length > 1) {
+      // multiple
+      try {
+        this.loanImported.emit(uiLoans);
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Success',
+          detail: `${uiLoans.length} loans imported successfully.`,
+        });
+      } catch (e) {
+        console.error('Error importing loan(s):', e);
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'Failed to import loan(s).',
+        });
+      }
+    } else {
+      // single
+      this.loanImported.emit(uiLoans[0]);
+      this.messageService.add({
+        severity: 'success',
+        summary: 'Success',
+        detail: 'Loan imported successfully.',
+      });
+    }
   }
 
   private validateInputs(): boolean {

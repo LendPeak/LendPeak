@@ -69,7 +69,20 @@
   </div>
 
   <div class="flex gap-2 mt-4 justify-content-end">
-    <!-- Preview and Import Buttons side by side -->
+    <!-- Progress bar & tracker: only relevant for systemIdRange while loading -->
+    <div
+      class="flex align-items-center mr-2"
+      *ngIf="isLoading && searchType === 'systemIdRange'"
+    >
+      <p-progressbar
+        [value]="progressValue"
+        styleClass="w-20rem"
+        [showValue]="true"
+      >
+      </p-progressbar>
+      <span class="ml-2"> {{ loansLoaded }} / {{ totalLoans }} Loaded </span>
+    </div>
+
     <p-button
       label="Preview"
       icon="pi pi-eye"

@@ -364,7 +364,7 @@ export class AppComponent implements OnChanges {
       // Multiple loans imported
       // For example, save each loan individually under its own name
       loanData.forEach((singleLoan) => {
-        this.saveAndLoadLoan(singleLoan);
+        this.saveLoanWithoutLoading(singleLoan);
       });
       this.messageService.add({
         severity: 'success',
@@ -386,6 +386,11 @@ export class AppComponent implements OnChanges {
 
   // A helper function to avoid repeating code:
   private saveAndLoadLoan(loanData: UILoan) {
+    this.saveLoanWithoutLoading(loanData);
+    this.executeLoadLoan(this.loanName);
+  }
+
+  private saveLoanWithoutLoading(loanData: UILoan) {
     this.loan = loanData;
     this.loanModified = true;
     this.loanName = this.loan.name || 'Imported Loan';
@@ -395,7 +400,6 @@ export class AppComponent implements OnChanges {
       this.loan.description || 'Imported from LoanPro';
 
     this.saveLoan();
-    this.executeLoadLoan(this.loanName);
   }
 
   // Handle any actions emitted by the bills component
@@ -435,7 +439,9 @@ export class AppComponent implements OnChanges {
       nextBillDate = unpaidBills[0].dueDate.toDate();
     }
 
-    const originalPrincipal = Currency.of(this.loan.principal);
+    const originalPrincipal = Currency.of(this.loan.principal).add(
+      this.loan.originationFee,
+    );
     const actualRemainingPrincipal =
       originalPrincipal.subtract(actualPrincipalPaid);
 
@@ -694,7 +700,8 @@ export class AppComponent implements OnChanges {
       const loanName = decodeURIComponent(params['loan'] || '');
       if (loanName) {
         if (this.currentLoanName !== loanName) {
-          this.loadLoanFromURL(loanName);
+          //this.loadLoanFromURL(loanName);
+          this.executeLoadLoan(loanName);
         }
       } else {
         // No loan specified, proceed as normal
@@ -745,46 +752,6 @@ export class AppComponent implements OnChanges {
     });
 
     this.loanModified = false;
-  }
-
-  loadLoanFromURL(loanName: string) {
-    const key = `loan_${loanName}`;
-    const loanDataJSON = localStorage.getItem(key);
-    if (loanDataJSON) {
-      // Loan found, load it
-      const loanData = JSON.parse(loanDataJSON);
-      this.loan = loanData.loan;
-      this.bills = loanData.bills;
-      this.loan.deposits = loanData.deposits;
-      this.parseLoanData(this.loan);
-
-      // Set the current loan name and description
-      this.currentLoanName =
-        loanData.name || loanData.loan.name || 'Loaded Loan';
-      this.currentLoanId = loanData.loan.id || '111';
-      this.currentLoanDescription = loanData.loan.description || '222';
-
-      this.updateTermOptions();
-      this.generateBills();
-      this.applyPayments();
-      this.submitLoan();
-      this.loanModified = false;
-      this.loanNotFound = false; // Ensure this is false
-      this.messageService.add({
-        severity: 'success',
-        summary: 'Success',
-        detail: `Loan "${loanData.name}" loaded successfully`,
-      });
-    } else {
-      // Loan not found, display a message and suggest going back to home page
-      this.messageService.add({
-        severity: 'error',
-        summary: 'Error',
-        detail: `Loan "${loanName}" not found.`,
-      });
-      this.loanNotFound = true;
-      this.requestedLoanName = loanName;
-    }
   }
 
   loadDefaultLoan() {

@@ -80,8 +80,8 @@
             <!-- Popover replacing OverlayPanel -->
             <p-popover #termPeriodUnitTooltip>
               <ng-template pTemplate="content">
-                Defines the unit of time for each term period. For example, select
-                "Month" for monthly payments.
+                Defines the unit of time for each term period. For example,
+                select "Month" for monthly payments.
               </ng-template>
             </p-popover>
           </div>
@@ -216,7 +216,8 @@
             <ng-template pTemplate="content">
               <div class="tooltip-content">
                 <p>
-                  Specify the order in which payments are applied to components...
+                  Specify the order in which payments are applied to
+                  components...
                 </p>
               </div>
             </ng-template>
@@ -253,9 +254,9 @@
             <ng-template pTemplate="content">
               <div class="tooltip-content">
                 <p>
-                  <strong>Amortized Loan:</strong> An amortized loan has scheduled
-                  payments applied to both principal and interest over the life
-                  of the loan.
+                  <strong>Amortized Loan:</strong> An amortized loan has
+                  scheduled payments applied to both principal and interest over
+                  the life of the loan.
                 </p>
                 <p>
                   <strong>Daily Simple Interest Loan:</strong> A daily simple
@@ -287,7 +288,8 @@
             <!-- Popover replacing OverlayPanel -->
             <p-popover #defaultPreBillDaysTooltip>
               <ng-template pTemplate="content">
-                Number of days before the period end to open the bill by default.
+                Number of days before the period end to open the bill by
+                default.
               </ng-template>
             </p-popover>
           </div>
@@ -374,7 +376,8 @@
           <!-- Popover replacing OverlayPanel -->
           <p-popover #allowRateAbove100Tooltip>
             <ng-template pTemplate="content">
-              Enable this option to allow setting interest rates higher than 100%.
+              Enable this option to allow setting interest rates higher than
+              100%.
             </ng-template>
           </p-popover>
         </div>
@@ -500,8 +503,8 @@
   header="Save Advanced Settings"
   [(visible)]="showSaveSettingsDialog"
   [modal]="true"
+  [closable]="true"
   [style]="{ width: '400px' }"
-  [closable]="false"
 >
   <div class="p-fluid">
     <div class="field">
@@ -518,7 +521,7 @@
       <label for="isDefault">Set as default</label>
     </div>
   </div>
-  <p-footer>
+  <div class="flex gap-2 mt-4 justify-content-end">
     <div class="p-d-flex p-jc-end">
       <p-button
         label="Cancel"
@@ -527,7 +530,7 @@
       ></p-button>
       <p-button label="Save" (onClick)="confirmSaveSettings()"></p-button>
     </div>
-  </p-footer>
+  </div>
 </p-dialog>
 
 <!-- Load Settings Dialog -->
@@ -536,7 +539,7 @@
   [(visible)]="showLoadSettingsDialog"
   [modal]="true"
   [style]="{ width: '600px' }"
-  [closable]="false"
+  [closable]="true"
 >
   <p-table
     [value]="savedSettings"
@@ -577,7 +580,7 @@
       </tr>
     </ng-template>
   </p-table>
-  <p-footer>
+  <div class="flex gap-2 mt-4 justify-content-end">
     <div class="p-d-flex p-jc-end">
       <p-button
         label="Cancel"
@@ -591,7 +594,7 @@
         (onClick)="confirmLoadSettings()"
       ></p-button>
     </div>
-  </p-footer>
+  </div>
 </p-dialog>
 
 <!-- Preview Settings Dialog -->
@@ -599,15 +602,16 @@
   header="Settings Preview"
   [(visible)]="showPreviewSettingsDialog"
   [modal]="true"
+  [closable]="true"
   [style]="{ width: '600px' }"
 >
   <pre>{{ selectedSetting?.settings | json }}</pre>
-  <p-footer>
+  <div class="flex gap-2 mt-4 justify-content-end">
     <button
       pButton
       label="Close"
       class="p-button-text"
       (click)="showPreviewSettingsDialog = false"
     ></button>
-  </p-footer>
+  </div>
 </p-dialog>

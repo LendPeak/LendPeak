@@ -24,6 +24,7 @@
     "angular-gtag": "^1.0.4",
     "dayjs": "^1.11.13",
     "decimal.js": "^10.4.3",
+    "dexie": "^4.0.11",
     "highlight.js": "^11.10.0",
     "highlightjs-line-numbers.js": "^2.9.0",
     "lendpeak-engine": "file:../../engine",

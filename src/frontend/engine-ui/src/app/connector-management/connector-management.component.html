@@ -2,83 +2,82 @@
 <p-dialog
   [(visible)]="showConnectorDialog"
   [modal]="true"
-  [style]="{ width: '80%', height: '80%' }"
   [closable]="false"
   [header]="connectorDialogTitle"
+  [style]="{ width: '80%', height: '80%' }"
 >
-  <div class="p-fluid">
+  <div class="field">
+    <label for="name">Connector Name</label>
+    <input
+      id="name"
+      type="text"
+      pInputText
+      [(ngModel)]="newConnector.name"
+      required
+      autofocus
+      class="w-full"
+    />
+  </div>
+  <div class="field">
+    <label for="type">Connector Type</label>
+    <p-select
+      inputId="type"
+      [options]="connectorTypes"
+      [(ngModel)]="newConnector.type"
+      placeholder="Select a Connector Type"
+      [disabled]="isEditMode()"
+      class="w-full"
+    ></p-select>
+  </div>
+  <!-- LoanPro Credentials -->
+  <div *ngIf="newConnector.type === 'LoanPro'">
     <div class="field">
-      <label for="name">Connector Name</label>
+      <label for="autopalId">Autopal ID</label>
       <input
-        id="name"
+        id="autopalId"
+        class="w-full"
         type="text"
         pInputText
-        [(ngModel)]="newConnector.name"
+        [(ngModel)]="newConnector.credentials.autopalId"
         required
-        autofocus
       />
     </div>
     <div class="field">
-      <label for="type">Connector Type</label>
-      <p-select
-        id="type"
-        [options]="connectorTypes"
-        [(ngModel)]="newConnector.type"
-        placeholder="Select a Connector Type"
-        [disabled]="isEditMode()"
-      ></p-select>
+      <label for="apiUrl">API URL</label>
+      <input
+        id="apiUrl"
+        type="text"
+        pInputText
+        class="w-full"
+        [(ngModel)]="newConnector.credentials.apiUrl"
+        required
+      />
     </div>
-    <!-- LoanPro Credentials -->
-    <div *ngIf="newConnector.type === 'LoanPro'">
-      <div class="field">
-        <label for="autopalId">Autopal ID</label>
-        <input
-          id="autopalId"
-          type="text"
-          pInputText
-          [(ngModel)]="newConnector.credentials.autopalId"
-          required
-        />
-      </div>
-      <div class="field">
-        <label for="apiUrl">API URL</label>
-        <input
-          id="apiUrl"
-          type="text"
-          pInputText
-          [(ngModel)]="newConnector.credentials.apiUrl"
-          required
-        />
-      </div>
-      <div class="field">
-        <label for="apiToken">API Token</label>
-        <input
-          id="apiToken"
-          type="text"
-          pInputText
-          [(ngModel)]="newConnector.credentials.apiToken"
-          required
-        />
-      </div>
+    <div class="field">
+      <label for="apiToken">API Token</label>
+      <input
+        id="apiToken"
+        type="text"
+        class="w-full"
+        pInputText
+        [(ngModel)]="newConnector.credentials.apiToken"
+        required
+      />
     </div>
-    <!-- Additional fields for other connector types can be added here -->
   </div>
-  <p-footer>
-    <button
-      pButton
+  <div class="flex gap-2 mt-4 justify-content-end">
+    <p-button
       label="Cancel"
       icon="pi pi-times"
-      class="p-button-text"
       (click)="showConnectorDialog = false"
-    ></button>
-    <button
-      pButton
+    ></p-button>
+    <p-button
       label="Save"
       icon="pi pi-check"
       (click)="saveConnector()"
       [disabled]="!newConnector.name || !newConnector.type"
-    ></button>
-  </p-footer>
+    ></p-button>
+  </div>
 </p-dialog>
 
 <!-- Connector List -->
@@ -117,10 +116,11 @@
   </ng-template>
 </p-table>
 
-<button
-  pButton
-  label="Add Connector"
-  icon="pi pi-plus"
-  class="p-button-success"
-  (click)="openNewConnectorDialog()"
-></button>
+<div class="flex gap-2 mt-4 justify-content-end">
+  <button
+    pButton
+    label="Add Connector"
+    icon="pi pi-plus"
+    (click)="openNewConnectorDialog()"
+  ></button>
+</div>

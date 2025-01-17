@@ -19,10 +19,10 @@ import { LoanResponse } from '../models/loanpro.model';
 import { DepositRecord } from 'lendpeak-engine/models/Deposit';
 
 @Component({
-    selector: 'app-loan-import',
-    templateUrl: './loan-import.component.html',
-    styleUrls: ['./loan-import.component.css'],
-    standalone: false
+  selector: 'app-loan-import',
+  templateUrl: './loan-import.component.html',
+  styleUrls: ['./loan-import.component.css'],
+  standalone: false,
 })
 export class LoanImportComponent implements OnInit, OnDestroy {
   connectors: Connector[] = [];
@@ -90,6 +90,8 @@ export class LoanImportComponent implements OnInit, OnDestroy {
         next: (loanData) => {
           this.isLoading = false;
           let previewLoans = Array.isArray(loanData) ? loanData : [loanData];
+          // filter out loans that do not have any data
+          previewLoans = previewLoans.filter((loan) => loan.d);
 
           for (let loan of previewLoans) {
             loan.d.Payments.results
@@ -138,7 +140,10 @@ export class LoanImportComponent implements OnInit, OnDestroy {
         next: (loanData) => {
           this.isLoading = false;
           // loanData can be single or multiple loans
-          const loans = Array.isArray(loanData) ? loanData : [loanData];
+          let loans = Array.isArray(loanData) ? loanData : [loanData];
+
+          // filter out loans that are empty
+          loans = loans.filter((loan) => loan.d);
 
           if (loans.length === 0) {
             this.messageService.add({
@@ -153,12 +158,21 @@ export class LoanImportComponent implements OnInit, OnDestroy {
 
           if (uiLoans.length > 1) {
             // Emit an array of UILoans
-            this.loanImported.emit(uiLoans);
-            this.messageService.add({
-              severity: 'success',
-              summary: 'Success',
-              detail: `${uiLoans.length} loans imported successfully.`,
-            });
+            try {
+              this.loanImported.emit(uiLoans);
+              this.messageService.add({
+                severity: 'success',
+                summary: 'Success',
+                detail: `${uiLoans.length} loans imported successfully.`,
+              });
+            } catch (e) {
+              console.error('Error importing loan(s):', e);
+              this.messageService.add({
+                severity: 'error',
+                summary: 'Error',
+                detail: 'Failed to import loan(s).',
+              });
+            }
           } else {
             // Just one loan
             this.loanImported.emit(uiLoans[0]);

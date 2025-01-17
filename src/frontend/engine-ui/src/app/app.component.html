@@ -120,6 +120,7 @@
     <p-table [value]="savedLoans">
       <ng-template pTemplate="header">
         <tr>
+          <th>#</th>
           <th>Loan Name</th>
           <th>Description</th>
           <th>Amount</th>
@@ -128,8 +129,9 @@
           <th>Actions</th>
         </tr>
       </ng-template>
-      <ng-template pTemplate="body" let-loan>
+      <ng-template pTemplate="body" let-loan let-rowIndex="rowIndex">
         <tr>
+          <td>{{ rowIndex + 1 }}</td>
           <td>{{ loan.name }}</td>
           <td>{{ loan.description }}</td>
           <td>{{ loan.loanAmount | currency }}</td>
@@ -181,6 +183,7 @@
     [(visible)]="showLoanImportDialog"
     [modal]="true"
     [closable]="true"
+    [style]="{ width: '80%', height: '80%' }"
     (onHide)="showLoanImportDialog = false"
   >
     <app-loan-import (loanImported)="onLoanImported($event)"></app-loan-import>

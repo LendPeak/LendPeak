@@ -19,6 +19,8 @@ import {
   DropDownOptionNumber,
 } from './models/common.model';
 
+import { IndexedDbService } from './services/indexed-db.service';
+
 import {
   Amortization,
   AmortizationParams,
@@ -85,6 +87,7 @@ export class AppComponent implements OnChanges {
     private location: Location,
     private messageService: MessageService,
     private confirmationService: ConfirmationService,
+    private indexedDbService: IndexedDbService,
   ) {}
 
   actualLoanSummary?: ActualLoanSummary;
@@ -1228,34 +1231,54 @@ export class AppComponent implements OnChanges {
     this.showManageLoansDialog = true;
   }
 
-  loadSavedLoans() {
+  async loadSavedLoans() {
     this.savedLoans = [];
 
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key && key.startsWith('loan_')) {
-        const loanData = JSON.parse(localStorage.getItem(key)!);
-        const loanName = key.replace('loan_', '');
-        this.savedLoans.push({
-          key: key,
-          name: loanName,
-          description: loanData.description || '',
-          loanAmount: loanData.loan.principal || 0,
-          startDate: loanData.loan.startDate || '',
-          interestRate: loanData.loan.interestRate || 0,
-        });
-      }
+    try {
+      const allLoans = await this.indexedDbService.getAllLoans();
+      console.log('loadSavedLoans:', allLoans);
+      this.savedLoans = allLoans.map((row) => {
+        // row.key => e.g. 'loan_MyLoanName'
+        // row.data => the actual object
+        // you can parse out "loanName" from row.key or row.data
+        const name = row.key.replace('loan_', '');
+        return {
+          key: row.key,
+          name,
+          description: row.data.description || '',
+          loanAmount: row.data.loan?.principal ?? 0,
+          startDate: row.data.loan?.startDate ?? '',
+          interestRate: row.data.loan?.interestRate ?? 0,
+        };
+      });
+      console.log('loadSavedLoans:', this.savedLoans);
+    } catch (err) {
+      console.error('loadSavedLoans error:', err);
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: 'Failed to load the saved loans from IndexedDB.',
+      });
     }
   }
 
-  deleteLoan(key: string) {
-    localStorage.removeItem(key);
-    this.loadSavedLoans();
-    this.messageService.add({
-      severity: 'success',
-      summary: 'Success',
-      detail: `Loan deleted successfully`,
-    });
+  async deleteLoan(key: string) {
+    try {
+      await this.indexedDbService.deleteLoan(key);
+      await this.loadSavedLoans(); // refresh list
+      this.messageService.add({
+        severity: 'success',
+        summary: 'Success',
+        detail: `Loan "${key}" deleted from IndexedDB successfully.`,
+      });
+    } catch (err) {
+      console.error('deleteLoan error:', err);
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: `Failed to delete loan "${key}" from IndexedDB.`,
+      });
+    }
   }
 
   loadLoan(key: string, event: Event) {
@@ -1283,12 +1306,13 @@ export class AppComponent implements OnChanges {
     });
   }
 
-  executeLoadLoan(key: string) {
+  async executeLoadLoan(key: string) {
     // check if key starts with loan_ if not lets add it
     if (!key.startsWith('loan_')) {
       key = `loan_${key}`;
     }
-    const loanData = JSON.parse(localStorage.getItem(key)!);
+    const loanData = await this.indexedDbService.loadLoan(key);
+
     if (loanData) {
       this.loan = loanData.loan;
       // this.bills = loanData.bills;
@@ -1329,7 +1353,7 @@ export class AppComponent implements OnChanges {
     this.loanModified = false;
   }
 
-  saveLoan() {
+  async saveLoan() {
     if (!this.currentLoanName || this.currentLoanName === 'New Loan') {
       // New loan, prompt for name
       if (!this.loanToSave.name) {
@@ -1342,18 +1366,18 @@ export class AppComponent implements OnChanges {
       }
 
       const key = `loan_${this.loanToSave.name}`;
-      const existingLoan = localStorage.getItem(key);
+      //const existingLoan = localStorage.getItem(key);
 
-      if (existingLoan) {
-        // Inform the user that the loan will overwrite existing data
-        if (
-          !confirm(
-            `A loan named "${this.loanToSave.name}" already exists. Do you want to overwrite it?`,
-          )
-        ) {
-          return;
-        }
-      }
+      // if (existingLoan) {
+      //   // Inform the user that the loan will overwrite existing data
+      //   if (
+      //     !confirm(
+      //       `A loan named "${this.loanToSave.name}" already exists. Do you want to overwrite it?`,
+      //     )
+      //   ) {
+      //     return;
+      //   }
+      // }
 
       // Save the loan
       const loanData = {
@@ -1364,7 +1388,8 @@ export class AppComponent implements OnChanges {
         name: this.loanToSave.name,
       };
 
-      localStorage.setItem(key, JSON.stringify(loanData));
+      //localStorage.setItem(key, JSON.stringify(loanData));
+      await this.indexedDbService.saveLoan(key, loanData);
 
       // Update the current loan name and reset loanModified
       this.currentLoanName = this.loanToSave.name;
@@ -1391,7 +1416,8 @@ export class AppComponent implements OnChanges {
         name: this.currentLoanName,
       };
 
-      localStorage.setItem(key, JSON.stringify(loanData));
+      //localStorage.setItem(key, JSON.stringify(loanData));
+      await this.indexedDbService.saveLoan(key, loanData);
 
       // Reset loanModified
       this.loanModified = false;

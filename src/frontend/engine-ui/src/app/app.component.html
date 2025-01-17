@@ -511,7 +511,13 @@
         <div class="col-12 md:col-3">
           <div class="flex flex-column">
             <span class="text-300 font-semibold mb-1">Next Bill Date:</span>
-            <span>{{ loanSummary?.nextBillDate | date: "MM/dd/yyyy" }}</span>
+            <span>
+              {{
+                loanSummary?.nextBillDate
+                  ? (loanSummary?.nextBillDate | date: "MM/dd/yyyy")
+                  : "No more bills left"
+              }}
+            </span>
           </div>
         </div>
         <div class="col-12 md:col-3">
@@ -621,9 +627,13 @@
             <span class="text-300 font-semibold mb-1"
               >Next Unpaid Bill Due Date (Actual):</span
             >
-            <span>{{
-              actualLoanSummary.nextBillDate | date: "MM/dd/yyyy"
-            }}</span>
+            <span>
+              {{
+                actualLoanSummary.nextBillDate
+                  ? (actualLoanSummary.nextBillDate | date: "MM/dd/yyyy")
+                  : "No more bills left"
+              }}
+            </span>
           </div>
         </div>
         <div class="col-12 md:col-3">

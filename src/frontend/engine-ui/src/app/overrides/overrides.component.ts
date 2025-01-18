@@ -9,6 +9,7 @@ import { OverrideSettingsService } from '../services/override-settings.service';
 import { OverrideSettings } from '../models/override-settings.model';
 import { v4 as uuidv4 } from 'uuid';
 import { Popover } from 'primeng/popover';
+import { Dayjs } from 'dayjs';
 
 @Component({
   selector: 'app-overrides',
@@ -341,7 +342,10 @@ export class OverridesComponent {
     this.loadSavedSettings();
   }
 
-  onInputChange() {
+  onInputChange(event: any = null) {
+    if (event === null || event === undefined) {
+      return;
+    }
     this.isModified = true;
 
     this.emitLoanChange();
@@ -456,6 +460,32 @@ export class OverridesComponent {
     this.emitLoanChange();
   }
 
+  getEndDateForTerm(termNumber: number): Dayjs {
+    if (!termNumber) {
+      return dayjs().startOf('day');
+    }
+    const term = this.loanRepaymentPlan.filter(
+      (row) => row.term === termNumber,
+    );
+    if (term) {
+      return term[term.length - 1].periodEndDate;
+    }
+    return dayjs().startOf('day');
+  }
+
+  getStartDateForTerm(termNumber: number): Dayjs {
+    if (!termNumber) {
+      return dayjs().startOf('day');
+    }
+    const term = this.loanRepaymentPlan.filter(
+      (row) => row.term === termNumber,
+    );
+    if (term) {
+      return term[term.length - 1].periodStartDate;
+    }
+    return dayjs().startOf('day');
+  }
+
   removeChangePaymentDate(index: number) {
     if (this.loan.changePaymentDates.length > 0) {
       this.loan.changePaymentDates.splice(index, 1);
@@ -560,7 +590,7 @@ export class OverridesComponent {
     if (this.loan.balanceModifications.length > 0) {
       this.loan.balanceModifications.splice(index, 1);
     }
-    if (this.balanceModifications.length === 0) {
+    if (this.balanceModifications.length > 0) {
       this.balanceModifications.splice(index, 1);
     }
     this.emitLoanChange();
@@ -640,6 +670,9 @@ export class OverridesComponent {
   }
 
   updateTermForCPD(index: number, termNumber: number) {
+    if (termNumber === null || termNumber === undefined || termNumber < 1) {
+      return;
+    }
     // find the term number in the repayment plan
     // const repaymentPlanRow = this.loanRepaymentPlan.find(
     //   (row) => row.period === termNumber
@@ -664,6 +697,31 @@ export class OverridesComponent {
     }
   }
 
+  addTermInterestRateOverrideRow() {
+    if (!this.loan.termInterestRateOverride) {
+      this.loan.termInterestRateOverride = [];
+    }
+
+    // Default values for a new row
+    const lastEntry =
+      this.loan.termInterestRateOverride[
+        this.loan.termInterestRateOverride.length - 1
+      ];
+    let termNumber = 1;
+    let interestRate = this.loan.interestRate;
+
+    if (lastEntry) {
+      termNumber = lastEntry.termNumber + 1;
+      interestRate = lastEntry.interestRate;
+    }
+
+    this.loan.termInterestRateOverride.push({
+      termNumber: termNumber,
+      interestRate: interestRate,
+    });
+
+    this.onInputChange(true);
+  }
   // Add row for termInterestOverride
   addTermInterestOverrideRow() {
     if (!this.loan.termInterestOverride) {
@@ -686,7 +744,17 @@ export class OverridesComponent {
       interestAmount: interestAmount,
     });
 
-    this.onInputChange();
+    this.onInputChange(true);
+  }
+
+  removeTermInterestRateOverride(index: number) {
+    if (
+      this.loan.termInterestRateOverride &&
+      this.loan.termInterestRateOverride.length > 0
+    ) {
+      this.loan.termInterestRateOverride.splice(index, 1);
+      this.onInputChange(true);
+    }
   }
 
   // Remove a specific termInterestOverride row
@@ -696,7 +764,7 @@ export class OverridesComponent {
       this.loan.termInterestOverride.length > 0
     ) {
       this.loan.termInterestOverride.splice(index, 1);
-      this.onInputChange();
+      this.onInputChange(true);
     }
   }
 

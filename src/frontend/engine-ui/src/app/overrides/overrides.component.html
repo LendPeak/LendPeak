@@ -174,7 +174,7 @@
     <p-accordion [multiple]="true" [value]="openPanels">
       <!-- Interest Rate -->
       <p-accordion-panel value="interestRate">
-        <p-accordion-header>Interest Rate</p-accordion-header>
+        <p-accordion-header>Date Range Interest Rate</p-accordion-header>
         <p-accordion-content>
           <div class="p-fluid">
             <table
@@ -198,7 +198,7 @@
                       name="overrideStartDate-{{ i }}"
                       dateFormat="mm/dd/yy"
                       showIcon
-                      (ngModelChange)="onInputChange()"
+                      (ngModelChange)="onInputChange($event)"
                       appendTo="body"
                     >
                       <ng-template pTemplate="date" let-date>
@@ -230,7 +230,7 @@
                       name="overrideEndDate-{{ i }}"
                       dateFormat="mm/dd/yy"
                       showIcon
-                      (ngModelChange)="onInputChange()"
+                      (ngModelChange)="onInputChange($event)"
                     >
                       <ng-template pTemplate="date" let-date>
                         <span
@@ -261,7 +261,7 @@
                       mode="decimal"
                       minFractionDigits="2"
                       suffix="%"
-                      (ngModelChange)="onInputChange()"
+                      (ngModelChange)="onInputChange($event)"
                     ></p-inputNumber>
                   </td>
                   <!-- Remove Button -->
@@ -281,6 +281,181 @@
                 label="Add New Rate Row"
                 icon="pi pi-plus"
                 (click)="addRateOverride()"
+              ></p-button>
+            </div>
+          </div>
+        </p-accordion-content>
+      </p-accordion-panel>
+
+      <!-- Term Interest Amount Override -->
+      <p-accordion-panel value="termInterestOverride">
+        <p-accordion-header>Term Interest Amount Override</p-accordion-header>
+        <p-accordion-content>
+          <div class="p-fluid">
+            <table
+              *ngIf="
+                loan.termInterestOverride &&
+                loan.termInterestOverride.length > 0
+              "
+              class="p-datatable p-component"
+            >
+              <thead>
+                <tr>
+                  <th>Dates</th>
+                  <th>Term Number</th>
+                  <th>Interest Amount</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr
+                  *ngFor="
+                    let override of loan.termInterestOverride;
+                    let i = index
+                  "
+                >
+                  <!-- Term Dates -->
+                  <td>
+                    <span class="font-medium text-md">
+                      {{
+                        getStartDateForTerm(override.termNumber).format(
+                          "MM/DD/YYYY"
+                        )
+                      }}
+                    </span>
+                    <span class="font-bold text-xl"> - </span>
+                    <span class="font-medium text-md">{{
+                      getEndDateForTerm(override.termNumber).format(
+                        "MM/DD/YYYY"
+                      )
+                    }}</span>
+                  </td>
+                  <!-- Term Number -->
+                  <td>
+                    <p-inputNumber
+                      [(ngModel)]="override.termNumber"
+                      name="termInterestOverride-term{{ i }}"
+                      (ngModelChange)="onInputChange($event)"
+                    ></p-inputNumber>
+                  </td>
+                  <!-- Interest Amount -->
+                  <td>
+                    <p-inputNumber
+                      [(ngModel)]="override.interestAmount"
+                      name="termInterestOverride-amount-{{ i }}"
+                      mode="currency"
+                      currency="USD"
+                      locale="en-US"
+                      (ngModelChange)="onInputChange($event)"
+                    ></p-inputNumber>
+                  </td>
+                  <!-- Remove Button -->
+                  <td>
+                    <p-button
+                      icon="pi pi-trash"
+                      class="p-button-rounded"
+                      severity="danger"
+                      (click)="removeTermInterestOverride(i)"
+                    ></p-button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <div class="p-mt-2">
+              <p-button
+                label="Add Interest Override"
+                icon="pi pi-plus"
+                (click)="addTermInterestOverrideRow()"
+              ></p-button>
+            </div>
+          </div>
+        </p-accordion-content>
+      </p-accordion-panel>
+
+      <!-- Term Interest Rate Override -->
+      <p-accordion-panel value="termInterestRateOverride">
+        <p-accordion-header>Term Interest Rate Override</p-accordion-header>
+        <p-accordion-content>
+          <div class="p-fluid">
+            <table
+              *ngIf="
+                loan.termInterestRateOverride &&
+                loan.termInterestRateOverride.length > 0
+              "
+              class="p-datatable p-component"
+            >
+              <thead>
+                <tr>
+                  <th>Dates</th>
+                  <th>Term Number</th>
+                  <th>Interest Rate</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr
+                  *ngFor="
+                    let override of loan.termInterestRateOverride;
+                    let i = index
+                  "
+                >
+                  <!-- Term Dates -->
+                  <td>
+                    <span class="font-medium text-md">
+                      {{
+                        getStartDateForTerm(override.termNumber).format(
+                          "MM/DD/YYYY"
+                        )
+                      }}
+                    </span>
+                    <span class="font-bold text-xl"> - </span>
+                    <span class="font-medium text-md">{{
+                      getEndDateForTerm(override.termNumber).format(
+                        "MM/DD/YYYY"
+                      )
+                    }}</span>
+                  </td>
+                  <!-- Term Number -->
+                  <td>
+                    <p-inputgroup>
+                      <p-inputgroup-addon>#</p-inputgroup-addon>
+                      <p-inputNumber
+                        [(ngModel)]="override.termNumber"
+                        name="termInterestOverride-term{{ i }}"
+                        (ngModelChange)="onInputChange($event)"
+                      ></p-inputNumber>
+                    </p-inputgroup>
+                  </td>
+                  <!-- Interest Rate -->
+                  <td>
+                    <p-inputgroup>
+                      <p-inputgroup-addon>%</p-inputgroup-addon>
+                      <p-inputNumber
+                        name="termInterestRateOverride-amount-{{ i }}"
+                        mode="decimal"
+                        minFractionDigits="2"
+                        [(ngModel)]="override.interestRate"
+                        (ngModelChange)="onInputChange($event)"
+                      />
+                    </p-inputgroup>
+                  </td>
+                  <!-- Remove Button -->
+                  <td>
+                    <p-button
+                      icon="pi pi-trash"
+                      class="p-button-rounded"
+                      severity="danger"
+                      (click)="removeTermInterestRateOverride(i)"
+                    ></p-button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <div class="p-mt-2">
+              <p-button
+                label="Add Interest Rate Override"
+                icon="pi pi-plus"
+                (click)="addTermInterestRateOverrideRow()"
               ></p-button>
             </div>
           </div>
@@ -310,7 +485,7 @@
                 mode="currency"
                 currency="USD"
                 locale="en-US"
-                (ngModelChange)="onInputChange()"
+                (ngModelChange)="onInputChange($event)"
               ></p-inputNumber>
               <!-- Tooltip Overlay -->
               <p-popover #termPaymentAmountTooltip>
@@ -335,6 +510,7 @@
             >
               <thead>
                 <tr>
+                  <th>Dates</th>
                   <th>Term Number</th>
                   <th>Payment Amount</th>
                   <th>Actions</th>
@@ -347,12 +523,28 @@
                     let i = index
                   "
                 >
+                  <!-- Term Dates -->
+                  <td>
+                    <span class="font-medium text-md">
+                      {{
+                        getStartDateForTerm(
+                          paymentConfiguration.termNumber
+                        ).format("MM/DD/YYYY")
+                      }}
+                    </span>
+                    <span class="font-bold text-xl"> - </span>
+                    <span class="font-medium text-md">{{
+                      getEndDateForTerm(paymentConfiguration.termNumber).format(
+                        "MM/DD/YYYY"
+                      )
+                    }}</span>
+                  </td>
                   <!-- Term Number -->
                   <td>
                     <p-inputNumber
                       [(ngModel)]="paymentConfiguration.termNumber"
                       name="overrideTermPayment-term{{ i }}"
-                      (ngModelChange)="onInputChange()"
+                      (ngModelChange)="onInputChange($event)"
                     ></p-inputNumber>
                   </td>
                   <!-- Payment Amount -->
@@ -363,7 +555,7 @@
                       mode="currency"
                       currency="USD"
                       locale="en-US"
-                      (ngModelChange)="onInputChange()"
+                      (ngModelChange)="onInputChange($event)"
                     ></p-inputNumber>
                   </td>
                   <!-- Remove Button -->
@@ -389,74 +581,6 @@
         </p-accordion-content>
       </p-accordion-panel>
 
-      <!-- Term Interest Override -->
-      <p-accordion-panel value="termInterestOverride">
-        <p-accordion-header>Term Interest Override</p-accordion-header>
-        <p-accordion-content>
-          <div class="p-fluid">
-            <table
-              *ngIf="
-                loan.termInterestOverride &&
-                loan.termInterestOverride.length > 0
-              "
-              class="p-datatable p-component"
-            >
-              <thead>
-                <tr>
-                  <th>Term Number</th>
-                  <th>Interest Amount</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr
-                  *ngFor="
-                    let override of loan.termInterestOverride;
-                    let i = index
-                  "
-                >
-                  <!-- Term Number -->
-                  <td>
-                    <p-inputNumber
-                      [(ngModel)]="override.termNumber"
-                      name="termInterestOverride-term{{ i }}"
-                      (ngModelChange)="onInputChange()"
-                    ></p-inputNumber>
-                  </td>
-                  <!-- Interest Amount -->
-                  <td>
-                    <p-inputNumber
-                      [(ngModel)]="override.interestAmount"
-                      name="termInterestOverride-amount-{{ i }}"
-                      mode="currency"
-                      currency="USD"
-                      locale="en-US"
-                      (ngModelChange)="onInputChange()"
-                    ></p-inputNumber>
-                  </td>
-                  <!-- Remove Button -->
-                  <td>
-                    <p-button
-                      icon="pi pi-trash"
-                      class="p-button-rounded"
-                      severity="danger"
-                      (click)="removeTermInterestOverride(i)"
-                    ></p-button>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-            <div class="p-mt-2">
-              <p-button
-                label="Add Interest Override"
-                icon="pi pi-plus"
-                (click)="addTermInterestOverrideRow()"
-              ></p-button>
-            </div>
-          </div>
-        </p-accordion-content>
-      </p-accordion-panel>
-
       <!-- Change Payment Date -->
       <p-accordion-panel value="changePaymentDates">
         <p-accordion-header>Change Payment Date</p-accordion-header>
@@ -468,6 +592,7 @@
             >
               <thead>
                 <tr>
+                  <th>Dates</th>
                   <th>Term Number</th>
                   <th>New Date</th>
                   <th>Actions</th>
@@ -480,6 +605,22 @@
                     let i = index
                   "
                 >
+                  <!-- Term Dates -->
+                  <td>
+                    <span class="font-medium text-md">
+                      {{
+                        getStartDateForTerm(
+                          changePaymentDate.termNumber
+                        ).format("MM/DD/YYYY")
+                      }}
+                    </span>
+                    <span class="font-bold text-xl"> - </span>
+                    <span class="font-medium text-md">{{
+                      getEndDateForTerm(changePaymentDate.termNumber).format(
+                        "MM/DD/YYYY"
+                      )
+                    }}</span>
+                  </td>
                   <!-- Term Number -->
                   <td>
                     <p-inputNumber
@@ -497,7 +638,7 @@
                       name="changePaymentDateNewDate-{{ i }}"
                       dateFormat="mm/dd/yy"
                       showIcon
-                      (ngModelChange)="onInputChange()"
+                      (ngModelChange)="onInputChange($event)"
                       appendTo="body"
                     ></p-datepicker>
                   </td>
@@ -535,6 +676,7 @@
             >
               <thead>
                 <tr>
+                  <th>Dates</th>
                   <th>Term Number</th>
                   <th>Days</th>
                   <th>Actions</th>
@@ -542,12 +684,28 @@
               </thead>
               <tbody>
                 <tr *ngFor="let preBillDay of loan.preBillDays; let i = index">
+                  <!-- Term Dates -->
+                  <td>
+                    <span class="font-medium text-md">
+                      {{
+                        getStartDateForTerm(preBillDay.termNumber).format(
+                          "MM/DD/YYYY"
+                        )
+                      }}
+                    </span>
+                    <span class="font-bold text-xl"> - </span>
+                    <span class="font-medium text-md">{{
+                      getEndDateForTerm(preBillDay.termNumber).format(
+                        "MM/DD/YYYY"
+                      )
+                    }}</span>
+                  </td>
                   <!-- Term Number -->
                   <td>
                     <p-inputNumber
                       [(ngModel)]="preBillDay.termNumber"
                       name="preBillDayConfiguration-term{{ i }}"
-                      (ngModelChange)="onInputChange()"
+                      (ngModelChange)="onInputChange($event)"
                     ></p-inputNumber>
                   </td>
                   <!-- Days -->
@@ -555,7 +713,7 @@
                     <p-inputNumber
                       [(ngModel)]="preBillDay.preBillDays"
                       name="prebillDays-day-{{ i }}"
-                      (ngModelChange)="onInputChange()"
+                      (ngModelChange)="onInputChange($event)"
                     ></p-inputNumber>
                   </td>
                   <!-- Remove Button -->
@@ -592,6 +750,7 @@
             >
               <thead>
                 <tr>
+                  <th>Dates</th>
                   <th>Term Number</th>
                   <th>Days</th>
                   <th>Actions</th>
@@ -599,12 +758,28 @@
               </thead>
               <tbody>
                 <tr *ngFor="let dueBillDay of loan.dueBillDays; let i = index">
+                  <!-- Term Dates -->
+                  <td>
+                    <span class="font-medium text-md">
+                      {{
+                        getStartDateForTerm(dueBillDay.termNumber).format(
+                          "MM/DD/YYYY"
+                        )
+                      }}
+                    </span>
+                    <span class="font-bold text-xl"> - </span>
+                    <span class="font-medium text-md">{{
+                      getEndDateForTerm(dueBillDay.termNumber).format(
+                        "MM/DD/YYYY"
+                      )
+                    }}</span>
+                  </td>
                   <!-- Term Number -->
                   <td>
                     <p-inputNumber
                       [(ngModel)]="dueBillDay.termNumber"
                       name="dueBillDayConfiguration-term{{ i }}"
-                      (ngModelChange)="onInputChange()"
+                      (ngModelChange)="onInputChange($event)"
                     ></p-inputNumber>
                   </td>
                   <!-- Days -->
@@ -612,7 +787,7 @@
                     <p-inputNumber
                       [(ngModel)]="dueBillDay.daysDueAfterPeriodEnd"
                       name="duebillDays-day-{{ i }}"
-                      (ngModelChange)="onInputChange()"
+                      (ngModelChange)="onInputChange($event)"
                     ></p-inputNumber>
                   </td>
                   <!-- Remove Button -->
@@ -779,7 +954,7 @@
                         { label: 'Fixed', value: 'fixed' },
                         { label: 'Percentage', value: 'percentage' },
                       ]"
-                      (ngModelChange)="onInputChange()"
+                      (ngModelChange)="onInputChange($event)"
                     ></p-select>
                   </td>
                   <!-- Amount or Percentage -->
@@ -791,7 +966,7 @@
                         mode="currency"
                         currency="USD"
                         locale="en-US"
-                        (ngModelChange)="onInputChange()"
+                        (ngModelChange)="onInputChange($event)"
                       ></p-inputNumber>
                     </ng-container>
                     <ng-container *ngIf="fee.type === 'percentage'">
@@ -801,7 +976,7 @@
                         mode="decimal"
                         minFractionDigits="2"
                         suffix="%"
-                        (ngModelChange)="onInputChange()"
+                        (ngModelChange)="onInputChange($event)"
                       ></p-inputNumber>
                     </ng-container>
                   </td>
@@ -816,7 +991,7 @@
                         { label: 'Principal', value: 'principal' },
                         { label: 'Total Payment', value: 'totalPayment' },
                       ]"
-                      (ngModelChange)="onInputChange()"
+                      (ngModelChange)="onInputChange($event)"
                     ></p-select>
                   </td>
                   <!-- Description -->
@@ -827,7 +1002,7 @@
                       pInputText
                       type="text"
                       [(ngModel)]="fee.description"
-                      (ngModelChange)="onInputChange()"
+                      (ngModelChange)="onInputChange($event)"
                     />
                   </td>
                   <!-- Remove Button -->
@@ -880,7 +1055,7 @@
                     <p-inputNumber
                       inputId="feeTermNumber"
                       [(ngModel)]="fee.termNumber"
-                      (ngModelChange)="onInputChange()"
+                      (ngModelChange)="onInputChange($event)"
                     ></p-inputNumber>
                   </td>
                   <!-- Fee Type -->
@@ -892,7 +1067,7 @@
                         { label: 'Fixed', value: 'fixed' },
                         { label: 'Percentage', value: 'percentage' },
                       ]"
-                      (ngModelChange)="onInputChange()"
+                      (ngModelChange)="onInputChange($event)"
                     ></p-select>
                   </td>
                   <!-- Amount or Percentage -->
@@ -904,7 +1079,7 @@
                         mode="currency"
                         currency="USD"
                         locale="en-US"
-                        (ngModelChange)="onInputChange()"
+                        (ngModelChange)="onInputChange($event)"
                       ></p-inputNumber>
                     </ng-container>
                     <ng-container *ngIf="fee.type === 'percentage'">
@@ -914,7 +1089,7 @@
                         mode="decimal"
                         minFractionDigits="2"
                         suffix="%"
-                        (ngModelChange)="onInputChange()"
+                        (ngModelChange)="onInputChange($event)"
                       ></p-inputNumber>
                     </ng-container>
                   </td>
@@ -929,7 +1104,7 @@
                         { label: 'Principal', value: 'principal' },
                         { label: 'Total Payment', value: 'totalPayment' },
                       ]"
-                      (ngModelChange)="onInputChange()"
+                      (ngModelChange)="onInputChange($event)"
                     ></p-select>
                   </td>
                   <!-- Description -->
@@ -939,7 +1114,7 @@
                       pInputText
                       type="text"
                       [(ngModel)]="fee.description"
-                      (ngModelChange)="onInputChange()"
+                      (ngModelChange)="onInputChange($event)"
                     />
                   </td>
                   <!-- Remove Button -->

@@ -9,6 +9,7 @@
           (click)="openDepositDialog()"
         ></p-button>
         <p-button
+          [hidden]="deposits.length === 0"
           label="Go to Last Deposit"
           icon="pi pi-arrow-down"
           severity="info"

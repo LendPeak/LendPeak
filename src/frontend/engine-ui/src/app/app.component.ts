@@ -1860,6 +1860,14 @@ export class AppComponent implements OnChanges {
         this.loan.termInterestOverride;
     }
 
+    if (
+      this.loan.termInterestRateOverride &&
+      this.loan.termInterestRateOverride.length > 0
+    ) {
+      uiAmortizationParams.termInterestRateOverride =
+        this.loan.termInterestRateOverride;
+    }
+
     let amortization: Amortization;
 
     try {

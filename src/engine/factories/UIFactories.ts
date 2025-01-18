@@ -278,6 +278,11 @@ export interface UIAmortizationParams {
     interestAmount: number; // user can pass raw number
   }[];
 
+  termInterestRateOverride?: {
+    termNumber: number;
+    interestRate: number; // user can pass raw number
+  }[];
+
   // "TermPeriodDefinition" (if used):
   termPeriodDefinition?: {
     unit: "year" | "month" | "week" | "day" | "complex";
@@ -474,6 +479,15 @@ export function toAmortizationParams(ui: UIAmortizationParams): AmortizationPara
     }));
   }
 
+  // Term interest rate override
+  let termInterestRateOverride: { termNumber: number; interestRate: Decimal }[] | undefined = undefined;
+  if (ui.termInterestRateOverride && ui.termInterestRateOverride.length > 0) {
+    termInterestRateOverride = ui.termInterestRateOverride.map((o) => ({
+      termNumber: o.termNumber,
+      interestRate: new Decimal(o.interestRate).div(100),
+    }));
+  }
+
   // Term period definition
   let termPeriodDefinition: TermPeriodDefinition | undefined = undefined;
   if (ui.termPeriodDefinition) {
@@ -525,6 +539,7 @@ export function toAmortizationParams(ui: UIAmortizationParams): AmortizationPara
 
     // Term overrides
     termInterestOverride,
+    termInterestRateOverride,
     termPeriodDefinition,
   };
 

@@ -361,7 +361,7 @@
                     >
                       <td>{{ i + 1 }}</td>
                       <td>
-                        <p-calendar
+                        <p-datepicker
                           [(ngModel)]="plan.startDate"
                           dateFormat="mm/dd/yy"
                           name="periodStartDate-{{ i }}"
@@ -369,10 +369,10 @@
                           (onSelect)="submitLoan()"
                           pTooltip="Custom start date for term {{ i + 1 }}."
                           tooltipPosition="top"
-                        ></p-calendar>
+                        ></p-datepicker>
                       </td>
                       <td>
-                        <p-calendar
+                        <p-datepicker
                           [(ngModel)]="plan.endDate"
                           dateFormat="mm/dd/yy"
                           name="periodEndDate-{{ i }}"
@@ -380,7 +380,7 @@
                           (onSelect)="repaymentPlanEndDateChange(i)"
                           pTooltip="Custom end date for term {{ i + 1 }}."
                           tooltipPosition="top"
-                        ></p-calendar>
+                        ></p-datepicker>
                       </td>
                     </tr>
                   </tbody>

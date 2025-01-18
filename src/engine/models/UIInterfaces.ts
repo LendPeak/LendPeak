@@ -71,6 +71,7 @@ export interface UILoan {
   termPeriodDefinition: TermPeriodDefinition;
   paymentAllocationStrategy: PaymentAllocationStrategyName;
   termInterestOverride?: { termNumber: number; interestAmount: number }[];
+  termInterestRateOverride?: { termNumber: number; interestRate: number }[];
 }
 
 export interface ActualLoanSummary {

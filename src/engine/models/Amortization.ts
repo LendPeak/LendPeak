@@ -175,6 +175,7 @@ export interface AmortizationParams {
   feesForAllTerms?: JSFee[];
   billingModel?: BillingModel;
   termInterestOverride?: { termNumber: number; interestAmount: Currency }[];
+  termInterestRateOverride?: { termNumber: number; interestRate: Decimal }[];
 }
 
 export type BillingModel = "amortized" | "dailySimpleInterest";
@@ -232,6 +233,7 @@ export class Amortization {
   private _inputParams: AmortizationParams;
 
   private termInterestOverrideMap: Map<number, Currency> = new Map();
+  private termInterestRateOverrideMap: Map<number, Decimal> = new Map();
 
   constructor(params: AmortizationParams) {
     this._inputParams = cloneDeep(params);
@@ -363,6 +365,18 @@ export class Amortization {
           throw new Error("Invalid termInterestOverride: interestAmount cannot be negative");
         }
         this.termInterestOverrideMap.set(override.termNumber, override.interestAmount);
+      }
+    }
+
+    if (params.termInterestRateOverride) {
+      for (const override of params.termInterestRateOverride) {
+        if (override.termNumber <= 0 || override.termNumber > this.term) {
+          throw new Error(`Invalid termInterestRateOverride: termNumber ${override.termNumber} out of range`);
+        }
+        if (override.interestRate.isNegative()) {
+          throw new Error("Invalid termInterestRateOverride: interestAmount cannot be negative");
+        }
+        this.termInterestRateOverrideMap.set(override.termNumber, override.interestRate);
       }
     }
 
@@ -1268,7 +1282,21 @@ export class Amortization {
           break;
         }
         currentBalanceIndex++;
-        const periodRates = this.getInterestRatesBetweenDates(periodStartBalance.startDate, periodStartBalance.endDate);
+        const termInterestRateOverride = this.termInterestRateOverrideMap.get(termIndex);
+
+        let periodRates: RateSchedule[];
+        if (termInterestRateOverride) {
+          periodRates = [
+            {
+              annualInterestRate: termInterestRateOverride,
+              startDate: periodStartBalance.startDate,
+              endDate: periodStartBalance.endDate,
+            },
+          ];
+        } else {
+          periodRates = this.getInterestRatesBetweenDates(periodStartBalance.startDate, periodStartBalance.endDate);
+        }
+
         const lastRateInPeriod = periodRates.length;
         let currentRate = 0;
 

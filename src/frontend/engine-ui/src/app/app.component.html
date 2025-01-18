@@ -278,14 +278,39 @@
   </div>
 
   <!-- Tabsw -->
-  <p-tabs [(value)]="activeTabIndex" (valueChange)="onTabChange($event)">
+  <p-tabs
+    [(value)]="activeTabIndex"
+    (valueChange)="onTabChange($event)"
+    scrollable
+  >
     <p-tablist>
-      <p-tab [value]="0">Basic Loan Info</p-tab>
-      <p-tab [value]="1">Overrides</p-tab>
-      <p-tab [value]="2">Advanced Settings</p-tab>
-      <p-tab [value]="3">Custom Periods Schedule</p-tab>
-      <p-tab [value]="4">Deposits</p-tab>
-      <p-tab [value]="5">Bills</p-tab>
+      <ng-template #previcon>
+        <i class="pi pi-minus"></i>
+      </ng-template>
+      <p-tab [value]="0">
+        <span class="font-bold whitespace-nowrap">Basic Loan Info</span>
+      </p-tab>
+      <p-tab [value]="5">
+        <span class="font-bold whitespace-nowrap">Bills</span></p-tab
+      >
+      <p-tab [value]="4">
+        <span class="font-bold whitespace-nowrap">Deposits</span></p-tab
+      >
+
+      <p-tab [value]="1">
+        <span class="font-bold whitespace-nowrap">Modifications</span></p-tab
+      >
+      <p-tab [value]="2">
+        <span class="font-bold whitespace-nowrap">Settings</span></p-tab
+      >
+      <p-tab [value]="3"
+        ><span class="font-bold whitespace-nowrap"
+          >Custom Periods Schedule</span
+        ></p-tab
+      >
+      <ng-template #nexticon>
+        <i class="pi pi-plus"></i>
+      </ng-template>
     </p-tablist>
     <p-tabpanels>
       <!-- Basic Loan Info Tab -->

@@ -1215,6 +1215,7 @@ export class AppComponent implements OnChanges {
           description: row.data.description || '',
           loanAmount: row.data.loan?.principal ?? 0,
           startDate: row.data.loan?.startDate ?? '',
+          endDate: row.data.loan?.endDate ?? '',
           interestRate: row.data.loan?.interestRate ?? 0,
         };
       });
@@ -1667,10 +1668,10 @@ export class AppComponent implements OnChanges {
       deposit.usageDetails = deposit.usageDetails || [];
 
       if (result.balanceModification) {
-        // console.log(
-        //   'Applying balance modification',
-        //   result.balanceModification,
-        // );
+        console.log(
+          'Applying balance modification',
+          result.balanceModification,
+        );
 
         // 1) Remove existing UI modifications for this deposit
         this.loan.balanceModifications = this.loan.balanceModifications.filter(

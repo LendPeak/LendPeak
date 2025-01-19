@@ -1,6 +1,14 @@
 // overrides.component.ts
 
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import {
+  Component,
+  Input,
+  Output,
+  EventEmitter,
+  OnChanges,
+  SimpleChanges,
+  OnInit,
+} from '@angular/core';
 import dayjs from 'dayjs';
 import { AmortizationEntry } from 'lendpeak-engine/models/Amortization/AmortizationEntry';
 import { BalanceModification } from 'lendpeak-engine/models/Amortization/BalanceModification';
@@ -17,7 +25,7 @@ import { Dayjs } from 'dayjs';
   styleUrls: ['./overrides.component.css'],
   standalone: false,
 })
-export class OverridesComponent {
+export class OverridesComponent implements OnInit {
   @Input() loan!: UILoan;
   @Input() termOptions: { label: string; value: number }[] = [];
   @Input() balanceIncreaseType: { label: string; value: string }[] = [];
@@ -53,6 +61,15 @@ export class OverridesComponent {
   selectedSetting: OverrideSettings | null = null;
 
   constructor(private overrideSettingsService: OverrideSettingsService) {}
+
+  ngOnChanges(changes: SimpleChanges): void {
+    // This will fire whenever an @Input changes.
+    // If 'loan' has changed, you can re-run your initialization logic or
+    // re-apply defaults etc.
+    if (changes['loan'] && !changes['loan'].firstChange) {
+      this.balanceModifications = this.loan.balanceModifications;
+    }
+  }
 
   ngOnInit() {
     this.loadSavedSettings();

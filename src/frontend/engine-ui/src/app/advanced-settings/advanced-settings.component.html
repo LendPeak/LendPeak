@@ -76,6 +76,7 @@
               [options]="termPeriodUnits"
               placeholder="Select a term period unit"
               (ngModelChange)="termPeriodDefinitionChange()"
+              appendTo="body"
             ></p-select>
             <!-- Popover replacing OverlayPanel -->
             <p-popover #termPeriodUnitTooltip>
@@ -126,6 +127,7 @@
               [options]="calendarTypes"
               placeholder="Select a calendar type"
               (ngModelChange)="onInputChange()"
+              appendTo="body"
             ></p-select>
             <!-- Popover replacing OverlayPanel -->
             <p-popover #calendarTypeTooltip>
@@ -164,6 +166,7 @@
             [options]="paymentAllocationStrategies"
             placeholder="Select an allocation strategy"
             (ngModelChange)="onInputChange()"
+            appendTo="body"
           ></p-select>
           <!-- Popover replacing OverlayPanel -->
           <p-popover #paymentAllocationStrategyTooltip>
@@ -192,6 +195,7 @@
                 [options]="paymentPriorityOptions"
                 placeholder="First"
                 (ngModelChange)="onPaymentPriorityChange()"
+                appendTo="body"
               ></p-select>
             </div>
             <div class="p-col-4">
@@ -200,6 +204,7 @@
                 [options]="paymentPriorityOptions"
                 placeholder="Second"
                 (ngModelChange)="onPaymentPriorityChange()"
+                appendTo="body"
               ></p-select>
             </div>
             <div class="p-col-4">
@@ -208,6 +213,7 @@
                 [options]="paymentPriorityOptions"
                 placeholder="Third"
                 (ngModelChange)="onPaymentPriorityChange()"
+                appendTo="body"
               ></p-select>
             </div>
           </div>
@@ -248,6 +254,7 @@
             [options]="billingModelOptions"
             placeholder="Select a loan type"
             (ngModelChange)="onInputChange()"
+            appendTo="body"
           ></p-select>
           <!-- Popover replacing OverlayPanel -->
           <p-popover #billingModelTooltip>
@@ -284,6 +291,7 @@
               [(ngModel)]="loan.defaultPreBillDaysConfiguration"
               name="defaultPreBillDaysConfiguration"
               (ngModelChange)="onInputChange()"
+              appendTo="body"
             ></p-inputNumber>
             <!-- Popover replacing OverlayPanel -->
             <p-popover #defaultPreBillDaysTooltip>
@@ -343,6 +351,7 @@
             [options]="perDiemCalculationTypes"
             placeholder="Select a per diem calculation type"
             (ngModelChange)="onInputChange()"
+            appendTo="body"
           ></p-select>
           <!-- Popover replacing OverlayPanel -->
           <p-popover #perDiemCalculationTypeTooltip>
@@ -398,6 +407,7 @@
             [options]="flushMethods"
             placeholder="Select a flush method"
             (ngModelChange)="onInputChange()"
+            appendTo="body"
           ></p-select>
           <!-- Popover replacing OverlayPanel -->
           <p-popover #flushMethodTooltip>
@@ -459,6 +469,7 @@
             [options]="roundingMethods"
             placeholder="Select a rounding method"
             (ngModelChange)="onInputChange()"
+            appendTo="body"
           ></p-select>
           <!-- Popover replacing OverlayPanel -->
           <p-popover #roundingMethodTooltip>

@@ -117,14 +117,15 @@
     [closable]="true"
     [closeOnEscape]="true"
   >
-    <p-table [value]="savedLoans">
+    <p-table [value]="savedLoans" sortField="startDate" [sortOrder]="-1">
       <ng-template pTemplate="header">
         <tr>
           <th>#</th>
           <th>Loan Name</th>
           <th>Description</th>
-          <th>Amount</th>
-          <th>Start Date</th>
+          <th pSortableColumn="startDate">Start Date</th>
+          <th pSortableColumn="endDate">End Date</th>
+          <th pSortableColumn="loanAmount">Amount</th>
           <th>Interest Rate</th>
           <th>Actions</th>
         </tr>
@@ -134,8 +135,9 @@
           <td>{{ rowIndex + 1 }}</td>
           <td>{{ loan.name }}</td>
           <td>{{ loan.description }}</td>
-          <td>{{ loan.loanAmount | currency }}</td>
           <td>{{ loan.startDate | date: "MM/dd/yyyy" }}</td>
+          <td>{{ loan.endDate | date: "MM/dd/yyyy" }}</td>
+          <td>{{ loan.loanAmount | currency }}</td>
           <td>{{ loan.interestRate }}%</td>
           <td>
             <button

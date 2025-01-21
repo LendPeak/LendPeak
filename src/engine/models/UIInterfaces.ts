@@ -53,6 +53,7 @@ export interface UILoan {
   changePaymentDates: {
     termNumber: number;
     newDate: Date;
+    originalDate?: Date;
   }[];
   ratesSchedule: {
     startDate: Date;

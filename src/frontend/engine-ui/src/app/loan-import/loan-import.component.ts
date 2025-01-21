@@ -28,7 +28,6 @@ import { DepositRecord } from 'lendpeak-engine/models/Deposit';
 export class LoanImportComponent implements OnInit, OnDestroy {
   connectors: Connector[] = [];
   selectedConnectorId: string = '';
-  
 
   searchType: 'displayId' | 'systemId' | 'systemIdRange' = 'systemId';
   searchValue: string = '';
@@ -255,6 +254,8 @@ export class LoanImportComponent implements OnInit, OnDestroy {
   ) {
     // unify them into array
     let loansArray = Array.isArray(loanData) ? loanData : [loanData];
+
+    console.log('Imported loans:', loansArray);
 
     // If they’re still raw LoanResponse, convert them to UILoan
     if (loansArray.length > 0 && (loansArray[0] as any).d) {

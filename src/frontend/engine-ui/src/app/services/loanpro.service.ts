@@ -112,9 +112,6 @@ export class LoanProService {
     );
   }
 
-  /**
-   * Fetch a single loan by systemId using a GET request.
-   */
   private fetchBySystemId(
     headers: HttpHeaders,
     systemId: string,
@@ -126,8 +123,9 @@ export class LoanProService {
       .get<any>(fullProxyUrl, {
         headers,
         params: {
+          // Expand whichever fields you need
           $expand:
-            'LoanSetup,LoanSettings,Payments,DueDateChanges,ScheduleRolls,Transactions',
+            'Payments,DueDateChanges,ScheduleRolls,Transactions,LoanSetup,LoanSettings',
         },
       })
       .pipe(
@@ -135,7 +133,8 @@ export class LoanProService {
           if (!response) {
             throw new Error('Loan not found by systemId');
           }
-          // handle pagination in expanded collections
+          // This will handle the "paging" for each expanded property
+          // that might have a `__next` link.
           return this.loadAllExpandedCollections(response, headers);
         }),
         map((completeResponse) => completeResponse as LoanResponse),
@@ -152,35 +151,44 @@ export class LoanProService {
     response: any,
     headers: HttpHeaders,
   ): Observable<any> {
+    // Adjust this array to any expanded fields you want to handle
     const expansionsNeedingPagination = [
       'Payments',
       'DueDateChanges',
       'ScheduleRolls',
       'Transactions',
+      // etc.
     ];
 
-    const fetchObservables: Observable<[string, any[]]>[] = [];
+    // We’ll collect Observables in here for each field that has a __next link
+    const fetchObservables: Array<Observable<[string, any[]]>> = [];
 
     for (const field of expansionsNeedingPagination) {
-      if (response[field]?.__next) {
-        // We have a partial collection with `__next`; fetch the rest
+      // e.g. response.d.Payments, response.d.Transactions, ...
+      if (response?.d?.[field]?.__next) {
         fetchObservables.push(
-          this.fetchAllPagesForExpandedField(response[field], headers).pipe(
-            map((allResults) => [field, allResults] as [string, any[]]),
+          this.fetchAllPagesForExpandedField(response.d[field], headers).pipe(
+            // We'll map the final array of items to a tuple: [ fieldName, completeItems[] ]
+            map((allItems) => [field, allItems] as [string, any[]]),
           ),
         );
       }
     }
 
     if (fetchObservables.length === 0) {
+      // Nothing to paginate, return as-is
       return of(response);
     }
 
+    // If we have multiple expansions that need paging, run them in parallel (forkJoin):
     return forkJoin(fetchObservables).pipe(
       map((results) => {
-        for (const [fieldName, completeResults] of results) {
-          response[fieldName].results = completeResults;
-          delete response[fieldName].__next;
+        // results is an array of [fieldName, completeItems[]]
+        for (const [fieldName, completeItems] of results) {
+          // Overwrite the partial "results" array with the fully loaded array
+          response.d[fieldName].results = completeItems;
+          // Remove the __next property so it doesn’t confuse your code
+          delete response.d[fieldName].__next;
         }
         return response;
       }),
@@ -188,30 +196,42 @@ export class LoanProService {
   }
 
   /**
-   * Given the partial data for one expanded collection, fetch all subsequent pages
-   * by following `__next` links. Returns an Observable of the complete array of items.
+   * Given a partial data object (e.g. `response.d.Transactions`),
+   * fetch all subsequent pages by following __next links.
+   * Returns an Observable of the *complete* array of items.
    */
   private fetchAllPagesForExpandedField(
-    initialData: { results: any[]; __next?: string },
+    initialData: { results: any[]; __next?: string, d?: { __next?: string } },
     headers: HttpHeaders,
   ): Observable<any[]> {
     return of(initialData).pipe(
-      expand((currentPage) => {
-        if (!currentPage.__next) {
-          return EMPTY;
+      expand((currentChunk) => {
+        // The next link might be either currentChunk.__next or currentChunk.d?.__next
+        // so unify them:
+        const nextLink = currentChunk.__next || currentChunk.d?.__next;
+        if (!nextLink) {
+          return EMPTY; // no more pages
         }
-        // If __next is a relative path, prepend `this.proxyUrl`. Adjust as needed.
-        const nextUrl = currentPage.__next.startsWith('http')
-          ? currentPage.__next
-          : this.proxyUrl + currentPage.__next;
 
-        return this.http.get<{ results: any[]; __next?: string }>(nextUrl, {
-          headers,
-        });
+        // If the link is fully qualified, or partial, do your domain replacement logic
+        const url = new URL(nextLink);
+        const domain = url.origin;
+        const nextUrl = nextLink.startsWith('http')
+          ? nextLink.replace(domain, this.proxyUrl)
+          : this.proxyUrl + nextLink;
+
+        return this.http.get<any>(nextUrl, { headers });
       }),
-      scan((acc, pageData) => {
-        acc.results = acc.results.concat(pageData.results);
-        acc.__next = pageData.__next;
+      scan((acc, page) => {
+        // For each chunk, unify the shape:
+        // If it’s the initial chunk, it might have .results.
+        // Subsequent pages might have .d.results
+        const newItems = page.results ?? page.d?.results ?? [];
+        const newNext = page.__next ?? page.d?.__next ?? null;
+
+        // combine them into our accumulator
+        acc.results = acc.results.concat(newItems);
+        acc.__next = newNext;
         return acc;
       }),
       takeWhile((data) => !!data.__next, true),

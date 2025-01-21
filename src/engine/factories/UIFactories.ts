@@ -68,7 +68,7 @@ export interface UIPeriodSchedule {
 export interface UIChangePaymentDate {
   termNumber: number;
   newDate: string | Date;
-  oneTimeChange?: boolean;
+  originalDate?: string | Date;
 }
 
 /**
@@ -411,8 +411,8 @@ export function toAmortizationParams(ui: UIAmortizationParams): AmortizationPara
   if (ui.changePaymentDates && ui.changePaymentDates.length > 0) {
     changePaymentDates = ui.changePaymentDates.map((c) => ({
       termNumber: c.termNumber,
-      newDate: dayjs(c.newDate),
-      oneTimeChange: c.oneTimeChange ?? false,
+      newDate: dayjs(c.newDate).toDate(),
+      originalDate: c.originalDate ? dayjs(c.originalDate).startOf('day').toDate() : undefined,
     }));
   }
 

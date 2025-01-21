@@ -1953,6 +1953,17 @@ export class AppComponent implements OnChanges {
     // this will show user how much was unused
     this.loan.balanceModifications = this.amortization.balanceModifications;
 
+    // change payment dates will get updated with term number if only original date
+    // is passed and term is set to zero.
+    this.loan.changePaymentDates = this.amortization.changePaymentDates.map(
+      (cpd) => {
+        return {
+          termNumber: cpd.termNumber,
+          newDate: cpd.newDate.toDate(),
+        };
+      },
+    );
+
     this.loanModified = true; // Mark as modified
 
     this.loanSummary = this.amortization.getLoanSummary(

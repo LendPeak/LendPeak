@@ -16,7 +16,7 @@ import { Subscription, from } from 'rxjs';
 import { mergeMap, tap, finalize } from 'rxjs/operators';
 import { PerDiemCalculationType } from 'lendpeak-engine/models/InterestCalculator';
 import { FlushUnbilledInterestDueToRoundingErrorType } from 'lendpeak-engine/models/Amortization';
-import { LoanResponse } from '../models/loanpro.model';
+import { LoanResponse, DueDateChange } from '../models/loanpro.model';
 import { DepositRecord } from 'lendpeak-engine/models/Deposit';
 
 @Component({
@@ -28,6 +28,7 @@ import { DepositRecord } from 'lendpeak-engine/models/Deposit';
 export class LoanImportComponent implements OnInit, OnDestroy {
   connectors: Connector[] = [];
   selectedConnectorId: string = '';
+  
 
   searchType: 'displayId' | 'systemId' | 'systemIdRange' = 'systemId';
   searchValue: string = '';
@@ -350,7 +351,7 @@ export class LoanImportComponent implements OnInit, OnDestroy {
     return connector;
   }
 
-  private mapToUILoan(loanData: any): UILoan {
+  private mapToUILoan(loanData: LoanResponse): UILoan {
     let perDiemCalculationType: PerDiemCalculationType =
       'AnnualRateDividedByDaysInYear';
     if (loanData.d.LoanSetup.calcType === 'loan.calcType.simpleInterest') {
@@ -395,7 +396,15 @@ export class LoanImportComponent implements OnInit, OnDestroy {
       defaultPreBillDaysConfiguration: 5,
       allowRateAbove100: false,
       periodsSchedule: [],
-      changePaymentDates: [],
+      changePaymentDates: loanData.d.DueDateChanges.results.map(
+        (change: DueDateChange) => {
+          return {
+            termNumber: 0,
+            originalDate: parseODataDate(change.originalDate, true),
+            newDate: parseODataDate(change.newDate, true),
+          };
+        },
+      ),
       dueBillDays: [],
       preBillDays: [],
       termPeriodDefinition: {
@@ -405,6 +414,7 @@ export class LoanImportComponent implements OnInit, OnDestroy {
       balanceModifications: [],
       billingModel: 'amortized',
       paymentAllocationStrategy: 'FIFO',
+
       deposits: loanData.d.Payments.results
         .filter((payment: any) => payment.active === 1)
         .map((payment: any) => {

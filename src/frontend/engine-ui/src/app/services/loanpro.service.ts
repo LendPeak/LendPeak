@@ -1,7 +1,16 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable, throwError, forkJoin } from 'rxjs';
-import { map, catchError } from 'rxjs/operators';
+import {
+  Observable,
+  throwError,
+  forkJoin,
+  expand,
+  takeWhile,
+  of,
+  scan,
+  EMPTY,
+} from 'rxjs';
+import { map, catchError, switchMap } from 'rxjs/operators';
 
 import { Connector } from '../models/connector.model';
 import { environment } from '../../environments/environment';
@@ -72,7 +81,7 @@ export class LoanProService {
     headers: HttpHeaders,
     displayId: string,
   ): Observable<LoanResponse> {
-    const apiPath = `/api/public/api/1/Users/Autopal.Search()`;
+    const apiPath = `/api/public/api/1/Loans/Autopal.Search()`;
     const fullProxyUrl = `${this.proxyUrl}${apiPath}`;
 
     const requestBody = {
@@ -88,9 +97,11 @@ export class LoanProService {
     };
 
     return this.http.post<any>(fullProxyUrl, requestBody, { headers }).pipe(
-      map((response) => {
-        if (response.data && response.data.length > 0) {
-          return response.data[0] as LoanResponse;
+      switchMap((response) => {
+        // d.results.[0].id is the systemId of the first result
+        if (response.data && response.data.d.results.length > 0) {
+          const systemId = response.data.d.results[0].id;
+          return this.fetchBySystemId(headers, systemId);
         } else {
           throw new Error('Loan not found by displayId');
         }
@@ -115,21 +126,97 @@ export class LoanProService {
       .get<any>(fullProxyUrl, {
         headers,
         params: {
-          $expand: 'LoanSetup,LoanSettings,Payments',
+          $expand:
+            'LoanSetup,LoanSettings,Payments,DueDateChanges,ScheduleRolls,Transactions',
         },
       })
       .pipe(
-        map((response) => {
-          if (response) {
-            return response as LoanResponse;
-          } else {
+        switchMap((response) => {
+          if (!response) {
             throw new Error('Loan not found by systemId');
           }
+          // handle pagination in expanded collections
+          return this.loadAllExpandedCollections(response, headers);
         }),
+        map((completeResponse) => completeResponse as LoanResponse),
         catchError((error) =>
           this.handleError(error, 'Error fetching by systemId'),
         ),
       );
+  }
+
+  /**
+   * Load the remaining pages for any expanded collections that include a `__next` link.
+   */
+  private loadAllExpandedCollections(
+    response: any,
+    headers: HttpHeaders,
+  ): Observable<any> {
+    const expansionsNeedingPagination = [
+      'Payments',
+      'DueDateChanges',
+      'ScheduleRolls',
+      'Transactions',
+    ];
+
+    const fetchObservables: Observable<[string, any[]]>[] = [];
+
+    for (const field of expansionsNeedingPagination) {
+      if (response[field]?.__next) {
+        // We have a partial collection with `__next`; fetch the rest
+        fetchObservables.push(
+          this.fetchAllPagesForExpandedField(response[field], headers).pipe(
+            map((allResults) => [field, allResults] as [string, any[]]),
+          ),
+        );
+      }
+    }
+
+    if (fetchObservables.length === 0) {
+      return of(response);
+    }
+
+    return forkJoin(fetchObservables).pipe(
+      map((results) => {
+        for (const [fieldName, completeResults] of results) {
+          response[fieldName].results = completeResults;
+          delete response[fieldName].__next;
+        }
+        return response;
+      }),
+    );
+  }
+
+  /**
+   * Given the partial data for one expanded collection, fetch all subsequent pages
+   * by following `__next` links. Returns an Observable of the complete array of items.
+   */
+  private fetchAllPagesForExpandedField(
+    initialData: { results: any[]; __next?: string },
+    headers: HttpHeaders,
+  ): Observable<any[]> {
+    return of(initialData).pipe(
+      expand((currentPage) => {
+        if (!currentPage.__next) {
+          return EMPTY;
+        }
+        // If __next is a relative path, prepend `this.proxyUrl`. Adjust as needed.
+        const nextUrl = currentPage.__next.startsWith('http')
+          ? currentPage.__next
+          : this.proxyUrl + currentPage.__next;
+
+        return this.http.get<{ results: any[]; __next?: string }>(nextUrl, {
+          headers,
+        });
+      }),
+      scan((acc, pageData) => {
+        acc.results = acc.results.concat(pageData.results);
+        acc.__next = pageData.__next;
+        return acc;
+      }),
+      takeWhile((data) => !!data.__next, true),
+      map((acc) => acc.results),
+    );
   }
 
   /**

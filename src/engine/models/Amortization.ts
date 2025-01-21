@@ -121,13 +121,13 @@ export interface JSTermPaymentAmount {
 export interface ChangePaymentDate {
   termNumber: number;
   newDate: Dayjs;
-  oneTimeChange?: boolean;
+  originalDate?: Dayjs;
 }
 
 export interface JSChangePaymentDate {
   termNumber: number;
+  originalDate?: Date;
   newDate: Dayjs | Date;
-  oneTimeChange?: boolean;
 }
 
 export interface PreBillDaysConfiguration {
@@ -841,7 +841,17 @@ export class Amortization {
 
       // Check for change payment date
       if (this.changePaymentDates.length > 0) {
-        const changePaymentDate = this.changePaymentDates.find((changePaymentDate) => changePaymentDate.termNumber === i + 1);
+        const changePaymentDate = this.changePaymentDates.find((changePaymentDate) => {
+          if (changePaymentDate.originalDate) {
+            // it is false if original date is after the current period
+            if (startDate.isSame(changePaymentDate.originalDate)) {
+              changePaymentDate.termNumber = i + 1;
+              return true;
+            }
+          } else {
+            return changePaymentDate.termNumber === i + 1;
+          }
+        });
         if (changePaymentDate) {
           endDate = changePaymentDate.newDate.startOf("day");
         }

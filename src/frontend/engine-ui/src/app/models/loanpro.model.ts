@@ -46,11 +46,21 @@ export interface LoanData {
   Collateral: Deferred;
   LoanSettings: LoanSettings;
   LoanSetup: LoanSetup;
+
   Notes: Deferred;
   Promises: Deferred;
   Bankruptcies: Deferred;
   Charges: Deferred;
   Payments: PaymentsCollection;
+  DueDateChanges: {
+    results: DueDateChange[];
+    __next?: string;
+  };
+  ScheduleRolls: {
+    results: ScheduleRoll[];
+    __next?: string;
+  };
+
   // ... Other deferred properties
   // Core properties
   id: number;
@@ -216,6 +226,7 @@ export interface LoanSetup {
 
 export interface PaymentsCollection {
   results: Payment[];
+  __next?: string;
 }
 
 export interface Payment {
@@ -304,4 +315,40 @@ export interface Payment {
   reportExtendedData: any;
   createdBy: number | null;
   autopayId: number | null;
+}
+
+export interface DueDateChange {
+  __metadata: Metadata;
+  id: number;
+  entityType: string;
+  entityId: number;
+  modId: number | null;
+  originalDate: string; // e.g. "/Date(1700784000)/"
+  newDate: string; // e.g. "/Date(1703721600)/"
+  changedDate: string; // e.g. "/Date(1703376000)/"
+  dueDateOnLastDOM: number;
+}
+
+export interface ScheduleRoll {
+  __metadata: Metadata;
+  id: number;
+  entityType: string;
+  entityId: number;
+  modId: number | null;
+  term: number;
+  rate: string;
+  solveUsing: string;
+  amount: string;
+  interestOnlyOffSetDays: number | null;
+  percent: string;
+  advancedTerms: string;
+  solveFor: string;
+  balance: string;
+  balanceSet: string;
+  difference: string;
+  forceBalloon: number;
+  basicRevert: number;
+  displayOrder: number;
+  isCurtailment: number;
+  lastAsFinal: number;
 }

@@ -68,6 +68,13 @@ export class OverridesComponent implements OnInit {
     // re-apply defaults etc.
     if (changes['loan'] && !changes['loan'].firstChange) {
       this.balanceModifications = this.loan.balanceModifications;
+      if (this.balanceModifications.length > 0) {
+        if (this.openPanels.indexOf('balanceModifications') === -1) {
+          // this.openPanels = [];
+          this.openPanels = [];
+          this.openPanels.push('balanceModifications');
+        }
+      }
     }
   }
 

@@ -846,7 +846,7 @@ export class Amortization {
       // Check for change payment date
       if (this.changePaymentDates.length > 0) {
         const changePaymentDate = this.changePaymentDates.find((changePaymentDate) => {
-          if (changePaymentDate.originalDate) {
+          if (!changePaymentDate.termNumber && changePaymentDate.originalDate) {
             // it is false if original date is after the current period
             if (startDate.isSame(changePaymentDate.originalDate)) {
               changePaymentDate.termNumber = i + 1;

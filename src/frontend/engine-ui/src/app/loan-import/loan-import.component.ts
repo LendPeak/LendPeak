@@ -255,7 +255,7 @@ export class LoanImportComponent implements OnInit, OnDestroy {
     // unify them into array
     let loansArray = Array.isArray(loanData) ? loanData : [loanData];
 
-    console.log('Imported loans:', loansArray);
+    // console.log('Imported loans:', loansArray);
 
     // If they’re still raw LoanResponse, convert them to UILoan
     if (loansArray.length > 0 && (loansArray[0] as any).d) {

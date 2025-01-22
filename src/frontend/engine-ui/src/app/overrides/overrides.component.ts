@@ -66,15 +66,10 @@ export class OverridesComponent implements OnInit {
     // This will fire whenever an @Input changes.
     // If 'loan' has changed, you can re-run your initialization logic or
     // re-apply defaults etc.
+    this.refreshOpenTabs();
+
     if (changes['loan'] && !changes['loan'].firstChange) {
       this.balanceModifications = this.loan.balanceModifications;
-      if (this.balanceModifications.length > 0) {
-        if (this.openPanels.indexOf('balanceModifications') === -1) {
-          // this.openPanels = [];
-          this.openPanels = [];
-          this.openPanels.push('balanceModifications');
-        }
-      }
     }
   }
 
@@ -99,7 +94,10 @@ export class OverridesComponent implements OnInit {
     }
 
     this.balanceModifications = this.loan.balanceModifications;
+    this.refreshOpenTabs();
+  }
 
+  refreshOpenTabs() {
     // Clear or initialize the array each time
     this.openPanels = [];
 

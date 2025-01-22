@@ -1958,11 +1958,6 @@ export class AppComponent implements OnChanges {
 
     // change payment dates will get updated with term number if only original date
     // is passed and term is set to zero.
-    console.log('changePaymentDates:', this.loan.changePaymentDates);
-    console.log(
-      'this.amortization.changePaymentDates:',
-      this.amortization.changePaymentDates,
-    );
     this.loan.changePaymentDates = this.amortization.changePaymentDates.map(
       (cpd) => {
         return {

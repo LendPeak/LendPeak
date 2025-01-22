@@ -860,10 +860,6 @@ export class Amortization {
             // it is false if original date is after the current period
             if (startDate.isSame(changePaymentDate.originalDate)) {
               changePaymentDate.termNumber = i + 1;
-              // find index of the changePaymentDate in the array
-              // const index = this.changePaymentDates.indexOf(changePaymentDate);
-              // console.log("udpating changePaymentDate", changePaymentDate);
-              // this.changePaymentDates[index].termNumber = i + 1;
               return true;
             }
           } else {

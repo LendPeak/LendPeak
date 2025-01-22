@@ -7,7 +7,7 @@
  */
 
 import Decimal from "decimal.js";
-import dayjs from "dayjs";
+import dayjs, { Dayjs } from "dayjs";
 
 import {
   AmortizationParams,
@@ -276,6 +276,7 @@ export interface UIAmortizationParams {
   termInterestOverride?: {
     termNumber: number;
     interestAmount: number; // user can pass raw number
+    date?: Date;
   }[];
 
   termInterestRateOverride?: {
@@ -412,7 +413,7 @@ export function toAmortizationParams(ui: UIAmortizationParams): AmortizationPara
     changePaymentDates = ui.changePaymentDates.map((c) => ({
       termNumber: c.termNumber,
       newDate: dayjs(c.newDate).toDate(),
-      originalDate: c.originalDate ? dayjs(c.originalDate).startOf('day').toDate() : undefined,
+      originalDate: c.originalDate ? dayjs(c.originalDate).startOf("day").toDate() : undefined,
     }));
   }
 
@@ -471,11 +472,12 @@ export function toAmortizationParams(ui: UIAmortizationParams): AmortizationPara
   }
 
   // Term interest override
-  let termInterestOverride: { termNumber: number; interestAmount: Currency }[] | undefined = undefined;
+  let termInterestOverride: { termNumber: number; interestAmount: Currency; date?: Dayjs }[] | undefined = undefined;
   if (ui.termInterestOverride && ui.termInterestOverride.length > 0) {
     termInterestOverride = ui.termInterestOverride.map((o) => ({
       termNumber: o.termNumber,
       interestAmount: Currency.of(o.interestAmount),
+      date: o.date ? dayjs(o.date) : undefined,
     }));
   }
 

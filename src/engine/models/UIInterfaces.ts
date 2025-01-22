@@ -71,8 +71,8 @@ export interface UILoan {
   deposits: DepositRecord[];
   termPeriodDefinition: TermPeriodDefinition;
   paymentAllocationStrategy: PaymentAllocationStrategyName;
-  termInterestOverride?: { termNumber: number; interestAmount: number }[];
-  termInterestRateOverride?: { termNumber: number; interestRate: number }[];
+  termInterestOverride?: { termNumber: number; interestAmount: number; date?: Date }[];
+  termInterestRateOverride?: { termNumber: number; interestRate: number; date?: Date }[];
 }
 
 export interface ActualLoanSummary {

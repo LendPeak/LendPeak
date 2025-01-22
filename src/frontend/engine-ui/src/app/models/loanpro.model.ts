@@ -60,6 +60,14 @@ export interface LoanData {
     results: ScheduleRoll[];
     __next?: string;
   };
+  InterestAdjustments: {
+    results: InterestAdjustment[];
+    __next?: string;
+  };
+  Transactions: {
+    results: Transaction[];
+    __next?: string;
+  };
 
   // ... Other deferred properties
   // Core properties
@@ -96,6 +104,19 @@ export interface Deferred {
   __deferred: {
     uri: string;
   };
+}
+
+export interface InterestAdjustment {
+  id: number;
+  entityType: 'Entity.Loan';
+  entityId: number; // 4500;
+  modId: string; //  null;
+  title: string; // 'LPT-002517043 Interest Adjustment';
+  date: string; // '/Date(1619136000)/';
+  type: 'loan.interest.adjust.type.increase';
+  amount: string; // '372.67';
+  categoryId: string; // '1';
+  importId: null;
 }
 
 export interface LoanSettings {
@@ -351,4 +372,47 @@ export interface ScheduleRoll {
   displayOrder: number;
   isCurtailment: number;
   lastAsFinal: number;
+}
+
+export interface Transaction {
+  id: number; // Example: 567006
+  txId: string; // Example: '4500-0-info-int-adj-60051'
+  entityType: string; // Example: 'Entity.Loan'
+  entityId: number; // Example: 4500
+  modId: number; // Example: 0
+  date: string; // Example: '/Date(1619136000)/'
+  period: number; // Example: 0
+  periodStart: string; // Example: '/Date(-62169984000)/'
+  periodEnd: string; // Example: '/Date(-62169984000)/'
+  title: string; // Example: 'Interest Adjustment'
+  type: 'intAdjustment' | 'scheduledPayment' | 'payment'; // Example: 'intAdjustment'
+  infoOnly: number; // Example: 1
+  infoDetails: string; // Example: '{"type":"increase","amount":"372.67"}'
+  paymentId: number; // Example: 0
+  paymentDisplayId: number; // Example: 0
+  paymentAmount: string; // Example: '0'
+  paymentInterest: string; // Example: '0'
+  paymentPrincipal: string; // Example: '0'
+  paymentDiscount: string; // Example: '0'
+  paymentFees: string; // Example: '0'
+  feesPaidDetails: any; // Example: null
+  paymentEscrow: string; // Example: '0'
+  paymentEscrowBreakdown: any; // Example: null
+  chargeAmount: string; // Example: '0'
+  chargeInterest: string; // Example: '0'
+  chargePrincipal: string; // Example: '0'
+  chargeDiscount: string; // Example: '0'
+  chargeFees: string; // Example: '0'
+  chargeEscrow: string; // Example: '0'
+  chargeEscrowBreakdown: any; // Example: null
+  future: number; // Example: 0
+  principalOnly: number; // Example: 0
+  advancement: number; // Example: 0
+  payoffFee: number; // Example: 0
+  chargeOff: number; // Example: 0
+  paymentType: number; // Example: 0
+  adbDays: number; // Example: 0
+  adb: string; // Example: '0'
+  principalBalance: string; // Example: '0'
+  displayOrder: string; // Example: '0'
 }

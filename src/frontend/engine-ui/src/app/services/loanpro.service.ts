@@ -125,7 +125,7 @@ export class LoanProService {
         params: {
           // Expand whichever fields you need
           $expand:
-            'Payments,DueDateChanges,ScheduleRolls,Transactions,LoanSetup,LoanSettings',
+            'Payments,DueDateChanges,ScheduleRolls,Transactions,LoanSetup,LoanSettings,InterestAdjustments',
         },
       })
       .pipe(
@@ -157,7 +157,7 @@ export class LoanProService {
       'DueDateChanges',
       'ScheduleRolls',
       'Transactions',
-      // etc.
+      'InterestAdjustments',
     ];
 
     // We’ll collect Observables in here for each field that has a __next link
@@ -201,7 +201,7 @@ export class LoanProService {
    * Returns an Observable of the *complete* array of items.
    */
   private fetchAllPagesForExpandedField(
-    initialData: { results: any[]; __next?: string, d?: { __next?: string } },
+    initialData: { results: any[]; __next?: string; d?: { __next?: string } },
     headers: HttpHeaders,
   ): Observable<any[]> {
     return of(initialData).pipe(

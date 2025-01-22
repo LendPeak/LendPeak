@@ -1972,6 +1972,14 @@ export class AppComponent implements OnChanges {
       },
     );
 
+    this.loan.termInterestOverride = [];
+    this.amortization.termInterestOverrideMap.forEach((value, key) => {
+      this.loan.termInterestOverride!.push({
+        termNumber: key,
+        interestAmount: value.toNumber(),
+      });
+    });
+
     this.loanModified = true; // Mark as modified
 
     this.loanSummary = this.amortization.getLoanSummary(

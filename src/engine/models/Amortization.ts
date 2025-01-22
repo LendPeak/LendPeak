@@ -174,7 +174,7 @@ export interface AmortizationParams {
   feesPerTerm?: { termNumber: number; fees: Fee[] }[];
   feesForAllTerms?: JSFee[];
   billingModel?: BillingModel;
-  termInterestOverride?: { termNumber: number; interestAmount: Currency }[];
+  termInterestOverride?: { termNumber: number; interestAmount: Currency; date?: Dayjs }[];
   termInterestRateOverride?: { termNumber: number; interestRate: Decimal }[];
 }
 
@@ -227,13 +227,13 @@ export class Amortization {
   // private customFeesPerTerm: Map<number, Currency>;
   // private feePercentageOfTotalPayment: Decimal;
   // private customFeePercentagesPerTerm: Map<number, Decimal>;
-  private feesPerTerm: Map<number, Fee[]>;
-  private feesForAllTerms: Fee[] = [];
+  feesPerTerm: Map<number, Fee[]>;
+  feesForAllTerms: Fee[] = [];
 
   private _inputParams: AmortizationParams;
 
-  private termInterestOverrideMap: Map<number, Currency> = new Map();
-  private termInterestRateOverrideMap: Map<number, Decimal> = new Map();
+  termInterestOverrideMap: Map<number, Currency> = new Map();
+  termInterestRateOverrideMap: Map<number, Decimal> = new Map();
 
   constructor(params: AmortizationParams) {
     this._inputParams = cloneDeep(params);
@@ -360,30 +360,6 @@ export class Amortization {
       });
     }
 
-    if (params.termInterestOverride) {
-      for (const override of params.termInterestOverride) {
-        if (override.termNumber <= 0 || override.termNumber > this.term) {
-          throw new Error(`Invalid termInterestOverride: termNumber ${override.termNumber} out of range`);
-        }
-        if (override.interestAmount.getValue().isNegative()) {
-          throw new Error("Invalid termInterestOverride: interestAmount cannot be negative");
-        }
-        this.termInterestOverrideMap.set(override.termNumber, override.interestAmount);
-      }
-    }
-
-    if (params.termInterestRateOverride) {
-      for (const override of params.termInterestRateOverride) {
-        if (override.termNumber <= 0 || override.termNumber > this.term) {
-          throw new Error(`Invalid termInterestRateOverride: termNumber ${override.termNumber} out of range`);
-        }
-        if (override.interestRate.isNegative()) {
-          throw new Error("Invalid termInterestRateOverride: interestAmount cannot be negative");
-        }
-        this.termInterestRateOverrideMap.set(override.termNumber, override.interestRate);
-      }
-    }
-
     this.calendar = new Calendar(params.calendarType || CalendarType.ACTUAL_ACTUAL);
 
     if (params.roundingMethod) {
@@ -441,7 +417,41 @@ export class Amortization {
         };
       });
     }
+    if (params.termInterestOverride) {
+      for (const override of params.termInterestOverride) {
+        if (override.termNumber < 0 || override.termNumber > this.term) {
+          throw new Error(`Invalid termInterestOverride: termNumber ${override.termNumber} out of range`);
+        }
+        if (override.interestAmount.getValue().isNegative()) {
+          throw new Error("Invalid termInterestOverride: interestAmount cannot be negative");
+        }
+        if (!override.termNumber && override.date) {
+          // this means term was not available so we will resolve term number through date
+          const date = dayjs(override.date).startOf("day");
+          let term = this.periodsSchedule.findIndex((period) => {
+            return date.isBetween(period.startDate, period.endDate, "day", "[]");
+          });
+          if (term === -1) {
+            throw new Error("Invalid termInterestOverride: date does not fall within any term");
+          }
 
+          override.termNumber = term + 1;
+        }
+        this.termInterestOverrideMap.set(override.termNumber, override.interestAmount);
+      }
+    }
+
+    if (params.termInterestRateOverride) {
+      for (const override of params.termInterestRateOverride) {
+        if (override.termNumber <= 0 || override.termNumber > this.term) {
+          throw new Error(`Invalid termInterestRateOverride: termNumber ${override.termNumber} out of range`);
+        }
+        if (override.interestRate.isNegative()) {
+          throw new Error("Invalid termInterestRateOverride: interestAmount cannot be negative");
+        }
+        this.termInterestRateOverrideMap.set(override.termNumber, override.interestRate);
+      }
+    }
     if (!params.ratesSchedule) {
       this.generateRatesSchedule();
     } else {

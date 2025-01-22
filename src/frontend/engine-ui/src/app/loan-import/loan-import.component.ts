@@ -397,6 +397,25 @@ export class LoanImportComponent implements OnInit, OnDestroy {
       defaultPreBillDaysConfiguration: 5,
       allowRateAbove100: false,
       periodsSchedule: [],
+      termInterestOverride: loanData.d.Transactions.results
+        .filter((tr) => tr.type === 'intAdjustment')
+        .map((tr) => {
+          // "infoDetails": "{\"type\":\"increase\",\"amount\":\"273.47\"}",
+
+          const infoDetail = JSON.parse(tr.infoDetails);
+          let amount = '0';
+          if (infoDetail.type == 'increase') {
+            amount = infoDetail.amount;
+          } else {
+            amount = '0';
+            console.error('Unknown interest adjustment type:', infoDetail.type);
+          }
+          return {
+            termNumber: 0,
+            interestAmount: parseFloat(amount),
+            date: parseODataDate(tr.date, true),
+          };
+        }),
       changePaymentDates: loanData.d.DueDateChanges.results.map(
         (change: DueDateChange) => {
           return {

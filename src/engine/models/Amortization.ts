@@ -427,9 +427,10 @@ export class Amortization {
         }
         if (!override.termNumber && override.date) {
           // this means term was not available so we will resolve term number through date
-          const date = dayjs(override.date).startOf("day");
+          let date = dayjs(override.date).startOf("day");
           let term = this.periodsSchedule.findIndex((period) => {
-            return date.isBetween(period.startDate, period.endDate, "day", "[]");
+            return date.isBetween(period.startDate, period.endDate, "day", "[)"); // this is start and < end date;
+            // return date.isBetween(period.startDate, period.endDate, "day", "[]"); // this is start and end date inclusive
           });
           if (term === -1) {
             throw new Error("Invalid termInterestOverride: date does not fall within any term");

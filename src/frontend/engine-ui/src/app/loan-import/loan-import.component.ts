@@ -15,7 +15,10 @@ import dayjs from 'dayjs';
 import { Subscription, from } from 'rxjs';
 import { mergeMap, tap, finalize } from 'rxjs/operators';
 import { PerDiemCalculationType } from 'lendpeak-engine/models/InterestCalculator';
-import { FlushUnbilledInterestDueToRoundingErrorType } from 'lendpeak-engine/models/Amortization';
+import {
+  FlushUnbilledInterestDueToRoundingErrorType,
+  BillingModel,
+} from 'lendpeak-engine/models/Amortization';
 import { LoanResponse, DueDateChange } from '../models/loanpro.model';
 import { DepositRecord } from 'lendpeak-engine/models/Deposit';
 
@@ -364,6 +367,9 @@ export class LoanImportComponent implements OnInit, OnDestroy {
       calendarType = 'ACTUAL_360';
     }
 
+    let billingModel: BillingModel = "dailySimpleInterest";
+    
+
     let flushMethod: FlushUnbilledInterestDueToRoundingErrorType =
       FlushUnbilledInterestDueToRoundingErrorType.NONE;
 
@@ -386,6 +392,7 @@ export class LoanImportComponent implements OnInit, OnDestroy {
       endDate: parseODataDate(loanData.d.LoanSetup.origFinalPaymentDate, true),
       calendarType: calendarType,
       roundingMethod: 'ROUND_HALF_EVEN',
+      billingModel: billingModel,
       perDiemCalculationType: perDiemCalculationType,
       roundingPrecision: 2,
       flushMethod: flushMethod,
@@ -432,7 +439,6 @@ export class LoanImportComponent implements OnInit, OnDestroy {
         count: [1],
       },
       balanceModifications: [],
-      billingModel: 'amortized',
       paymentAllocationStrategy: 'FIFO',
 
       deposits: loanData.d.Payments.results

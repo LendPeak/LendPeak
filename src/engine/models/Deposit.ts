@@ -77,6 +77,8 @@ export class DepositRecord implements Deposit {
   private _balanceModificationId?: string;
   jsBalanceModificationId?: string;
 
+  active: boolean = true;
+
   _metadata?: DepositMetadata;
   _usageDetails: UsageDetail[] = [];
 
@@ -98,12 +100,17 @@ export class DepositRecord implements Deposit {
     unusedAmount?: Currency | number;
     balanceModificationId?: string;
     metadata?: DepositMetadata;
+    active?: boolean;
   }) {
     // console.log("params in deposit record", params);
     if (params.id) {
       this.id = params.id;
     } else {
       this.id = DepositRecord.generateUniqueId(params.sequence);
+    }
+
+    if (params.active !== undefined) {
+      this.active = params.active;
     }
 
     this.amount = Currency.of(params.amount);

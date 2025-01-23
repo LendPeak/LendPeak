@@ -436,10 +436,11 @@ export class LoanImportComponent implements OnInit, OnDestroy {
       paymentAllocationStrategy: 'FIFO',
 
       deposits: loanData.d.Payments.results
-        .filter((payment: any) => payment.active === 1)
+        // .filter((payment: any) => payment.active === 1)
         .map((payment: any) => {
           return new DepositRecord({
             amount: parseFloat(payment.amount),
+            active: payment.active === 1,
             currency: 'USD',
             effectiveDate: parseODataDate(payment.date, true),
             clearingDate: parseODataDate(payment.date, true),

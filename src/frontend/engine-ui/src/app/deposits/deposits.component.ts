@@ -19,10 +19,10 @@ dayjs.extend(isSameOrBefore);
 dayjs.extend(isBetween);
 
 @Component({
-    selector: 'app-deposits',
-    templateUrl: './deposits.component.html',
-    styleUrls: ['./deposits.component.css'],
-    standalone: false
+  selector: 'app-deposits',
+  templateUrl: './deposits.component.html',
+  styleUrls: ['./deposits.component.css'],
+  standalone: false,
 })
 export class DepositsComponent {
   @Input() deposits: DepositRecord[] = [];
@@ -128,7 +128,6 @@ export class DepositsComponent {
       this.selectedDepositForEdit = null;
     }
     this.showDepositDialog = true;
-    this.calculateBillGuidance();
   }
 
   onDataChange(event: any) {
@@ -140,137 +139,8 @@ export class DepositsComponent {
     ) {
       this.depositData.excessAppliedDate = this.depositData.effectiveDate;
     }
-
-    this.calculateBillGuidance();
   }
 
-  calculateBillGuidance() {
-    const originalDepositAmount = Currency.of(this.depositData.jsAmount || 0);
-
-    // 1. Baseline scenario (no deposit)
-    this.depositData.jsAmount = 0;
-    this.runGuidanceCalculation();
-    // Store baseline values
-    this.baselineNextDueBillAmount = this.nextDueBillAmount;
-    this.baselineTotalFutureScheduledPayments =
-      this.totalFutureScheduledPayments;
-    this.baselinePayoffAmount = this.payoffAmount;
-    // Note: AccruedInterestToDate and nextDueBill breakdown (principal, interest, fees) can also be stored if needed
-    this.baselineNextDuePrincipal = this.nextDuePrincipal;
-    this.baselineNextDueInterest = this.nextDueInterest;
-    this.baselineNextDueFees = this.nextDueFees;
-
-    // 2. Actual scenario (with user-entered deposit)
-    this.depositData.jsAmount = originalDepositAmount.toNumber();
-    this.runGuidanceCalculation();
-  }
-
-  // A refactored method that does the actual logic of reading bills and computing nextDueBillAmount, etc.
-  // This separates the logic so we can call it twice (once for baseline, once for actual).
-  runGuidanceCalculation() {
-    const snapshotDayjs = dayjs(this.snapshotDate);
-
-    const allUnpaidBills = this.bills.filter(
-      (b) => !b.isPaid && b.jsTotalDue > 0,
-    );
-    this.totalFutureScheduledPayments = allUnpaidBills.reduce(
-      (sum, bill) => sum.add(Currency.of(bill.jsTotalDue)),
-      Currency.Zero(),
-    );
-    this.noUnpaidBills = this.totalFutureScheduledPayments.isZero();
-
-    const currentlyDueBills = allUnpaidBills.filter((b) =>
-      dayjs(b.jsDueDate).isSameOrBefore(snapshotDayjs, 'day'),
-    );
-    const upcomingBills = allUnpaidBills.filter((b) =>
-      dayjs(b.jsDueDate).isAfter(snapshotDayjs, 'day'),
-    );
-
-    let nextDueBill: Bill | undefined;
-    if (currentlyDueBills.length > 0) {
-      nextDueBill = currentlyDueBills.sort((a, b) =>
-        dayjs(a.jsDueDate).diff(dayjs(b.jsDueDate)),
-      )[0];
-    } else if (upcomingBills.length > 0) {
-      nextDueBill = upcomingBills.sort((a, b) =>
-        dayjs(a.jsDueDate).diff(dayjs(b.jsDueDate)),
-      )[0];
-    } else {
-      nextDueBill = undefined;
-    }
-
-    if (nextDueBill) {
-      this.nextDuePrincipal = Currency.of(nextDueBill.jsPrincipalDue);
-      this.nextDueInterest = Currency.of(nextDueBill.jsInterestDue);
-      this.nextDueFees = Currency.of(nextDueBill.jsFeesDue);
-      this.nextDueBillAmount = this.nextDuePrincipal
-        .add(this.nextDueInterest)
-        .add(this.nextDueFees);
-      this.nextDueBillDate = nextDueBill.jsDueDate;
-
-      this.isNextBillOverdue = dayjs(nextDueBill.jsDueDate).isBefore(
-        snapshotDayjs,
-        'day',
-      );
-      this.daysPastDue = this.isNextBillOverdue
-        ? snapshotDayjs.diff(dayjs(nextDueBill.jsDueDate), 'day')
-        : 0;
-    } else {
-      this.nextDuePrincipal = Currency.Zero();
-      this.nextDueInterest = Currency.Zero();
-      this.nextDueFees = Currency.Zero();
-      this.nextDueBillAmount = Currency.Zero();
-      this.nextDueBillDate = undefined;
-      this.isNextBillOverdue = false;
-      this.daysPastDue = 0;
-    }
-
-    const depositAmount = Currency.of(this.depositData.jsAmount || 0);
-    this.amountCoveringNextDue = Currency.Zero();
-    this.remainingUnpaidAfterDeposit = Currency.Zero();
-    this.excessPayment = Currency.Zero();
-
-    if (this.noUnpaidBills) {
-      this.excessPayment = depositAmount;
-      return;
-    }
-
-    if (this.nextDueBillAmount.greaterThan(0)) {
-      this.amountCoveringNextDue = depositAmount.greaterThan(
-        this.nextDueBillAmount,
-      )
-        ? this.nextDueBillAmount
-        : depositAmount;
-    }
-
-    const remainingAfterNextDue = depositAmount.subtract(
-      this.amountCoveringNextDue,
-    );
-    let unpaidExcludingNext = this.totalFutureScheduledPayments.subtract(
-      this.nextDueBillAmount,
-    );
-    const stillOwedOnNext = this.nextDueBillAmount.subtract(
-      this.amountCoveringNextDue,
-    );
-
-    if (stillOwedOnNext.greaterThan(0)) {
-      unpaidExcludingNext = unpaidExcludingNext.add(stillOwedOnNext);
-    }
-
-    if (remainingAfterNextDue.greaterThan(unpaidExcludingNext)) {
-      this.remainingUnpaidAfterDeposit = Currency.Zero();
-      this.excessPayment = remainingAfterNextDue.subtract(unpaidExcludingNext);
-    } else {
-      const stillUnpaid = unpaidExcludingNext.subtract(remainingAfterNextDue);
-      if (stillUnpaid.greaterThan(0)) {
-        this.remainingUnpaidAfterDeposit = stillUnpaid;
-        this.excessPayment = Currency.Zero();
-      } else {
-        this.remainingUnpaidAfterDeposit = Currency.Zero();
-        this.excessPayment = stillUnpaid.abs();
-      }
-    }
-  }
   onDepositDialogHide() {
     this.showDepositDialog = false;
     this.selectedDepositForEdit = null;
@@ -294,10 +164,14 @@ export class DepositsComponent {
     } else {
       this.deposits.push(this.depositData);
     }
-    this.depositsChange.emit(this.deposits);
-    this.depositUpdated.emit();
+    this.depositActiveUpdated();
     this.showDepositDialog = false;
     this.selectedDepositForEdit = null;
+  }
+
+  depositActiveUpdated() {
+    this.depositsChange.emit(this.deposits);
+    this.depositUpdated.emit();
   }
 
   onApplyExcessToPrincipalChange(event: any) {
@@ -306,7 +180,6 @@ export class DepositsComponent {
     } else {
       this.depositData.excessAppliedDate = undefined;
     }
-    this.calculateBillGuidance();
   }
 
   removeDeposit(deposit: DepositRecord) {

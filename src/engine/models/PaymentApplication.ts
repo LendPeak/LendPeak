@@ -90,6 +90,10 @@ export class PaymentApplication {
     const results: PaymentApplicationResult[] = [];
 
     for (const deposit of this.deposits) {
+      if (deposit.active !== true) {
+        console.debug(`Skipping deposit ${deposit.id} because it is not active`);
+        continue;
+      }
       const result = this.applyDeposit(deposit, {
         allocationStrategy: this.allocationStrategy,
         paymentPriority: this.paymentPriority,

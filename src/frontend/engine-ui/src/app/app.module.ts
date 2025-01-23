@@ -28,6 +28,8 @@ import { DialogModule } from 'primeng/dialog';
 import { BadgeModule } from 'primeng/badge';
 import { ProgressBarModule } from 'primeng/progressbar';
 import { ConfirmPopupModule } from 'primeng/confirmpopup';
+import { ToggleButtonModule } from 'primeng/togglebutton';
+import { ToggleSwitchModule } from 'primeng/toggleswitch';
 
 import { PanelModule } from 'primeng/panel';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
@@ -96,6 +98,8 @@ import {
     ConfirmPopupModule,
     BadgeModule,
     FluidModule,
+    ToggleButtonModule,
+    ToggleSwitchModule,
     InputTextModule,
     DatePickerModule,
     SelectModule,

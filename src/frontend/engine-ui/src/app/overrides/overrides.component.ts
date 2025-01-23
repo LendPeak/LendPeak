@@ -34,7 +34,6 @@ export class OverridesComponent implements OnInit {
   @Output() loanChange = new EventEmitter<any>();
   @Output() loanUpdated = new EventEmitter<void>();
   openPanels: string[] = [];
-  balanceModifications: BalanceModification[] = [];
   savedSettings: OverrideSettings[] = [];
   selectedSettingId: string | null = null;
   isModified: boolean = false;
@@ -66,11 +65,8 @@ export class OverridesComponent implements OnInit {
     // This will fire whenever an @Input changes.
     // If 'loan' has changed, you can re-run your initialization logic or
     // re-apply defaults etc.
+    //this.balanceModifications = this.loan.balanceModifications;
     this.refreshOpenTabs();
-
-    if (changes['loan'] && !changes['loan'].firstChange) {
-      this.balanceModifications = this.loan.balanceModifications;
-    }
   }
 
   ngOnInit() {
@@ -93,7 +89,6 @@ export class OverridesComponent implements OnInit {
       );
     }
 
-    this.balanceModifications = this.loan.balanceModifications;
     this.refreshOpenTabs();
   }
 
@@ -141,7 +136,7 @@ export class OverridesComponent implements OnInit {
     }
 
     // Panel: Balance Modifications
-    if (this.balanceModifications?.length > 0) {
+    if (this.loan?.balanceModifications?.length > 0) {
       this.openPanels.push('balanceModifications');
     }
 
@@ -604,16 +599,13 @@ export class OverridesComponent implements OnInit {
     });
 
     // this.loan.balanceModifications.push(balanceModificationToAdd);
-    this.balanceModifications.push(balanceModificationToAdd);
+    this.loan.balanceModifications.push(balanceModificationToAdd);
     this.emitLoanChange();
   }
 
   deleteBalanceModificationRow(index: number) {
     if (this.loan.balanceModifications.length > 0) {
       this.loan.balanceModifications.splice(index, 1);
-    }
-    if (this.balanceModifications.length > 0) {
-      this.balanceModifications.splice(index, 1);
     }
     this.emitLoanChange();
   }
@@ -624,7 +616,7 @@ export class OverridesComponent implements OnInit {
     // Date and in this code we know that p-calendar is updating jsDate
     // so we will do a date update here
 
-    this.loan.balanceModifications = this.balanceModifications;
+    //this.loan.balanceModifications = this.balanceModifications;
 
     this.loan.balanceModifications.forEach((balanceModification) => {
       balanceModification.syncValuesFromJSProperties();
@@ -798,5 +790,6 @@ export class OverridesComponent implements OnInit {
   private emitLoanChange() {
     this.loanChange.emit(this.loan);
     this.loanUpdated.emit();
+    this.refreshOpenTabs();
   }
 }

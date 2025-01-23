@@ -887,7 +887,26 @@
             tabindex="0"
             (keydown)="onRowKeyDown($event, plan)"
           >
-            <td>{{ plan.period }}</td>
+            <td>
+              {{ plan.period }}
+
+              <p-badge
+                *ngIf="plan.balanceModificationAmount !== 0"
+                value="Balance Modification"
+                severity="info"
+                styleClass="mr-2"
+                pTooltip="Balance {{
+                  plan.balanceModificationAmount > 0 ? 'increased' : 'decreased'
+                }} by {{
+                  (plan.balanceModificationAmount >= 0
+                    ? plan.balanceModificationAmount
+                    : plan.balanceModificationAmount * -1
+                  ) | currency
+                }}"
+                tooltipPosition="top"
+                tooltipStyleClass="wide-tooltip"
+              ></p-badge>
+            </td>
 
             <td>{{ plan.periodStartDate | date: "MM/dd/yyyy" }}</td>
             <td>{{ plan.periodEndDate | date: "MM/dd/yyyy" }}</td>

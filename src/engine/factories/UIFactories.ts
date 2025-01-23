@@ -418,21 +418,7 @@ export function toAmortizationParams(ui: UIAmortizationParams): AmortizationPara
   }
 
   // Balance modifications: convert raw UI to real BalanceModification
-  let balanceModifications: BalanceModification[] | undefined = undefined;
-  if (ui.balanceModifications && ui.balanceModifications.length > 0) {
-    balanceModifications = ui.balanceModifications.map((b) => {
-      const params: IBalanceModification = {
-        id: b.id,
-        type: b.type,
-        amount: b.amount, // raw number -> internally BalanceModification uses Currency.of(amount)
-        date: b.date,
-        description: b.description,
-        metadata: b.metadata,
-        isSystemModification: b.isSystemModification,
-      };
-      return new BalanceModification(params);
-    });
-  }
+  let balanceModifications: BalanceModification[] | undefined = ui.balanceModifications;
 
   // Fees for all terms
   let feesForAllTerms: JSFee[] | undefined = undefined;

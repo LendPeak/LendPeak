@@ -819,7 +819,7 @@
         <p-accordion-content>
           <div class="grid">
             <div class="col-12">
-              <p-table [value]="balanceModifications">
+              <p-table [value]="loan.balanceModifications">
                 <ng-template pTemplate="header">
                   <tr>
                     <th style="width: 10%">Date</th>
@@ -842,7 +842,7 @@
                       <p-datepicker
                         [(ngModel)]="balanceModification.jsDate"
                         dateFormat="mm/dd/yy"
-                        name="balanceModificationDate-{{ i }}"
+                        inputId="balanceModificationDate-{{ i }}"
                         showIcon
                         (ngModelChange)="balanceModificationChanged()"
                         [disabled]="balanceModification.isSystemModification"
@@ -853,7 +853,7 @@
                     <td>
                       <p-select
                         [(ngModel)]="balanceModification.type"
-                        name="balanceModificationType-{{ i }}"
+                        inputId="balanceModificationType-{{ i }}"
                         [options]="balanceIncreaseType"
                         placeholder="Select a type"
                         (ngModelChange)="balanceModificationChanged()"
@@ -877,7 +877,7 @@
                       <p-inputNumber
                         [disabled]="true"
                         [(ngModel)]="balanceModification.jsUnusedAmount"
-                        name="balanceModificationAmount-{{ i }}"
+                        inputId="balanceModificationAmount-{{ i }}"
                         mode="currency"
                         currency="USD"
                         locale="en-US"

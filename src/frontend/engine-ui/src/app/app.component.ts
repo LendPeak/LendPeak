@@ -898,6 +898,7 @@ export class AppComponent implements OnChanges {
   }
 
   generateBills() {
+    console.log('generating bills');
     const repaymentSchedule = this.repaymentSchedule;
     this.bills = BillGenerator.generateBills(
       repaymentSchedule,
@@ -1598,11 +1599,6 @@ export class AppComponent implements OnChanges {
     return balanceModificationDate.toDate();
   }
 
-  addBalanceModification(balanceModification: BalanceModification) {
-    this.loan.balanceModifications.push(balanceModification);
-    this.submitLoan();
-  }
-
   balanceModificationRemoved = false;
 
   generateUniqueId(): string {
@@ -1631,6 +1627,7 @@ export class AppComponent implements OnChanges {
   }
 
   applyPayments() {
+    console.log('running applyPayments');
     // Reset usageDetails and related fields for each deposit
     this.loan.deposits.forEach((deposit) => {
       deposit.clearHistory();
@@ -1902,6 +1899,7 @@ export class AppComponent implements OnChanges {
       // mm/dd/yy
       return entry.periodEndDate.format('MM/DD/YY');
     });
+
     this.repaymentPlan = this.repaymentSchedule.map((entry, index) => {
       return {
         period: entry.term,
@@ -1943,6 +1941,11 @@ export class AppComponent implements OnChanges {
     });
 
     this.showTable = true;
+    // after balance modifications are applied amortization will add usage values and
+    // it is possible that modification amount exceeds the principal amount
+    // this will show user how much was unused
+
+    this.loan.balanceModifications = this.amortization.balanceModifications;
 
     this.generateBills();
     this.applyPayments();
@@ -1950,11 +1953,6 @@ export class AppComponent implements OnChanges {
       this.balanceModificationRemoved = false;
       this.submitLoan();
     }
-
-    // after balance modifications are applied amortization will add usage values and
-    // it is possible that modification amount exceeds the principal amount
-    // this will show user how much was unused
-    this.loan.balanceModifications = this.amortization.balanceModifications;
 
     // change payment dates will get updated with term number if only original date
     // is passed and term is set to zero.

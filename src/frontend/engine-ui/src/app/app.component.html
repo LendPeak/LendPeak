@@ -240,20 +240,21 @@
     <div class="loan-header-content">
       <!-- Left Section: Loan Details -->
       <div class="loan-details">
-        <a class="sexy-link" href="?loan={{ currentLoanName }}">
-          <h2 class="loan-name-title">
-            {{ currentLoanName }}
-            <span *ngIf="loanModified" class="unsaved-indicator">
-              (Modified)
-            </span>
-            <span
-              *ngIf="!loanModified && currentLoanName === 'New Loan'"
-              class="unsaved-indicator"
-            >
-              (Unsaved)
-            </span>
-          </h2>
-        </a>
+        <h2 class="loan-name-title">
+          <a class="sexy-link" href="?loan={{ currentLoanName }}">
+            <i class="pi pi-external-link" style="font-size: 1.5rem"></i>
+          </a>
+          {{ currentLoanName }}
+          <span *ngIf="loanModified" class="unsaved-indicator">
+            (Modified)
+          </span>
+          <span
+            *ngIf="!loanModified && currentLoanName === 'New Loan'"
+            class="unsaved-indicator"
+          >
+            (Unsaved)
+          </span>
+        </h2>
         <p class="loan-description" *ngIf="currentLoanDescription">
           {{ currentLoanDescription }}
           <span *ngIf="currentLoanId"> (ID: {{ currentLoanId }})</span>
@@ -930,8 +931,10 @@
                   value="Manual"
                   severity="warn"
                   styleClass="mr-2"
-                  pTooltip="This term's interest was manually set. Equivalent Interest Rate: {{
-                    plan.metadata.equivalentAnnualRate * 100 | number: '1.2-8'
+                  pTooltip="This term's interest was manually set to {{
+                    plan.metadata.actualInterestValue | currency
+                  }}, calculated equivalent interest rate is {{
+                    plan.metadata.equivalentAnnualRate * 100 | number: '1.2-6'
                   }}%"
                   tooltipPosition="top"
                   tooltipStyleClass="wide-tooltip"

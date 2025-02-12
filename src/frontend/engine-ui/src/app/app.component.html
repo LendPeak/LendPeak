@@ -912,7 +912,7 @@
             </td>
 
             <td>{{ plan.periodStartDate | date: "MM/dd/yyyy" }}</td>
-            <td class="flex justify-content-between flex-wrap">
+            <td class="flex flex-wrap column-gap-4 row-gap-6">
               <span class="flex align-items-center justify-content-center">
                 {{ plan.periodEndDate | date: "MM/dd/yyyy" }}
               </span>
@@ -947,11 +947,14 @@
               {{ plan.periodBillDueDate | date: "MM/dd/yyyy" }}
             </td>
 
-            <td class="flex justify-content-between flex-wrap">
-              <span class="flex align-items-center justify-content-center"
+            <td class="flex flex-wrap column-gap-2 row-gap-6">
+              <span
+                class="w-3rem flex align-items-center justify-content-center"
                 >{{ plan.periodInterestRate | number }}%</span
               >
-              <span class="flex align-items-center justify-content-center">
+              <span
+                class="w-3rem flex align-items-center justify-content-center"
+              >
                 <p-badge
                   *ngIf="
                     plan.metadata && plan.metadata.staticInterestOverrideApplied
@@ -971,15 +974,18 @@
             </td>
 
             <td>{{ showFullNumbers ? plan.fees : (plan.fees | currency) }}</td>
-            <td class="flex justify-content-between flex-wrap">
-              <span class="flex align-items-center justify-content-center">
+            <td class="flex flex-wrap column-gap-2 row-gap-6">
+              <span
+                class="align-content-start w-4rem flex flex align-items-center justify-content-center"
+              >
                 {{
                   showFullNumbers
                     ? plan.dueInterestForTerm
                     : (plan.dueInterestForTerm | currency)
                 }}
               </span>
-              <span class="flex align-items-center justify-content-center"
+              <span
+                class="w-4rem flex flex align-items-center justify-content-center"
                 ><p-badge
                   *ngIf="
                     plan.metadata && plan.metadata.staticInterestOverrideApplied
@@ -1002,7 +1008,7 @@
                 showFullNumbers ? plan.principal : (plan.principal | currency)
               }}
             </td>
-            <td class="flex justify-content-between flex-wrap">
+            <td class="flex flex-wrap column-gap-4 row-gap-6">
               <span class="flex align-items-center justify-content-center">
                 {{
                   showFullNumbers

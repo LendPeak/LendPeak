@@ -27,14 +27,15 @@ export class Bills {
     // check if the value is an array of Bill objects
     // if not, create a new Bill object from the value
 
-    this._bills = value
-      .map((c) => {
-        if (c instanceof Bill) {
-          return c;
-        }
-        return new Bill(c);
-      })
-      .sort((a, b) => a.period - b.period);
+    this._bills = value.map((c) => {
+      if (c instanceof Bill) {
+        return c;
+      }
+      return new Bill(c);
+    });
+
+    // sort bills from olders to newest
+    this._bills = this._bills.sort((a, b) => a.period - b.period);
   }
 
   getBillByPeriod(period: number): Bill | undefined {
@@ -59,7 +60,8 @@ export class Bills {
   }
 
   removeBill(bill: Bill): void {
-    this._bills = this._bills.filter((_bill) => _bill.id !== bill.id).sort((a, b) => a.period - b.period);
+    this._bills = this._bills.filter((_bill) => _bill.id !== bill.id);
+    this._bills = this._bills.sort((a, b) => a.period - b.period);
   }
 
   updateModelValues() {

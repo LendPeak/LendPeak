@@ -86,16 +86,25 @@ export class DepositRecords {
   addRecord(record: DepositRecord) {
     this.modified = true;
     this._records.push(record);
+    this._records = this._records.sort((a, b) => {
+      return dayjs(a.effectiveDate).isBefore(dayjs(b.effectiveDate)) ? -1 : 1;
+    });
   }
 
   removeRecordAtIndex(index: number) {
     this.modified = true;
     this._records.splice(index, 1);
+    this._records = this._records.sort((a, b) => {
+      return dayjs(a.effectiveDate).isBefore(dayjs(b.effectiveDate)) ? -1 : 1;
+    });
   }
 
   removeRecordById(id: string) {
     this.modified = true;
     this._records = this._records.filter((record) => record.id !== id);
+    this._records = this._records.sort((a, b) => {
+      return dayjs(a.effectiveDate).isBefore(dayjs(b.effectiveDate)) ? -1 : 1;
+    });
   }
 
   get all(): DepositRecord[] {

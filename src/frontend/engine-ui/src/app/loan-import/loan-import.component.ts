@@ -9,7 +9,12 @@ import { ConnectorService } from '../services/connector.service';
 import { Connector } from '../models/connector.model';
 import { LoanProService } from '../services/loanpro.service';
 import { MessageService } from 'primeng/api';
-import { UILoan } from 'lendpeak-engine/models/UIInterfaces';
+import {
+  Amortization,
+  AmortizationParams,
+} from 'lendpeak-engine/models/Amortization';
+import { TermInterestAmountOverride } from 'lendpeak-engine/models/TermInterestAmountOverride';
+import { TermInterestAmountOverrides } from 'lendpeak-engine/models/TermInterestAmountOverrides';
 import { parseODataDate, Payment } from '../models/loanpro.model';
 import dayjs from 'dayjs';
 import { Subscription, from } from 'rxjs';
@@ -19,8 +24,20 @@ import {
   FlushUnbilledInterestDueToRoundingErrorType,
   BillingModel,
 } from 'lendpeak-engine/models/Amortization';
+import { ChangePaymentDate } from 'lendpeak-engine/models/ChangePaymentDate';
+import { ChangePaymentDates } from 'lendpeak-engine/models/ChangePaymentDates';
 import { LoanResponse, DueDateChange } from '../models/loanpro.model';
 import { DepositRecord } from 'lendpeak-engine/models/Deposit';
+import { FeesPerTerm } from 'lendpeak-engine/models/FeesPerTerm';
+import { PeriodSchedules } from 'lendpeak-engine/models/PeriodSchedules';
+import { BalanceModifications } from 'lendpeak-engine/models/Amortization/BalanceModifications';
+import { BillDueDaysConfigurations } from 'lendpeak-engine/models/BillDueDaysConfigurations';
+import { PreBillDaysConfigurations } from 'lendpeak-engine/models/PreBillDaysConfigurations';
+import { TermPaymentAmounts } from 'lendpeak-engine/models/TermPaymentAmounts';
+import { TermPaymentAmount } from 'lendpeak-engine/models/TermPaymentAmount';
+import { RateSchedules } from 'lendpeak-engine/models/RateSchedules';
+import { DepositRecords } from 'lendpeak-engine/models/DepositRecords';
+import { PeriodSchedule } from 'lendpeak-engine/models/PeriodSchedule';
 
 @Component({
   selector: 'app-loan-import',
@@ -42,7 +59,9 @@ export class LoanImportComponent implements OnInit, OnDestroy {
   previewLoans: LoanResponse[] = [];
   errorMsg: string = '';
 
-  @Output() loanImported = new EventEmitter<UILoan | UILoan[]>();
+  @Output() loanImported = new EventEmitter<
+    { loan: Amortization; deposits: DepositRecords }[]
+  >();
 
   private connectorsSubscription!: Subscription;
 
@@ -104,12 +123,12 @@ export class LoanImportComponent implements OnInit, OnDestroy {
 
           for (let loan of previewLoans) {
             // convert payment dates
-            loan.d.Payments.results
-              .filter((payment: any) => payment.active === 1)
-              .map((payment: any) => {
+            loan.d.Payments.filter((payment: any) => payment.active === 1).map(
+              (payment: any) => {
                 payment.date = parseODataDate(payment.date, true);
                 payment.created = parseODataDate(payment.created, true);
-              });
+              },
+            );
             // convert contractDate to string for display
             loan.d.LoanSetup.contractDate = parseODataDate(
               loan.d.LoanSetup.contractDate,
@@ -151,7 +170,10 @@ export class LoanImportComponent implements OnInit, OnDestroy {
         .subscribe({
           next: (loanData) => {
             this.isLoading = false;
-            this.handleImportedLoans(loanData);
+
+            this.handleImportedLoans([
+              this.mapToUILoan(loanData as LoanResponse),
+            ]);
           },
           error: (error) => {
             this.isLoading = false;
@@ -243,6 +265,7 @@ export class LoanImportComponent implements OnInit, OnDestroy {
 
           // Convert them to UILoan and emit
           const uiLoans = loans.map((l) => this.mapToUILoan(l));
+          // const deposits = loans.map((l) => this.mapDeposits(l));
           this.handleImportedLoans(uiLoans);
         },
       });
@@ -253,54 +276,21 @@ export class LoanImportComponent implements OnInit, OnDestroy {
    * "imported" logic => i.e. filter empty, convert to UI objects, and emit.
    */
   private handleImportedLoans(
-    loanData: LoanResponse | LoanResponse[] | UILoan[],
+    loanData: { loan: Amortization; deposits: DepositRecords }[],
   ) {
-    // unify them into array
-    let loansArray = Array.isArray(loanData) ? loanData : [loanData];
-
-    // console.log('Imported loans:', loansArray);
-
-    // If they’re still raw LoanResponse, convert them to UILoan
-    if (loansArray.length > 0 && (loansArray[0] as any).d) {
-      // Filter out empties
-      loansArray = (loansArray as LoanResponse[]).filter((loan) => loan.d);
-      if (loansArray.length === 0) {
-        this.messageService.add({
-          severity: 'warn',
-          summary: 'No Loans Found',
-          detail: 'No loans found to import.',
-        });
-        return;
-      }
-      loansArray = loansArray.map((l) => this.mapToUILoan(l));
-    }
-
-    const uiLoans = loansArray as UILoan[];
-
-    if (uiLoans.length > 1) {
-      // multiple
-      try {
-        this.loanImported.emit(uiLoans);
-        this.messageService.add({
-          severity: 'success',
-          summary: 'Success',
-          detail: `${uiLoans.length} loans imported successfully.`,
-        });
-      } catch (e) {
-        console.error('Error importing loan(s):', e);
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Error',
-          detail: 'Failed to import loan(s).',
-        });
-      }
-    } else {
-      // single
-      this.loanImported.emit(uiLoans[0]);
+    try {
+      this.loanImported.emit(loanData);
       this.messageService.add({
         severity: 'success',
         summary: 'Success',
-        detail: 'Loan imported successfully.',
+        detail: `${loanData.length} loans imported successfully.`,
+      });
+    } catch (e) {
+      console.error('Error importing loan(s):', e);
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: 'Failed to import loan(s).',
       });
     }
   }
@@ -355,7 +345,10 @@ export class LoanImportComponent implements OnInit, OnDestroy {
     return connector;
   }
 
-  private mapToUILoan(loanData: LoanResponse): UILoan {
+  private mapToUILoan(loanData: LoanResponse): {
+    loan: Amortization;
+    deposits: DepositRecords;
+  } {
     let perDiemCalculationType: PerDiemCalculationType =
       'AnnualRateDividedByDaysInYear';
     if (loanData.d.LoanSetup.calcType === 'loan.calcType.simpleInterest') {
@@ -367,23 +360,27 @@ export class LoanImportComponent implements OnInit, OnDestroy {
       calendarType = 'ACTUAL_360';
     }
 
-    let billingModel: BillingModel = "dailySimpleInterest";
-    
+    let billingModel: BillingModel = 'dailySimpleInterest';
 
-    let flushMethod: FlushUnbilledInterestDueToRoundingErrorType =
+    let flushUnbilledInterestRoundingErrorMethod: FlushUnbilledInterestDueToRoundingErrorType =
       FlushUnbilledInterestDueToRoundingErrorType.NONE;
 
-    const uiLoan: UILoan = {
-      objectVersion: 9,
+    console.log('loanData', loanData);
+    const uiLoan: AmortizationParams = {
+      // objectVersion: 9,
       id: loanData.d.id.toString(),
       name: loanData.d.displayId,
       description: 'Imported from LoanPro',
-      principal: parseFloat(loanData.d.LoanSetup.tilLoanAmount),
+      loanAmount: parseFloat(loanData.d.LoanSetup.tilLoanAmount),
       originationFee: parseFloat(loanData.d.LoanSetup.underwriting),
-      interestRate: parseFloat(loanData.d.LoanSetup.loanRate),
-      term: parseFloat(loanData.d.LoanSetup.loanTerm),
+      annualInterestRate: parseFloat(loanData.d.LoanSetup.loanRate) / 100,
+      //term: parseFloat(loanData.d.LoanSetup.loanTerm),
+      // we will set term to the number of scheduled payments
+      term: loanData.d.Transactions.filter(
+        (tr) => tr.type === 'scheduledPayment',
+      ).length,
       feesForAllTerms: [],
-      feesPerTerm: [],
+      feesPerTerm: FeesPerTerm.empty(),
       startDate: parseODataDate(loanData.d.LoanSetup.contractDate, true),
       firstPaymentDate: parseODataDate(
         loanData.d.LoanSetup.firstPaymentDate,
@@ -395,67 +392,113 @@ export class LoanImportComponent implements OnInit, OnDestroy {
       billingModel: billingModel,
       perDiemCalculationType: perDiemCalculationType,
       roundingPrecision: 2,
-      flushMethod: flushMethod,
+      flushUnbilledInterestRoundingErrorMethod:
+        flushUnbilledInterestRoundingErrorMethod,
       flushThreshold: 0.01,
-      ratesSchedule: [],
-      termPaymentAmountOverride: [],
-      termPaymentAmount: undefined,
+      ratesSchedule: new RateSchedules(),
+      termPaymentAmountOverride: new TermPaymentAmounts(
+        loanData.d.Transactions.filter(
+          (tr) =>
+            tr.type === 'scheduledPayment' &&
+            tr.chargeAmount !== loanData.d.LoanSetup.payment,
+        ).map((row) => {
+          return new TermPaymentAmount({
+            termNumber: row.period,
+            paymentAmount: parseFloat(row.chargeAmount),
+          });
+        }),
+      ),
+      //  termPaymentAmount: undefined,
+      equitedMonthlyPayment: parseFloat(loanData.d.LoanSetup.payment),
       defaultBillDueDaysAfterPeriodEndConfiguration: 3,
       defaultPreBillDaysConfiguration: 5,
       allowRateAbove100: false,
-      periodsSchedule: [],
-      termInterestOverride: loanData.d.Transactions.results
-        .filter((tr) => tr.type === 'intAdjustment')
-        .map((tr) => {
-          // "infoDetails": "{\"type\":\"increase\",\"amount\":\"273.47\"}",
+      periodsSchedule: new PeriodSchedules(),
+      termInterestAmountOverride: new TermInterestAmountOverrides(
+        loanData.d.Transactions.filter((tr) => tr.type === 'intAdjustment')
+          // remove duplicate entries where date and amount are the same
+          .filter(
+            (tr, index, self) =>
+              index ===
+              self.findIndex(
+                (t) => t.date === tr.date && t.infoDetails === tr.infoDetails,
+              ),
+          )
+          .map((tr) => {
+            // "infoDetails": "{\"type\":\"increase\",\"amount\":\"273.47\"}",
 
-          const infoDetail = JSON.parse(tr.infoDetails);
-          let amount = '0';
-          if (infoDetail.type == 'increase') {
-            amount = infoDetail.amount;
-          } else {
-            amount = '0';
-            console.error('Unknown interest adjustment type:', infoDetail.type);
-          }
-          return {
-            termNumber: 0,
-            interestAmount: parseFloat(amount),
-            date: parseODataDate(tr.date, true),
-          };
-        }),
-      changePaymentDates: loanData.d.DueDateChanges.results.map(
-        (change: DueDateChange) => {
-          return {
-            termNumber: 0,
+            const infoDetail = JSON.parse(tr.infoDetails);
+            let amount = '0';
+            if (infoDetail.type == 'increase') {
+              amount = infoDetail.amount;
+            } else {
+              amount = '0';
+              console.error(
+                'Unknown interest adjustment type:',
+                infoDetail.type,
+              );
+            }
+
+            return new TermInterestAmountOverride({
+              termNumber: -1,
+              interestAmount: parseFloat(amount),
+              date: parseODataDate(tr.date, true),
+            });
+          }),
+      ),
+      changePaymentDates: new ChangePaymentDates(
+        loanData.d.DueDateChanges.map((change: DueDateChange) => {
+          return new ChangePaymentDate({
+            termNumber: -1,
             originalDate: parseODataDate(change.originalDate, true),
             newDate: parseODataDate(change.newDate, true),
-          };
-        },
+          });
+        }),
       ),
-      dueBillDays: [],
-      preBillDays: [],
+      dueBillDays: new BillDueDaysConfigurations(),
+      preBillDays: new PreBillDaysConfigurations(),
       termPeriodDefinition: {
         unit: 'month',
         count: [1],
       },
-      balanceModifications: [],
-      paymentAllocationStrategy: 'FIFO',
+      balanceModifications: new BalanceModifications(),
+      //   paymentAllocationStrategy: 'FIFO',
 
-      deposits: loanData.d.Payments.results
-        // .filter((payment: any) => payment.active === 1)
-        .map((payment: any) => {
-          return new DepositRecord({
-            amount: parseFloat(payment.amount),
-            active: payment.active === 1,
-            currency: 'USD',
-            effectiveDate: parseODataDate(payment.date, true),
-            clearingDate: parseODataDate(payment.date, true),
-            systemDate: parseODataDate(payment.created, true),
-            id: `(${payment.id}) ${payment.info}`,
-          });
-        }),
+      // deposits: loanData.d.Payments.results
+      //   // .filter((payment: any) => payment.active === 1)
+      //   .map((payment: any) => {
+      //     return new DepositRecord({
+      //       amount: parseFloat(payment.amount),
+      //       active: payment.active === 1,
+      //       currency: 'USD',
+      //       effectiveDate: parseODataDate(payment.date, true),
+      //       clearingDate: parseODataDate(payment.date, true),
+      //       systemDate: parseODataDate(payment.created, true),
+      //       id: `(${payment.id}) ${payment.info}`,
+      //     });
+      //   }),
     };
 
-    return uiLoan;
+    const deposits = this.mapDeposits(loanData);
+    console.log('adding deposits', deposits);
+    return { loan: new Amortization(uiLoan), deposits: deposits };
+  }
+
+  private mapDeposits(loanData: LoanResponse): DepositRecords {
+    return new DepositRecords(
+      loanData.d.Payments.filter(
+        (payment: any) => payment.childId === null,
+      ).map((payment: any) => {
+        return new DepositRecord({
+          amount: parseFloat(payment.amount),
+          active: payment.active === 1,
+          currency: 'USD',
+          effectiveDate: parseODataDate(payment.date, true),
+          clearingDate: parseODataDate(payment.date, true),
+          systemDate: parseODataDate(payment.created, true),
+          id: `(${payment.id}) ${payment.info}`,
+        });
+      }),
+    );
   }
 }

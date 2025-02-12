@@ -9,7 +9,8 @@ import {
 } from '@angular/core';
 import { DropDownOptionString } from '../models/common.model';
 import { DepositRecord } from 'lendpeak-engine/models/Deposit';
-import { Bill } from 'lendpeak-engine/models/Bill';
+import { DepositRecords } from 'lendpeak-engine/models/DepositRecords';
+import { Bills } from 'lendpeak-engine/models/Bills';
 import { Currency } from 'lendpeak-engine/utils/Currency';
 import dayjs from 'dayjs';
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore';
@@ -25,14 +26,14 @@ dayjs.extend(isBetween);
   standalone: false,
 })
 export class DepositsComponent {
-  @Input() deposits: DepositRecord[] = [];
+  @Input() deposits: DepositRecords = new DepositRecords();
   @Input() currencyOptions: DropDownOptionString[] = [];
-  @Input() bills: Bill[] = [];
+  @Input() bills: Bills = new Bills();
   @Input() snapshotDate: Date = new Date();
   @Input() payoffAmount: Currency = Currency.Zero();
   @Input() accruedInterestToDate: Currency = Currency.Zero();
 
-  @Output() depositsChange = new EventEmitter<DepositRecord[]>();
+  @Output() depositsChange = new EventEmitter<DepositRecords>();
   @Output() depositUpdated = new EventEmitter<void>();
 
   @ViewChildren('depositRow', { read: ElementRef })
@@ -75,8 +76,8 @@ export class DepositsComponent {
       return;
     }
 
-    const lastDeposit = this.deposits[this.deposits.length - 1];
-    this.highlightedDepositId = lastDeposit.id;
+    const lastDeposit = this.deposits.last;
+    this.highlightedDepositId = lastDeposit?.id;
 
     setTimeout(() => {
       const lastRow = this.depositRows.last;
@@ -131,7 +132,7 @@ export class DepositsComponent {
   }
 
   onDataChange(event: any) {
-    this.depositData.syncValuesFromJSProperties();
+    this.depositData.updateModelValues();
 
     if (
       this.depositData.applyExcessToPrincipal &&
@@ -157,12 +158,12 @@ export class DepositsComponent {
       this.depositData.jsExcessAppliedDate = undefined;
     }
 
-    this.depositData.syncJSPropertiesFromValues();
+    this.depositData.updateModelValues();
 
     if (this.selectedDepositForEdit) {
       Object.assign(this.selectedDepositForEdit, this.depositData);
     } else {
-      this.deposits.push(this.depositData);
+      this.deposits.addRecord(this.depositData);
     }
     this.depositActiveUpdated();
     this.showDepositDialog = false;
@@ -183,7 +184,7 @@ export class DepositsComponent {
   }
 
   removeDeposit(deposit: DepositRecord) {
-    this.deposits = this.deposits.filter((d) => d.id !== deposit.id);
+    this.deposits.removeRecordById(deposit.id);
     this.depositsChange.emit(this.deposits);
     this.depositUpdated.emit();
   }

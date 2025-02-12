@@ -1,5 +1,6 @@
-import { AmortizationEntry } from "./Amortization/AmortizationEntry"; // Adjust the import path as needed
+import { AmortizationEntries } from "./Amortization/AmortizationEntries"; // Adjust the import path as needed
 import { Bill } from "./Bill";
+import { Bills } from "./Bills";
 import { v4 as uuidv4 } from "uuid"; // For generating unique IDs
 import { Currency } from "../utils/Currency";
 import dayjs, { Dayjs } from "dayjs";
@@ -12,14 +13,14 @@ dayjs.extend(isSameOrAfter);
 dayjs.extend(isSameOrBefore);
 
 export class BillGenerator {
-  static generateBills(amortizationSchedule: AmortizationEntry[], currentDate: Dayjs | Date = dayjs()): Bill[] {
-    const bills: Bill[] = [];
+  static generateBills(amortizationSchedule: AmortizationEntries, currentDate: Dayjs | Date = dayjs()): Bills {
+    const bills: Bills = new Bills();
     if (currentDate instanceof Date) {
       currentDate = dayjs(currentDate);
     }
 
     let billIdSequence = 1;
-    for (const entry of amortizationSchedule) {
+    for (const entry of amortizationSchedule.entries) {
       if (!entry.billablePeriod) {
         // Skip non-billable periods
         continue;
@@ -47,7 +48,7 @@ export class BillGenerator {
         amortizationEntry: entry,
       });
 
-      bills.push(bill);
+      bills.addBill(bill);
     }
 
     return bills;

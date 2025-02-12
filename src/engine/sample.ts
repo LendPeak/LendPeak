@@ -2,6 +2,7 @@ import { Payment } from "./models/Payment";
 import { Loan } from "./models/Loan";
 import { Amortization, FlushUnbilledInterestDueToRoundingErrorType } from "./models/Amortization";
 import { BalanceModification } from "./models/Amortization/BalanceModification";
+import { BalanceModifications } from "./models/Amortization/BalanceModifications";
 import { LoanRestructureService } from "./services/RestructureService";
 import { PaymentService } from "./services/PaymentService";
 import { Restructure } from "./models/Restructure";
@@ -9,6 +10,7 @@ import dayjs from "dayjs";
 import { Currency, RoundingMethod } from "./utils/Currency";
 import { CalendarType } from "./models/Calendar";
 import Decimal from "decimal.js";
+import { TermPaymentAmounts } from "@models/TermPaymentAmounts";
 
 // const loanAmount = Currency.of(1); // 1 unit of currency
 // const interestRate = 0.05; // 5% annual interest rate
@@ -39,14 +41,14 @@ const amortization = new Amortization({
   calendarType: CalendarType.THIRTY_360,
   //roundingMethod: RoundingMethod.ROUND_HALF_EVEN,
   flushUnbilledInterestRoundingErrorMethod: FlushUnbilledInterestDueToRoundingErrorType.NONE,
-  termPaymentAmountOverride: [
+  termPaymentAmountOverride: new TermPaymentAmounts([
     // {
     //   paymentAmount: Currency.of(0),
     //   termNumber: 1,
     // },
-  ],
+  ]),
 
-  balanceModifications: [
+  balanceModifications: new BalanceModifications([
     new BalanceModification({
       amount: 0,
       date: startDate,
@@ -57,7 +59,7 @@ const amortization = new Amortization({
     //   date: dayjs("2024-09-25"),
     //   type: "decrease",
     // },
-  ],
+  ]),
   // flushUnbilledInterestRoundingErrorMethod: FlushUnbilledInterestDueToRoundingErrorType.AT_THRESHOLD,
   // roundingPrecision: 2, // 5 decimal places
   //flushThreshold: Currency.of(0.01), // 1 cent threshold

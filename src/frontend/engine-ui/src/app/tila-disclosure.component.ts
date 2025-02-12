@@ -1,27 +1,30 @@
 import { Component, Input } from '@angular/core';
-import {
-  TILADisclosures,
-  PaymentScheduleEntry,
-} from 'lendpeak-engine/models/Amortization';
+import { Amortization } from 'lendpeak-engine/models/Amortization';
+import { TILA } from 'lendpeak-engine/models/TILA';
 
 import { Currency } from 'lendpeak-engine/utils/Currency';
 
 import Decimal from 'decimal.js';
 
 @Component({
-    selector: 'app-tila-disclosure',
-    templateUrl: './tila-disclosure.component.html',
-    styleUrls: ['./tila-disclosure.component.css'],
-    standalone: false
+  selector: 'app-tila-disclosure',
+  templateUrl: './tila-disclosure.component.html',
+  styleUrls: ['./tila-disclosure.component.css'],
+  standalone: false,
 })
 export class TilaDisclosureComponent {
-  @Input() tilaDisclosures: TILADisclosures = {
-    amountFinanced: Currency.of(0),
-    financeCharge: Currency.of(0),
-    totalOfPayments: Currency.of(0),
-    annualPercentageRate: new Decimal(0),
-    paymentSchedule: [],
-  };
+  @Input() loan: Amortization | undefined;
+
+  tilaDisclosures: any = [];
+  tila: TILA | undefined;
+  tolaDisclosure: any;
+
+  ngOnInit(): void {
+    if (this.loan) {
+      this.tila = new TILA(this.loan);
+      this.tilaDisclosures = this.tila.generateTILADisclosures();
+    }
+  }
 
   @Input() showTitle: boolean = true;
 

@@ -96,20 +96,25 @@ export class LoanProService {
       },
     };
 
-    return this.http.post<any>(fullProxyUrl, requestBody, { headers }).pipe(
-      switchMap((response) => {
-        // d.results.[0].id is the systemId of the first result
-        if (response.data && response.data.d.results.length > 0) {
-          const systemId = response.data.d.results[0].id;
-          return this.fetchBySystemId(headers, systemId);
-        } else {
-          throw new Error('Loan not found by displayId');
-        }
-      }),
-      catchError((error) =>
-        this.handleError(error, 'Error fetching by displayId'),
-      ),
-    );
+    return this.http
+      .post<any>(fullProxyUrl, requestBody, {
+        headers,
+        params: { nopaging: true },
+      })
+      .pipe(
+        switchMap((response) => {
+          // d.results.[0].id is the systemId of the first result
+          if (response.data && response.data.d.results.length > 0) {
+            const systemId = response.data.d.results[0].id;
+            return this.fetchBySystemId(headers, systemId);
+          } else {
+            throw new Error('Loan not found by displayId');
+          }
+        }),
+        catchError((error) =>
+          this.handleError(error, 'Error fetching by displayId'),
+        ),
+      );
   }
 
   private fetchBySystemId(
@@ -124,6 +129,7 @@ export class LoanProService {
         headers,
         params: {
           // Expand whichever fields you need
+          nopaging: 'true',
           $expand:
             'Payments,DueDateChanges,ScheduleRolls,Transactions,LoanSetup,LoanSettings,InterestAdjustments',
         },
@@ -220,7 +226,10 @@ export class LoanProService {
           ? nextLink.replace(domain, this.proxyUrl)
           : this.proxyUrl + nextLink;
 
-        return this.http.get<any>(nextUrl, { headers });
+        return this.http.get<any>(nextUrl, {
+          headers,
+          params: { nopaging: true },
+        });
       }),
       scan((acc, page) => {
         // For each chunk, unify the shape:

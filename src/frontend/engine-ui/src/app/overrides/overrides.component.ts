@@ -12,12 +12,30 @@ import {
 import dayjs from 'dayjs';
 import { AmortizationEntry } from 'lendpeak-engine/models/Amortization/AmortizationEntry';
 import { BalanceModification } from 'lendpeak-engine/models/Amortization/BalanceModification';
-import { UILoan } from 'lendpeak-engine/models/UIInterfaces';
+import { Amortization } from 'lendpeak-engine/models/Amortization';
+import { TermInterestAmountOverride } from 'lendpeak-engine/models/TermInterestAmountOverride';
+import { TermInterestRateOverride } from 'lendpeak-engine/models/TermInterestRateOverride';
 import { OverrideSettingsService } from '../services/override-settings.service';
 import { OverrideSettings } from '../models/override-settings.model';
 import { v4 as uuidv4 } from 'uuid';
 import { Popover } from 'primeng/popover';
 import { Dayjs } from 'dayjs';
+import { ChangePaymentDate } from 'lendpeak-engine/models/ChangePaymentDate';
+import { ChangePaymentDates } from 'lendpeak-engine/models/ChangePaymentDates';
+import { FeesPerTerm } from 'lendpeak-engine/models/FeesPerTerm';
+import { TermFees } from 'lendpeak-engine/models/TermFees';
+import { Fee } from 'lendpeak-engine/models/Fee';
+import { RateSchedule } from 'lendpeak-engine/models/RateSchedule';
+import { Currency } from 'lendpeak-engine/utils/Currency';
+import { BalanceModifications } from 'lendpeak-engine/models/Amortization/BalanceModifications';
+import { TermPaymentAmount } from 'lendpeak-engine/models/TermPaymentAmount';
+import { PreBillDaysConfiguration } from 'lendpeak-engine/models/PreBillDaysConfiguration';
+import { PreBillDaysConfigurations } from 'lendpeak-engine/models/PreBillDaysConfigurations';
+import { BillDueDaysConfiguration } from 'lendpeak-engine/models/BillDueDaysConfiguration';
+import { BillDueDaysConfigurations } from 'lendpeak-engine/models/BillDueDaysConfigurations';
+import { TermPaymentAmounts } from 'lendpeak-engine/models/TermPaymentAmounts';
+import { RateSchedules } from 'lendpeak-engine/models/RateSchedules';
+import { TermInterestAmountOverrides } from 'lendpeak-engine/models/TermInterestAmountOverrides';
 
 @Component({
   selector: 'app-overrides',
@@ -26,10 +44,9 @@ import { Dayjs } from 'dayjs';
   standalone: false,
 })
 export class OverridesComponent implements OnInit {
-  @Input() loan!: UILoan;
+  @Input() loan!: Amortization;
   @Input() termOptions: { label: string; value: number }[] = [];
   @Input() balanceIncreaseType: { label: string; value: string }[] = [];
-  @Input() loanRepaymentPlan: AmortizationEntry[] = [];
 
   @Output() loanChange = new EventEmitter<any>();
   @Output() loanUpdated = new EventEmitter<void>();
@@ -97,13 +114,13 @@ export class OverridesComponent implements OnInit {
     this.openPanels = [];
 
     // Panel: Interest Rate
-    if (this.loan?.ratesSchedule?.length > 0) {
+    if (this.loan?.rateSchedules?.hasCustom) {
       this.openPanels.push('interestRate');
     }
 
     // Panel: Payment Settings (EIP)
     // You might open this if a certain condition is met, e.g., loan.termPaymentAmount > 0
-    if (this.loan?.termPaymentAmount && this.loan.termPaymentAmount > 0) {
+    if (this.loan.hasCustomEquitedMonthlyPayment) {
       this.openPanels.push('paymentSettings');
     }
 
@@ -114,8 +131,8 @@ export class OverridesComponent implements OnInit {
 
     // Panel: Term Interest Override
     if (
-      this.loan?.termInterestOverride &&
-      this.loan?.termInterestOverride?.length > 0
+      this.loan?.termInterestAmountOverride &&
+      this.loan?.termInterestAmountOverride?.length > 0
     ) {
       this.openPanels.push('termInterestOverride');
     }
@@ -126,12 +143,12 @@ export class OverridesComponent implements OnInit {
     }
 
     // Panel: Pre Bill Day Term
-    if (this.loan?.preBillDays?.length > 0) {
+    if (this.loan?.preBillDays?.hasCustom) {
       this.openPanels.push('preBillDayTerm');
     }
 
     // Panel: Due Bill Day Term
-    if (this.loan?.dueBillDays?.length > 0) {
+    if (this.loan?.dueBillDays?.hasCustom) {
       this.openPanels.push('dueBillDayTerm');
     }
 
@@ -164,20 +181,20 @@ export class OverridesComponent implements OnInit {
     this.selectedSettingId = null;
     this.loadedSettingName = '';
     this.currentSettingVersion = null;
-    this.applyDefaultSettings();
+    // this.applyDefaultSettings();
     this.isModified = false;
   }
 
   applyDefaultSettings() {
     // Reset overrides to default values
-    this.loan.termPaymentAmountOverride = [];
-    this.loan.ratesSchedule = [];
-    this.loan.changePaymentDates = [];
-    this.loan.preBillDays = [];
-    this.loan.dueBillDays = [];
-    this.loan.balanceModifications = [];
+    this.loan.termPaymentAmountOverride = new TermPaymentAmounts();
+    this.loan.rateSchedules = new RateSchedules();
+    this.loan.changePaymentDates = new ChangePaymentDates();
+    this.loan.preBillDays = new PreBillDaysConfigurations();
+    this.loan.dueBillDays = new BillDueDaysConfigurations();
+    this.loan.balanceModifications = new BalanceModifications();
     this.loan.feesForAllTerms = [];
-    this.loan.feesPerTerm = [];
+    this.loan.feesPerTerm = FeesPerTerm.empty();
     // Add other properties as needed
 
     // Store as original settings
@@ -202,7 +219,7 @@ export class OverridesComponent implements OnInit {
       const settings = this.originalSettings;
       this.loan.termPaymentAmountOverride =
         settings.termPaymentAmountOverride || [];
-      this.loan.ratesSchedule = settings.ratesSchedule || [];
+      this.loan.rateSchedules = settings.rateSchedules || [];
       this.loan.changePaymentDates = settings.changePaymentDates || [];
       this.loan.preBillDays = settings.preBillDays || [];
       this.loan.dueBillDays = settings.dueBillDays || [];
@@ -265,14 +282,14 @@ export class OverridesComponent implements OnInit {
   getCurrentSettings() {
     return {
       termPaymentAmountOverride: this.loan.termPaymentAmountOverride,
-      ratesSchedule: this.loan.ratesSchedule,
+      ratesSchedule: this.loan.repaymentSchedule,
       changePaymentDates: this.loan.changePaymentDates,
       preBillDays: this.loan.preBillDays,
       dueBillDays: this.loan.dueBillDays,
       balanceModifications: this.loan.balanceModifications,
       feesForAllTerms: this.loan.feesForAllTerms,
       feesPerTerm: this.loan.feesPerTerm,
-      termInterestOverride: this.loan.termInterestOverride || [],
+      termInterestAmountOverride: this.loan.termInterestAmountOverride || [],
 
       // Add other settings as needed
     };
@@ -283,14 +300,15 @@ export class OverridesComponent implements OnInit {
     const settings = setting.settings;
     this.loan.termPaymentAmountOverride =
       settings.termPaymentAmountOverride || [];
-    this.loan.ratesSchedule = settings.ratesSchedule || [];
+    this.loan.repaymentSchedule = settings.ratesSchedule || [];
     this.loan.changePaymentDates = settings.changePaymentDates || [];
     this.loan.preBillDays = settings.preBillDays || [];
     this.loan.dueBillDays = settings.dueBillDays || [];
     this.loan.balanceModifications = settings.balanceModifications || [];
     this.loan.feesForAllTerms = settings.feesForAllTerms || [];
     this.loan.feesPerTerm = settings.feesPerTerm || [];
-    this.loan.termInterestOverride = settings.termInterestOverride || [];
+    this.loan.termInterestAmountOverride =
+      settings.termInterestAmountOverride || [];
 
     // Apply other settings as needed
 
@@ -383,68 +401,91 @@ export class OverridesComponent implements OnInit {
     const termPaymentAmountOverride = this.loan.termPaymentAmountOverride;
 
     let termNumber: number;
-    let paymentAmount: number;
+    let paymentAmount: Currency;
 
     if (termPaymentAmountOverride.length === 0) {
       // First entry
       termNumber = 1;
-      paymentAmount = 0;
+      paymentAmount = Currency.Zero();
     } else {
       // Following entries
-      termNumber =
-        termPaymentAmountOverride[termPaymentAmountOverride.length - 1]
-          .termNumber + 1;
-      paymentAmount =
-        termPaymentAmountOverride[termPaymentAmountOverride.length - 1]
-          .paymentAmount;
+      termNumber = termPaymentAmountOverride.last.termNumber + 1;
+      paymentAmount = termPaymentAmountOverride.last.paymentAmount;
     }
 
-    termPaymentAmountOverride.push({
-      termNumber: termNumber,
-      paymentAmount: paymentAmount,
-    });
+    if (termNumber > this.loan.term) {
+      termNumber = this.loan.term;
+    }
+
+    termPaymentAmountOverride.addPaymentAmount(
+      new TermPaymentAmount({
+        termNumber: termNumber,
+        paymentAmount: paymentAmount,
+      }),
+    );
 
     this.loan.termPaymentAmountOverride = termPaymentAmountOverride;
-    this.emitLoanChange();
+    this.onInputChange(true);
   }
 
   removeTermPaymentAmountOverride(index: number) {
     if (this.loan.termPaymentAmountOverride.length > 0) {
-      this.loan.termPaymentAmountOverride.splice(index, 1);
+      this.loan.termPaymentAmountOverride.removePaymentAmountAtIndex(index);
       this.emitLoanChange();
     }
   }
 
   // Methods related to Rate Overrides
   addRateOverride() {
-    const ratesSchedule = this.loan.ratesSchedule;
-    let startDate: Date;
-    let endDate: Date;
+    // const ratesSchedule = this.loan.rateSchedules;
+    // let startDate: Dayjs;
+    // let endDate: Dayjs;
 
-    if (ratesSchedule.length === 0) {
-      // First entry: use loan's start date
-      startDate = this.loan.startDate;
+    // if (ratesSchedule.length === 0) {
+    //   // First entry: use loan's start date
+    //   startDate = this.loan.startDate;
+    // } else {
+    //   // Following entries: use end date from previous row as start date
+    //   startDate = ratesSchedule.last.endDate;
+    // }
+
+    // // End date is 1 month from start date
+    // endDate = startDate.add(1, 'month');
+
+    // ratesSchedule.addSchedule(
+    //   new RateSchedule({
+    //     startDate: startDate,
+    //     endDate: endDate,
+    //     annualInterestRate: 10,
+    //   }),
+    // );
+
+    this.loan.hasCustomRateSchedule = true;
+
+    if (this.loan.rateSchedules.length === 0) {
+      this.loan.rateSchedules.addSchedule(
+        new RateSchedule({
+          startDate: this.loan.rateSchedules.first.startDate,
+          endDate: this.loan.rateSchedules.first.endDate,
+          annualInterestRate: this.loan.rateSchedules.first.annualInterestRate,
+        }),
+      );
     } else {
-      // Following entries: use end date from previous row as start date
-      startDate = ratesSchedule[ratesSchedule.length - 1].endDate;
+      this.loan.rateSchedules.addSchedule(
+        new RateSchedule({
+          startDate: this.loan.rateSchedules.last.endDate,
+          endDate: dayjs(this.loan.rateSchedules.last.endDate).add(1, 'month'),
+          annualInterestRate: this.loan.rateSchedules.last.annualInterestRate,
+        }),
+      );
     }
-
-    // End date is 1 month from start date
-    endDate = dayjs(startDate).add(1, 'month').toDate();
-
-    ratesSchedule.push({
-      startDate: startDate,
-      endDate: endDate,
-      annualInterestRate: 10,
-    });
-
-    this.loan.ratesSchedule = ratesSchedule;
+    //  this.loan.rateSchedules = ratesSchedule;
     this.emitLoanChange();
   }
 
   removeRateOverride(index: number) {
-    if (this.loan.ratesSchedule.length > 0) {
-      this.loan.ratesSchedule.splice(index, 1);
+    if (this.loan.rateSchedules.length > 0) {
+      this.loan.rateSchedules.removeScheduleAtIndex(index);
       this.emitLoanChange();
     }
   }
@@ -455,22 +496,23 @@ export class OverridesComponent implements OnInit {
 
     if (changePaymentDates.length === 0) {
       // First entry: use loan's start date
-      changePaymentDates.push({
-        termNumber: 1,
-        newDate: dayjs(this.loan.startDate).add(1, 'month').toDate(),
-      });
+      changePaymentDates.addChangePaymentDate(
+        new ChangePaymentDate({
+          termNumber: 1,
+          newDate: dayjs(this.loan.startDate).add(1, 'month').toDate(),
+        }),
+      );
     } else {
       // Following entries: use term number from previous row + 1
-      const lastTermNumber =
-        changePaymentDates[changePaymentDates.length - 1].termNumber;
-      changePaymentDates.push({
-        termNumber: lastTermNumber + 1,
-        newDate: dayjs(
-          changePaymentDates[changePaymentDates.length - 1].newDate,
-        )
-          .add(1, 'month')
-          .toDate(),
-      });
+      const lastTermNumber = changePaymentDates.last.termNumber;
+      changePaymentDates.addChangePaymentDate(
+        new ChangePaymentDate({
+          termNumber: lastTermNumber + 1,
+          newDate: dayjs(changePaymentDates.last.newDate)
+            .add(1, 'month')
+            .toDate(),
+        }),
+      );
     }
 
     this.loan.changePaymentDates = changePaymentDates;
@@ -478,10 +520,10 @@ export class OverridesComponent implements OnInit {
   }
 
   getEndDateForTerm(termNumber: number): Dayjs {
-    if (!termNumber) {
+    if (!termNumber || termNumber < 0) {
       return dayjs().startOf('day');
     }
-    const term = this.loanRepaymentPlan.filter(
+    const term = this.loan.repaymentSchedule.entries.filter(
       (row) => row.term === termNumber,
     );
     if (term) {
@@ -491,10 +533,12 @@ export class OverridesComponent implements OnInit {
   }
 
   getStartDateForTerm(termNumber: number): Dayjs {
-    if (!termNumber) {
+    if (!termNumber || termNumber < 0) {
+      return dayjs().startOf('day');
+    } else if (termNumber > this.loan.term) {
       return dayjs().startOf('day');
     }
-    const term = this.loanRepaymentPlan.filter(
+    const term = this.loan.repaymentSchedule.entries.filter(
       (row) => row.term === termNumber,
     );
     if (term) {
@@ -505,7 +549,7 @@ export class OverridesComponent implements OnInit {
 
   removeChangePaymentDate(index: number) {
     if (this.loan.changePaymentDates.length > 0) {
-      this.loan.changePaymentDates.splice(index, 1);
+      this.loan.changePaymentDates.removeConfigurationAtIndex(index);
       this.emitLoanChange();
     }
   }
@@ -522,18 +566,17 @@ export class OverridesComponent implements OnInit {
       preBillDays = this.loan.defaultPreBillDaysConfiguration;
     } else {
       // Following entries
-      termNumber =
-        preBillDaysConfiguration[preBillDaysConfiguration.length - 1]
-          .termNumber + 1;
-      preBillDays =
-        preBillDaysConfiguration[preBillDaysConfiguration.length - 1]
-          .preBillDays;
+      termNumber = preBillDaysConfiguration.last.termNumber + 1;
+      preBillDays = preBillDaysConfiguration.last.preBillDays;
     }
 
-    preBillDaysConfiguration.push({
-      termNumber: termNumber,
-      preBillDays: preBillDays,
-    });
+    preBillDaysConfiguration.addConfiguration(
+      new PreBillDaysConfiguration({
+        termNumber: termNumber,
+        preBillDays: preBillDays,
+        type: 'custom',
+      }),
+    );
 
     this.loan.preBillDays = preBillDaysConfiguration;
     this.emitLoanChange();
@@ -541,7 +584,7 @@ export class OverridesComponent implements OnInit {
 
   removePreBillDayTerm(index: number) {
     if (this.loan.preBillDays.length > 0) {
-      this.loan.preBillDays.splice(index, 1);
+      this.loan.preBillDays.removeConfigurationAtIndex(index);
       this.emitLoanChange();
     }
   }
@@ -559,18 +602,18 @@ export class OverridesComponent implements OnInit {
         this.loan.defaultBillDueDaysAfterPeriodEndConfiguration;
     } else {
       // Following entries
-      termNumber =
-        dueBillDaysConfiguration[dueBillDaysConfiguration.length - 1]
-          .termNumber + 1;
+      termNumber = dueBillDaysConfiguration.last.termNumber + 1;
       daysDueAfterPeriodEnd =
-        dueBillDaysConfiguration[dueBillDaysConfiguration.length - 1]
-          .daysDueAfterPeriodEnd;
+        dueBillDaysConfiguration.last.daysDueAfterPeriodEnd;
     }
 
-    dueBillDaysConfiguration.push({
-      termNumber: termNumber,
-      daysDueAfterPeriodEnd: daysDueAfterPeriodEnd,
-    });
+    dueBillDaysConfiguration.addConfiguration(
+      new BillDueDaysConfiguration({
+        termNumber: termNumber,
+        daysDueAfterPeriodEnd: daysDueAfterPeriodEnd,
+        type: 'custom',
+      }),
+    );
 
     this.loan.dueBillDays = dueBillDaysConfiguration;
     this.emitLoanChange();
@@ -578,7 +621,7 @@ export class OverridesComponent implements OnInit {
 
   removeDueBillDayTerm(index: number) {
     if (this.loan.dueBillDays.length > 0) {
-      this.loan.dueBillDays.splice(index, 1);
+      this.loan.dueBillDays.removeConfigurationAtIndex(index);
       this.emitLoanChange();
     }
   }
@@ -586,11 +629,8 @@ export class OverridesComponent implements OnInit {
   // Methods related to Balance Modifications
   addBalanceModificationRow() {
     const dateOfTheModification =
-      this.loan.balanceModifications.length === 0
-        ? this.loan.startDate
-        : this.loan.balanceModifications[
-            this.loan.balanceModifications.length - 1
-          ].date;
+      this.loan.balanceModifications.lastModification?.date ||
+      this.loan.startDate;
 
     const balanceModificationToAdd = new BalanceModification({
       amount: 0,
@@ -599,13 +639,15 @@ export class OverridesComponent implements OnInit {
     });
 
     // this.loan.balanceModifications.push(balanceModificationToAdd);
-    this.loan.balanceModifications.push(balanceModificationToAdd);
+    this.loan.balanceModifications.addBalanceModification(
+      balanceModificationToAdd,
+    );
     this.emitLoanChange();
   }
 
   deleteBalanceModificationRow(index: number) {
     if (this.loan.balanceModifications.length > 0) {
-      this.loan.balanceModifications.splice(index, 1);
+      this.loan.balanceModifications.removeBalanceModificationAtIndex(index);
     }
     this.emitLoanChange();
   }
@@ -618,10 +660,7 @@ export class OverridesComponent implements OnInit {
 
     //this.loan.balanceModifications = this.balanceModifications;
 
-    this.loan.balanceModifications.forEach((balanceModification) => {
-      balanceModification.syncValuesFromJSProperties();
-    });
-
+    this.loan.balanceModifications.updateModelValues();
     // Optional: Order the balance modifications by date
     // this.loan.balanceModifications.sort((a, b) => dayjs(a.date).diff(dayjs(b.date)));
     this.emitLoanChange();
@@ -633,11 +672,13 @@ export class OverridesComponent implements OnInit {
       this.loan.feesForAllTerms = [];
     }
 
-    this.loan.feesForAllTerms.push({
-      type: 'fixed',
-      amount: 0,
-      description: '',
-    });
+    this.loan.feesForAllTerms.push(
+      new Fee({
+        type: 'fixed',
+        amount: 0,
+        description: '',
+      }),
+    );
 
     this.emitLoanChange();
   }
@@ -652,15 +693,21 @@ export class OverridesComponent implements OnInit {
   // Methods related to Fees Per Term
   addFeePerTerm() {
     if (!this.loan.feesPerTerm) {
-      this.loan.feesPerTerm = [];
+      this.loan.feesPerTerm = FeesPerTerm.empty();
     }
 
-    this.loan.feesPerTerm.push({
-      termNumber: 1,
-      type: 'fixed',
-      amount: 0,
-      description: '',
-    });
+    this.loan.feesPerTerm.addFee(
+      new TermFees({
+        termNumber: 1,
+        fees: [
+          new Fee({
+            type: 'fixed',
+            amount: 0,
+            description: '',
+          }),
+        ],
+      }),
+    );
 
     this.emitLoanChange();
   }
@@ -674,7 +721,7 @@ export class OverridesComponent implements OnInit {
       new Date(ngDate.year, ngDate.month, ngDate.day),
     ).startOf('day');
 
-    for (const row of this.loanRepaymentPlan) {
+    for (const row of this.loan.repaymentSchedule.entries) {
       if (row.periodEndDate.isSame(passedDate)) {
         return true;
       }
@@ -683,10 +730,8 @@ export class OverridesComponent implements OnInit {
     return false;
   }
 
-  updateTermForCPD(index: number, termNumber: number) {
-    if (termNumber === null || termNumber === undefined || termNumber < 1) {
-      return;
-    }
+  cpdUpdated() {
+    this.loan.changePaymentDates.updateModelValues();
     // find the term number in the repayment plan
     // const repaymentPlanRow = this.loanRepaymentPlan.find(
     //   (row) => row.period === termNumber
@@ -696,19 +741,11 @@ export class OverridesComponent implements OnInit {
     //     repaymentPlanRow.periodEndDate.toDate();
     //   this.emitLoanChange();
     // }
-
-    if (this.loanRepaymentPlan && this.loanRepaymentPlan.length >= termNumber) {
-      this.loan.changePaymentDates[index].newDate =
-        this.loanRepaymentPlan[termNumber - 1].periodEndDate.toDate();
-      this.emitLoanChange();
-    }
+    this.emitLoanChange();
   }
 
-  removeFeePerTerm(index: number) {
-    if (this.loan.feesPerTerm && this.loan.feesPerTerm.length > 0) {
-      this.loan.feesPerTerm.splice(index, 1);
-      this.emitLoanChange();
-    }
+  removeFeePerTerm(termNumber: number) {
+    this.loan.feesPerTerm.removeAllFeesForTerm(termNumber);
   }
 
   addTermInterestRateOverrideRow() {
@@ -722,41 +759,44 @@ export class OverridesComponent implements OnInit {
         this.loan.termInterestRateOverride.length - 1
       ];
     let termNumber = 1;
-    let interestRate = this.loan.interestRate;
+    let interestRate = this.loan.annualInterestRate;
 
     if (lastEntry) {
       termNumber = lastEntry.termNumber + 1;
       interestRate = lastEntry.interestRate;
     }
 
-    this.loan.termInterestRateOverride.push({
-      termNumber: termNumber,
-      interestRate: interestRate,
-    });
+    this.loan.termInterestRateOverride.push(
+      new TermInterestRateOverride({
+        termNumber: termNumber,
+        interestRate: interestRate,
+      }),
+    );
 
     this.onInputChange(true);
   }
   // Add row for termInterestOverride
   addTermInterestOverrideRow() {
-    if (!this.loan.termInterestOverride) {
-      this.loan.termInterestOverride = [];
+    if (!this.loan.termInterestAmountOverride) {
+      this.loan.termInterestAmountOverride = new TermInterestAmountOverrides();
     }
 
     // Default values for a new row
-    const lastEntry =
-      this.loan.termInterestOverride[this.loan.termInterestOverride.length - 1];
+    const lastEntry = this.loan.termInterestAmountOverride.last;
     let termNumber = 1;
-    let interestAmount = 0;
+    let interestAmount = Currency.of(0);
 
     if (lastEntry) {
       termNumber = lastEntry.termNumber + 1;
       interestAmount = lastEntry.interestAmount;
     }
 
-    this.loan.termInterestOverride.push({
-      termNumber: termNumber,
-      interestAmount: interestAmount,
-    });
+    this.loan.termInterestAmountOverride.addOverride(
+      new TermInterestAmountOverride({
+        termNumber: termNumber,
+        interestAmount: interestAmount,
+      }),
+    );
 
     this.onInputChange(true);
   }
@@ -773,11 +813,8 @@ export class OverridesComponent implements OnInit {
 
   // Remove a specific termInterestOverride row
   removeTermInterestOverride(index: number) {
-    if (
-      this.loan.termInterestOverride &&
-      this.loan.termInterestOverride.length > 0
-    ) {
-      this.loan.termInterestOverride.splice(index, 1);
+    if (this.loan.termInterestAmountOverride.length > 0) {
+      this.loan.termInterestAmountOverride.removeOverrideAtIndex(index);
       this.onInputChange(true);
     }
   }

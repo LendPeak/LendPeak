@@ -2,10 +2,29 @@ import { Currency, RoundingMethod } from "../utils/Currency";
 import { Calendar, CalendarType } from "./Calendar";
 import { InterestCalculator, PerDiemCalculationType } from "./InterestCalculator";
 import { BalanceModification } from "./Amortization/BalanceModification";
-import Decimal from "decimal.js";
-import { toAmortizationParams, UIAmortizationParams } from "../factories/UIFactories";
-
+import { BalanceModifications } from "./Amortization/BalanceModifications";
+import { Decimal } from "decimal.js";
+import { ChangePaymentDate } from "./ChangePaymentDate";
+import { ChangePaymentDates } from "./ChangePaymentDates";
 import { AmortizationEntry, AmortizationScheduleMetadata } from "./Amortization/AmortizationEntry";
+import { TermInterestAmountOverride } from "./TermInterestAmountOverride";
+import { TermInterestAmountOverrides } from "./TermInterestAmountOverrides";
+import { TermInterestRateOverride } from "./TermInterestRateOverride";
+import { RateSchedule } from "./RateSchedule";
+import { RateSchedules } from "./RateSchedules";
+import { PeriodSchedule } from "./PeriodSchedule";
+import { PeriodSchedules } from "./PeriodSchedules";
+import { AmortizationSummary } from "./AmortizationSummary";
+import { TILA } from "./TILA";
+import { Fee } from "./Fee";
+import { FeesPerTerm } from "./FeesPerTerm";
+import { PreBillDaysConfiguration } from "./PreBillDaysConfiguration";
+import { PreBillDaysConfigurations } from "./PreBillDaysConfigurations";
+import { BillDueDaysConfiguration } from "./BillDueDaysConfiguration";
+import { BillDueDaysConfigurations } from "./BillDueDaysConfigurations";
+import { AmortizationExport } from "./AmortizationExport";
+import { TermPaymentAmount } from "./TermPaymentAmount";
+import { TermPaymentAmounts } from "./TermPaymentAmounts";
 import dayjs, { Dayjs } from "dayjs";
 import isSameOrAfter from "dayjs/plugin/isSameOrAfter";
 import isSameOrBefore from "dayjs/plugin/isSameOrBefore";
@@ -16,83 +35,7 @@ dayjs.extend(isSameOrBefore);
 dayjs.extend(isBetween);
 
 import cloneDeep from "lodash/cloneDeep";
-
-export interface LoanSummary {
-  totalTerms: number;
-  remainingTerms: number;
-  nextBillDate?: Date;
-  paidPrincipalToDate: Currency;
-  paidInterestToDate: Currency;
-  lastPaymentDate?: Date;
-  lastPaymentAmount: Currency;
-  remainingPrincipal: Currency;
-  currentPayoffAmount: Currency; // Principal + accrued interest to date
-  accruedInterestToDate: Currency;
-  projectedFutureInterest: Currency; // Interest yet to be accrued if held to maturity
-}
-
-/**
- * Interface representing each entry in the payment schedule.
- */
-export interface PaymentScheduleEntry {
-  paymentNumber: number;
-  paymentDate: Dayjs;
-  paymentAmount: Currency;
-  principal: Currency;
-  interest: Currency;
-  balance: Currency;
-}
-
-/**
- * Interface representing the TILA disclosures.
- */
-export interface TILADisclosures {
-  amountFinanced: Currency;
-  financeCharge: Currency;
-  totalOfPayments: Currency;
-  annualPercentageRate: Decimal;
-  paymentSchedule: PaymentScheduleEntry[];
-}
-
-export interface PeriodSchedule {
-  startDate: Dayjs;
-  endDate: Dayjs;
-}
-
-export interface JSPeriodSchedule {
-  startDate: Date;
-  endDate: Date;
-}
-
-export interface RateSchedule {
-  annualInterestRate: Decimal;
-  startDate: Dayjs;
-  endDate: Dayjs;
-}
-
-export interface JSRateSchedule {
-  annualInterestRate: Decimal | number;
-  startDate: Dayjs | Date;
-  endDate: Dayjs | Date;
-}
-
-export interface Fee {
-  type: "fixed" | "percentage";
-  amount?: Currency; // For fixed amount fees
-  percentage?: Decimal; // For percentage-based fees
-  basedOn?: "interest" | "principal" | "totalPayment"; // What the percentage is applied to
-  description?: string;
-  metadata?: any;
-}
-
-export interface JSFee {
-  type: "fixed" | "percentage";
-  amount?: Currency | number; // For fixed amount fees
-  percentage?: Decimal | number; // For percentage-based fees
-  basedOn?: "interest" | "principal" | "totalPayment"; // What the percentage is applied to
-  description?: string;
-  metadata?: any;
-}
+import { AmortizationEntries } from "./Amortization/AmortizationEntries";
 
 /**
  * Enum for flush cumulative rounding error types.
@@ -108,140 +51,179 @@ export interface TermPeriodDefinition {
   count: number[];
 }
 
-export interface TermPaymentAmount {
-  termNumber: number;
-  paymentAmount: Currency;
-}
-
-export interface JSTermPaymentAmount {
-  termNumber: number;
-  paymentAmount: number;
-}
-
-export interface ChangePaymentDate {
-  termNumber: number;
-  newDate: Dayjs;
-  originalDate?: Dayjs;
-}
-
-export interface JSChangePaymentDate {
-  termNumber: number;
-  originalDate?: Date;
-  newDate: Dayjs | Date;
-}
-
-export interface PreBillDaysConfiguration {
-  termNumber: number;
-  preBillDays: number;
-}
-
-export interface BillDueDaysConfiguration {
-  termNumber: number;
-  daysDueAfterPeriodEnd: number;
-}
-
 export interface AmortizationParams {
-  loanAmount: Currency;
-  originationFee?: Currency;
-  annualInterestRate: Decimal;
+  name?: string;
+  id?: string;
+  description?: string;
+  loanAmount: Currency | number;
+  originationFee?: Currency | number;
+  annualInterestRate: Decimal | number;
   term: number;
-  preBillDays?: PreBillDaysConfiguration[];
-  dueBillDays?: BillDueDaysConfiguration[];
-  billDueDaysAfterPeriodEnd?: BillDueDaysConfiguration[];
+  preBillDays?: PreBillDaysConfigurations;
+  dueBillDays?: BillDueDaysConfigurations;
   defaultPreBillDaysConfiguration?: number;
   defaultBillDueDaysAfterPeriodEndConfiguration?: number;
-  startDate: Dayjs;
-  endDate?: Dayjs;
+  startDate: Dayjs | Date;
+  endDate?: Dayjs | Date;
   calendarType?: CalendarType | string;
   roundingMethod?: RoundingMethod | string;
   flushUnbilledInterestRoundingErrorMethod?: FlushUnbilledInterestDueToRoundingErrorType | string;
   roundingPrecision?: number;
-  flushThreshold?: Currency;
-  periodsSchedule?: PeriodSchedule[];
-  ratesSchedule?: RateSchedule[];
+  flushThreshold?: Currency | number;
+  periodsSchedule?: PeriodSchedules;
+  ratesSchedule?: RateSchedules;
   allowRateAbove100?: boolean;
-  termPaymentAmountOverride?: TermPaymentAmount[];
-  termPaymentAmount?: Currency | number | Decimal; // allows one to specify EMI manually instead of calculating it
-  firstPaymentDate?: Dayjs;
+  termPaymentAmountOverride?: TermPaymentAmounts;
+  equitedMonthlyPayment?: Currency | number | Decimal; // allows one to specify EMI manually instead of calculating it
+  firstPaymentDate?: Dayjs | Date | string;
   termPeriodDefinition?: TermPeriodDefinition;
-  changePaymentDates?: JSChangePaymentDate[];
-  balanceModifications?: BalanceModification[];
+  changePaymentDates?: ChangePaymentDates;
+  balanceModifications?: BalanceModifications;
   perDiemCalculationType?: PerDiemCalculationType;
   // staticFeePerBill?: Currency; // A fixed fee amount applied to each bill.
   // customFeesPerTerm?: { termNumber: number; feeAmount: Currency }[]; // An array specifying custom fee amounts for each term.
   // feePercentageOfTotalPayment?: Decimal; // A percentage of the total payment to be applied as a fee.
   // customFeePercentagesPerTerm?: { termNumber: number; feePercentage: Decimal }[]; // An array specifying custom percentages per term.
-  feesPerTerm?: { termNumber: number; fees: Fee[] }[];
-  feesForAllTerms?: JSFee[];
+  feesPerTerm?: FeesPerTerm;
+  feesForAllTerms?: Fee[];
   billingModel?: BillingModel;
-  termInterestOverride?: { termNumber: number; interestAmount: Currency; date?: Dayjs }[];
-  termInterestRateOverride?: { termNumber: number; interestRate: Decimal }[];
+  termInterestAmountOverride?: TermInterestAmountOverrides;
+  termInterestRateOverride?: TermInterestRateOverride[];
 }
 
 export type BillingModel = "amortized" | "dailySimpleInterest";
-
-const DEFAULT_PRE_BILL_DAYS_CONFIGURATION = 0;
-const DEFAULT_BILL_DUE_DAYS_AFTER_PERIO_END_CONFIGURATION = 0;
 
 /**
  * Amortization class to generate an amortization schedule for a loan.
  */
 export class Amortization {
-  loanAmount: Currency;
-  originationFee: Currency;
-  totalLoanAmount: Currency;
-  annualInterestRate: Decimal;
-  term: number;
-  preBillDays: PreBillDaysConfiguration[];
-  dueBillDays: BillDueDaysConfiguration[];
-  defaultPreBillDaysConfiguration: number;
-  defaultBillDueDaysAfterPeriodEndConfiguration: number;
-  startDate: Dayjs;
-  endDate: Dayjs;
-  calendar: Calendar;
-  roundingMethod: RoundingMethod;
-  flushUnbilledInterestRoundingErrorMethod: FlushUnbilledInterestDueToRoundingErrorType; // Updated property
-  totalChargedInterestRounded: Currency; // tracks total charged interest (rounded)
-  totalChargedInterestUnrounded: Currency; // racks total charged interest (unrounded)
-  unbilledInterestDueToRounding: Currency; // racks unbilled interest due to rounding
-  unbilledDeferredInterest: Currency; // tracks deferred interest
-  unbilledDeferredFees: Currency; // tracks deferred interest
-  roundingPrecision: number; // tracks precision for rounding
-  flushThreshold: Currency; // property to track the threshold for flushing cumulative rounding error
-  periodsSchedule: PeriodSchedule[] = [];
-  rateSchedules: RateSchedule[] = [];
-  allowRateAbove100: boolean = false;
-  termPaymentAmountOverride: TermPaymentAmount[] = [];
-  equitedMonthlyPayment: Currency;
-  firstPaymentDate: Dayjs;
-  termPeriodDefinition: TermPeriodDefinition;
-  changePaymentDates: ChangePaymentDate[] = [];
-  repaymentSchedule: AmortizationEntry[];
-  balanceModifications: BalanceModification[] = [];
-  _apr?: Decimal;
-  earlyRepayment: boolean = false;
-  perDiemCalculationType: PerDiemCalculationType = "AnnualRateDividedByDaysInYear";
-  billingModel: BillingModel = "amortized";
-  // Fee configurations
-  // private staticFeePerBill: Currency;
-  // private customFeesPerTerm: Map<number, Currency>;
-  // private feePercentageOfTotalPayment: Decimal;
-  // private customFeePercentagesPerTerm: Map<number, Decimal>;
-  feesPerTerm: Map<number, Fee[]>;
-  feesForAllTerms: Fee[] = [];
+  private static readonly DEFAULT_PRE_BILL_DAYS_CONFIGURATION = 0;
+  private static readonly DEFAULT_BILL_DUE_DAYS_AFTER_PERIO_END_CONFIGURATION = 0;
 
+  private _id: string = "";
+  jsId: string = "";
+
+  private _name: string = "";
+  jsName: string = "";
+
+  private _description: string = "";
+  jsDescription: string = "";
+
+  private _loanAmount!: Currency;
+  jsLoanAmount!: number;
+
+  private _originationFee: Currency = Currency.zero;
+  jsOriginationFee!: number;
+
+  private _term: number = 1;
+  jsTerm!: number;
+
+  private _startDate!: Dayjs;
+  jsStartDate!: Date;
+
+  private _endDate?: Dayjs;
+  jsEndDate?: Date;
+
+  private _hasCustomEndDate: boolean = false;
+  jsHasCustomEndDate!: boolean;
+
+  private _annualInterestRate: Decimal = new Decimal(0);
+  jsAnnualInterestRate!: number;
+
+  private _totalChargedInterestRounded: Currency = Currency.zero;
+  jsTotalChargedInterestRounded!: number;
+
+  private _totalChargedInterestUnrounded: Currency = Currency.zero;
+  jsTotalChargedInterestUnrounded!: number;
+
+  private _unbilledInterestDueToRounding: Currency = Currency.zero;
+  jsUnbilledInterestDueToRounding!: number;
+
+  private _unbilledDeferredInterest: Currency = Currency.zero;
+  jsUnbilledDeferredInterest!: number;
+
+  private _unbilledDeferredFees: Currency = Currency.zero;
+  jsUnbilledDeferredFees!: number;
+
+  private _roundingPrecision: number = 2;
+  jsRoundingPrecision!: number;
+
+  private _flushThreshold: Currency = Currency.of(0.01);
+  jsFlushThreshold!: number;
+
+  private _hasCustomPeriodsSchedule: boolean = false;
+  jsHasCustomPeriodsSchedule!: boolean;
+
+  private _allowRateAbove100: boolean = false;
+  jsAllowRateAbove100!: boolean;
+
+  private _firstPaymentDate?: Dayjs;
+  jsFirstPaymentDate!: Date;
+
+  private _hasCustomFirstPaymentDate: boolean = false;
+  jshasCustomFirstPaymentDate!: boolean;
+
+  private _earlyRepayment: boolean = false;
+  jsEarlyRepayment!: boolean;
+
+  private _equitedMonthlyPayment!: Currency;
+  jsEquitedMonthlyPayment!: number;
+
+  private _hasCustomEquitedMonthlyPayment: boolean = false;
+  jsHasCustomEquitedMonthlyPayment!: boolean;
+
+  private _hasCustomPreBillDays: boolean = false;
+  jsHasCustomPreBillDays!: boolean;
+
+  private _hasCustomBillDueDays: boolean = false;
+  jsHasCustomBillDueDays!: boolean;
+
+  private _periodsSchedule: PeriodSchedules = new PeriodSchedules();
+  private _preBillDays: PreBillDaysConfigurations = new PreBillDaysConfigurations();
+  private _dueBillDays: BillDueDaysConfigurations = new BillDueDaysConfigurations();
+  private _termPaymentAmountOverride: TermPaymentAmounts = new TermPaymentAmounts();
+  private _balanceModifications: BalanceModifications = new BalanceModifications();
+
+  private _defaultPreBillDaysConfiguration: number = Amortization.DEFAULT_PRE_BILL_DAYS_CONFIGURATION;
+  private _defaultBillDueDaysAfterPeriodEndConfiguration: number = Amortization.DEFAULT_BILL_DUE_DAYS_AFTER_PERIO_END_CONFIGURATION;
+  private _calendar: Calendar = new Calendar(CalendarType.ACTUAL_ACTUAL);
+  private _roundingMethod: RoundingMethod = RoundingMethod.ROUND_HALF_EVEN;
+  private _flushUnbilledInterestRoundingErrorMethod: FlushUnbilledInterestDueToRoundingErrorType = FlushUnbilledInterestDueToRoundingErrorType.NONE;
+  private _rateSchedules: RateSchedules = new RateSchedules();
+  private _hasCustomRateSchedule: boolean = false;
+  private _termPeriodDefinition: TermPeriodDefinition = { unit: "month", count: [1] };
+  private _changePaymentDates: ChangePaymentDates = new ChangePaymentDates();
+  private _repaymentSchedule!: AmortizationEntries;
+  private _apr?: Decimal;
+  private _perDiemCalculationType: PerDiemCalculationType = "AnnualRateDividedByDaysInYear";
+  private _billingModel: BillingModel = "amortized";
+  private _feesPerTerm: FeesPerTerm = FeesPerTerm.empty();
+  private _feesForAllTerms: Fee[] = [];
   private _inputParams: AmortizationParams;
-
-  termInterestOverrideMap: Map<number, Currency> = new Map();
-  termInterestRateOverrideMap: Map<number, Decimal> = new Map();
+  private _termInterestAmountOverride: TermInterestAmountOverrides = new TermInterestAmountOverrides();
+  private _termInterestRateOverride: TermInterestRateOverride[] = [];
+  private _modifiedSinceLastCalculation: boolean = true;
+  private _modificationCount: number = 0;
+  private _modificationOptimizationTracker: any = {};
+  private _export?: AmortizationExport;
+  private _summary?: AmortizationSummary;
+  private _tila?: TILA;
 
   constructor(params: AmortizationParams) {
     this._inputParams = cloneDeep(params);
 
-    // validate that loan amount is greater than zero
-    if (params.loanAmount.getValue().isZero() || params.loanAmount.getValue().isNegative()) {
-      throw new Error("Invalid loan amount, must be greater than zero");
+    if (params.id) {
+      this.id = params.id;
     }
+
+    if (params.name) {
+      this.name = params.name;
+    }
+
+    if (params.description) {
+      this.description = params.description;
+    }
+
     this.loanAmount = params.loanAmount;
 
     if (params.billingModel) {
@@ -249,287 +231,1018 @@ export class Amortization {
     }
 
     if (params.originationFee) {
-      if (params.originationFee.getValue().isNegative()) {
-        throw new Error("Invalid origination fee, value cannot be negative");
-      }
       this.originationFee = params.originationFee;
-    } else {
-      this.originationFee = Currency.of(0);
     }
 
     if (params.balanceModifications) {
       this.balanceModifications = params.balanceModifications;
-
-      // sort balance modifications by date
-      this.balanceModifications = this.balanceModifications.sort((a, b) => {
-        return a.date.diff(b.date);
-      });
     }
-
-    this.totalLoanAmount = this.loanAmount.add(this.originationFee);
 
     if (params.perDiemCalculationType) {
       this.perDiemCalculationType = params.perDiemCalculationType;
     }
 
-    // Initialize feesPerTerm
-    this.feesPerTerm = new Map();
     if (params.feesPerTerm) {
-      for (const feeConfig of params.feesPerTerm) {
-        this.feesPerTerm.set(feeConfig.termNumber, feeConfig.fees);
-      }
+      this.feesPerTerm = params.feesPerTerm;
     }
 
-    // Initialize feesForAllTerms
-
     if (params.feesForAllTerms) {
-      this.feesForAllTerms = params.feesForAllTerms.map((fee) => {
-        return {
-          type: fee.type,
-          amount: fee.amount !== undefined ? Currency.of(fee.amount) : undefined,
-          percentage: fee.percentage !== undefined ? new Decimal(fee.percentage).dividedBy(100) : undefined,
-          basedOn: fee.basedOn,
-          description: fee.description,
-          metadata: fee.metadata,
-        } as Fee;
-      });
+      this.feesForAllTerms = params.feesForAllTerms;
     }
 
     if (params.termPeriodDefinition) {
       this.termPeriodDefinition = params.termPeriodDefinition;
-    } else {
-      this.termPeriodDefinition = { unit: "month", count: [1] };
     }
 
     if (params.changePaymentDates) {
-      const changePaymentDates = params.changePaymentDates;
-      this.changePaymentDates = changePaymentDates.map((changePaymentDate) => {
-        return {
-          termNumber: changePaymentDate.termNumber,
-          newDate: dayjs(changePaymentDate.newDate).startOf("day"),
-          originalDate: changePaymentDate.originalDate ? dayjs(changePaymentDate.originalDate).startOf("day") : undefined,
-        };
-      });
+      this.changePaymentDates = params.changePaymentDates;
     }
 
     if (params.allowRateAbove100 !== undefined) {
       this.allowRateAbove100 = params.allowRateAbove100;
     }
 
-    // validate annual interest rate, it should not be negative or greater than 100%
-    if (params.annualInterestRate.isNegative()) {
-      throw new Error("Invalid annual interest rate, value cannot be negative");
-    }
-
-    if (params.annualInterestRate.greaterThan(1) && !this.allowRateAbove100) {
-      throw new Error("Invalid annual interest rate, value cannot be greater than or equal to 100%, unless explicitly allowed by setting allowRateAbove100 to true");
-    }
     this.annualInterestRate = params.annualInterestRate;
 
-    // validate term, it should be greater than zero
-    if (params.term <= 0) {
-      throw new Error("Invalid term, must be greater than zero");
-    }
     this.term = params.term;
-    this.startDate = dayjs(params.startDate).startOf("day");
+    this.startDate = params.startDate;
 
     if (params.firstPaymentDate) {
       this.firstPaymentDate = params.firstPaymentDate;
-    } else {
-      const termUnit = this.termPeriodDefinition.unit === "complex" ? "day" : this.termPeriodDefinition.unit;
-      this.firstPaymentDate = this.startDate.add(1 * this.termPeriodDefinition.count[0], termUnit);
-
-      //this.firstPaymentDate = params.startDate.add(1, "month");
     }
 
     if (params.endDate) {
-      this.endDate = dayjs(params.endDate).startOf("day");
-    } else {
-      const termUnit = this.termPeriodDefinition.unit === "complex" ? "day" : this.termPeriodDefinition.unit;
-      this.endDate = this.startDate.add(this.term * this.termPeriodDefinition.count[0], termUnit);
+      this.endDate = params.endDate;
     }
 
-    // validate that the end date is after the start date
-    if (this.endDate.isBefore(this.startDate)) {
-      throw new Error("Invalid end date, must be after the start date");
+    if (params.termPaymentAmountOverride && params.termPaymentAmountOverride.length > 0) {
+      this.termPaymentAmountOverride = params.termPaymentAmountOverride;
     }
 
-    if (params.termPaymentAmountOverride) {
-      this.termPaymentAmountOverride = params.termPaymentAmountOverride.map((override) => {
-        return { termNumber: override.termNumber, paymentAmount: Currency.of(override.paymentAmount) };
-      });
+    if (params.calendarType) {
+      this.calendar = params.calendarType;
     }
-
-    this.calendar = new Calendar(params.calendarType || CalendarType.ACTUAL_ACTUAL);
 
     if (params.roundingMethod) {
-      if (typeof params.roundingMethod === "string") {
-        this.roundingMethod = Currency.RoundingMethodFromString(params.roundingMethod);
-      } else {
-        this.roundingMethod = params.roundingMethod;
-      }
-    } else {
-      this.roundingMethod = RoundingMethod.ROUND_HALF_EVEN;
+      this.roundingMethod = params.roundingMethod;
     }
 
     if (params.flushUnbilledInterestRoundingErrorMethod) {
-      if (typeof params.flushUnbilledInterestRoundingErrorMethod === "string") {
-        let flushMethod: FlushUnbilledInterestDueToRoundingErrorType;
-        switch (params.flushUnbilledInterestRoundingErrorMethod) {
-          case "none":
-            flushMethod = FlushUnbilledInterestDueToRoundingErrorType.NONE;
-            break;
-          case "at_end":
-            flushMethod = FlushUnbilledInterestDueToRoundingErrorType.AT_END;
-            break;
-          case "at_threshold":
-            flushMethod = FlushUnbilledInterestDueToRoundingErrorType.AT_THRESHOLD;
-            break;
-          default:
-            flushMethod = FlushUnbilledInterestDueToRoundingErrorType.NONE;
-        }
-        this.flushUnbilledInterestRoundingErrorMethod = flushMethod;
-      } else {
-        this.flushUnbilledInterestRoundingErrorMethod = params.flushUnbilledInterestRoundingErrorMethod;
-      }
-    } else {
-      this.flushUnbilledInterestRoundingErrorMethod = FlushUnbilledInterestDueToRoundingErrorType.NONE;
+      this.flushUnbilledInterestRoundingErrorMethod = params.flushUnbilledInterestRoundingErrorMethod;
     }
 
-    this.totalChargedInterestRounded = Currency.of(0);
-    this.totalChargedInterestUnrounded = Currency.of(0);
-    this.unbilledInterestDueToRounding = Currency.of(0);
-    this.roundingPrecision = params.roundingPrecision || 2;
-    // validate that the rounding precision is greater than or equal to zero
-    if (this.roundingPrecision < 0) {
-      throw new Error("Invalid rounding precision, must be greater than or equal to zero, number represents decimal places");
+    if (params.roundingPrecision !== undefined) {
+      this.roundingPrecision = params.roundingPrecision;
     }
-    this.flushThreshold = params.flushThreshold || Currency.of(0.01); // Default threshold is 1 cent
+    // validate that the rounding precision is greater than or equal to zero
+
+    if (params.flushThreshold !== undefined) {
+      this.flushThreshold = params.flushThreshold;
+    }
 
     // Initialize the schedule periods and rates
-    if (!params.periodsSchedule) {
-      this.generatePeriodicSchedule();
-    } else {
-      this.periodsSchedule = params.periodsSchedule.map((period) => {
-        return {
-          startDate: dayjs(period.startDate).startOf("day"),
-          endDate: dayjs(period.endDate).startOf("day"),
-        };
-      });
+    if (params.periodsSchedule) {
+      this.periodsSchedule = params.periodsSchedule;
     }
-    if (params.termInterestOverride) {
-      for (const override of params.termInterestOverride) {
-        if (override.termNumber < 0 || override.termNumber > this.term) {
-          throw new Error(`Invalid termInterestOverride: termNumber ${override.termNumber} out of range`);
-        }
-        if (override.interestAmount.getValue().isNegative()) {
-          throw new Error("Invalid termInterestOverride: interestAmount cannot be negative");
-        }
-        if (!override.termNumber && override.date) {
-          // this means term was not available so we will resolve term number through date
-          let date = dayjs(override.date).startOf("day");
-          let term = this.periodsSchedule.findIndex((period) => {
-            return date.isBetween(period.startDate, period.endDate, "day", "[)"); // this is start and < end date;
-            // return date.isBetween(period.startDate, period.endDate, "day", "[]"); // this is start and end date inclusive
-          });
-          if (term === -1) {
-            throw new Error("Invalid termInterestOverride: date does not fall within any term");
-          }
 
-          override.termNumber = term + 1;
-        }
-        this.termInterestOverrideMap.set(override.termNumber, override.interestAmount);
-      }
+    if (params.termInterestAmountOverride) {
+      this.termInterestAmountOverride = params.termInterestAmountOverride;
     }
 
     if (params.termInterestRateOverride) {
-      for (const override of params.termInterestRateOverride) {
-        if (override.termNumber <= 0 || override.termNumber > this.term) {
-          throw new Error(`Invalid termInterestRateOverride: termNumber ${override.termNumber} out of range`);
-        }
-        if (override.interestRate.isNegative()) {
-          throw new Error("Invalid termInterestRateOverride: interestAmount cannot be negative");
-        }
-        this.termInterestRateOverrideMap.set(override.termNumber, override.interestRate);
-      }
+      this.termInterestRateOverride = params.termInterestRateOverride;
     }
-    if (!params.ratesSchedule) {
-      this.generateRatesSchedule();
-    } else {
-      this.rateSchedules = params.ratesSchedule.map((rate) => {
-        const interestAsDecimal = new Decimal(rate.annualInterestRate);
-        return {
-          startDate: dayjs(rate.startDate),
-          endDate: dayjs(rate.endDate),
-          annualInterestRate: interestAsDecimal.dividedBy(100),
-        };
-      });
-
-      // all start and end dates must be at the start of the day, we dont want to count hours
-      // at least not just yet... maybe in the future
-      for (let rate of this.rateSchedules) {
-        rate.startDate = rate.startDate.startOf("day");
-        rate.endDate = rate.endDate.startOf("day");
-      }
-
-      // rate schedule might be partial and not necesserily aligns with billing periods
-      // if first period is not equal to start date, we need to backfill
-      // original start date and rate to the first period
-      // same goes for in-between periods, if first period end date is not equal to next period start date
-      // we need to backfill the rate and start date to the next period
-      // finally same goes for the last period, if end date is not equal to the end date of the term
-      // we need to backfill the rate and end date to the last period
-
-      if (!this.startDate.isSame(this.rateSchedules[0].startDate, "day")) {
-        console.log(`adding rate schedule at the start ${this.startDate.format("YYYY-MM-DD")} and ${this.rateSchedules[0].startDate.format("YYYY-MM-DD")}`);
-        this.rateSchedules.unshift({ annualInterestRate: this.annualInterestRate, startDate: this.startDate, endDate: this.rateSchedules[0].startDate });
-      }
-
-      for (let i = 0; i < this.rateSchedules.length - 1; i++) {
-        if (!this.rateSchedules[i].endDate.isSame(this.rateSchedules[i + 1].startDate, "day")) {
-          console.log(`adding rate schedule between ${this.rateSchedules[i].startDate.format("YYYY-MM-DD")} and ${this.rateSchedules[i + 1].endDate.format("YYYY-MM-DD")}`);
-          this.rateSchedules.splice(i + 1, 0, { annualInterestRate: this.annualInterestRate, startDate: this.rateSchedules[i].endDate, endDate: this.rateSchedules[i + 1].startDate });
-        }
-      }
-
-      if (!this.endDate.isSame(this.rateSchedules[this.rateSchedules.length - 1].endDate, "day")) {
-        console.log(`adding rate schedule for the end between ${this.rateSchedules[this.rateSchedules.length - 1].endDate.format("YYYY-MM-DD")} and ${this.endDate.format("YYYY-MM-DD")}`);
-        this.rateSchedules.push({ annualInterestRate: this.annualInterestRate, startDate: this.rateSchedules[this.rateSchedules.length - 1].endDate, endDate: this.endDate });
-      }
+    if (params.ratesSchedule) {
+      this.rateSchedules = params.ratesSchedule;
     }
 
-    if (params.termPaymentAmount !== undefined) {
-      this.equitedMonthlyPayment = new Currency(params.termPaymentAmount);
-    } else {
-      this.equitedMonthlyPayment = this.calculateFixedMonthlyPayment();
+    if (params.equitedMonthlyPayment !== undefined) {
+      this.equitedMonthlyPayment = params.equitedMonthlyPayment;
     }
 
     if (params.defaultPreBillDaysConfiguration !== undefined) {
       this.defaultPreBillDaysConfiguration = params.defaultPreBillDaysConfiguration;
-    } else {
-      this.defaultPreBillDaysConfiguration = DEFAULT_PRE_BILL_DAYS_CONFIGURATION;
     }
 
     if (params.preBillDays && params.preBillDays.length > 0) {
       this.preBillDays = params.preBillDays;
-    } else {
-      this.preBillDays = [{ preBillDays: this.defaultPreBillDaysConfiguration, termNumber: 1 }];
     }
 
     if (params.defaultBillDueDaysAfterPeriodEndConfiguration !== undefined) {
       this.defaultBillDueDaysAfterPeriodEndConfiguration = params.defaultBillDueDaysAfterPeriodEndConfiguration;
-    } else {
-      this.defaultBillDueDaysAfterPeriodEndConfiguration = DEFAULT_BILL_DUE_DAYS_AFTER_PERIO_END_CONFIGURATION;
     }
 
     if (params.dueBillDays && params.dueBillDays.length > 0) {
       this.dueBillDays = params.dueBillDays;
-    } else {
-      this.dueBillDays = [{ daysDueAfterPeriodEnd: this.defaultBillDueDaysAfterPeriodEndConfiguration, termNumber: 1 }];
     }
 
-    // when using DSI there is no concept of a bill so perBillDays and dueBillDays are not used
-    // so lets throw an error if they are used
+    // validate the schedule periods and rates
+
+    this.generateSchedule();
+
+    this.verifySchedulePeriods();
+    // this.validateRatesSchedule();
+    this.updateJsValues();
+  }
+
+  /**
+   * JS values are primarily to assist with Angular bindings
+   * to simplify the process of updating the UI when the model changes.
+   */
+  updateJsValues() {
+    this.termPaymentAmountOverride.updateJsValues();
+    this.changePaymentDates.updateJsValues();
+    this.jsId = this.id;
+    this.jsName = this.name;
+    this.jsDescription = this.description;
+    this.jsLoanAmount = this.loanAmount.toNumber();
+    this.jsOriginationFee = this.originationFee.toNumber();
+    this.jsTerm = this.term;
+    this.jsStartDate = this.startDate.toDate();
+    this.jsAnnualInterestRate = this.annualInterestRate.toNumber();
+    this.jsTotalChargedInterestRounded = this.totalChargedInterestRounded.toNumber();
+    this.jsTotalChargedInterestUnrounded = this.totalChargedInterestUnrounded.toNumber();
+    this.jsUnbilledInterestDueToRounding = this.unbilledInterestDueToRounding.toNumber();
+    this.jsUnbilledDeferredInterest = this.unbilledDeferredInterest.toNumber();
+    this.jsUnbilledDeferredFees = this.unbilledDeferredFees.toNumber();
+    this.jsRoundingPrecision = this.roundingPrecision;
+    this.jsFlushThreshold = this.flushThreshold.toNumber();
+    this.jsHasCustomPeriodsSchedule = this.hasCustomPeriodsSchedule;
+    this.jsAllowRateAbove100 = this.allowRateAbove100;
+    this.jsFirstPaymentDate = this.firstPaymentDate.toDate();
+    this.jsEarlyRepayment = this.earlyRepayment;
+    this.jsEquitedMonthlyPayment = this.equitedMonthlyPayment.toNumber();
+    this.jsHasCustomEquitedMonthlyPayment = this.hasCustomEquitedMonthlyPayment;
+    this.jsHasCustomPreBillDays = this.hasCustomPreBillDays;
+    this.jsHasCustomBillDueDays = this.hasCustomBillDueDays;
+    this.jshasCustomFirstPaymentDate = this.hasCustomFirstPaymentDate;
+    this.jsHasCustomEndDate = this.hasCustomEndDate;
+    this.jsEndDate = this.endDate.toDate();
+  }
+
+  updateModelValues() {
+    this.id = this.jsId;
+    this.name = this.jsName;
+    this.description = this.jsDescription;
+    this.loanAmount = Currency.of(this.jsLoanAmount);
+    this.originationFee = Currency.of(this.jsOriginationFee);
+    this.term = this.jsTerm;
+    this.startDate = dayjs(this.jsStartDate);
+
+    this.hasCustomEndDate = this.jsHasCustomEndDate;
+
+    if (this.hasCustomEndDate) {
+      this.endDate = this.jsEndDate;
+    } else {
+      this.endDate = undefined;
+    }
+
+    this.annualInterestRate = new Decimal(this.jsAnnualInterestRate);
+    this.totalChargedInterestRounded = Currency.of(this.jsTotalChargedInterestRounded);
+    this.totalChargedInterestUnrounded = Currency.of(this.jsTotalChargedInterestUnrounded);
+    this.unbilledInterestDueToRounding = Currency.of(this.jsUnbilledInterestDueToRounding);
+    this.unbilledDeferredInterest = Currency.of(this.jsUnbilledDeferredInterest);
+    this.unbilledDeferredFees = Currency.of(this.jsUnbilledDeferredFees);
+    this.roundingPrecision = this.jsRoundingPrecision;
+    this.flushThreshold = Currency.of(this.jsFlushThreshold);
+    this.hasCustomPeriodsSchedule = this.jsHasCustomPeriodsSchedule;
+    this.allowRateAbove100 = this.jsAllowRateAbove100;
+    this.hasCustomFirstPaymentDate = this.jshasCustomFirstPaymentDate;
+    if (this.hasCustomFirstPaymentDate) {
+      this.firstPaymentDate = dayjs(this.jsFirstPaymentDate);
+    }
+    this.earlyRepayment = this.jsEarlyRepayment;
+    if (this.hasCustomEquitedMonthlyPayment) {
+      this.equitedMonthlyPayment = Currency.of(this.jsEquitedMonthlyPayment);
+    } else {
+      this.equitedMonthlyPayment = undefined;
+    }
+    this.hasCustomEquitedMonthlyPayment = this.jsHasCustomEquitedMonthlyPayment;
+    this.hasCustomPreBillDays = this.jsHasCustomPreBillDays;
+    this.hasCustomBillDueDays = this.jsHasCustomBillDueDays;
+
+    this.termPaymentAmountOverride.updateModelValues();
+    this.changePaymentDates.updateModelValues();
+  }
+
+  /**
+   * Accessors
+   **/
+
+  get tila(): TILA {
+    if (!this._tila) {
+      this._tila = new TILA(this);
+    }
+    return this._tila;
+  }
+
+  get summary(): AmortizationSummary {
+    if (!this._summary) {
+      this._summary = new AmortizationSummary(this);
+    }
+    return this._summary;
+  }
+
+  get export(): AmortizationExport {
+    if (!this._export) {
+      this._export = new AmortizationExport(this);
+    }
+    return this._export;
+  }
+
+  get hasCustomPreBillDays(): boolean {
+    return this._hasCustomPreBillDays;
+  }
+
+  set hasCustomPreBillDays(value: boolean) {
+    this._hasCustomPreBillDays = value;
+  }
+
+  get hasCustomBillDueDays(): boolean {
+    return this._hasCustomBillDueDays;
+  }
+
+  set hasCustomBillDueDays(value: boolean) {
+    this._hasCustomBillDueDays = value;
+  }
+
+  get hasCustomPeriodsSchedule(): boolean {
+    return this._hasCustomPeriodsSchedule;
+  }
+
+  set hasCustomPeriodsSchedule(value: boolean) {
+    this._hasCustomPeriodsSchedule = value;
+  }
+
+  get modifiedSinceLastCalculation(): boolean {
+    return this._modifiedSinceLastCalculation;
+  }
+
+  set modifiedSinceLastCalculation(value: boolean) {
+    this._modifiedSinceLastCalculation = value;
+    this._modificationCount++;
+    //  console.trace("modified since last calculation set to: ", value, this._modificationCount);
+  }
+
+  set modificationOptimizationTracker(value: any) {
+    this._modificationOptimizationTracker[value] = this._modificationCount;
+  }
+
+  get modificationOptimizationTracker(): any {
+    return this._modificationOptimizationTracker;
+  }
+
+  isUpdatedSinceLastCalculation(key: string): boolean {
+    return this._modificationOptimizationTracker[key] === this._modificationCount;
+  }
+
+  get id(): string {
+    return this._id;
+  }
+
+  set id(value: string) {
+    this.modifiedSinceLastCalculation = true;
+    this._id = value;
+  }
+
+  get name(): string {
+    return this._name;
+  }
+
+  set name(value: string) {
+    this.modifiedSinceLastCalculation = true;
+
+    this._name = value;
+  }
+
+  get description(): string {
+    return this._description;
+  }
+
+  set description(value: string) {
+    this.modifiedSinceLastCalculation = true;
+
+    this._description = value;
+  }
+
+  get loanAmount(): Currency {
+    return this._loanAmount;
+  }
+
+  set loanAmount(value: Currency | number | Decimal) {
+    this.modifiedSinceLastCalculation = true;
+
+    let newValue: Currency;
+    if (value instanceof Currency) {
+      newValue = value;
+    } else {
+      newValue = Currency.of(value);
+    }
+
+    if (newValue.isZero() || newValue.isNegative()) {
+      throw new Error("Invalid loan amount, must be greater than zero");
+    }
+    this._loanAmount = newValue;
+  }
+
+  get originationFee(): Currency {
+    return this._originationFee;
+  }
+
+  set originationFee(value: Currency | number | Decimal | undefined) {
+    this.modifiedSinceLastCalculation = true;
+
+    if (!value) {
+      this._originationFee = Currency.zero;
+      return;
+    }
+    if (value instanceof Currency) {
+      this._originationFee = value;
+    } else {
+      this._originationFee = Currency.of(value);
+    }
+
+    if (this._originationFee.isNegative()) {
+      this._originationFee = Currency.zero;
+      throw new Error("Invalid origination fee, value cannot be negative");
+    }
+  }
+
+  get totalLoanAmount(): Currency {
+    return this.loanAmount.add(this.originationFee);
+  }
+
+  get term(): number {
+    return this._term;
+  }
+
+  set term(value: number) {
+    this.modifiedSinceLastCalculation = true;
+
+    if (value <= 0) {
+      throw new Error("Invalid term, must be greater than zero");
+    }
+    this._term = value;
+  }
+
+  get preBillDays(): PreBillDaysConfigurations {
+    if (!this._preBillDays || this._preBillDays.length === 0) {
+      this._preBillDays = new PreBillDaysConfigurations([
+        new PreBillDaysConfiguration({
+          preBillDays: this.defaultPreBillDaysConfiguration,
+          termNumber: 1,
+          type: "default",
+        }),
+      ]);
+      this.generatePreBillDays();
+      this.modificationOptimizationTracker = "preBillDays";
+    } else {
+      if (this.modifiedSinceLastCalculation === true) {
+        //  if (this._modificationOptimizationTracker?.preBillDays !== this._modificationCount) {
+        if (!this.isUpdatedSinceLastCalculation("preBillDays")) {
+          this.generatePreBillDays();
+          this.modificationOptimizationTracker = "preBillDays";
+        }
+      }
+    }
+    return this._preBillDays;
+  }
+
+  set preBillDays(value: PreBillDaysConfigurations) {
+    this.modifiedSinceLastCalculation = true;
+
+    if (!value || value.length === 0) {
+      this._hasCustomPreBillDays = false;
+      this._preBillDays = new PreBillDaysConfigurations();
+    } else {
+      this._hasCustomBillDueDays = true;
+      // check type and if different inflate
+      if (value instanceof PreBillDaysConfigurations) {
+        this._preBillDays = value;
+      } else {
+        this._preBillDays = new PreBillDaysConfigurations(value);
+      }
+    }
+    this.generatePreBillDays();
+  }
+
+  private generatePreBillDays(): void {
+    const value = this._preBillDays.all.filter((dueBillDay) => dueBillDay.type !== "generated");
+
+    const completedPreBillDays: PreBillDaysConfigurations = new PreBillDaysConfigurations();
+    for (let preBillDay of value) {
+      completedPreBillDays.all[preBillDay.termNumber - 1] = preBillDay;
+    }
+
+    let lastUserDefinedTerm = value[0];
+    for (let i = 0; i < this.term; i++) {
+      if (!completedPreBillDays.all[i]) {
+        if (lastUserDefinedTerm.termNumber - 1 > i) {
+          completedPreBillDays.all[i] = new PreBillDaysConfiguration({
+            termNumber: i + 1,
+            preBillDays: this.defaultPreBillDaysConfiguration,
+            type: "generated",
+          });
+        } else {
+          completedPreBillDays.all[i] = new PreBillDaysConfiguration({
+            termNumber: i + 1,
+            preBillDays: lastUserDefinedTerm.preBillDays,
+            type: "generated",
+          });
+        }
+      }
+      lastUserDefinedTerm = completedPreBillDays.all[i];
+    }
+    this._preBillDays = completedPreBillDays;
+  }
+
+  private generateDueBillDays(): void {
+    // lets remove all generated values and re-generate them
+    const value = this._dueBillDays.all.filter((dueBillDay) => dueBillDay.type !== "generated");
+    const completedDueDayBillDays: BillDueDaysConfigurations = new BillDueDaysConfigurations();
+    for (let dueBillDay of value) {
+      completedDueDayBillDays.all[dueBillDay.termNumber - 1] = dueBillDay;
+    }
+
+    let lastUserDefinedTerm = value[0];
+    for (let i = 0; i < this.term; i++) {
+      if (!completedDueDayBillDays.all[i]) {
+        if (lastUserDefinedTerm.termNumber - 1 > i) {
+          completedDueDayBillDays.all[i] = new BillDueDaysConfiguration({
+            termNumber: i + 1,
+            daysDueAfterPeriodEnd: this.defaultBillDueDaysAfterPeriodEndConfiguration,
+            type: "generated",
+          });
+        } else {
+          completedDueDayBillDays.all[i] = new BillDueDaysConfiguration({
+            termNumber: i + 1,
+            daysDueAfterPeriodEnd: lastUserDefinedTerm.daysDueAfterPeriodEnd,
+            type: "generated",
+          });
+        }
+      }
+      lastUserDefinedTerm = completedDueDayBillDays.all[i];
+    }
+
+    // console.log("completedDueBillDays", completedDueDayBillDays);
+
+    this._dueBillDays = completedDueDayBillDays;
+  }
+
+  get dueBillDays(): BillDueDaysConfigurations {
+    if (!this._dueBillDays || this._dueBillDays.length === 0) {
+      this._dueBillDays = new BillDueDaysConfigurations([
+        new BillDueDaysConfiguration({
+          daysDueAfterPeriodEnd: this.defaultBillDueDaysAfterPeriodEndConfiguration,
+          termNumber: 1,
+          type: "default",
+        }),
+      ]);
+      this.generateDueBillDays();
+      this.modificationOptimizationTracker = "dueBillDays";
+    } else {
+      if (this.modifiedSinceLastCalculation === true) {
+        if (this._modificationOptimizationTracker?.dueBillDays !== this._modificationCount) {
+          //    console.log(`modification tracker version didnt match ${this._modificationOptimizationTracker?.dueBillDays} ${this._modificationCount}`);
+          this.generateDueBillDays();
+          this._modificationOptimizationTracker.dueBillDays = this._modificationCount;
+        }
+      }
+    }
+    return this._dueBillDays;
+  }
+
+  set dueBillDays(value: BillDueDaysConfigurations) {
+    this.modifiedSinceLastCalculation = true;
+
+    if (!value || value.length === 0) {
+      this._hasCustomBillDueDays = false;
+      this._dueBillDays = new BillDueDaysConfigurations();
+    } else {
+      this._hasCustomBillDueDays = true;
+      if (value instanceof BillDueDaysConfigurations) {
+        this._dueBillDays = value;
+      } else {
+        this._dueBillDays = new BillDueDaysConfigurations(value);
+      }
+    }
+    this.generateDueBillDays();
+  }
+
+  get defaultPreBillDaysConfiguration() {
+    return this._defaultPreBillDaysConfiguration;
+  }
+
+  set defaultPreBillDaysConfiguration(value: number) {
+    this.modifiedSinceLastCalculation = true;
+
+    this._defaultPreBillDaysConfiguration = value;
+  }
+  get defaultBillDueDaysAfterPeriodEndConfiguration() {
+    return this._defaultBillDueDaysAfterPeriodEndConfiguration;
+  }
+
+  set defaultBillDueDaysAfterPeriodEndConfiguration(value: number) {
+    this.modifiedSinceLastCalculation = true;
+
+    this._defaultBillDueDaysAfterPeriodEndConfiguration = value;
+  }
+
+  get termInterestRateOverride(): TermInterestRateOverride[] {
+    return this._termInterestRateOverride;
+  }
+
+  set termInterestRateOverride(value: TermInterestRateOverride[]) {
+    this.modifiedSinceLastCalculation = true;
+
+    this._termInterestRateOverride = [];
+
+    for (const override of value) {
+      if (override.termNumber <= 0 || override.termNumber > this.term) {
+        throw new Error(`Invalid termInterestRateOverride: termNumber ${override.termNumber} out of range`);
+      }
+      if (override.interestRate.isNegative()) {
+        throw new Error("Invalid termInterestRateOverride: interestAmount cannot be negative");
+      }
+      this._termInterestRateOverride.push(override);
+    }
+  }
+
+  get termInterestAmountOverride(): TermInterestAmountOverrides {
+    return this._termInterestAmountOverride;
+  }
+
+  set termInterestAmountOverride(value: TermInterestAmountOverrides) {
+    this.modifiedSinceLastCalculation = true;
+
+    // it is possible that value at runtime is not an instance of TermInterestAmountOverrides
+    // so we will inflate it
+    if (!(value instanceof TermInterestAmountOverrides)) {
+      value = new TermInterestAmountOverrides(value);
+    }
+
+    this._termInterestAmountOverride = new TermInterestAmountOverrides();
+    // console.log("setting term amount overide", value);
+    for (const override of value.all) {
+      if (override.termNumber < 0 && override.date) {
+        // this means term was not available so we will resolve term number through date
+        let date = dayjs(override.date).startOf("day");
+        let term = this.periodsSchedule.periods.findIndex((period) => {
+          return date.isBetween(period.startDate, period.endDate, "day", "[)"); // this is start and < end date;
+        });
+        if (term < 0) {
+          throw new Error("Invalid termInterestOverride: date does not fall within any term");
+        }
+
+        override.termNumber = term;
+      }
+
+      if (override.termNumber < 0 || override.termNumber > this.term) {
+        throw new Error(`Invalid termInterestOverride: termNumber ${override.termNumber} out of range`);
+      }
+      this._termInterestAmountOverride.addOverride(override);
+    }
+  }
+
+  get feesForAllTerms() {
+    return this._feesForAllTerms;
+  }
+
+  set feesForAllTerms(value: Fee[]) {
+    this.modifiedSinceLastCalculation = true;
+
+    this._feesForAllTerms = value;
+  }
+
+  get feesPerTerm() {
+    return this._feesPerTerm;
+  }
+
+  set feesPerTerm(feesPerTerm: FeesPerTerm) {
+    this.modifiedSinceLastCalculation = true;
+
+    // check type and inflate
+    if (feesPerTerm instanceof FeesPerTerm) {
+      this._feesPerTerm = feesPerTerm;
+    } else {
+      this._feesPerTerm = new FeesPerTerm(feesPerTerm);
+    }
+  }
+
+  get perDiemCalculationType() {
+    return this._perDiemCalculationType;
+  }
+
+  set perDiemCalculationType(value: PerDiemCalculationType) {
+    this.modifiedSinceLastCalculation = true;
+
+    this._perDiemCalculationType = value;
+  }
+
+  get earlyRepayment() {
+    return this._earlyRepayment;
+  }
+
+  set earlyRepayment(value: boolean) {
+    this.modifiedSinceLastCalculation = true;
+
+    this._earlyRepayment = value;
+  }
+
+  get balanceModifications(): BalanceModifications {
+    if (!this._balanceModifications) {
+      this._balanceModifications = new BalanceModifications();
+    }
+    return this._balanceModifications;
+  }
+
+  set balanceModifications(balanceModifications: BalanceModifications) {
+    this.modifiedSinceLastCalculation = true;
+
+    if (balanceModifications instanceof BalanceModifications) {
+      this._balanceModifications = balanceModifications;
+    } else {
+      this._balanceModifications = new BalanceModifications(balanceModifications);
+    }
+  }
+
+  get repaymentSchedule(): AmortizationEntries {
+    return this._repaymentSchedule;
+  }
+
+  set repaymentSchedule(repaymentSchedule: AmortizationEntries) {
+    this._repaymentSchedule = repaymentSchedule;
+  }
+
+  get changePaymentDates() {
+    return this._changePaymentDates;
+  }
+
+  set changePaymentDates(changePaymentDates: ChangePaymentDates) {
+    this.modifiedSinceLastCalculation = true;
+
+    // check type and inflate
+    if (changePaymentDates instanceof ChangePaymentDates) {
+      this._changePaymentDates = changePaymentDates;
+    } else {
+      this._changePaymentDates = new ChangePaymentDates(changePaymentDates);
+    }
+
+    // update period schedule
+    //this.periodsSchedule = this.generatePeriodsSchedule();
+  }
+
+  get termPeriodDefinition() {
+    return this._termPeriodDefinition;
+  }
+
+  set termPeriodDefinition(termPeriodDefinition: TermPeriodDefinition) {
+    this.modifiedSinceLastCalculation = true;
+
+    this._termPeriodDefinition = termPeriodDefinition;
+  }
+
+  set hasCustomEquitedMonthlyPayment(value: boolean) {
+    this.modifiedSinceLastCalculation = true;
+
+    this._hasCustomEquitedMonthlyPayment = value;
+  }
+
+  get hasCustomEquitedMonthlyPayment() {
+    return this._hasCustomEquitedMonthlyPayment;
+  }
+
+  get equitedMonthlyPayment(): Currency {
+    if (!this._equitedMonthlyPayment) {
+      this._equitedMonthlyPayment = this.calculateFixedMonthlyPayment();
+      this.modificationOptimizationTracker = "equitedMonthlyPayment";
+    }
+    if (this.hasCustomEquitedMonthlyPayment) {
+      return this._equitedMonthlyPayment;
+    } else {
+      if (this.isUpdatedSinceLastCalculation("equitedMonthlyPayment")) {
+        this._equitedMonthlyPayment = this.calculateFixedMonthlyPayment();
+        this.modificationOptimizationTracker = "equitedMonthlyPayment";
+      }
+      return this._equitedMonthlyPayment;
+    }
+  }
+
+  set equitedMonthlyPayment(value: Currency | Decimal | number | undefined | null) {
+    this.modifiedSinceLastCalculation = true;
+
+    if (value === undefined || value === null) {
+      this.hasCustomEquitedMonthlyPayment = false;
+      this._equitedMonthlyPayment = this.calculateFixedMonthlyPayment();
+      this.modificationOptimizationTracker = "equitedMonthlyPayment";
+
+      return;
+    } else {
+      this.hasCustomEquitedMonthlyPayment = true;
+    }
+
+    if (value instanceof Currency) {
+      this._equitedMonthlyPayment = value;
+    } else {
+      try {
+        this._equitedMonthlyPayment = Currency.of(value);
+      } catch (e) {
+        this._equitedMonthlyPayment = this.calculateFixedMonthlyPayment();
+      }
+    }
+  }
+
+  get termPaymentAmountOverride() {
+    return this._termPaymentAmountOverride;
+  }
+
+  set termPaymentAmountOverride(termPaymentAmountOverride: TermPaymentAmounts) {
+    this.modifiedSinceLastCalculation = true;
+
+    if (termPaymentAmountOverride instanceof TermPaymentAmounts) {
+      this._termPaymentAmountOverride = termPaymentAmountOverride;
+    } else {
+      this._termPaymentAmountOverride = new TermPaymentAmounts(termPaymentAmountOverride);
+    }
+  }
+
+  get allowRateAbove100(): boolean {
+    return this._allowRateAbove100;
+  }
+
+  set allowRateAbove100(value: boolean) {
+    this.modifiedSinceLastCalculation = true;
+
+    this._allowRateAbove100 = value;
+  }
+
+  get hasCustomRateSchedule(): boolean {
+    return this._hasCustomRateSchedule;
+  }
+
+  set hasCustomRateSchedule(value: boolean) {
+    this._hasCustomRateSchedule = value;
+  }
+
+  get rateSchedules() {
+    if (!this._rateSchedules || this._rateSchedules.length === 0) {
+      this._hasCustomRateSchedule = false;
+      this.modificationOptimizationTracker = "rateSchedules";
+      this._rateSchedules = this.generateRatesSchedule();
+    } else {
+      if (this._rateSchedules.hasModified) {
+        this.modificationOptimizationTracker = "rateSchedules";
+        this._rateSchedules.resetModified();
+      }
+    }
+
+    if (this.isUpdatedSinceLastCalculation("rateSchedules")) {
+      // console.log("rate schedules are not updated since last calculation");
+      if (this.hasCustomRateSchedule === true) {
+        this.rateSchedules = this._rateSchedules;
+      } else {
+        this._rateSchedules = this.generateRatesSchedule();
+      }
+      this.modificationOptimizationTracker = "rateSchedules";
+    }
+    return this._rateSchedules;
+  }
+
+  set rateSchedules(rateSchedules: RateSchedules) {
+    this.modifiedSinceLastCalculation = true;
+
+    const newRateSchedules = rateSchedules.allCustomAsObject;
+
+    if (newRateSchedules.hasCustom) {
+      this.hasCustomRateSchedule = true;
+    } else {
+      this.hasCustomRateSchedule = false;
+      this._rateSchedules = this.generateRatesSchedule();
+      return;
+    }
+
+    // all start and end dates must be at the start of the day, we dont want to count hours
+    // at least not just yet... maybe in the future
+    // for (let rate of this.rateSchedules) {
+    //   rate.startDate = rate.startDate.startOf("day");
+    //   rate.endDate = rate.endDate.startOf("day");
+    // }
+
+    // rate schedule might be partial and not necesserily aligns with billing periods
+    // if first period is not equal to start date, we need to backfill
+    // original start date and rate to the first period
+    // same goes for in-between periods, if first period end date is not equal to next period start date
+    // we need to backfill the rate and start date to the next period
+    // finally same goes for the last period, if end date is not equal to the end date of the term
+    // we need to backfill the rate and end date to the last period
+
+    if (!this.startDate.isSame(newRateSchedules.first.startDate, "day")) {
+      //(`adding rate schedule at the start ${this.startDate.format("YYYY-MM-DD")} and ${newRateSchedules.first.startDate.format("YYYY-MM-DD")}`);
+      newRateSchedules.addScheduleAtTheBeginning(
+        new RateSchedule({
+          annualInterestRate: this.annualInterestRate,
+          startDate: this.startDate,
+          endDate: newRateSchedules.first.startDate,
+          type: "generated",
+        })
+      );
+    }
+
+    for (let i = 0; i < newRateSchedules.length - 1; i++) {
+      if (!newRateSchedules.atIndex(i).endDate.isSame(newRateSchedules.atIndex(i + 1).startDate, "day")) {
+        //   console.log(`adding rate schedule between ${newRateSchedules.atIndex(i).startDate.format("YYYY-MM-DD")} and ${newRateSchedules.atIndex(i + 1).endDate.format("YYYY-MM-DD")}`);
+        this.rateSchedules.all.splice(
+          i + 1,
+          0,
+          new RateSchedule({
+            annualInterestRate: this.annualInterestRate,
+            startDate: newRateSchedules.atIndex(i).endDate,
+            endDate: newRateSchedules.atIndex(i + 1).startDate,
+            type: "generated",
+          })
+        );
+      }
+    }
+
+    if (!this.endDate.isSame(newRateSchedules.last.endDate, "day")) {
+      //  console.log(`adding rate schedule for the end between ${newRateSchedules.last.endDate.format("YYYY-MM-DD")} and ${this.endDate.format("YYYY-MM-DD")}`);
+      this.rateSchedules.addSchedule(new RateSchedule({ annualInterestRate: this.annualInterestRate, startDate: newRateSchedules.last.endDate, endDate: this.endDate, type: "generated" }));
+    }
+
+    this._rateSchedules = newRateSchedules;
+
+    this.validateRatesSchedule();
+  }
+
+  get periodsSchedule(): PeriodSchedules {
+    if (!this._periodsSchedule || this._periodsSchedule.length === 0) {
+      this._periodsSchedule.periods = this.generatePeriodicSchedule();
+      return this._periodsSchedule;
+    }
+    if (this._periodsSchedule.hasCustomPeriods === true) {
+      return this._periodsSchedule;
+    } else {
+      if (this.modifiedSinceLastCalculation === true) {
+        this._periodsSchedule.periods = this.generatePeriodicSchedule();
+      }
+      return this._periodsSchedule;
+    }
+  }
+
+  set periodsSchedule(periodsSchedule: PeriodSchedules) {
+    this.modifiedSinceLastCalculation = true;
+
+    // check type and if not PeriodSchedules, convert it
+    if (periodsSchedule instanceof PeriodSchedules) {
+      this._periodsSchedule = periodsSchedule;
+    } else {
+      this._periodsSchedule = new PeriodSchedules(periodsSchedule);
+    }
+  }
+
+  get flushThreshold(): Currency {
+    return this._flushThreshold;
+  }
+
+  set flushThreshold(value: Currency | number | Decimal) {
+    this.modifiedSinceLastCalculation = true;
+
+    if (value instanceof Currency) {
+      this._flushThreshold = value;
+    } else {
+      this._flushThreshold = Currency.of(value);
+    }
+  }
+
+  get roundingPrecision() {
+    return this._roundingPrecision;
+  }
+
+  set roundingPrecision(value: number) {
+    this.modifiedSinceLastCalculation = true;
+
+    if (value < 0) {
+      throw new Error("Invalid rounding precision, must be greater than or equal to zero, number represents decimal places");
+    }
+
+    this._roundingPrecision = value;
+  }
+
+  get unbilledDeferredFees(): Currency {
+    return this._unbilledDeferredFees;
+  }
+
+  set unbilledDeferredFees(value: Currency | number | Decimal) {
+    if (value instanceof Currency) {
+      this._unbilledDeferredFees = value;
+    } else {
+      this._unbilledDeferredFees = Currency.of(value);
+    }
+  }
+
+  get unbilledDeferredInterest(): Currency {
+    return this._unbilledDeferredInterest;
+  }
+
+  set unbilledDeferredInterest(value: Currency | number | Decimal) {
+    if (value instanceof Currency) {
+      this._unbilledDeferredInterest = value;
+    } else {
+      this._unbilledDeferredInterest = Currency.of(value);
+    }
+  }
+
+  get unbilledInterestDueToRounding(): Currency {
+    return this._unbilledInterestDueToRounding;
+  }
+
+  set unbilledInterestDueToRounding(value: Currency | number | Decimal) {
+    if (value instanceof Currency) {
+      this._unbilledInterestDueToRounding = value;
+    } else {
+      this._unbilledInterestDueToRounding = Currency.of(value);
+    }
+  }
+
+  get totalChargedInterestUnrounded(): Currency {
+    return this._totalChargedInterestUnrounded;
+  }
+
+  set totalChargedInterestUnrounded(value: Currency | number | Decimal) {
+    if (value instanceof Currency) {
+      this._totalChargedInterestUnrounded = value;
+    } else {
+      this._totalChargedInterestUnrounded = Currency.of(value);
+    }
+  }
+
+  get totalChargedInterestRounded(): Currency {
+    return this._totalChargedInterestRounded;
+  }
+
+  set totalChargedInterestRounded(value: Currency | number | Decimal) {
+    if (value instanceof Currency) {
+      this._totalChargedInterestRounded = value;
+    } else {
+      this._totalChargedInterestRounded = Currency.of(value);
+    }
+  }
+
+  get flushUnbilledInterestRoundingErrorMethod(): FlushUnbilledInterestDueToRoundingErrorType {
+    return this._flushUnbilledInterestRoundingErrorMethod;
+  }
+
+  set flushUnbilledInterestRoundingErrorMethod(value: FlushUnbilledInterestDueToRoundingErrorType | string) {
+    this.modifiedSinceLastCalculation = true;
+
+    if (typeof value === "string") {
+      let flushMethod: FlushUnbilledInterestDueToRoundingErrorType;
+      switch (value) {
+        case "none":
+          flushMethod = FlushUnbilledInterestDueToRoundingErrorType.NONE;
+          break;
+        case "at_end":
+          flushMethod = FlushUnbilledInterestDueToRoundingErrorType.AT_END;
+          break;
+        case "at_threshold":
+          flushMethod = FlushUnbilledInterestDueToRoundingErrorType.AT_THRESHOLD;
+          break;
+        default:
+          flushMethod = FlushUnbilledInterestDueToRoundingErrorType.NONE;
+      }
+      this._flushUnbilledInterestRoundingErrorMethod = flushMethod;
+    } else {
+      this._flushUnbilledInterestRoundingErrorMethod = value;
+    }
+  }
+
+  get roundingMethod(): RoundingMethod {
+    return this._roundingMethod;
+  }
+
+  set roundingMethod(value: RoundingMethod | string) {
+    this.modifiedSinceLastCalculation = true;
+
+    this._roundingMethod = typeof value === "string" ? Currency.RoundingMethodFromString(value) : value;
+  }
+
+  get calendar(): Calendar {
+    return this._calendar;
+  }
+
+  set calendar(calendarType: CalendarType | Calendar | string) {
+    this.modifiedSinceLastCalculation = true;
+
+    this._calendar = calendarType instanceof Calendar ? calendarType : new Calendar(calendarType);
+  }
+
+  get billingModel(): BillingModel {
+    return this._billingModel;
+  }
+
+  set billingModel(value: BillingModel) {
+    this.modifiedSinceLastCalculation = true;
+
     if (this.billingModel === "dailySimpleInterest") {
       if (this.preBillDays.length > 1) {
         throw new Error("Pre-bill days are not used in Daily Simple Interest billing model");
@@ -539,11 +1252,11 @@ export class Amortization {
       }
       // now lets make sure that the pre-bill days and due-bill days are set to 0, if not, since user
       // might have passed custom values, we will throw an error
-      if (this.preBillDays[0].preBillDays !== 0) {
+      if (this.preBillDays.first.preBillDays !== 0) {
         throw new Error("Pre-bill days are not used in Daily Simple Interest billing model");
       }
 
-      if (this.dueBillDays[0].daysDueAfterPeriodEnd !== 0) {
+      if (this.dueBillDays.first.daysDueAfterPeriodEnd !== 0) {
         throw new Error("Due-bill days are not used in Daily Simple Interest billing model");
       }
 
@@ -558,62 +1271,139 @@ export class Amortization {
       }
     }
 
-    this.generatePreBillDaysForAllTerms();
-    this.generateDueBillDaysForAllTerms();
-
-    this.unbilledDeferredInterest = Currency.of(0);
-    this.unbilledDeferredFees = Currency.of(0);
-
-    // validate the schedule periods and rates
-    this.verifySchedulePeriods();
-    this.validateRatesSchedule();
-
-    this.repaymentSchedule = this.generateSchedule();
+    this._billingModel = value;
   }
 
-  public static fromUI(uiParams: UIAmortizationParams): Amortization {
-    const engineParams = toAmortizationParams(uiParams);
-    return new Amortization(engineParams);
+  get annualInterestRate(): Decimal {
+    return this._annualInterestRate;
   }
 
-  get cumulativeInterest(): Currency {
-    return this.repaymentSchedule.reduce((acc, entry) => {
-      return acc.add(entry.dueInterestForTerm.getRoundedValue());
-    }, Currency.Zero());
+  set annualInterestRate(value: Decimal | number) {
+    this.modifiedSinceLastCalculation = true;
+
+    const annualInterestRate = new Decimal(value);
+
+    // validate annual interest rate, it should not be negative or greater than 100%
+    if (annualInterestRate.isNegative()) {
+      throw new Error("Invalid annual interest rate, value cannot be negative");
+    }
+
+    if (annualInterestRate.greaterThan(1) && !this.allowRateAbove100) {
+      throw new Error("Invalid annual interest rate, value cannot be greater than or equal to 100%, unless explicitly allowed by setting allowRateAbove100 to true");
+    }
+
+    this._annualInterestRate = annualInterestRate;
   }
 
-  get cumulativeInterestNotRounded(): Currency {
-    return this.repaymentSchedule.reduce((acc, entry) => {
-      return acc.add(entry.dueInterestForTerm);
-    }, Currency.Zero());
+  get hasCustomFirstPaymentDate() {
+    return this._hasCustomFirstPaymentDate;
+  }
+
+  set hasCustomFirstPaymentDate(value: boolean) {
+    this.modifiedSinceLastCalculation = true;
+    this._hasCustomFirstPaymentDate = value;
+  }
+
+  get firstPaymentDate(): Dayjs {
+    if (!this._firstPaymentDate || (this.modifiedSinceLastCalculation === true && this._hasCustomFirstPaymentDate === false)) {
+      const termUnit = this.termPeriodDefinition.unit === "complex" ? "day" : this.termPeriodDefinition.unit;
+      this._firstPaymentDate = this.startDate.add(1 * this.termPeriodDefinition.count[0], termUnit).startOf("day");
+    }
+    return this._firstPaymentDate;
+  }
+
+  set firstPaymentDate(date: Dayjs | Date | string | undefined) {
+    this.modifiedSinceLastCalculation = true;
+
+    if (date) {
+      this.hasCustomFirstPaymentDate = true;
+      this._firstPaymentDate = dayjs(date).startOf("day");
+    } else {
+      this._hasCustomFirstPaymentDate = false;
+      this._firstPaymentDate = undefined;
+      return;
+    }
+  }
+
+  get startDate(): Dayjs {
+    // console.trace("returning start date");
+    return this._startDate;
+  }
+
+  set startDate(startDate: Dayjs | Date | string) {
+    this.modifiedSinceLastCalculation = true;
+
+    if (!startDate) {
+      throw new Error("Invalid start date, must be a valid date");
+    }
+    this._startDate = dayjs(startDate).startOf("day");
+  }
+
+  get endDate(): Dayjs {
+    if (!this._endDate || (this.modifiedSinceLastCalculation === true && this.hasCustomEndDate === false)) {
+      const termUnit = this.termPeriodDefinition.unit === "complex" ? "day" : this.termPeriodDefinition.unit;
+      this._endDate = this.startDate.add(this.term * this.termPeriodDefinition.count[0], termUnit);
+    }
+    return this._endDate;
+  }
+
+  set hasCustomEndDate(value: boolean) {
+    this.modifiedSinceLastCalculation = true;
+    this._endDate = undefined;
+    this._hasCustomEndDate = value;
+  }
+
+  get hasCustomEndDate() {
+    return this._hasCustomEndDate;
+  }
+
+  set endDate(endDate: Dayjs | Date | string | undefined) {
+    this.modifiedSinceLastCalculation = true;
+
+    // console.trace("end date is being set", endDate);
+    let newEndDate: Dayjs;
+    if (endDate) {
+      this.hasCustomEndDate = true;
+      newEndDate = dayjs(endDate).startOf("day");
+    } else {
+      this._endDate = undefined;
+      return;
+    }
+
+    // validate that the end date is after the start date
+    if (newEndDate.isBefore(this.startDate)) {
+      throw new Error("Invalid end date, must be after the start date");
+    }
+
+    this._endDate = newEndDate;
   }
 
   public getInputParams(): AmortizationParams {
     return cloneDeep(this._inputParams);
   }
 
-  public getRepaymentSchedule(): AmortizationEntry[] {
+  public getRepaymentSchedule(): AmortizationEntries {
     return this.repaymentSchedule;
   }
 
   private calculateFeesForPeriod(termNumber: number, principal: Currency | null, interest: Currency, totalPayment: Currency): { totalFees: Currency; feesAfterPrincipal: Fee[] } {
     // Retrieve per-term fees
-    const termFees = this.feesPerTerm.get(termNumber) || [];
+    const termFees = this.feesPerTerm.getFeesForTerm(termNumber);
     // Retrieve fees that apply to all terms
     const allTermFees = this.feesForAllTerms;
     // deffered fees
     const deferredFees: Fee[] = [
-      {
+      new Fee({
         type: "fixed",
         amount: this.unbilledDeferredFees,
         description: "Deferred fee",
-      },
+      }),
     ];
 
     // Combine the fees
     const fees = [...deferredFees, ...allTermFees, ...termFees];
 
-    let totalFees = Currency.Zero();
+    let totalFees = Currency.zero;
     let feesBeforePrincipal: Fee[] = [];
     let feesAfterPrincipal: Fee[] = [];
 
@@ -635,7 +1425,7 @@ export class Amortization {
 
     // Calculate feesBeforePrincipal
     for (const fee of feesBeforePrincipal) {
-      let feeAmount: Currency = Currency.Zero();
+      let feeAmount: Currency = Currency.zero;
       if (fee.type === "fixed") {
         feeAmount = fee.amount!;
       } else if (fee.type === "percentage") {
@@ -653,7 +1443,7 @@ export class Amortization {
     }
 
     // reset deferred fees
-    this.unbilledDeferredFees = Currency.Zero();
+    this.unbilledDeferredFees = Currency.zero;
     // Return the totalFees and the feesAfterPrincipal to be handled after principal is calculated
     return { totalFees, feesAfterPrincipal };
   }
@@ -671,65 +1461,11 @@ export class Amortization {
     return endDate.diff(startDate, "month");
   }
 
-  generatePreBillDaysForAllTerms(): void {
-    // we need to fill the gaps between the periods with pre-bill days
-    // anything that is defined before first term will use default pre-bill days
-    // any gaps between terms will use previously defined pre-bill days
-
-    const completedPreBillDays: PreBillDaysConfiguration[] = [];
-    for (let preBillDay of this.preBillDays) {
-      completedPreBillDays[preBillDay.termNumber - 1] = preBillDay;
-    }
-
-    let lastUserDefinedTerm = this.preBillDays[0];
-    for (let i = 0; i < this.term; i++) {
-      if (!completedPreBillDays[i]) {
-        if (lastUserDefinedTerm.termNumber - 1 > i) {
-          completedPreBillDays[i] = { termNumber: i + 1, preBillDays: this.defaultPreBillDaysConfiguration };
-        } else {
-          completedPreBillDays[i] = { termNumber: i + 1, preBillDays: lastUserDefinedTerm.preBillDays };
-        }
-      }
-      lastUserDefinedTerm = completedPreBillDays[i];
-    }
-
-    //console.log("completedPreBillDays", completedPreBillDays);
-
-    this.preBillDays = completedPreBillDays;
-  }
-
-  generateDueBillDaysForAllTerms(): void {
-    // we need to fill the gaps between the periods with due-bill days
-    // anything that is defined before first term will use default due-bill days
-    // any gaps between terms will use previously defined due-bill days
-
-    const completedDueDayBillDays: BillDueDaysConfiguration[] = [];
-    for (let dueBillDay of this.dueBillDays) {
-      completedDueDayBillDays[dueBillDay.termNumber - 1] = dueBillDay;
-    }
-
-    let lastUserDefinedTerm = this.dueBillDays[0];
-    for (let i = 0; i < this.term; i++) {
-      if (!completedDueDayBillDays[i]) {
-        if (lastUserDefinedTerm.termNumber - 1 > i) {
-          completedDueDayBillDays[i] = { termNumber: i + 1, daysDueAfterPeriodEnd: this.defaultBillDueDaysAfterPeriodEndConfiguration };
-        } else {
-          completedDueDayBillDays[i] = { termNumber: i + 1, daysDueAfterPeriodEnd: lastUserDefinedTerm.daysDueAfterPeriodEnd };
-        }
-      }
-      lastUserDefinedTerm = completedDueDayBillDays[i];
-    }
-
-    // console.log("completedDueBillDays", completedDueDayBillDays);
-
-    this.dueBillDays = completedDueDayBillDays;
-  }
-
   calculateAPR(): Decimal {
     // Group repayments by period number, summing up principal and interest
     const paymentsMap = new Map<number, { principal: Decimal; interest: Decimal; paymentDate: Date }>();
 
-    for (const schedule of this.repaymentSchedule) {
+    for (const schedule of this.repaymentSchedule.entries) {
       const period = schedule.term;
       let payment = paymentsMap.get(period);
       if (!payment) {
@@ -778,26 +1514,24 @@ export class Amortization {
       throw new Error("Invalid schedule rates, at least one rate is required");
     }
     // Check if the start date of the first period is the same as the loan start date
-    if (!this.startDate.isSame(this.rateSchedules[0].startDate, "day")) {
-      throw new Error(`Invalid schedule rates: The start date (${this.startDate.format("YYYY-MM-DD")}) does not match the first rate schedule start date (${this.rateSchedules[0].startDate.format("YYYY-MM-DD")}).`);
+    if (!this.startDate.isSame(this.rateSchedules.first.startDate, "day")) {
+      throw new Error(`Invalid schedule rates: The start date (${this.startDate.format("YYYY-MM-DD")}) does not match the first rate schedule start date (${this.rateSchedules.first.startDate.format("YYYY-MM-DD")}).`);
     }
 
     // Check if the end date of the last period is the same as the loan end date
-    if (!this.endDate.isSame(this.rateSchedules[this.rateSchedules.length - 1].endDate, "day")) {
-      throw new Error(
-        `Invalid schedule rates: The end date (${this.endDate.format("YYYY-MM-DD")}) does not match the last rate schedule end date (${this.rateSchedules[this.rateSchedules.length - 1].endDate.format("YYYY-MM-DD")}).`
-      );
+    if (!this.endDate.isSame(this.rateSchedules.last.endDate, "day")) {
+      throw new Error(`Invalid schedule rates: The end date (${this.endDate.format("YYYY-MM-DD")}) does not match the last rate schedule end date (${this.rateSchedules.last.endDate.format("YYYY-MM-DD")}).`);
     }
 
     // verify that rate is not negative
-    for (let rate of this.rateSchedules) {
+    for (let rate of this.rateSchedules.all) {
       if (rate.annualInterestRate.isNegative()) {
         throw new Error("Invalid annual interest rate, value cannot be negative");
       }
     }
 
     // verify that rate is not greater than 100% unless explicitly allowed
-    for (let rate of this.rateSchedules) {
+    for (let rate of this.rateSchedules.all) {
       if (rate.annualInterestRate.greaterThan(1) && !this.allowRateAbove100) {
         throw new Error("Invalid annual interest rate, value cannot be greater than or equal to 100%, unless explicitly allowed by setting allowRateAbove100 to true");
       }
@@ -812,22 +1546,22 @@ export class Amortization {
       throw new Error("Invalid schedule periods, number of periods must match the term");
     }
     // Check if the start date of the first period is the same as the loan start date
-    if (!this.startDate.isSame(this.periodsSchedule[0].startDate, "day")) {
+    if (!this.startDate.isSame(this.periodsSchedule.firstPeriod.startDate, "day")) {
       throw new Error("Invalid schedule periods, start date does not match the loan start date");
     }
 
     // Check if the end date of the last period is the same as the loan end date
-    if (!this.endDate.isSame(this.periodsSchedule[this.periodsSchedule.length - 1].endDate, "day")) {
+    if (!this.endDate.isSame(this.periodsSchedule.lastPeriod.endDate, "day")) {
       throw new Error("Invalid schedule periods, end date does not match the loan end date");
     }
 
     for (let i = 0; i < this.periodsSchedule.length - 1; i++) {
       // Check if the periods are in ascending order
-      if (!this.periodsSchedule[i].endDate.isSame(this.periodsSchedule[i + 1].startDate, "day")) {
+      if (!this.periodsSchedule.periods[i].endDate.isSame(this.periodsSchedule.periods[i + 1].startDate, "day")) {
         throw new Error("Invalid schedule periods, periods are not in ascending order");
       }
       // Check if the periods are non-overlapping
-      if (this.periodsSchedule[i].endDate.isAfter(this.periodsSchedule[i + 1].startDate, "day")) {
+      if (this.periodsSchedule.periods[i].endDate.isAfter(this.periodsSchedule.periods[i + 1].startDate, "day")) {
         throw new Error("Invalid schedule periods, periods are overlapping");
       }
     }
@@ -837,13 +1571,15 @@ export class Amortization {
    * Generate schedule periods based on the term and start date.
    */
 
-  generatePeriodicSchedule(): void {
-    let startDate = this.startDate;
-    for (let i = 0; i < this.term; i++) {
+  generatePeriodicSchedule(): PeriodSchedule[] {
+    const periodsSchedule: PeriodSchedule[] = [];
+
+    let startDate = dayjs(this.startDate);
+    for (let currentTerm = 0; currentTerm < this.term; currentTerm++) {
       let endDate: Dayjs;
       const isStartDateLastDayOfMonth = startDate.isSame(startDate.endOf("month"), "day");
 
-      if (i === 0 && this.firstPaymentDate) {
+      if (currentTerm === 0 && this.firstPaymentDate) {
         endDate = this.firstPaymentDate.startOf("day");
       } else {
         const termUnit = this.termPeriodDefinition.unit === "complex" ? "day" : this.termPeriodDefinition.unit;
@@ -856,37 +1592,52 @@ export class Amortization {
 
       // Check for change payment date
       if (this.changePaymentDates.length > 0) {
-        const changePaymentDate = this.changePaymentDates.find((changePaymentDate) => {
-          if (!changePaymentDate.termNumber && changePaymentDate.originalDate) {
+        const changePaymentDate = this.changePaymentDates.all.find((changePaymentDate) => {
+          if (changePaymentDate.termNumber < 0 && changePaymentDate.originalDate) {
             // it is false if original date is after the current period
             if (startDate.isSame(changePaymentDate.originalDate)) {
-              changePaymentDate.termNumber = i + 1;
+              changePaymentDate.termNumber = currentTerm;
               return true;
             }
           } else {
-            return changePaymentDate.termNumber === i + 1;
+            return changePaymentDate.termNumber === currentTerm;
           }
         });
         if (changePaymentDate) {
+          changePaymentDate.originalEndDate = endDate;
           endDate = changePaymentDate.newDate.startOf("day");
         }
       }
-      this.periodsSchedule.push({ startDate, endDate });
+      periodsSchedule.push(
+        new PeriodSchedule({
+          startDate: startDate,
+          endDate: endDate,
+          type: "generated",
+        })
+      );
       startDate = endDate;
     }
 
     // Ensure the final period ends on the loan's end date
-    this.periodsSchedule[this.periodsSchedule.length - 1].endDate = this.endDate;
+    periodsSchedule[periodsSchedule.length - 1].endDate = this.endDate;
+    return periodsSchedule;
   }
 
   /**
    * Generate schedule rates based on the term and start date.
    */
 
-  generateRatesSchedule(): void {
+  generateRatesSchedule(): RateSchedules {
     let startDate = this.startDate;
     const endDate = this.endDate;
-    this.rateSchedules.push({ annualInterestRate: this.annualInterestRate, startDate, endDate });
+    return new RateSchedules([
+      new RateSchedule({
+        annualInterestRate: this.annualInterestRate,
+        startDate,
+        endDate,
+        type: "default",
+      }),
+    ]);
   }
 
   /**
@@ -895,7 +1646,7 @@ export class Amortization {
   printShortAmortizationSchedule(): void {
     const amortization = this.generateSchedule();
     console.table(
-      amortization.map((row) => {
+      amortization.entries.map((row) => {
         return {
           term: row.term,
           periodStartDate: row.periodStartDate.format("YYYY-MM-DD"),
@@ -929,7 +1680,7 @@ export class Amortization {
   printAmortizationSchedule(): void {
     const amortization = this.generateSchedule();
     console.table(
-      amortization.map((row) => {
+      amortization.entries.map((row) => {
         return {
           period: row.term,
           periodStartDate: row.periodStartDate.format("YYYY-MM-DD"),
@@ -970,11 +1721,11 @@ export class Amortization {
   getInterestRatesBetweenDates(startDate: Dayjs, endDate: Dayjs): RateSchedule[] {
     const rates: RateSchedule[] = [];
 
-    for (let rate of this.rateSchedules) {
+    for (let rate of this.rateSchedules.all) {
       if (startDate.isBefore(rate.endDate) && endDate.isSameOrAfter(rate.startDate)) {
         const effectiveStartDate = startDate.isAfter(rate.startDate) ? startDate : rate.startDate;
         const effectiveEndDate = endDate.isBefore(rate.endDate) ? endDate : rate.endDate;
-        rates.push({ annualInterestRate: rate.annualInterestRate, startDate: effectiveStartDate, endDate: effectiveEndDate });
+        rates.push(new RateSchedule({ annualInterestRate: rate.annualInterestRate, startDate: effectiveStartDate, endDate: effectiveEndDate }));
       }
     }
 
@@ -999,7 +1750,7 @@ export class Amortization {
         while (currentDate.isSameOrBefore(endDate)) {
           const lastDayOfMonth = currentDate.endOf("month");
           const effectiveEndDate = endDate.isBefore(lastDayOfMonth) ? endDate : lastDayOfMonth.add(1, "day");
-          splitRates.push({ annualInterestRate: rate.annualInterestRate, startDate: currentDate.startOf("day"), endDate: effectiveEndDate.startOf("day") });
+          splitRates.push(new RateSchedule({ annualInterestRate: rate.annualInterestRate, startDate: currentDate, endDate: effectiveEndDate }));
           currentDate = lastDayOfMonth.add(1, "day");
         }
       }
@@ -1010,13 +1761,7 @@ export class Amortization {
   }
 
   getTermPaymentAmount(termNumber: number): Currency {
-    if (this.termPaymentAmountOverride.length > 0) {
-      const term = this.termPaymentAmountOverride.find((term) => term.termNumber === termNumber);
-      if (term) {
-        return term.paymentAmount;
-      }
-    }
-    return this.equitedMonthlyPayment;
+    return this.termPaymentAmountOverride.getPaymentAmountForTerm(termNumber)?.paymentAmount || this.equitedMonthlyPayment;
   }
 
   getModifiedBalance(
@@ -1052,7 +1797,7 @@ export class Amortization {
     //     };
     //   })
     // );
-    for (let modification of this.balanceModifications) {
+    for (let modification of this.balanceModifications.all) {
       // see if there are any modifications in the range
       // console.log(`Checking modification ${modification.date.format("YYYY-MM-DD")} and comparing it to ${startDate.format("YYYY-MM-DD")} and ${endDate.format("YYYY-MM-DD")}`);
 
@@ -1071,11 +1816,11 @@ export class Amortization {
             modifiedBalance = balanceToModify.subtract(modification.amount);
             if (modifiedBalance.isNegative()) {
               const exess = modifiedBalance.abs();
-              modifiedBalance = Currency.Zero();
+              modifiedBalance = Currency.zero;
               modificationAmount = modification.amount.subtract(exess);
               modification.usedAmount = modificationAmount;
             } else {
-              modificationAmount = modification.amount.isZero() ? Currency.Zero() : modification.amount.negated();
+              modificationAmount = modification.amount.isZero() ? Currency.zero : modification.amount.negated();
               modification.usedAmount = modificationAmount.negated();
             }
 
@@ -1094,10 +1839,10 @@ export class Amortization {
     }
     // if we dont have any modifications in the range, we will just return the original balance
     if (balances.length === 0) {
-      balances.push({ balance, startDate, endDate, modificationAmount: Currency.Zero() });
+      balances.push({ balance, startDate, endDate, modificationAmount: Currency.zero });
     } else {
       // if we have modifications, we will add the last balance to the end of the range
-      balances.push({ balance: balances[balances.length - 1].balance, startDate: balances[balances.length - 1].endDate, endDate, modificationAmount: Currency.Zero() });
+      balances.push({ balance: balances[balances.length - 1].balance, startDate: balances[balances.length - 1].endDate, endDate, modificationAmount: Currency.zero });
 
       // console.log(
       //   "Balance Modifications:",
@@ -1127,37 +1872,44 @@ export class Amortization {
     return balances;
   }
 
+  public jsGenerateSchedule(): AmortizationEntries {
+    this.updateModelValues();
+    const newSchedule = this.generateSchedule();
+    this.updateJsValues();
+    return newSchedule;
+  }
+
   /**
    * Generates the amortization schedule.
    * @returns An array of AmortizationSchedule entries.
    */
-  public generateSchedule(): AmortizationEntry[] {
-    this.balanceModifications.forEach((modification) => {
-      modification.resetUsedAmount();
-    });
+  public generateSchedule(): AmortizationEntries {
+    this.balanceModifications.resetUsedAmounts();
 
     this.earlyRepayment = false;
-    const schedule: AmortizationEntry[] = [];
+    const schedule: AmortizationEntries = new AmortizationEntries();
     let startBalance = this.totalLoanAmount;
-    let termIndex = 0;
+    //let termIndex = 0;
 
-    for (let term of this.periodsSchedule) {
+    // for (let term of this.periodsSchedule.periods) {
+    for (let termIndex = 0; termIndex < this.periodsSchedule.length; termIndex++) {
+      let term = this.periodsSchedule.atIndex(termIndex);
       if (this.earlyRepayment === true) {
         break;
       }
-      termIndex++;
+      // termIndex++;
 
       const periodStartDate = term.startDate;
       const periodEndDate = term.endDate;
-      const preBillDaysConfiguration = this.preBillDays[termIndex - 1].preBillDays;
-      const dueBillDaysConfiguration = this.dueBillDays[termIndex - 1].daysDueAfterPeriodEnd;
+      const preBillDaysConfiguration = this.preBillDays.atIndex(termIndex).preBillDays;
+      const dueBillDaysConfiguration = this.dueBillDays.atIndex(termIndex).daysDueAfterPeriodEnd;
       const billOpenDate = periodEndDate.subtract(preBillDaysConfiguration, "day");
       const billDueDate = periodEndDate.add(dueBillDaysConfiguration, "day");
       const fixedMonthlyPayment = this.getTermPaymentAmount(termIndex);
-      let billedInterestForTerm = Currency.Zero();
+      let billedInterestForTerm = Currency.zero;
 
       // Check if we have a static interest override for this term
-      const staticInterestOverride = this.termInterestOverrideMap.get(termIndex);
+      const staticInterestOverride = this.termInterestAmountOverride.all.find((override) => override.termNumber === termIndex)?.interestAmount;
 
       const loanBalancesInAPeriod = this.getModifiedBalance(periodStartDate, periodEndDate, startBalance);
       const lastBalanceInPeriod = loanBalancesInAPeriod.length;
@@ -1169,7 +1921,7 @@ export class Amortization {
         let appliedDeferredInterest = Currency.of(0);
         if (this.unbilledDeferredInterest.getValue().greaterThan(0)) {
           appliedDeferredInterest = this.unbilledDeferredInterest;
-          this.unbilledDeferredInterest = Currency.Zero();
+          this.unbilledDeferredInterest = Currency.zero;
         }
 
         const totalTermInterest = staticInterestOverride.add(appliedDeferredInterest);
@@ -1200,19 +1952,19 @@ export class Amortization {
         let dueInterestForTerm: Currency;
         let deferredInterestFromCurrentPeriod: Currency;
         let totalFees: Currency;
-        let billedDeferredFees = Currency.Zero();
+        let billedDeferredFees = Currency.zero;
         let principal: Currency;
         let totalPayment: Currency;
 
         if (availableForInterestAndPrincipal.isNegative()) {
           // Fees exceed payment, so interest defers again
-          principal = Currency.Zero();
-          dueInterestForTerm = Currency.Zero();
+          principal = Currency.zero;
+          dueInterestForTerm = Currency.zero;
           const unpaidFees = availableForInterestAndPrincipal.abs();
           this.unbilledDeferredFees = this.unbilledDeferredFees.add(unpaidFees);
 
           const paidFeesThisPeriod = totalFeesBeforePrincipal.subtract(unpaidFees);
-          totalFees = paidFeesThisPeriod.greaterThan(0) ? paidFeesThisPeriod : Currency.Zero();
+          totalFees = paidFeesThisPeriod.greaterThan(0) ? paidFeesThisPeriod : Currency.zero;
 
           deferredInterestFromCurrentPeriod = accruedInterestForPeriod;
           this.unbilledDeferredInterest = this.unbilledDeferredInterest.add(deferredInterestFromCurrentPeriod);
@@ -1220,16 +1972,16 @@ export class Amortization {
           if (availableForInterestAndPrincipal.greaterThanOrEqualTo(accruedInterestForPeriod)) {
             dueInterestForTerm = accruedInterestForPeriod;
             principal = availableForInterestAndPrincipal.subtract(accruedInterestForPeriod);
-            deferredInterestFromCurrentPeriod = Currency.Zero();
+            deferredInterestFromCurrentPeriod = Currency.zero;
           } else {
             dueInterestForTerm = availableForInterestAndPrincipal;
-            principal = Currency.Zero();
+            principal = Currency.zero;
             deferredInterestFromCurrentPeriod = accruedInterestForPeriod.subtract(dueInterestForTerm);
             this.unbilledDeferredInterest = this.unbilledDeferredInterest.add(deferredInterestFromCurrentPeriod);
           }
 
           // Fees after principal
-          let totalFeesAfterPrincipal = Currency.Zero();
+          let totalFeesAfterPrincipal = Currency.zero;
           if (feesAfterPrincipal.length > 0) {
             let totalPercentage = feesAfterPrincipal.reduce((sum, fee) => sum.add(fee.percentage!), new Decimal(0));
             totalFeesAfterPrincipal = principal.multiply(totalPercentage);
@@ -1242,7 +1994,7 @@ export class Amortization {
         if (totalPayment.greaterThan(fixedMonthlyPayment)) {
           principal = principal.subtract(totalPayment.subtract(fixedMonthlyPayment));
           if (principal.isNegative()) {
-            principal = Currency.Zero();
+            principal = Currency.zero;
           }
           totalPayment = fixedMonthlyPayment;
         }
@@ -1259,7 +2011,7 @@ export class Amortization {
           equivalentAnnualRate: annualizedEquivalentRate.toNumber(),
         };
 
-        schedule.push(
+        schedule.addEntry(
           new AmortizationEntry({
             term: termIndex,
             billablePeriod: true,
@@ -1283,7 +2035,7 @@ export class Amortization {
             endBalance: balanceAfterPayment,
             startBalance: balanceBeforePayment,
             totalPayment: totalPayment,
-            perDiem: accruedInterestForPeriod.isZero() ? Currency.Zero() : accruedInterestForPeriod.divide(daysInPeriodTotal),
+            perDiem: accruedInterestForPeriod.isZero() ? Currency.zero : accruedInterestForPeriod.divide(daysInPeriodTotal),
             daysInPeriod: daysInPeriodTotal,
             unbilledTotalDeferredInterest: this.unbilledDeferredInterest,
             interestRoundingError: interestRoundingError,
@@ -1307,16 +2059,16 @@ export class Amortization {
           break;
         }
         currentBalanceIndex++;
-        const termInterestRateOverride = this.termInterestRateOverrideMap.get(termIndex);
+        const termInterestRateOverride = this.termInterestRateOverride.find((override) => override.termNumber === termIndex)?.interestRate;
 
         let periodRates: RateSchedule[];
         if (termInterestRateOverride) {
           periodRates = [
-            {
+            new RateSchedule({
               annualInterestRate: termInterestRateOverride,
               startDate: periodStartBalance.startDate,
               endDate: periodStartBalance.endDate,
-            },
+            }),
           ];
         } else {
           periodRates = this.getInterestRatesBetweenDates(periodStartBalance.startDate, periodStartBalance.endDate);
@@ -1344,13 +2096,13 @@ export class Amortization {
 
           let interestForPeriod: Currency;
           if (interestRateForPeriod.annualInterestRate.isZero()) {
-            interestForPeriod = Currency.Zero();
+            interestForPeriod = Currency.zero;
           } else {
             interestForPeriod = interestCalculator.calculateInterestForDays(startBalance, daysInPeriod);
             // interestForPeriod = this.round(interestForPeriod);
           }
 
-          const perDiem = interestForPeriod.isZero() ? Currency.Zero() : interestCalculator.perDiem;
+          const perDiem = interestForPeriod.isZero() ? Currency.zero : interestCalculator.perDiem;
 
           // Handle unbilled interest due to rounding error if at threshold
           if (this.flushUnbilledInterestRoundingErrorMethod === FlushUnbilledInterestDueToRoundingErrorType.AT_THRESHOLD) {
@@ -1358,7 +2110,7 @@ export class Amortization {
               interestForPeriod = interestForPeriod.add(this.unbilledInterestDueToRounding);
               metadata.unbilledInterestApplied = true;
               metadata.unbilledInterestAppliedAmount = this.unbilledInterestDueToRounding.toNumber();
-              this.unbilledInterestDueToRounding = Currency.Zero();
+              this.unbilledInterestDueToRounding = Currency.zero;
             }
           }
 
@@ -1368,7 +2120,7 @@ export class Amortization {
             interestForPeriod = interestForPeriod.add(this.unbilledDeferredInterest);
             metadata.deferredInterestAppliedAmount = this.unbilledDeferredInterest.toNumber();
             appliedDeferredInterest = this.unbilledDeferredInterest;
-            this.unbilledDeferredInterest = Currency.Zero();
+            this.unbilledDeferredInterest = Currency.zero;
           }
 
           const roundedInterest = this.round(interestForPeriod);
@@ -1386,23 +2138,23 @@ export class Amortization {
           if (currentRate !== lastRateInPeriod || currentBalanceIndex !== lastBalanceInPeriod) {
             // Non-billable sub-period
             const endBalance = periodStartBalance.balance;
-            schedule.push(
+            schedule.addEntry(
               new AmortizationEntry({
                 term: termIndex,
                 billablePeriod: false,
                 periodStartDate: interestRateForPeriod.startDate,
                 periodEndDate: interestRateForPeriod.endDate,
                 periodInterestRate: interestRateForPeriod.annualInterestRate,
-                principal: Currency.Zero(),
-                dueInterestForTerm: Currency.Zero(),
+                principal: Currency.zero,
+                dueInterestForTerm: Currency.zero,
                 accruedInterestForPeriod: this.round(accruedInterestForPeriod),
                 billedInterestForTerm: billedInterestForTerm,
                 billedDeferredInterest: appliedDeferredInterest,
                 unbilledTotalDeferredInterest: this.unbilledDeferredInterest,
                 unbilledInterestDueToRounding: this.unbilledInterestDueToRounding,
-                fees: Currency.Zero(),
-                billedDeferredFees: Currency.Zero(),
-                unbilledTotalDeferredFees: Currency.Zero(),
+                fees: Currency.zero,
+                billedDeferredFees: Currency.zero,
+                unbilledTotalDeferredFees: Currency.zero,
                 periodBillOpenDate: billOpenDate,
                 periodBillDueDate: billDueDate,
                 billDueDaysAfterPeriodEndConfiguration: dueBillDaysConfiguration,
@@ -1412,7 +2164,7 @@ export class Amortization {
                 balanceModification: periodStartBalance.balanceModification,
                 endBalance: endBalance,
                 startBalance: startBalance,
-                totalPayment: Currency.Zero(),
+                totalPayment: Currency.zero,
                 perDiem: perDiem,
                 daysInPeriod: daysInPeriod,
                 metadata,
@@ -1429,19 +2181,19 @@ export class Amortization {
           let dueInterestForTerm: Currency;
           let deferredInterestFromCurrentPeriod: Currency;
           let totalFees: Currency;
-          let billedDeferredFees = Currency.Zero();
+          let billedDeferredFees = Currency.zero;
           let principal: Currency;
           let totalPayment: Currency;
 
           if (availableForInterestAndPrincipal.isNegative()) {
-            principal = Currency.Zero();
-            dueInterestForTerm = Currency.Zero();
+            principal = Currency.zero;
+            dueInterestForTerm = Currency.zero;
             const unpaidFees = availableForInterestAndPrincipal.abs();
             metadata.amountAddedToDeferredFees = unpaidFees.toNumber();
             this.unbilledDeferredFees = this.unbilledDeferredFees.add(unpaidFees);
 
             let paidFeesThisPeriod = totalFeesBeforePrincipal.subtract(unpaidFees);
-            totalFees = paidFeesThisPeriod.greaterThan(0) ? paidFeesThisPeriod : Currency.Zero();
+            totalFees = paidFeesThisPeriod.greaterThan(0) ? paidFeesThisPeriod : Currency.zero;
 
             deferredInterestFromCurrentPeriod = billedInterestForTerm;
             this.unbilledDeferredInterest = this.unbilledDeferredInterest.add(deferredInterestFromCurrentPeriod);
@@ -1449,15 +2201,15 @@ export class Amortization {
             if (availableForInterestAndPrincipal.greaterThanOrEqualTo(billedInterestForTerm)) {
               dueInterestForTerm = billedInterestForTerm;
               principal = availableForInterestAndPrincipal.subtract(billedInterestForTerm);
-              deferredInterestFromCurrentPeriod = Currency.Zero();
+              deferredInterestFromCurrentPeriod = Currency.zero;
             } else {
               dueInterestForTerm = availableForInterestAndPrincipal;
-              principal = Currency.Zero();
+              principal = Currency.zero;
               deferredInterestFromCurrentPeriod = billedInterestForTerm.subtract(dueInterestForTerm);
               this.unbilledDeferredInterest = this.unbilledDeferredInterest.add(deferredInterestFromCurrentPeriod);
             }
 
-            let totalFeesAfterPrincipal = Currency.Zero();
+            let totalFeesAfterPrincipal = Currency.zero;
             if (feesAfterPrincipal.length > 0) {
               let totalPercentage = feesAfterPrincipal.reduce((sum, fee) => sum.add(fee.percentage!), new Decimal(0));
               totalFeesAfterPrincipal = principal.multiply(totalPercentage);
@@ -1470,7 +2222,7 @@ export class Amortization {
           if (totalPayment.greaterThan(fixedMonthlyPayment)) {
             principal = principal.subtract(totalPayment.subtract(fixedMonthlyPayment));
             if (principal.isNegative()) {
-              principal = Currency.Zero();
+              principal = Currency.zero;
             }
             totalPayment = fixedMonthlyPayment;
           }
@@ -1491,7 +2243,7 @@ export class Amortization {
 
           startBalance = balanceAfterPayment;
 
-          schedule.push(
+          schedule.addEntry(
             new AmortizationEntry({
               term: termIndex,
               billablePeriod: true,
@@ -1533,7 +2285,7 @@ export class Amortization {
 
     // Adjust the last payment if needed
     if (startBalance.toNumber() !== 0) {
-      const lastPayment = schedule[schedule.length - 1];
+      const lastPayment = schedule.lastEntry;
       if (!lastPayment) {
         console.error(`Last payment is not defined`, schedule);
         throw new Error("Last payment is not defined");
@@ -1545,14 +2297,14 @@ export class Amortization {
       }
       lastPayment.endBalance = Currency.of(0);
       const daysInMonthForCalc = this.calendar.daysInMonth(this.calendar.addMonths(this.startDate, this.term));
-      lastPayment.perDiem = daysInMonthForCalc > 0 ? lastPayment.accruedInterestForPeriod.divide(daysInMonthForCalc) : Currency.Zero();
+      lastPayment.perDiem = daysInMonthForCalc > 0 ? lastPayment.accruedInterestForPeriod.divide(daysInMonthForCalc) : Currency.zero;
       lastPayment.metadata.finalAdjustment = true;
     }
 
     // Apply unbilled interest at the end if configured
     if (this.flushUnbilledInterestRoundingErrorMethod === FlushUnbilledInterestDueToRoundingErrorType.AT_END) {
       if (this.unbilledInterestDueToRounding.getValue().abs().greaterThanOrEqualTo(this.flushThreshold.getValue())) {
-        const lastPayment = schedule[schedule.length - 1];
+        const lastPayment = schedule.lastEntry;
         const adjustedInterest = lastPayment.accruedInterestForPeriod.add(this.unbilledInterestDueToRounding);
         const adjustedInterestRounded = this.round(adjustedInterest);
         if (adjustedInterest.getValue().greaterThanOrEqualTo(0)) {
@@ -1568,28 +2320,8 @@ export class Amortization {
     }
 
     this.repaymentSchedule = schedule;
+    this.modifiedSinceLastCalculation = false;
     return schedule;
-  }
-
-  getPeriodByDate(date: Dayjs): AmortizationEntry {
-    // find period where passed date is between period start and end date
-    return this.repaymentSchedule.find((period) => date.isBetween(period.periodStartDate, period.periodEndDate, null, "[]"))!;
-  }
-
-  getPerDiemForPeriodByDate(date: Dayjs | Date): Currency {
-    if (date instanceof Date) {
-      date = dayjs(date);
-    }
-    date = date.startOf("day");
-
-    // first we get the period where the date is
-    const activePeriod = this.getPeriodByDate(date);
-
-    if (!activePeriod) {
-      return Currency.Zero();
-    }
-
-    return activePeriod.perDiem;
   }
 
   getAccruedInterestByDate(date: Dayjs | Date): Currency {
@@ -1599,15 +2331,15 @@ export class Amortization {
     date = date.startOf("day");
 
     // first we get the period where the date is
-    const activePeriod = this.getPeriodByDate(date);
+    const activePeriod = this.repaymentSchedule.getPeriodByDate(date);
 
     if (!activePeriod) {
-      return Currency.Zero();
+      return Currency.zero;
     }
     // next we get amortization entries with same period number and end date is same or before active period
-    const amortizationEntries = this.repaymentSchedule.filter((entry) => entry.term === activePeriod.term && entry.periodEndDate.isSameOrBefore(activePeriod.periodStartDate));
+    const amortizationEntries = this.repaymentSchedule.entries.filter((entry) => entry.term === activePeriod.term && entry.periodEndDate.isSameOrBefore(activePeriod.periodStartDate));
     // sum up accrued interest for those entries
-    let accruedInterest = Currency.Zero();
+    let accruedInterest = Currency.zero;
     for (let entry of amortizationEntries) {
       accruedInterest = accruedInterest.add(entry.accruedInterestForPeriod);
     }
@@ -1642,395 +2374,11 @@ export class Amortization {
     return value.round(this.roundingPrecision, this.roundingMethod);
   }
 
-  /**
-   * Generates the TILA disclosures for the loan.
-   * @returns An object containing all the TILA-required fields.
-   */
-  generateTILADisclosures(): TILADisclosures {
-    // Ensure the amortization schedule is generated
-    const schedule = this.repaymentSchedule;
-
-    if (schedule.length === 0) {
-      throw new Error("Amortization schedule is empty. Please generate the amortization schedule before generating TILA disclosures.");
-    }
-
-    // Amount Financed: The net amount of credit provided to the borrower
-    const amountFinanced = this.loanAmount.subtract(this.originationFee);
-
-    // Total of Payments: The total amount the borrower will have paid after making all scheduled payments
-    const totalOfPayments = schedule.reduce((sum, payment) => {
-      if (payment.billablePeriod) {
-        return sum.add(payment.totalPayment);
-      }
-      return sum;
-    }, Currency.Zero());
-
-    // Finance Charge: The total cost of credit as a dollar amount
-    // Finance Charge = Total of Payments - Amount Financed
-    const financeCharge = totalOfPayments.subtract(amountFinanced);
-
-    // Annual Percentage Rate (APR): Already calculated in the class
-    const annualPercentageRate = this.apr;
-
-    // Payment Schedule: Details of each payment
-    const paymentSchedule: PaymentScheduleEntry[] = schedule
-      .filter((payment) => payment.billablePeriod)
-      .map((payment) => ({
-        paymentNumber: payment.term,
-        paymentDate: payment.periodEndDate,
-        paymentAmount: payment.totalPayment,
-        principal: payment.principal,
-        interest: payment.accruedInterestForPeriod,
-        balance: payment.endBalance,
-      }));
-
+  get json() {
     return {
-      amountFinanced,
-      financeCharge,
-      totalOfPayments,
-      annualPercentageRate,
-      paymentSchedule,
-    };
-  }
-
-  /**
-   * Generates a formatted TILA disclosure document as a string.
-   * @returns A string containing the formatted TILA disclosure document.
-   */
-  printTILADocument(): string {
-    const tilaDisclosures = this.generateTILADisclosures();
-
-    // Format numbers and dates
-    const formatCurrency = (value: Currency): string => `$${value.toCurrencyString()}`;
-    const formatPercentage = (value: Decimal): string => `${value.toFixed(2)}%`;
-    const formatDate = (date: Dayjs): string => date.format("MM/DD/YYYY");
-
-    // Build the document string
-    let document = "";
-    document += "TRUTH IN LENDING DISCLOSURE STATEMENT\n";
-    document += "-------------------------------------\n\n";
-
-    document += `ANNUAL PERCENTAGE RATE (APR): ${formatPercentage(tilaDisclosures.annualPercentageRate)}\n`;
-    document += `Finance Charge: ${formatCurrency(tilaDisclosures.financeCharge)}\n`;
-    document += `Amount Financed: ${formatCurrency(tilaDisclosures.amountFinanced)}\n`;
-    document += `Total of Payments: ${formatCurrency(tilaDisclosures.totalOfPayments)}\n\n`;
-
-    document += "PAYMENT SCHEDULE:\n";
-    document += "-----------------------------------------------------------\n";
-    document += "Payment No. | Payment Date | Payment Amount | Principal | Interest | Balance\n";
-    document += "------------|--------------|----------------|-----------|----------|----------\n";
-
-    tilaDisclosures.paymentSchedule.forEach((payment) => {
-      document += `${payment.paymentNumber.toString().padStart(11)} | `;
-      document += `${formatDate(payment.paymentDate).padEnd(12)} | `;
-      document += `${formatCurrency(payment.paymentAmount).padStart(14)} | `;
-      document += `${formatCurrency(payment.principal).padStart(9)} | `;
-      document += `${formatCurrency(payment.interest).padStart(8)} | `;
-      document += `${formatCurrency(payment.balance).padStart(8)}\n`;
-    });
-
-    document += "-----------------------------------------------------------\n";
-
-    return document;
-  }
-
-  public exportRepaymentScheduleToCSV(): string {
-    // Step 1: Collect all unique metadata keys
-    const metadataKeys = new Set<string>();
-    this.repaymentSchedule.forEach((entry) => {
-      Object.keys(entry.metadata).forEach((key) => {
-        metadataKeys.add(key);
-      });
-    });
-
-    // Convert the Set to an Array for easier handling
-    const metadataKeysArray = Array.from(metadataKeys);
-
-    // Step 2: Define the fields array, including metadata fields
-    const fields = [
-      {
-        header: "Term",
-        value: (entry: AmortizationEntry) => entry.term,
-      },
-      {
-        header: "Period Start Date",
-        value: (entry: AmortizationEntry) => entry.periodStartDate.format("YYYY-MM-DD"),
-      },
-      {
-        header: "Period End Date",
-        value: (entry: AmortizationEntry) => entry.periodEndDate.format("YYYY-MM-DD"),
-      },
-      {
-        header: "Bill Open Date",
-        value: (entry: AmortizationEntry) => entry.periodBillOpenDate.format("YYYY-MM-DD"),
-      },
-      {
-        header: "Bill Due Date",
-        value: (entry: AmortizationEntry) => entry.periodBillDueDate.format("YYYY-MM-DD"),
-      },
-      {
-        header: "Period Interest Rate",
-        value: (entry: AmortizationEntry) => entry.periodInterestRate.toString(),
-      },
-      {
-        header: "Principal",
-        value: (entry: AmortizationEntry) => entry.principal.getRoundedValue(this.roundingPrecision),
-      },
-      {
-        header: "Fees",
-        value: (entry: AmortizationEntry) => entry.fees.getRoundedValue(this.roundingPrecision),
-      },
-      {
-        header: "Billed Deferred Fees",
-        value: (entry: AmortizationEntry) => entry.billedDeferredFees.getRoundedValue(this.roundingPrecision),
-      },
-      {
-        header: "Unbilled Total Deferred Fees",
-        value: (entry: AmortizationEntry) => entry.unbilledTotalDeferredFees.getRoundedValue(this.roundingPrecision),
-      },
-      {
-        header: "Due Interest For Term",
-        value: (entry: AmortizationEntry) => entry.dueInterestForTerm.getRoundedValue(this.roundingPrecision),
-      },
-      {
-        header: "Accrued Interest For Period",
-        value: (entry: AmortizationEntry) => entry.accruedInterestForPeriod.getRoundedValue(this.roundingPrecision),
-      },
-      {
-        header: "Billed Deferred Interest",
-        value: (entry: AmortizationEntry) => entry.billedDeferredInterest.getRoundedValue(this.roundingPrecision),
-      },
-      {
-        header: "Billed Interest For Term",
-        value: (entry: AmortizationEntry) => entry.billedInterestForTerm.getRoundedValue(this.roundingPrecision),
-      },
-      {
-        header: "Balance Modification Amount",
-        value: (entry: AmortizationEntry) => entry.balanceModificationAmount.getRoundedValue(this.roundingPrecision),
-      },
-      {
-        header: "End Balance",
-        value: (entry: AmortizationEntry) => entry.endBalance.getRoundedValue(this.roundingPrecision),
-      },
-      {
-        header: "Start Balance",
-        value: (entry: AmortizationEntry) => entry.startBalance.getRoundedValue(this.roundingPrecision),
-      },
-      {
-        header: "Total Payment",
-        value: (entry: AmortizationEntry) => entry.totalPayment.getRoundedValue(this.roundingPrecision),
-      },
-      {
-        header: "Per Diem",
-        value: (entry: AmortizationEntry) => entry.perDiem.getRoundedValue(this.roundingPrecision),
-      },
-      {
-        header: "Days In Period",
-        value: (entry: AmortizationEntry) => entry.daysInPeriod,
-      },
-      {
-        header: "Unbilled Total Deferred Interest",
-        value: (entry: AmortizationEntry) => entry.unbilledTotalDeferredInterest.getRoundedValue(this.roundingPrecision),
-      },
-      {
-        header: "Interest Rounding Error",
-        value: (entry: AmortizationEntry) => entry.interestRoundingError.getRoundedValue(this.roundingPrecision),
-      },
-      {
-        header: "Unbilled Interest Due To Rounding",
-        value: (entry: AmortizationEntry) => entry.unbilledInterestDueToRounding.getRoundedValue(this.roundingPrecision),
-      },
-      // Step 3: Add metadata fields dynamically
-      ...metadataKeysArray.map((key) => ({
-        header: `Metadata.${key}`,
-        value: (entry: AmortizationEntry) => {
-          const value = entry.metadata[key as keyof AmortizationScheduleMetadata];
-          // Handle different types of metadata values
-          if (typeof value === "object" && value !== null) {
-            return JSON.stringify(value);
-          }
-          return value !== undefined ? value : "";
-        },
-      })),
-    ];
-
-    // Helper function to escape CSV fields
-    const escapeCSVField = (field: any): string => {
-      let str = String(field);
-      if (str.includes('"')) {
-        str = str.replace(/"/g, '""');
-      }
-      if (str.includes(",") || str.includes("\n") || str.includes('"')) {
-        str = `"${str}"`;
-      }
-      return str;
-    };
-
-    // Generate the header row
-    const headerRow = fields.map((field) => field.header).join(",");
-
-    // Generate the data rows
-    const dataRows = this.repaymentSchedule.map((entry) => {
-      const row = fields.map((field) => escapeCSVField(field.value(entry)));
-      return row.join(",");
-    });
-
-    // Combine the header and data rows
-    const csvContent = [headerRow, ...dataRows].join("\n");
-
-    return csvContent;
-  }
-
-  /**
-   * Generates TypeScript code to recreate this Amortization instance.
-   * @returns A string containing the TypeScript code.
-   */
-  public toCode(): string {
-    // Helper functions to serialize special types
-    const serializeCurrency = (currency: Currency | number): string => {
-      if (currency instanceof Currency) {
-        return `Currency.of(${currency.toNumber()})`;
-      } else {
-        return `Currency.of(${currency})`;
-      }
-    };
-
-    const serializeDecimal = (decimal: Decimal | number): string => {
-      if (decimal instanceof Decimal) {
-        return `new Decimal(${decimal.toString()})`;
-      } else {
-        return `new Decimal(${decimal})`;
-      }
-    };
-
-    const serializeDayjs = (date: dayjs.Dayjs | Date | string): string => {
-      const dateStr = dayjs.isDayjs(date) ? date.format("YYYY-MM-DD") : dayjs(date).format("YYYY-MM-DD");
-      return `dayjs('${dateStr}')`;
-    };
-
-    const serializeAny = (value: any): string => {
-      return JSON.stringify(value);
-    };
-
-    // Serialize arrays of special types
-    const serializeArray = <T>(arr: T[], serializer: (item: T) => string): string => {
-      return `[${arr.map(serializer).join(", ")}]`;
-    };
-
-    // Serialize the input parameters
-    const serializeParams = (params: AmortizationParams): string => {
-      const lines = [];
-
-      for (const [key, value] of Object.entries(params)) {
-        if (value === undefined || value === null) {
-          continue; // Skip undefined or null values
-        }
-
-        let serializedValue: string;
-
-        switch (key) {
-          case "loanAmount":
-          case "originationFee":
-          case "flushThreshold":
-            serializedValue = serializeCurrency(value as Currency | number);
-            break;
-
-          case "annualInterestRate":
-            serializedValue = serializeDecimal(value as Decimal | number);
-            break;
-
-          case "startDate":
-          case "endDate":
-          case "firstPaymentDate":
-            serializedValue = serializeDayjs(value as Date | string);
-            break;
-
-          case "calendarType":
-            serializedValue = `CalendarType.${value as CalendarType}`;
-            break;
-
-          case "roundingMethod":
-            serializedValue = `RoundingMethod.${value as RoundingMethod}`;
-            break;
-
-          case "termPeriodDefinition":
-            serializedValue = `{
-    unit: '${(value as TermPeriodDefinition).unit}',
-    count: ${serializeArray((value as TermPeriodDefinition).count, (item) => item.toString())}
-  }`;
-            break;
-
-          case "balanceModifications":
-            serializedValue = serializeArray(value as BalanceModification[], (mod) => mod.toCode());
-            break;
-
-          // Handle other complex types as needed
-          default:
-            serializedValue = serializeAny(value);
-        }
-
-        lines.push(`  ${key}: ${serializedValue},`);
-      }
-
-      return lines.join("\n");
-    };
-
-    // Build the complete code string
-    const code = `import { Amortization, AmortizationParams, CalendarType, RoundingMethod, Fee, TermPeriodDefinition } from './Amortization';
-import { BalanceModification } from './BalanceModification';
-import { Currency } from '../utils/Currency';
-import Decimal from 'decimal.js';
-import dayjs from 'dayjs';
-
-// Define the parameters for the loan
-const params: AmortizationParams = {
-${serializeParams(this._inputParams)}
-};
-
-// Create the Amortization instance
-const amortization = new Amortization(params);
-`;
-
-    return code.trim();
-  }
-
-  public toTestCode(): string {
-    return `
-describe('Amortization Class', () => {
-  let amortization: Amortization;
-
-  beforeEach(() => {
-    ${this.toCode()}
-  });
-
-  it('should initialize with correct parameters', () => {
-    expect(amortization.loanAmount).toBeDefined();
-    expect(amortization.annualInterestRate).toBeDefined();
-    expect(amortization.term).toBeGreaterThan(0);
-  });
-
-  it('should calculate APR correctly', () => {
-    const apr = amortization.apr;
-    expect(apr).toBeInstanceOf(Decimal);
-    expect(apr.greaterThan(0)).toBe(true);
-  });
-
-  it('should generate an amortization schedule', () => {
-    const schedule = amortization.generateSchedule();
-    expect(schedule.length).toBeGreaterThan(0);
-    expect(schedule[0].principal).toBeDefined();
-    expect(schedule[0].interestRoundingError).toBeDefined();
-  });
-});
-  `.trim();
-  }
-
-  /**
-   * Serializes the Amortization instance into a JSON object.
-   * @returns A JSON-compatible object representing the Amortization instance.
-   */
-  public toJSON(): any {
-    return {
+      id: this.id,
+      name: this.name,
+      description: this.description,
       loanAmount: this.loanAmount.toNumber(),
       originationFee: this.originationFee.toNumber(),
       totalLoanAmount: this.totalLoanAmount.toNumber(),
@@ -2040,33 +2388,38 @@ describe('Amortization Class', () => {
       dueBillDays: this.dueBillDays,
       defaultPreBillDaysConfiguration: this.defaultPreBillDaysConfiguration,
       defaultBillDueDaysAfterPeriodEndConfiguration: this.defaultBillDueDaysAfterPeriodEndConfiguration,
-      startDate: this.startDate.toISOString(),
-      endDate: this.endDate.toISOString(),
+      startDate: this.startDate.toDate(),
+      endDate: this.endDate.toDate(),
+      hasCustomEndDate: this.hasCustomEndDate,
+      equitedMonthlyPayment: this.equitedMonthlyPayment.toNumber(),
+      hasCustomEquitedMonthlyPayment: this.hasCustomEquitedMonthlyPayment,
       calendarType: this.calendar.calendarType,
       roundingMethod: this.roundingMethod,
       flushUnbilledInterestRoundingErrorMethod: this.flushUnbilledInterestRoundingErrorMethod,
       roundingPrecision: this.roundingPrecision,
       flushThreshold: this.flushThreshold.toNumber(),
-      periodsSchedule: this.periodsSchedule.map((period) => ({
-        startDate: period.startDate.toISOString(),
-        endDate: period.endDate.toISOString(),
-      })),
-      rateSchedules: this.rateSchedules.map((rate) => ({
-        annualInterestRate: rate.annualInterestRate.toString(),
-        startDate: rate.startDate.toISOString(),
-        endDate: rate.endDate.toISOString(),
-      })),
+      periodsSchedule: this.periodsSchedule.json,
+      rateSchedules: this.rateSchedules.json,
       allowRateAbove100: this.allowRateAbove100,
-      termPaymentAmountOverride: this.termPaymentAmountOverride,
+      termPaymentAmountOverride: this.termPaymentAmountOverride.json,
+      termInterestAmountOverride: this.termInterestAmountOverride.json,
       termPeriodDefinition: this.termPeriodDefinition,
-      changePaymentDates: this.changePaymentDates,
-      balanceModifications: this.balanceModifications.map((mod) => mod.toJSON()), // Assuming BalanceModification has a toJSON method
+      changePaymentDates: this.changePaymentDates.json,
+      balanceModifications: this.balanceModifications.json,
       perDiemCalculationType: this.perDiemCalculationType,
       billingModel: this.billingModel,
-      feesPerTerm: Array.from(this.feesPerTerm.entries()),
+      feesPerTerm: this.feesPerTerm.json,
       feesForAllTerms: this.feesForAllTerms,
-      repaymentSchedule: this.repaymentSchedule.map((entry) => entry.toJSON()), // Assuming AmortizationEntry has a toJSON method
+      repaymentSchedule: this.repaymentSchedule.json,
     };
+  }
+
+  /**
+   * Serializes the Amortization instance into a JSON object.
+   * @returns A JSON-compatible object representing the Amortization instance.
+   */
+  public toJSON() {
+    return this.json;
   }
 
   /**
@@ -2127,30 +2480,6 @@ describe('Amortization Class', () => {
   }
 
   /**
-   * Computes the projected future interest if the loan runs to full maturity.
-   * This considers the given `date` as a reference point, finds the next upcoming
-   * repayment entry that starts after `date`, and sums all accruedInterestForPeriod
-   * from that entry forward until the end of the loan.
-   *
-   * @param date The reference date from which to consider future interest.
-   * @returns The projected future interest as a Currency object.
-   */
-  getProjectedFutureInterest(date: Dayjs): Currency {
-    date = date.startOf("day");
-
-    let projectedFutureInterest = Currency.Zero();
-
-    for (const entry of this.repaymentSchedule) {
-      // Consider only billable periods that start after the given date
-      if (entry.billablePeriod && entry.periodStartDate.isAfter(date)) {
-        projectedFutureInterest = projectedFutureInterest.add(entry.accruedInterestForPeriod);
-      }
-    }
-
-    return projectedFutureInterest;
-  }
-
-  /**
    * Computes the current payoff amount (principal + accrued interest up to a given date).
    * Current payoff = remaining principal + accrued interest to date.
    */
@@ -2163,11 +2492,11 @@ describe('Amortization Class', () => {
 
     // If date is after the last scheduled payment, payoff = 0
     if (date.isSameOrAfter(this.endDate, "day")) {
-      return Currency.Zero();
+      return Currency.zero;
     }
 
     // Find the period containing 'date'
-    const activePeriod = this.getPeriodByDate(date);
+    const activePeriod = this.repaymentSchedule.getPeriodByDate(date);
     if (!activePeriod) {
       // If no active period (date is before start?), payoff = totalLoanAmount
       if (date.isSameOrBefore(this.startDate)) {
@@ -2189,96 +2518,5 @@ describe('Amortization Class', () => {
     const remainingPrincipal = activePeriod.startBalance;
     const payoff = remainingPrincipal.add(accruedToDate);
     return payoff;
-  }
-
-  /**
-   * Computes a comprehensive LoanSummary object at a given snapshot date.
-   */
-  getLoanSummary(date: Dayjs): LoanSummary {
-    // total terms = this.term
-    const totalTerms = this.term;
-
-    // Determine how many terms have been fully paid
-    // A fully paid term is one where the billable period entries sum up to principal + interest paid
-    // For simplicity, count terms as completed if periodEndDate < date
-    const completedTerms = this.repaymentSchedule.filter((e) => e.billablePeriod && e.periodEndDate.isBefore(date, "day")).map((e) => e.term);
-    const maxCompletedTerm = completedTerms.length > 0 ? Math.max(...completedTerms) : 0;
-    const remainingTerms = totalTerms - maxCompletedTerm;
-
-    // Next bill date: the end date of the next unpaid period
-    const nextTermEntry = this.repaymentSchedule.find((e) => e.term === maxCompletedTerm + 1 && e.billablePeriod);
-    const nextBillDate = nextTermEntry ? nextTermEntry.periodBillDueDate.toDate() : undefined;
-
-    // Paid principal to date and paid interest to date
-    // Sum all principal and interest paid in periods fully before 'date'
-    let paidPrincipalToDate = Currency.Zero();
-    let paidInterestToDate = Currency.Zero();
-    let lastPaymentDate: Date | undefined = undefined;
-    let lastPaymentAmount = Currency.Zero();
-
-    // Iterate through all fully-paid periods
-    for (const entry of this.repaymentSchedule) {
-      if (entry.billablePeriod && entry.periodEndDate.isBefore(date, "day")) {
-        paidPrincipalToDate = paidPrincipalToDate.add(entry.principal);
-        // accruedInterestForPeriod is the interest charged this period
-        paidInterestToDate = paidInterestToDate.add(entry.accruedInterestForPeriod);
-        // lastPayment info
-        if (!lastPaymentDate || entry.periodEndDate.isAfter(dayjs(lastPaymentDate))) {
-          lastPaymentDate = entry.periodEndDate.toDate();
-          lastPaymentAmount = entry.totalPayment;
-        }
-      }
-    }
-
-    // Remaining Principal = last period that ended before 'date' endBalance of that period,
-    // or if date is mid-period use activePeriod startBalance minus principal if any partial calculation done
-    // For simplicity, use the active period's startBalance as remaining principal approximation
-    const activePeriod = this.getPeriodByDate(date) || this.repaymentSchedule[this.repaymentSchedule.length - 1];
-    const remainingPrincipal = activePeriod.startBalance;
-
-    const accruedInterestToDate = this.getAccruedInterestToDate(date);
-    const projectedFutureInterest = this.getProjectedFutureInterest(date);
-    const currentPayoffAmount = this.getCurrentPayoffAmount(date);
-
-    return {
-      totalTerms: totalTerms,
-      remainingTerms: remainingTerms,
-      nextBillDate: nextBillDate,
-      paidPrincipalToDate: paidPrincipalToDate,
-      paidInterestToDate: paidInterestToDate,
-      lastPaymentDate: lastPaymentDate,
-      lastPaymentAmount: lastPaymentAmount,
-      remainingPrincipal: remainingPrincipal,
-      currentPayoffAmount: currentPayoffAmount,
-      accruedInterestToDate: accruedInterestToDate,
-      projectedFutureInterest: projectedFutureInterest,
-    };
-  }
-
-  /**
-   * Returns the number of days left until the next billable term's due date,
-   * starting from the provided date (defaults to today).
-   *
-   * If there are no upcoming terms left (all are passed), it returns 0.
-   *
-   * @param now The reference date (defaults to today's date).
-   * @returns The number of days until the next billable period's due date.
-   */
-  getDaysLeftInTerm(now: Dayjs | Date = dayjs()): number {
-    if (now instanceof Date) {
-      now = dayjs(now);
-    }
-    now = now.startOf("day");
-
-    // Find the next upcoming billable period whose due date is after 'now'
-    const upcomingEntry = this.repaymentSchedule.find((entry) => entry.billablePeriod && entry.periodBillDueDate.isAfter(now));
-
-    if (!upcomingEntry) {
-      // No future billable terms remain, so 0 days left
-      return 0;
-    }
-
-    // Calculate and return the difference in whole days
-    return upcomingEntry.periodBillDueDate.diff(now, "day");
   }
 }

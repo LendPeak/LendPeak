@@ -51,23 +51,11 @@ export interface LoanData {
   Promises: Deferred;
   Bankruptcies: Deferred;
   Charges: Deferred;
-  Payments: PaymentsCollection;
-  DueDateChanges: {
-    results: DueDateChange[];
-    __next?: string;
-  };
-  ScheduleRolls: {
-    results: ScheduleRoll[];
-    __next?: string;
-  };
-  InterestAdjustments: {
-    results: InterestAdjustment[];
-    __next?: string;
-  };
-  Transactions: {
-    results: Transaction[];
-    __next?: string;
-  };
+  Payments: Payment[];
+  DueDateChanges: DueDateChange[];
+  ScheduleRolls: ScheduleRoll[];
+  InterestAdjustments: InterestAdjustment[];
+  Transactions: Transaction[];
 
   // ... Other deferred properties
   // Core properties

@@ -24,21 +24,14 @@ import { IndexedDbService } from './services/indexed-db.service';
 import {
   Amortization,
   AmortizationParams,
-  FlushUnbilledInterestDueToRoundingErrorType,
-  TILADisclosures,
-  Fee,
-  LoanSummary,
 } from 'lendpeak-engine/models/Amortization';
-import {
-  UIAmortizationParams,
-  toAmortizationParams,
-  UIBalanceModification,
-  LoanFeePerTerm,
-} from 'lendpeak-engine/factories/UIFactories';
+import { Fee } from 'lendpeak-engine/models/Fee';
+import { ChangePaymentDate } from 'lendpeak-engine/models/ChangePaymentDate';
 
 import { AmortizationEntry } from 'lendpeak-engine/models/Amortization/AmortizationEntry';
 import { BalanceModification } from 'lendpeak-engine/models/Amortization/BalanceModification';
 import { Deposit, DepositRecord } from 'lendpeak-engine/models/Deposit';
+import { DepositRecords } from 'lendpeak-engine/models/DepositRecords';
 import {
   PaymentApplication,
   PaymentApplicationResult,
@@ -46,10 +39,12 @@ import {
   PaymentAllocationStrategyName,
 } from 'lendpeak-engine/models/PaymentApplication';
 import { Bill } from 'lendpeak-engine/models/Bill';
+import { Bills } from 'lendpeak-engine/models/Bills';
 import { BillPaymentDetail } from 'lendpeak-engine/models/Bill/BillPaymentDetail';
 import { BillGenerator } from 'lendpeak-engine/models/BillGenerator';
 import { Currency, RoundingMethod } from 'lendpeak-engine/utils/Currency';
 import Decimal from 'decimal.js';
+
 import { CalendarType } from 'lendpeak-engine/models/Calendar';
 
 import dayjs, { Dayjs } from 'dayjs';
@@ -63,7 +58,6 @@ dayjs.extend(isSameOrBefore);
 
 import { v4 as uuidv4 } from 'uuid'; // For generating unique IDs
 import {
-  UILoan,
   PastDueSummary,
   ActualLoanSummary,
 } from 'lendpeak-engine/models/UIInterfaces';
@@ -296,54 +290,20 @@ export class AppComponent implements OnChanges {
 
   showFullNumbers: boolean = false;
 
-  defaultLoan: UILoan = {
-    objectVersion: this.CURRENT_OBJECT_VERSION,
-    principal: 10000,
-    originationFee: 0,
-    interestRate: 10,
-    term: 12,
-    feesForAllTerms: [],
-    feesPerTerm: [],
-    startDate: new Date(),
-    firstPaymentDate: dayjs().add(1, 'month').toDate(),
-    endDate: dayjs().add(12, 'month').toDate(),
-    calendarType: 'THIRTY_360',
-    roundingMethod: 'ROUND_HALF_EVEN',
-    flushMethod: 'at_threshold',
-    perDiemCalculationType: 'AnnualRateDividedByDaysInYear',
-    roundingPrecision: 2,
-    flushThreshold: 0.01,
-    ratesSchedule: [],
-    termPaymentAmountOverride: [],
-    termPaymentAmount: undefined,
-    defaultBillDueDaysAfterPeriodEndConfiguration: 3,
-    defaultPreBillDaysConfiguration: 5,
-    allowRateAbove100: false,
-    periodsSchedule: [],
-    changePaymentDates: [],
-    dueBillDays: [],
-    preBillDays: [],
-    deposits: [],
-    termPeriodDefinition: {
-      unit: 'month',
-      count: [1],
-    },
-    balanceModifications: [],
-    billingModel: 'amortized',
-    paymentAllocationStrategy: 'FIFO',
+  paymentAllocationStrategy: PaymentAllocationStrategyName = 'FIFO';
+
+  defaultLoanParams: AmortizationParams = {
+    loanAmount: Currency.of(1000),
+    originationFee: Currency.of(10),
+    annualInterestRate: new Decimal(0.06), // 5% annual interest rate
+    term: 24, // 24 months
+    startDate: dayjs(),
   };
 
-  loan: UILoan = { ...this.defaultLoan };
+  loan: Amortization = new Amortization(this.defaultLoanParams);
 
-  tilaDisclosures: TILADisclosures = {
-    amountFinanced: Currency.of(0),
-    financeCharge: Currency.of(0),
-    totalOfPayments: Currency.of(0),
-    annualPercentageRate: new Decimal(0),
-    paymentSchedule: [],
-  };
-
-  bills: Bill[] = [];
+  bills: Bills = new Bills();
+  deposits: DepositRecords = new DepositRecords();
 
   toggleFullNumberDisplay() {
     this.showFullNumbers = !this.showFullNumbers;
@@ -359,8 +319,13 @@ export class AppComponent implements OnChanges {
     this.showLoanImportDialog = true;
   }
 
-  onLoanImported(loanData: UILoan | UILoan[]) {
-    if (Array.isArray(loanData)) {
+  onLoanImported(
+    loanData: {
+      loan: Amortization;
+      deposits: DepositRecords;
+    }[],
+  ) {
+    if (loanData.length > 1) {
       // Multiple loans imported
       // For example, save each loan individually under its own name
       loanData.forEach((singleLoan) => {
@@ -373,11 +338,11 @@ export class AppComponent implements OnChanges {
       });
     } else {
       // Single loan imported
-      this.saveAndLoadLoan(loanData);
+      this.saveAndLoadLoan(loanData[0]);
       this.messageService.add({
         severity: 'success',
         summary: 'Success',
-        detail: `Loan "${loanData.name}" imported successfully`,
+        detail: `Loan "${loanData[0].loan.name}" imported successfully`,
       });
     }
 
@@ -385,13 +350,20 @@ export class AppComponent implements OnChanges {
   }
 
   // A helper function to avoid repeating code:
-  private saveAndLoadLoan(loanData: UILoan) {
+  private saveAndLoadLoan(loanData: {
+    loan: Amortization;
+    deposits: DepositRecords;
+  }) {
     this.saveLoanWithoutLoading(loanData);
-    this.executeLoadLoan(this.loanName);
+    this.executeLoadLoan(this.loan.name);
   }
 
-  private saveLoanWithoutLoading(loanData: UILoan) {
-    this.loan = loanData;
+  private saveLoanWithoutLoading(loanData: {
+    loan: Amortization;
+    deposits: DepositRecords;
+  }) {
+    this.loan = loanData.loan;
+    this.deposits = loanData.deposits;
     this.loanModified = true;
     this.loanName = this.loan.name || 'Imported Loan';
     this.currentLoanName = this.loanName;
@@ -414,7 +386,7 @@ export class AppComponent implements OnChanges {
     let lastPaymentAmount = Currency.Zero();
 
     // Sum principal and interest actually paid from bills
-    for (const bill of this.bills) {
+    for (const bill of this.bills.all) {
       if (bill.paymentDetails && bill.paymentDetails.length > 0) {
         for (const pd of bill.paymentDetails) {
           actualPrincipalPaid = actualPrincipalPaid.add(pd.allocatedPrincipal);
@@ -431,7 +403,7 @@ export class AppComponent implements OnChanges {
     }
 
     // Determine next unpaid bill
-    const unpaidBills = this.bills.filter((b) => !b.isPaid);
+    const unpaidBills = this.bills.unpaid;
     let nextBillDate: Date | undefined = undefined;
     if (unpaidBills.length > 0) {
       // sort by dueDate
@@ -439,14 +411,14 @@ export class AppComponent implements OnChanges {
       nextBillDate = unpaidBills[0].dueDate.toDate();
     }
 
-    const originalPrincipal = Currency.of(this.loan.principal).add(
+    const originalPrincipal = Currency.of(this.loan.loanAmount).add(
       this.loan.originationFee,
     );
     const actualRemainingPrincipal =
       originalPrincipal.subtract(actualPrincipalPaid);
 
-    const accruedInterestNow = this.amortization
-      ? this.amortization.getAccruedInterestByDate(this.snapshotDate)
+    const accruedInterestNow = this.loan
+      ? this.loan.getAccruedInterestByDate(this.snapshotDate)
       : Currency.Zero();
     const actualCurrentPayoff =
       actualRemainingPrincipal.add(accruedInterestNow);
@@ -463,6 +435,7 @@ export class AppComponent implements OnChanges {
   }
 
   newLoan() {
+    console.log('new loan');
     if (this.loanModified) {
       if (
         !confirm(
@@ -474,14 +447,14 @@ export class AppComponent implements OnChanges {
     }
 
     // Reset the loan to default values
-    this.loan = { ...this.defaultLoan };
+    this.loan = new Amortization(this.defaultLoanParams);
 
     // Reset other properties
     this.currentLoanName = 'New Loan';
     this.loanModified = false;
 
     // Reset bills and deposits
-    this.bills = [];
+    this.bills = new Bills();
 
     // Generate the default loan data
     this.updateTermOptions();
@@ -577,15 +550,6 @@ export class AppComponent implements OnChanges {
     });
     const newUrl = this.router.serializeUrl(urlTree);
     this.location.go(newUrl);
-  }
-
-  getNextTermNumber(): number {
-    if (this.loan.feesPerTerm.length === 0) {
-      return 1;
-    } else {
-      const termNumbers = this.loan.feesPerTerm.map((tf) => tf.termNumber);
-      return Math.max(...termNumbers) + 1;
-    }
   }
 
   selectedPeriods: number[] = [];
@@ -760,7 +724,7 @@ export class AppComponent implements OnChanges {
     this.requestedLoanName = '';
 
     // No loan found in localStorage, initialize with default values
-    this.loan = { ...this.defaultLoan };
+    this.loan = new Amortization(this.defaultLoanParams);
     this.currentLoanName = 'New Loan';
     this.submitLoan();
   }
@@ -774,106 +738,6 @@ export class AppComponent implements OnChanges {
       // Reload the default loan
       this.loadDefaultLoan();
     });
-  }
-
-  parseLoanData(loan: UILoan) {
-    // Parse dates
-    loan.startDate = new Date(loan.startDate);
-    loan.firstPaymentDate = new Date(loan.firstPaymentDate);
-    loan.endDate = new Date(loan.endDate);
-
-    // Set default if not present
-    loan.perDiemCalculationType =
-      loan.perDiemCalculationType || 'AnnualRateDividedByDaysInYear';
-
-    // Parse deposits
-    if (loan.deposits.length > 0) {
-      loan.deposits = loan.deposits.map((deposit: DepositRecord) => {
-        return DepositRecord.rehydrateFromJSON(deposit);
-      });
-    }
-
-    // Parse feesForAllTerms
-    if (loan.feesForAllTerms) {
-      loan.feesForAllTerms = loan.feesForAllTerms.map((fee) => ({
-        type: fee.type,
-        amount: fee.amount,
-        percentage: fee.percentage,
-        basedOn: fee.basedOn,
-        description: fee.description,
-        metadata: fee.metadata,
-      }));
-    } else {
-      loan.feesForAllTerms = [];
-    }
-
-    // Parse feesPerTerm
-    if (loan.feesPerTerm) {
-      loan.feesPerTerm = loan.feesPerTerm.map((fee) => ({
-        termNumber: fee.termNumber,
-        type: fee.type,
-        amount: fee.amount,
-        percentage: fee.percentage,
-        basedOn: fee.basedOn,
-        description: fee.description,
-        metadata: fee.metadata,
-      }));
-    } else {
-      loan.feesPerTerm = [];
-    }
-
-    // Parse ratesSchedule
-    loan.ratesSchedule = loan.ratesSchedule.map((rate) => ({
-      startDate: new Date(rate.startDate),
-      endDate: new Date(rate.endDate),
-      annualInterestRate: rate.annualInterestRate,
-    }));
-
-    // Parse periodsSchedule
-    loan.periodsSchedule = loan.periodsSchedule.map((period) => ({
-      period: period.period,
-      startDate: new Date(period.startDate),
-      endDate: new Date(period.endDate),
-      interestRate: period.interestRate,
-      paymentAmount: period.paymentAmount,
-    }));
-
-    // Parse changePaymentDates
-    loan.changePaymentDates = loan.changePaymentDates.map(
-      (changePaymentDate) => ({
-        termNumber: changePaymentDate.termNumber,
-        newDate: new Date(changePaymentDate.newDate),
-        originalDate: changePaymentDate.originalDate
-          ? new Date(changePaymentDate.originalDate)
-          : undefined,
-      }),
-    );
-
-    // Parse termPaymentAmountOverride
-    loan.termPaymentAmountOverride = loan.termPaymentAmountOverride.map(
-      (termPaymentAmountOverride) => ({
-        termNumber: termPaymentAmountOverride.termNumber,
-        paymentAmount: termPaymentAmountOverride.paymentAmount,
-      }),
-    );
-
-    // Parse preBillDays
-    loan.preBillDays = loan.preBillDays.map((preBillDay) => ({
-      termNumber: preBillDay.termNumber,
-      preBillDays: preBillDay.preBillDays,
-    }));
-
-    // Parse dueBillDays
-    loan.dueBillDays = loan.dueBillDays.map((dueBillDay) => ({
-      termNumber: dueBillDay.termNumber,
-      daysDueAfterPeriodEnd: dueBillDay.daysDueAfterPeriodEnd,
-    }));
-
-    loan.balanceModifications = BalanceModification.parseJSONArray(
-      loan.balanceModifications,
-    );
-
-    this.submitLoan();
   }
 
   showTable = false;
@@ -899,7 +763,7 @@ export class AppComponent implements OnChanges {
 
   generateBills() {
     console.log('generating bills');
-    const repaymentSchedule = this.repaymentSchedule;
+    const repaymentSchedule = this.loan.repaymentSchedule;
     this.bills = BillGenerator.generateBills(
       repaymentSchedule,
       this.snapshotDate,
@@ -907,7 +771,7 @@ export class AppComponent implements OnChanges {
   }
 
   downloadRepaymentPlanAsCSV() {
-    const repaymentPlanCSV = this.amortization?.exportRepaymentScheduleToCSV();
+    const repaymentPlanCSV = this.loan?.export.exportRepaymentScheduleToCSV();
     if (repaymentPlanCSV) {
       const blob = new Blob([repaymentPlanCSV], {
         type: 'text/csv',
@@ -933,7 +797,7 @@ export class AppComponent implements OnChanges {
   }
 
   copyRepaymentPlanAsCSV() {
-    const repaymentPlanCSV = this.amortization?.exportRepaymentScheduleToCSV();
+    const repaymentPlanCSV = this.loan?.export.exportRepaymentScheduleToCSV();
     if (repaymentPlanCSV) {
       navigator.clipboard
         .writeText(repaymentPlanCSV)
@@ -969,21 +833,21 @@ export class AppComponent implements OnChanges {
     // Optionally, update any backend or perform additional actions
   }
 
-  termPeriodDefinitionChange() {
-    const termUnit =
-      this.loan.termPeriodDefinition.unit === 'complex'
-        ? 'day'
-        : this.loan.termPeriodDefinition.unit;
-    this.loan.endDate = dayjs(this.loan.startDate)
-      .add(this.loan.term * this.loan.termPeriodDefinition.count[0], termUnit)
-      .toDate();
+  // termPeriodDefinitionChange() {
+  //   const termUnit =
+  //     this.loan.termPeriodDefinition.unit === 'complex'
+  //       ? 'day'
+  //       : this.loan.termPeriodDefinition.unit;
+  //   this.loan.endDate = dayjs(this.loan.startDate)
+  //     .add(this.loan.term * this.loan.termPeriodDefinition.count[0], termUnit)
+  //     .toDate();
 
-    this.loan.firstPaymentDate = dayjs(this.loan.startDate)
-      .add(this.loan.termPeriodDefinition.count[0], termUnit)
-      .toDate();
-    this.loanModified = true;
-    this.submitLoan();
-  }
+  //   this.loan.firstPaymentDate = dayjs(this.loan.startDate)
+  //     .add(this.loan.termPeriodDefinition.count[0], termUnit)
+  //     .toDate();
+  //   this.loanModified = true;
+  //   this.submitLoan();
+  // }
 
   ngOnChanges(changes: SimpleChanges) {
     //console.log('Changes detected:', changes);
@@ -1011,72 +875,15 @@ export class AppComponent implements OnChanges {
   ];
 
   showEditLoanDialog: boolean = false;
-  loanToEdit = {
-    name: '',
-    description: '',
-  };
 
   openEditLoanDialog() {
-    // Initialize the dialog fields with current loan details
-    this.loanToEdit = {
-      name: this.currentLoanName,
-      description: this.currentLoanDescription || '',
-    };
     this.showEditLoanDialog = true;
   }
 
   saveEditedLoanDetails() {
-    // Validate the new loan name
-    if (!this.loanToEdit.name) {
-      this.messageService.add({
-        severity: 'error',
-        summary: 'Error',
-        detail: 'Loan name is required',
-      });
-      return;
-    }
-
-    // Check if the new name conflicts with an existing loan (excluding the current loan)
-    const newKey = `loan_${this.loanToEdit.name}`;
-    const oldKey = `loan_${this.currentLoanName}`;
-
-    if (newKey !== oldKey && localStorage.getItem(newKey)) {
-      if (
-        !confirm(
-          `A loan named "${this.loanToEdit.name}" already exists. Do you want to overwrite it?`,
-        )
-      ) {
-        return;
-      } else {
-        // Remove the existing loan with the new name
-        localStorage.removeItem(newKey);
-      }
-    }
-
-    // Update the loan data in localStorage
-    const loanData = {
+    this.saveAndLoadLoan({
       loan: this.loan,
-      bills: this.bills,
-      deposits: this.loan.deposits,
-      description: this.loanToEdit.description,
-      name: this.loanToEdit.name,
-    };
-
-    // Remove the old key if the name has changed
-    if (newKey !== oldKey) {
-      localStorage.removeItem(oldKey);
-    }
-
-    localStorage.setItem(newKey, JSON.stringify(loanData));
-
-    // Update the current loan name and description
-    this.currentLoanName = this.loanToEdit.name;
-    this.currentLoanDescription = this.loanToEdit.description;
-
-    this.messageService.add({
-      severity: 'success',
-      summary: 'Success',
-      detail: `Loan details updated successfully`,
+      deposits: this.deposits,
     });
 
     this.showEditLoanDialog = false;
@@ -1146,7 +953,7 @@ export class AppComponent implements OnChanges {
   savedLoans: any[] = [];
 
   showLoanExplanation() {
-    if (!this.amortization) {
+    if (!this.loan) {
       this.messageService.add({
         severity: 'warn',
         summary: 'No Amortization Data',
@@ -1154,7 +961,7 @@ export class AppComponent implements OnChanges {
       });
       return;
     }
-    const explainer = new AmortizationExplainer(this.amortization);
+    const explainer = new AmortizationExplainer(this.loan);
     this.loanExplanationText = explainer.getFullExplanation();
     this.showExplanationDialog = true;
   }
@@ -1164,8 +971,8 @@ export class AppComponent implements OnChanges {
   }
 
   openCodeDialog() {
-    if (this.amortization) {
-      this.generatedCode = this.amortization.toCode();
+    if (this.loan) {
+      this.generatedCode = this.loan.export.toCode();
       this.showCodeDialogVisible = true;
     } else {
       this.messageService.add({
@@ -1216,7 +1023,8 @@ export class AppComponent implements OnChanges {
         return {
           key: row.key,
           name,
-          description: row.data.description || '',
+          id: row.data.loan.id || '',
+          description: row.data.loan.description || '',
           loanAmount: row.data.loan?.principal ?? 0,
           startDate: row.data.loan?.startDate ?? '',
           endDate: row.data.loan?.endDate ?? '',
@@ -1286,15 +1094,17 @@ export class AppComponent implements OnChanges {
     const loanData = await this.indexedDbService.loadLoan(key);
 
     if (loanData) {
-      this.loan = loanData.loan;
-      // this.bills = loanData.bills;
-      this.loan.deposits = loanData.deposits;
-      this.parseLoanData(this.loan);
+      console.log('loading loanData', loanData);
+      if (!loanData.loan.hasCustomEndDate) {
+        delete loanData.loan.endDate;
+      }
+      this.loan = new Amortization(loanData.loan);
+      this.deposits = new DepositRecords(loanData.deposits);
 
       // Set the current loan name
       this.currentLoanName = loanData.name || 'Loaded Loan';
-      this.currentLoanDescription = loanData.loan.description || '';
-      this.currentLoanId = loanData.loan.id || '';
+      this.currentLoanDescription = loanData.loan.description;
+      this.currentLoanId = loanData.loan.id;
 
       this.submitLoan();
       this.showManageLoansDialog = false;
@@ -1326,80 +1136,29 @@ export class AppComponent implements OnChanges {
   }
 
   async saveLoan() {
-    if (!this.currentLoanName || this.currentLoanName === 'New Loan') {
-      // New loan, prompt for name
-      if (!this.loanToSave.name) {
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Error',
-          detail: 'Loan name is required',
-        });
-        return;
-      }
+    this.loan.updateModelValues();
+    // Existing loan, save to the same key
+    const key = `loan_${this.loan.name}`;
 
-      const key = `loan_${this.loanToSave.name}`;
-      //const existingLoan = localStorage.getItem(key);
+    const loanData = {
+      loan: this.loan.toJSON(),
+      bills: this.bills.toJSON(),
+      deposits: this.deposits.toJSON(),
+      description: this.loan.description || '',
+      name: this.loan.name,
+    };
 
-      // if (existingLoan) {
-      //   // Inform the user that the loan will overwrite existing data
-      //   if (
-      //     !confirm(
-      //       `A loan named "${this.loanToSave.name}" already exists. Do you want to overwrite it?`,
-      //     )
-      //   ) {
-      //     return;
-      //   }
-      // }
+    //localStorage.setItem(key, JSON.stringify(loanData));
+    await this.indexedDbService.saveLoan(key, loanData);
 
-      // Save the loan
-      const loanData = {
-        loan: this.loan,
-        bills: this.bills,
-        deposits: this.loan.deposits,
-        description: this.loanToSave.description,
-        name: this.loanToSave.name,
-      };
+    // Reset loanModified
+    this.loanModified = false;
 
-      //localStorage.setItem(key, JSON.stringify(loanData));
-      await this.indexedDbService.saveLoan(key, loanData);
-
-      // Update the current loan name and reset loanModified
-      this.currentLoanName = this.loanToSave.name;
-      this.loanModified = false;
-
-      this.messageService.add({
-        severity: 'success',
-        summary: 'Success',
-        detail: `Loan "${
-          this.currentLoanName
-        }" saved successfully. Access it directly via: ${
-          window.location.origin
-        }/?loan=${encodeURIComponent(this.currentLoanName)}`,
-      });
-    } else {
-      // Existing loan, save to the same key
-      const key = `loan_${this.currentLoanName}`;
-
-      const loanData = {
-        loan: this.loan,
-        bills: this.bills,
-        deposits: this.loan.deposits,
-        description: this.loanToSave.description || '',
-        name: this.currentLoanName,
-      };
-
-      //localStorage.setItem(key, JSON.stringify(loanData));
-      await this.indexedDbService.saveLoan(key, loanData);
-
-      // Reset loanModified
-      this.loanModified = false;
-
-      this.messageService.add({
-        severity: 'success',
-        summary: 'Success',
-        detail: `Loan "${this.currentLoanName}" saved successfully`,
-      });
-    }
+    this.messageService.add({
+      severity: 'success',
+      summary: 'Success',
+      detail: `Loan "${this.currentLoanName}" saved successfully`,
+    });
 
     this.showSaveLoanDialog = false;
   }
@@ -1478,54 +1237,39 @@ export class AppComponent implements OnChanges {
     //   //    metadata: '{"unbilledInterestAmount":-0.004383561643835616}',
     // }
   ];
-  repaymentSchedule: AmortizationEntry[] = [];
   repaymentPlanEndDates: string[] = [];
-  amortization: Amortization | undefined = undefined;
-  loanSummary?: LoanSummary;
+  loanSummary?: any;
 
   createLoanRepaymentPlan() {
-    // we will reset current schedule and
-    // copy over this.loanRepaymentPlan values to this.loan.periodsSchedule
-    // which will become a base for user to modify values
-    this.loan.periodsSchedule = this.repaymentSchedule.map((entry) => {
-      return {
-        period: entry.term,
-        startDate: entry.periodStartDate.toDate(),
-        endDate: entry.periodEndDate.toDate(),
-        interestRate: entry.periodInterestRate.times(100).toNumber(),
-        paymentAmount: entry.totalPayment.toNumber(),
-      };
-    });
-
-    //console.log('Loan repayment plan refreshed', this.loan.periodsSchedule);
     this.submitLoan();
   }
 
   removeLoanRepaymentPlan() {
     // Logic to remove schedule override
-    this.loan.periodsSchedule = [];
+    this.loan.periodsSchedule.reset();
     // console.log('Loan repayment plan removed');
     this.submitLoan();
   }
 
   deletePlan(index: number) {
-    this.loan.periodsSchedule.splice(index, 1);
+    this.loan.periodsSchedule.periods.splice(index, 1);
     // console.log('Plan deleted at index:', index);
     this.submitLoan();
   }
 
   repaymentPlanEndDateChange(index: number) {
     // when end date is changed following start date should be updated
-    const selectedRow = this.loan.periodsSchedule[index];
+    const selectedRow = this.loan.periodsSchedule.periods[index];
     const endDate = dayjs(selectedRow.endDate);
     const startDate = endDate;
-    this.loan.periodsSchedule[index + 1].startDate = selectedRow.endDate;
+    this.loan.periodsSchedule.periods[index + 1].startDate =
+      selectedRow.endDate;
     this.submitLoan();
   }
 
   // Handle deposits change event
-  onDepositsChange(updatedDeposits: DepositRecord[]) {
-    this.loan.deposits = updatedDeposits;
+  onDepositsChange(updatedDeposits: DepositRecords) {
+    this.deposits = updatedDeposits;
   }
 
   // Handle deposit updated event (e.g., to recalculate loan details)
@@ -1563,7 +1307,7 @@ export class AppComponent implements OnChanges {
 
     // Find open bills at the time of the deposit's effective date
     const depositEffectiveDayjs = dayjs(deposit.effectiveDate);
-    const openBillsAtDepositDate = this.bills.filter(
+    const openBillsAtDepositDate = this.bills.all.filter(
       (bill) =>
         !bill.isPaid &&
         bill.isOpen &&
@@ -1609,9 +1353,9 @@ export class AppComponent implements OnChanges {
     // remove any existing balance modifications that were associated with deposits
     // but deposits are no longer present
     const filteredBalanceModifications: BalanceModification[] = [];
-    this.loan.balanceModifications.forEach((balanceModification) => {
+    this.loan.balanceModifications.all.forEach((balanceModification) => {
       if (balanceModification.metadata?.depositId) {
-        const deposit = this.loan.deposits.find(
+        const deposit = this.deposits.all.find(
           (d) => d.id === balanceModification.metadata.depositId,
         );
         if (!deposit) {
@@ -1623,26 +1367,27 @@ export class AppComponent implements OnChanges {
       }
       filteredBalanceModifications.push(balanceModification);
     });
-    this.loan.balanceModifications = filteredBalanceModifications;
+    this.loan.balanceModifications.balanceModifications =
+      filteredBalanceModifications;
   }
 
   applyPayments() {
     console.log('running applyPayments');
     // Reset usageDetails and related fields for each deposit
-    this.loan.deposits.forEach((deposit) => {
+    this.deposits.all.forEach((deposit) => {
       deposit.clearHistory();
     });
 
     // Apply payments to the loan
-    const deposits: DepositRecord[] = this.loan.deposits.map((deposit) => {
+    const deposits: DepositRecord[] = this.deposits.all.map((deposit) => {
       return new DepositRecord(deposit);
     });
 
-    const bills: Bill[] = this.bills;
+    const bills: Bills = this.bills;
 
     // Build the allocation strategy based on user selection
     let allocationStrategy = PaymentApplication.getAllocationStrategyFromName(
-      this.loan.paymentAllocationStrategy,
+      this.paymentAllocationStrategy,
     );
 
     // Build the payment priority
@@ -1659,7 +1404,7 @@ export class AppComponent implements OnChanges {
     // Update bills and deposits based on payment results
     this.paymentApplicationResults.forEach((result) => {
       const depositId = result.depositId;
-      const deposit = this.loan.deposits.find((d) => d.id === depositId);
+      const deposit = this.deposits.all.find((d) => d.id === depositId);
       if (!deposit) {
         console.error(`Deposit with id ${depositId} not found`);
         return;
@@ -1674,22 +1419,26 @@ export class AppComponent implements OnChanges {
         );
 
         // 1) Remove existing UI modifications for this deposit
-        this.loan.balanceModifications = this.loan.balanceModifications.filter(
-          (uiMod) =>
-            !(uiMod.metadata && uiMod.metadata.depositId === deposit.id),
-        );
+        this.loan.balanceModifications.balanceModifications =
+          this.loan.balanceModifications.all.filter(
+            (uiMod) =>
+              !(uiMod.metadata && uiMod.metadata.depositId === deposit.id),
+          );
 
         // 2) Push the new UI object
-        this.loan.balanceModifications.push(result.balanceModification);
+        this.loan.balanceModifications.addBalanceModification(
+          result.balanceModification,
+        );
 
         // 3) Also store the ID
         deposit.balanceModificationId = result.balanceModification.id;
       } else {
         // Remove any existing UI modifications for this deposit
-        this.loan.balanceModifications = this.loan.balanceModifications.filter(
-          (uiMod) =>
-            !(uiMod.metadata && uiMod.metadata.depositId === deposit.id),
-        );
+        this.loan.balanceModifications.balanceModifications =
+          this.loan.balanceModifications.all.filter(
+            (uiMod) =>
+              !(uiMod.metadata && uiMod.metadata.depositId === deposit.id),
+          );
         deposit.balanceModificationId = undefined;
       }
 
@@ -1699,7 +1448,7 @@ export class AppComponent implements OnChanges {
       // Process allocations to update bills
       result.allocations.forEach((allocation) => {
         const billId = allocation.billId;
-        const bill = this.bills.find((b) => b.id === billId);
+        const bill = this.bills.all.find((b) => b.id === billId);
         if (!bill) {
           console.info(`Bill with id ${billId} not found`);
           return;
@@ -1731,7 +1480,7 @@ export class AppComponent implements OnChanges {
     });
 
     // Update bills with new payment details
-    this.bills = this.bills.map((bill) => {
+    this.bills.bills = this.bills.all.map((bill) => {
       const updatedBill = this.paymentApplicationResults
         .flatMap((result) => result.allocations)
         .find((allocation) => allocation.billId === bill.id);
@@ -1772,110 +1521,46 @@ export class AppComponent implements OnChanges {
     }
     this.cleanupBalanceModifications();
 
-    const interestRateAsDecimal = new Decimal(this.loan.interestRate);
+    console.log('submitting a loan');
+    // const interestRateAsDecimal = new Decimal(this.loan.annualInterestRate);
 
-    let uiAmortizationParams: UIAmortizationParams = {
-      loanAmount: this.loan.principal,
-      originationFee: this.loan.originationFee,
-      annualInterestRate: this.loan.interestRate,
-      term: this.loan.term,
-      startDate: this.loan.startDate,
-      endDate: this.loan.endDate,
-      firstPaymentDate: this.loan.firstPaymentDate,
-      calendarType: this.loan.calendarType,
-      roundingMethod: this.loan.roundingMethod,
-      flushUnbilledInterestRoundingErrorMethod: this.loan.flushMethod,
-      roundingPrecision: this.loan.roundingPrecision,
-      flushThreshold: this.loan.flushThreshold,
-      termPeriodDefinition: this.loan.termPeriodDefinition,
-      defaultPreBillDaysConfiguration:
-        this.loan.defaultPreBillDaysConfiguration,
-      defaultBillDueDaysAfterPeriodEndConfiguration:
-        this.loan.defaultBillDueDaysAfterPeriodEndConfiguration,
-      preBillDays: this.loan.preBillDays,
-      dueBillDays: this.loan.dueBillDays,
-      perDiemCalculationType: this.loan.perDiemCalculationType,
-      billingModel: this.loan.billingModel,
-    };
+    // let uiAmortizationParams: UIAmortizationParams = {
+    //   loanAmount: this.loan.principal,
+    //   originationFee: this.loan.originationFee,
+    //   annualInterestRate: this.loan.interestRate,
+    //   term: this.loan.term,
+    //   startDate: this.loan.startDate,
+    //   endDate: this.loan.endDate,
+    //   firstPaymentDate: this.loan.firstPaymentDate,
+    //   calendarType: this.loan.calendarType,
+    //   roundingMethod: this.loan.roundingMethod,
+    //   flushUnbilledInterestRoundingErrorMethod: this.loan.flushMethod,
+    //   roundingPrecision: this.loan.roundingPrecision,
+    //   flushThreshold: this.loan.flushThreshold,
+    //   termPeriodDefinition: this.loan.termPeriodDefinition,
+    //   defaultPreBillDaysConfiguration:
+    //     this.loan.defaultPreBillDaysConfiguration,
+    //   defaultBillDueDaysAfterPeriodEndConfiguration:
+    //     this.loan.defaultBillDueDaysAfterPeriodEndConfiguration,
+    //   preBillDays: this.loan.preBillDays,
+    //   dueBillDays: this.loan.dueBillDays,
+    //   perDiemCalculationType: this.loan.perDiemCalculationType,
+    //   billingModel: this.loan.billingModel,
+    // };
 
     // if billing model is Daily Simple Interest Loan then we will remove pre bill days and due bill days
     // configurations
-    if (this.loan.billingModel === 'dailySimpleInterest') {
-      delete uiAmortizationParams.defaultPreBillDaysConfiguration;
-      delete uiAmortizationParams.defaultBillDueDaysAfterPeriodEndConfiguration;
-    }
-
-    if (this.loan.termPaymentAmount) {
-      uiAmortizationParams.termPaymentAmount = this.loan.termPaymentAmount;
-    }
-
-    if (this.loan.changePaymentDates.length > 0) {
-      uiAmortizationParams.changePaymentDates = this.loan.changePaymentDates;
-    }
-
-    if (this.loan.ratesSchedule.length > 0) {
-      uiAmortizationParams.ratesSchedule = this.loan.ratesSchedule;
-    }
-
-    if (this.loan.termPaymentAmountOverride.length > 0) {
-      uiAmortizationParams.termPaymentAmountOverride =
-        this.loan.termPaymentAmountOverride;
-    }
-
-    if (this.loan.periodsSchedule.length > 0) {
-      uiAmortizationParams.periodsSchedule = this.loan.periodsSchedule;
-    }
-
-    if (this.loan.balanceModifications.length > 0) {
-      uiAmortizationParams.balanceModifications =
-        this.loan.balanceModifications;
-    }
-
-    if (this.loan.feesForAllTerms.length > 0) {
-      uiAmortizationParams.feesForAllTerms = this.loan.feesForAllTerms;
-    }
-
-    if (this.loan.feesPerTerm.length > 0) {
-      // Group fees by term number
-      // const feesGroupedByTerm = this.loan.feesPerTerm.reduce(
-      //   (acc, fee) => {
-      //     const termNumber = fee.termNumber;
-      //     if (!acc[termNumber]) {
-      //       acc[termNumber] = [];
-      //     }
-      //     acc[termNumber].push(fee);
-      //     return acc;
-      //   },
-      //   {} as { [key: number]: LoanFeePerTerm[] },
-      // );
-
-      // Build amortizationParams.feesPerTerm
-      uiAmortizationParams.feesPerTerm = this.loan.feesPerTerm;
-    }
-
-    if (
-      this.loan.termInterestOverride &&
-      this.loan.termInterestOverride.length > 0
-    ) {
-      uiAmortizationParams.termInterestOverride =
-        this.loan.termInterestOverride;
-    }
-
-    if (
-      this.loan.termInterestRateOverride &&
-      this.loan.termInterestRateOverride.length > 0
-    ) {
-      uiAmortizationParams.termInterestRateOverride =
-        this.loan.termInterestRateOverride;
-    }
-
-    let amortization: Amortization;
+    // if (this.loan.billingModel === 'dailySimpleInterest') {
+    //   delete uiAmortizationParams.defaultPreBillDaysConfiguration;
+    //   delete uiAmortizationParams.defaultBillDueDaysAfterPeriodEndConfiguration;
+    // }
 
     try {
-      const engineParams = toAmortizationParams(uiAmortizationParams);
-      amortization = new Amortization(engineParams);
-      this.loan.firstPaymentDate = amortization.firstPaymentDate.toDate();
-      this.loan.endDate = amortization.endDate.toDate();
+      this.loan.jsGenerateSchedule();
+      // const engineParams = toAmortizationParams(uiAmortizationParams);
+      // amortization = new Amortization(engineParams);
+      // this.loan.firstPaymentDate = amortization.firstPaymentDate.toDate();
+      // this.loan.endDate = amortization.endDate.toDate();
     } catch (error) {
       console.error('Error creating Amortization:', error);
 
@@ -1888,64 +1573,66 @@ export class AppComponent implements OnChanges {
       });
       return;
     }
-    this.amortization = amortization;
-    this.accruedInterest = amortization.getAccruedInterestByDate(
+    // this.loan = amortization;
+    this.accruedInterest = this.loan.getAccruedInterestByDate(
       this.snapshotDate,
     );
-    this.tilaDisclosures = amortization.generateTILADisclosures();
-    this.repaymentSchedule = amortization.repaymentSchedule;
+    //this.tilaDisclosures = this.loan.tila.generateTILADisclosures();
 
-    this.repaymentPlanEndDates = this.repaymentSchedule.map((entry) => {
-      // mm/dd/yy
-      return entry.periodEndDate.format('MM/DD/YY');
-    });
+    // this.repaymentPlanEndDates = this.loan.repaymentSchedule.map((entry) => {
+    //   // mm/dd/yy
+    //   return entry.periodEndDate.format('MM/DD/YY');
+    // });
 
-    this.repaymentPlan = this.repaymentSchedule.map((entry, index) => {
-      return {
-        period: entry.term,
-        periodStartDate: entry.periodStartDate.format('YYYY-MM-DD'),
-        periodEndDate: entry.periodEndDate.format('YYYY-MM-DD'),
-        prebillDaysConfiguration: entry.prebillDaysConfiguration,
-        billDueDaysAfterPeriodEndConfiguration:
-          entry.billDueDaysAfterPeriodEndConfiguration,
-        periodBillOpenDate: entry.periodBillOpenDate.format('YYYY-MM-DD'),
-        periodBillDueDate: entry.periodBillDueDate.format('YYYY-MM-DD'),
-        periodInterestRate: entry.periodInterestRate.times(100).toNumber(),
-        principal: entry.principal.toNumber(),
-        fees: entry.fees.toNumber(),
-        // interest transactions
-        accruedInterestForPeriod: entry.accruedInterestForPeriod.toNumber(), // track accrued interest for the period
-        billedInterestForTerm: entry.billedInterestForTerm.toNumber(), // tracks total accrued interest along with any deferred interest from previous periods
-        dueInterestForTerm: entry.dueInterestForTerm.toNumber(), // tracks total interest that is due for the term
-        dueInterestForTermError: entry.dueInterestForTerm
-          .getRoundingError()
-          .toNumber(), // tracks total interest that is due for the term
-        billedDeferredInterest: entry.billedDeferredInterest.toNumber(),
-        unbilledTotalDeferredInterest:
-          entry.unbilledTotalDeferredInterest.toNumber(), // tracks deferred interest
+    this.repaymentPlan = this.loan.repaymentSchedule.entries.map(
+      (entry, index) => {
+        return {
+          period: entry.term,
+          zeroPeriod: entry.zeroPeriod,
+          periodStartDate: entry.periodStartDate.format('YYYY-MM-DD'),
+          periodEndDate: entry.periodEndDate.format('YYYY-MM-DD'),
+          prebillDaysConfiguration: entry.prebillDaysConfiguration,
+          billDueDaysAfterPeriodEndConfiguration:
+            entry.billDueDaysAfterPeriodEndConfiguration,
+          periodBillOpenDate: entry.periodBillOpenDate.format('YYYY-MM-DD'),
+          periodBillDueDate: entry.periodBillDueDate.format('YYYY-MM-DD'),
+          periodInterestRate: entry.periodInterestRate.times(100).toNumber(),
+          principal: entry.principal.toNumber(),
+          fees: entry.fees.toNumber(),
+          // interest transactions
+          accruedInterestForPeriod: entry.accruedInterestForPeriod.toNumber(), // track accrued interest for the period
+          billedInterestForTerm: entry.billedInterestForTerm.toNumber(), // tracks total accrued interest along with any deferred interest from previous periods
+          dueInterestForTerm: entry.dueInterestForTerm.toNumber(), // tracks total interest that is due for the term
+          dueInterestForTermError: entry.dueInterestForTerm
+            .getRoundingError()
+            .toNumber(), // tracks total interest that is due for the term
+          billedDeferredInterest: entry.billedDeferredInterest.toNumber(),
+          unbilledTotalDeferredInterest:
+            entry.unbilledTotalDeferredInterest.toNumber(), // tracks deferred interest
 
-        totalInterestForPeriod: entry.billedInterestForTerm.toNumber(),
-        //  realInterest: entry.unroundedInterestForPeriod.toNumber(),
-        interestRoundingError: entry.interestRoundingError.toNumber(),
-        totalPayment: entry.totalPayment.toNumber(),
-        perDiem: entry.perDiem,
-        daysInPeriod: entry.daysInPeriod,
-        startBalance: entry.startBalance.toNumber(),
-        endBalance: entry.endBalance.toNumber(),
-        balanceModificationAmount: entry.balanceModificationAmount.toNumber(),
-        unbilledInterestDueToRounding:
-          entry.unbilledInterestDueToRounding.toNumber(),
-        totalDeferredInterest: entry.unbilledTotalDeferredInterest.toNumber(),
-        metadata: entry.metadata,
-      };
-    });
+          totalInterestForPeriod: entry.billedInterestForTerm.toNumber(),
+          //  realInterest: entry.unroundedInterestForPeriod.toNumber(),
+          interestRoundingError: entry.interestRoundingError.toNumber(),
+          totalPayment: entry.totalPayment.toNumber(),
+          perDiem: entry.perDiem,
+          daysInPeriod: entry.daysInPeriod,
+          startBalance: entry.startBalance.toNumber(),
+          endBalance: entry.endBalance.toNumber(),
+          balanceModificationAmount: entry.balanceModificationAmount.toNumber(),
+          unbilledInterestDueToRounding:
+            entry.unbilledInterestDueToRounding.toNumber(),
+          totalDeferredInterest: entry.unbilledTotalDeferredInterest.toNumber(),
+          metadata: entry.metadata,
+        };
+      },
+    );
 
     this.showTable = true;
     // after balance modifications are applied amortization will add usage values and
     // it is possible that modification amount exceeds the principal amount
     // this will show user how much was unused
 
-    this.loan.balanceModifications = this.amortization.balanceModifications;
+    this.loan.balanceModifications = this.loan.balanceModifications;
 
     this.generateBills();
     this.applyPayments();
@@ -1956,36 +1643,23 @@ export class AppComponent implements OnChanges {
 
     // change payment dates will get updated with term number if only original date
     // is passed and term is set to zero.
-    this.loan.changePaymentDates = this.amortization.changePaymentDates.map(
-      (cpd) => {
-        return {
-          termNumber: cpd.termNumber,
-          newDate: cpd.newDate.toDate(),
-        };
-      },
-    );
+    this.loan.changePaymentDates = this.loan.changePaymentDates;
 
-    this.loan.termInterestOverride = [];
-    this.amortization.termInterestOverrideMap.forEach((value, key) => {
-      this.loan.termInterestOverride!.push({
-        termNumber: key,
-        interestAmount: value.toNumber(),
-      });
-    });
+    //console.log('change payment dates', this.loan.changePaymentDates);
 
     this.loanModified = true; // Mark as modified
 
-    this.loanSummary = this.amortization.getLoanSummary(
+    this.loanSummary = this.loan.summary.calculateLoanSummaryAsOfDate(
       dayjs(this.snapshotDate),
     );
 
     this.actualLoanSummary = this.getActualLoanSummary(); // If already implemented
     this.pastDueSummary = this.getPastDueSummary();
 
-    this.accruedInterestToDate = this.amortization.getAccruedInterestByDate(
+    this.accruedInterestToDate = this.loan.getAccruedInterestByDate(
       this.snapshotDate,
     );
-    this.payoffAmount = this.amortization.getCurrentPayoffAmount(
+    this.payoffAmount = this.loan.getCurrentPayoffAmount(
       dayjs(this.snapshotDate),
     );
   }
@@ -2024,7 +1698,7 @@ export class AppComponent implements OnChanges {
 
     let earliestPastDueBillDate: Dayjs | null = null;
 
-    for (const bill of this.bills) {
+    for (const bill of this.bills.all) {
       // A bill is past due if it's not fully paid and due before the snapshot date
       if (!bill.isPaid && bill.dueDate.isBefore(snapshot)) {
         // Calculate the currently unpaid amount of the bill

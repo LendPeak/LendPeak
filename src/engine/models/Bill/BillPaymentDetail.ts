@@ -45,4 +45,15 @@ export class BillPaymentDetail {
   get jsDate(): Date {
     return this.date.toDate();
   }
+
+  get json() {
+    return {
+      depositId: this.depositId,
+      allocatedPrincipal: this.jsAllocatedPrincipal,
+      allocatedInterest: this.jsAllocatedInterest,
+      allocatedFees: this.jsAllocatedFees,
+      allocatedTotal: this.jsAllocatedTotal,
+      date: this.jsDate,
+    };
+  }
 }

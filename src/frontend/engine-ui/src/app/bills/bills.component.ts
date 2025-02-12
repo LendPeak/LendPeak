@@ -9,6 +9,7 @@ import {
   AfterViewInit,
 } from '@angular/core';
 import { Bill } from 'lendpeak-engine/models/Bill';
+import { Bills } from 'lendpeak-engine/models/Bills';
 
 @Component({
     selector: 'app-bills',
@@ -17,7 +18,7 @@ import { Bill } from 'lendpeak-engine/models/Bill';
     standalone: false
 })
 export class BillsComponent implements AfterViewInit {
-  @Input() bills: Bill[] = [];
+  @Input() bills: Bills = new Bills();
   @Input() snapshotDate: Date = new Date();
 
   @Output() billAction = new EventEmitter<void>();
@@ -48,7 +49,7 @@ export class BillsComponent implements AfterViewInit {
 
   scrollToLastDueBill() {
     // Filter unpaid due bills
-    const dueBills = this.bills.filter((bill) =>
+    const dueBills = this.bills.all.filter((bill) =>
       bill.dueDate.isBefore(this.snapshotDate, 'day'),
     );
 
@@ -67,7 +68,7 @@ export class BillsComponent implements AfterViewInit {
     setTimeout(() => {
       if (!this.billRows || this.billRows.length === 0) return;
 
-      const index = this.bills.findIndex((b) => b.id === lastDueBill.id);
+      const index = this.bills.all.findIndex((b) => b.id === lastDueBill.id);
 
       if (index > -1 && index < this.billRows.length) {
         const row = this.billRows.toArray()[index];

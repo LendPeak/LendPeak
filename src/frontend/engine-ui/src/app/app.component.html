@@ -121,6 +121,7 @@
       <ng-template pTemplate="header">
         <tr>
           <th>#</th>
+          <th>Id</th>
           <th>Loan Name</th>
           <th>Description</th>
           <th pSortableColumn="startDate">Start Date</th>
@@ -133,6 +134,7 @@
       <ng-template pTemplate="body" let-loan let-rowIndex="rowIndex">
         <tr>
           <td>{{ rowIndex + 1 }}</td>
+          <td>{{ loan.id }}</td>
           <td>{{ loan.name }}</td>
           <td>{{ loan.description }}</td>
           <td>{{ loan.startDate | date: "MM/dd/yyyy" }}</td>
@@ -207,7 +209,7 @@
         type="text"
         class="flex-auto"
         pInputText
-        [(ngModel)]="loanToEdit.name"
+        [(ngModel)]="loan.jsName"
       />
     </div>
     <div class="flex items-center gap-4 mb-8">
@@ -215,7 +217,7 @@
       <textarea
         id="editLoanDescription"
         pInputTextarea
-        [(ngModel)]="loanToEdit.description"
+        [(ngModel)]="loan.jsDescription"
         class="flex-auto"
         rows="5"
       ></textarea>
@@ -306,11 +308,11 @@
       <p-tab [value]="2">
         <span class="font-bold whitespace-nowrap">Settings</span></p-tab
       >
-      <p-tab [value]="3"
+      <!-- <p-tab [value]="3"
         ><span class="font-bold whitespace-nowrap"
           >Custom Periods Schedule</span
         ></p-tab
-      >
+      > -->
       <ng-template #nexticon>
         <i class="pi pi-plus"></i>
       </ng-template>
@@ -320,7 +322,6 @@
       <p-tabpanel [value]="0">
         <app-basic-loan-info
           [loan]="loan"
-          [amortization]="amortization"
           (loanChange)="onLoanChange($event)"
           (loanUpdated)="submitLoan()"
         ></app-basic-loan-info>
@@ -330,7 +331,6 @@
       <p-tabpanel [value]="1">
         <app-overrides
           [loan]="loan"
-          [loanRepaymentPlan]="repaymentSchedule"
           [termOptions]="termOptions"
           [balanceIncreaseType]="balanceIncreaseType"
           (loanChange)="onLoanChange($event)"
@@ -348,7 +348,7 @@
       </p-tabpanel>
 
       <!-- Custom Periods Schedule Tab -->
-      <p-tabpanel [value]="3">
+      <!-- <p-tabpanel [value]="3">
         <div class="grid">
           <div class="col-12">
             <p-card>
@@ -417,12 +417,12 @@
             </p-card>
           </div>
         </div>
-      </p-tabpanel>
+      </p-tabpanel> -->
 
       <!-- Deposits Tab -->
       <p-tabpanel [value]="4">
         <app-deposits
-          [deposits]="loan.deposits"
+          [deposits]="deposits"
           [currencyOptions]="currencyOptions"
           (depositsChange)="onDepositsChange($event)"
           (depositUpdated)="onDepositUpdated()"
@@ -736,9 +736,7 @@
         <div class="col-12 md:col-2">
           <div class="flex flex-column">
             <span class="text-300 font-semibold mb-1">Total Loan Amount:</span>
-            <span>{{
-              amortization?.totalLoanAmount?.toNumber() | currency
-            }}</span>
+            <span>{{ loan.totalLoanAmount.toNumber() | currency }}</span>
           </div>
         </div>
         <div class="col-12 md:col-2">
@@ -747,26 +745,30 @@
               >Cumulative Interest:</span
             >
             <span>{{
-              amortization?.cumulativeInterest?.toNumber() | currency
+              loan.summary
+                .calculateLoanSummaryAsOfDate()
+                .accruedInterestToDate.toNumber() | currency
             }}</span>
           </div>
         </div>
         <div class="col-12 md:col-2">
           <div class="flex flex-column">
             <span class="text-300 font-semibold mb-1">Term In Months:</span>
-            <span>{{ amortization?.loanTermInMonths }}</span>
+            <span>{{ loan.loanTermInMonths }}</span>
           </div>
         </div>
         <div class="col-12 md:col-1">
           <div class="flex flex-column">
             <span class="text-300 font-semibold mb-1">APR:</span>
-            <span>{{ amortization?.apr?.toDecimalPlaces(4) }}%</span>
+            <span>{{ loan.apr.toDecimalPlaces(4) }}%</span>
           </div>
         </div>
         <div class="col-12 md:col-2">
           <div class="flex flex-column">
             <span class="text-300 font-semibold mb-1">Days Left in Term:</span>
-            <span>{{ amortization?.getDaysLeftInTerm(snapshotDate) }}</span>
+            <span>{{
+              loan.repaymentSchedule.getDaysLeftInTerm(snapshotDate)
+            }}</span>
           </div>
         </div>
 
@@ -774,8 +776,8 @@
           <div class="flex flex-column">
             <span class="text-300 font-semibold mb-1">Per Diem:</span>
             <span>{{
-              amortization?.getPerDiemForPeriodByDate(snapshotDate)?.toNumber()
-                | currency
+              loan.repaymentSchedule.getPerDiemForPeriodByDate(snapshotDate)
+                .jsValue | currency
             }}</span>
           </div>
         </div>
@@ -910,7 +912,26 @@
             </td>
 
             <td>{{ plan.periodStartDate | date: "MM/dd/yyyy" }}</td>
-            <td>{{ plan.periodEndDate | date: "MM/dd/yyyy" }}</td>
+            <td>
+              {{ plan.periodEndDate | date: "MM/dd/yyyy" }}
+              <p-badge
+                *ngIf="
+                  loan.changePaymentDates.getChangePaymentDate(plan.period)
+                "
+                value="CPD"
+                severity="warn"
+                styleClass="mr-2"
+                pTooltip="Change Payment Date from {{
+                  loan.changePaymentDates.getChangePaymentDate(plan.period)
+                    ?.jsOriginalEndDate | date: 'MM/dd/yyyy'
+                }} to {{
+                  loan.changePaymentDates.getChangePaymentDate(plan.period)
+                    ?.jsNewDate | date: 'MM/dd/yyyy'
+                }}"
+                tooltipPosition="top"
+                tooltipStyleClass="wide-tooltip"
+              ></p-badge>
+            </td>
             <td *ngIf="showAdvancedTable">
               {{ plan.prebillDaysConfiguration }}
             </td>
@@ -918,28 +939,28 @@
             <td *ngIf="showAdvancedTable">
               {{ plan.billDueDaysAfterPeriodEndConfiguration }}
             </td>
-            <td>{{ plan.periodBillDueDate | date: "MM/dd/yyyy" }}</td>
+            <td>
+              {{ plan.periodBillDueDate | date: "MM/dd/yyyy" }}
+            </td>
 
             <td>
               {{ plan.periodInterestRate | number }}%
-              <ng-container
+
+              <p-badge
                 *ngIf="
                   plan.metadata && plan.metadata.staticInterestOverrideApplied
                 "
-              >
-                <p-badge
-                  value="Manual"
-                  severity="warn"
-                  styleClass="mr-2"
-                  pTooltip="This term's interest was manually set to {{
-                    plan.metadata.actualInterestValue | currency
-                  }}, calculated equivalent interest rate is {{
-                    plan.metadata.equivalentAnnualRate * 100 | number: '1.2-6'
-                  }}%"
-                  tooltipPosition="top"
-                  tooltipStyleClass="wide-tooltip"
-                ></p-badge>
-              </ng-container>
+                value="!"
+                severity="warn"
+                styleClass="mr-2"
+                pTooltip="This term's interest was manually set to {{
+                  plan.metadata.actualInterestValue | currency
+                }}, calculated equivalent interest rate is {{
+                  plan.metadata.equivalentAnnualRate * 100 | number: '1.2-6'
+                }}%"
+                tooltipPosition="top"
+                tooltipStyleClass="wide-tooltip"
+              ></p-badge>
             </td>
 
             <td>{{ showFullNumbers ? plan.fees : (plan.fees | currency) }}</td>
@@ -949,6 +970,22 @@
                   ? plan.dueInterestForTerm
                   : (plan.dueInterestForTerm | currency)
               }}
+
+              <p-badge
+                *ngIf="
+                  plan.metadata && plan.metadata.staticInterestOverrideApplied
+                "
+                value="Manual"
+                severity="warn"
+                styleClass="mr-2"
+                pTooltip="This term's interest was manually set to {{
+                  plan.metadata.actualInterestValue | currency
+                }}, calculated equivalent interest rate is {{
+                  plan.metadata.equivalentAnnualRate * 100 | number: '1.2-6'
+                }}%"
+                tooltipPosition="top"
+                tooltipStyleClass="wide-tooltip"
+              ></p-badge>
             </td>
             <td>
               {{
@@ -961,6 +998,26 @@
                   ? plan.totalPayment
                   : (plan.totalPayment | currency)
               }}
+
+              <p-badge
+                *ngIf="
+                  loan.termPaymentAmountOverride.getPaymentAmountForTerm(
+                    plan.period
+                  )
+                "
+                value="PO"
+                severity="warn"
+                styleClass="mr-2"
+                pTooltip="Payment override from standard EMI {{
+                  loan.jsEquitedMonthlyPayment | currency
+                }} to {{
+                  loan.termPaymentAmountOverride.getPaymentAmountForTerm(
+                    plan.period
+                  )?.jsPaymentAmount | currency
+                }}"
+                tooltipPosition="top"
+                tooltipStyleClass="wide-tooltip"
+              ></p-badge>
             </td>
             <td>
               {{
@@ -1069,7 +1126,6 @@
     >
       <app-tila-disclosure
         [showTitle]="false"
-        [tilaDisclosures]="tilaDisclosures"
         [lenderName]="lenderName"
         [borrowerName]="borrowerName"
         [loanDate]="loanDate"

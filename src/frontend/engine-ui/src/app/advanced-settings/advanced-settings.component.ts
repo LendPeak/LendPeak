@@ -1,14 +1,24 @@
 import { Component, Input, Output, EventEmitter, OnInit } from '@angular/core';
 import { AdvancedSettingsService } from '../services/advanced-settings.service';
 import { AdvancedSettings } from '../models/advanced-settings.model';
-import { UILoan } from 'lendpeak-engine/models/UIInterfaces';
 import { v4 as uuidv4 } from 'uuid';
 // REMOVE this import:
 // import { OverlayPanel } from 'primeng/overlaypanel';
 // ADD this import for p-popover:
 import { Popover } from 'primeng/popover';
-import { DropDownOptionString } from '../models/common.model';
-import { PaymentComponent } from 'lendpeak-engine/models/PaymentApplication';
+import { DropDownOptionNumber, DropDownOptionString } from '../models/common.model';
+import { CalendarType } from 'lendpeak-engine/models/Calendar';
+
+import {
+  PaymentAllocationStrategyName,
+  PaymentComponent,
+} from 'lendpeak-engine/models/PaymentApplication';
+import {
+  Amortization,
+  FlushUnbilledInterestDueToRoundingErrorType,
+} from 'lendpeak-engine/models/Amortization';
+import { Calendar } from 'lendpeak-engine/models/Calendar';
+import { RoundingMethod, Currency } from 'lendpeak-engine/utils/Currency';
 
 @Component({
   selector: 'app-advanced-settings',
@@ -17,8 +27,9 @@ import { PaymentComponent } from 'lendpeak-engine/models/PaymentApplication';
   standalone: false,
 })
 export class AdvancedSettingsComponent implements OnInit {
-  @Input() loan!: UILoan;
-  @Output() loanChange = new EventEmitter<UILoan>();
+  @Input() loan!: Amortization;
+  @Input() paymentAllocationStrategyName!: PaymentAllocationStrategyName;
+  @Output() loanChange = new EventEmitter<Amortization>();
   @Output() loanUpdated = new EventEmitter<void>();
 
   // For managing settings
@@ -51,12 +62,12 @@ export class AdvancedSettingsComponent implements OnInit {
   selectedSetting: AdvancedSettings | null = null;
 
   // Dropdown options
-  calendarTypes: DropDownOptionString[] = [
-    { label: 'Actual/Actual', value: 'ACTUAL_ACTUAL' },
-    { label: 'Actual/360', value: 'ACTUAL_360' },
-    { label: 'Actual/365', value: 'ACTUAL_365' },
-    { label: '30/360', value: 'THIRTY_360' },
-    { label: '30/Actual', value: 'THIRTY_ACTUAL' },
+  calendarTypes: DropDownOptionNumber[] = [
+    { label: 'Actual/Actual', value: CalendarType.ACTUAL_ACTUAL },
+    { label: 'Actual/360', value: CalendarType.ACTUAL_360 },
+    { label: 'Actual/365', value: CalendarType.ACTUAL_365 },
+    { label: '30/360', value: CalendarType.THIRTY_360 },
+    { label: '30/Actual', value: CalendarType.THIRTY_ACTUAL },
   ];
 
   termPeriodUnits: DropDownOptionString[] = [
@@ -149,18 +160,19 @@ export class AdvancedSettingsComponent implements OnInit {
 
   applyDefaultSettings() {
     // Reset to default values
-    this.loan.calendarType = 'THIRTY_360';
+    this.loan.calendar = new Calendar('THIRTY_360');
     this.loan.termPeriodDefinition = { unit: 'month', count: [1] };
-    this.loan.roundingMethod = 'ROUND_HALF_EVEN';
-    this.loan.flushMethod = 'at_threshold';
+    this.loan.roundingMethod = RoundingMethod.ROUND_HALF_EVEN;
+    this.loan.flushUnbilledInterestRoundingErrorMethod =
+      FlushUnbilledInterestDueToRoundingErrorType.AT_THRESHOLD;
     this.loan.perDiemCalculationType = 'AnnualRateDividedByDaysInYear';
     this.loan.billingModel = 'amortized';
-    this.loan.paymentAllocationStrategy = 'FIFO';
+    this.paymentAllocationStrategyName = 'FIFO';
     this.paymentPriority = ['interest', 'fees', 'principal'];
     this.loan.defaultPreBillDaysConfiguration = 5;
     this.loan.defaultBillDueDaysAfterPeriodEndConfiguration = 3;
     this.loan.allowRateAbove100 = false;
-    this.loan.flushThreshold = 0.01;
+    this.loan.flushThreshold = Currency.of(0.01);
     this.loan.roundingPrecision = 2;
 
     // Store as original settings
@@ -184,13 +196,13 @@ export class AdvancedSettingsComponent implements OnInit {
     } else {
       // Reset to stored original settings
       const settings = this.originalSettings;
-      this.loan.calendarType = settings.calendarType;
+      this.loan.calendar.calendarType = settings.calendarType;
       this.loan.termPeriodDefinition = settings.termPeriodDefinition;
       this.loan.roundingMethod = settings.roundingMethod;
-      this.loan.flushMethod = settings.flushMethod;
+      this.loan.flushUnbilledInterestRoundingErrorMethod = settings.flushMethod;
       this.loan.perDiemCalculationType = settings.perDiemCalculationType;
       this.loan.billingModel = settings.billingModel;
-      this.loan.paymentAllocationStrategy = settings.paymentAllocationStrategy;
+      this.paymentAllocationStrategyName = settings.paymentAllocationStrategy;
       this.paymentPriority = settings.paymentPriority;
       this.loan.defaultPreBillDaysConfiguration =
         settings.defaultPreBillDaysConfiguration;
@@ -265,13 +277,13 @@ export class AdvancedSettingsComponent implements OnInit {
   // Get the current settings
   getCurrentSettings() {
     return {
-      calendarType: this.loan.calendarType,
+      calendarType: this.loan.calendar.calendarType,
       termPeriodDefinition: this.loan.termPeriodDefinition,
       roundingMethod: this.loan.roundingMethod,
-      flushMethod: this.loan.flushMethod,
+      flushMethod: this.loan.flushUnbilledInterestRoundingErrorMethod,
       perDiemCalculationType: this.loan.perDiemCalculationType,
       billingModel: this.loan.billingModel,
-      paymentAllocationStrategy: this.loan.paymentAllocationStrategy,
+      paymentAllocationStrategyName: this.paymentAllocationStrategyName,
       paymentPriority: this.paymentPriority,
       defaultPreBillDaysConfiguration:
         this.loan.defaultPreBillDaysConfiguration,
@@ -286,17 +298,18 @@ export class AdvancedSettingsComponent implements OnInit {
   // Apply settings to the component
   applySettings(setting: AdvancedSettings) {
     const settings = setting.settings;
-    this.loan.calendarType = settings.calendarType || 'THIRTY_360';
+    this.loan.calendar.calendarType = settings.calendarType || 'THIRTY_360';
     this.loan.termPeriodDefinition = settings.termPeriodDefinition || {
       unit: 'month',
       count: [1],
     };
     this.loan.roundingMethod = settings.roundingMethod || 'ROUND_HALF_EVEN';
-    this.loan.flushMethod = settings.flushMethod || 'at_threshold';
+    this.loan.flushUnbilledInterestRoundingErrorMethod =
+      settings.flushMethod || 'at_threshold';
     this.loan.perDiemCalculationType =
       settings.perDiemCalculationType || 'AnnualRateDividedByDaysInYear';
     this.loan.billingModel = settings.billingModel || 'amortized';
-    this.loan.paymentAllocationStrategy =
+    this.paymentAllocationStrategyName =
       settings.paymentAllocationStrategy || 'FIFO';
     this.paymentPriority = settings.paymentPriority || [
       'interest',

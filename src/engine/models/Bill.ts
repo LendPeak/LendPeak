@@ -104,11 +104,30 @@ export class Bill {
   get jsFeesDue(): number {
     return this.feesDue.toNumber();
   }
-}
 
-export class Bills {
-  bills: Bill[];
-  constructor(bills: Bill[]) {
-    this.bills = bills;
+  toJSON() {
+    return this.json;
+  }
+
+  get json() {
+    return {
+      id: this.id,
+      period: this.period,
+      dueDate: this.jsDueDate,
+      openDate: this.jsOpenDate,
+      principalDue: this.jsPrincipalDue,
+      interestDue: this.jsInterestDue,
+      feesDue: this.jsFeesDue,
+      totalDue: this.jsTotalDue,
+      isPaid: this.isPaid,
+      isOpen: this.isOpen,
+      isDue: this.isDue,
+      isPastDue: this.isPastDue,
+      daysPastDue: this.daysPastDue,
+      isDSIBill: this.isDSIBill,
+      amortizationEntry: this.amortizationEntry.toJSON(),
+      paymentMetadata: this.paymentMetadata,
+      paymentDetails: this.paymentDetails.map((detail) => detail.json),
+    };
   }
 }

@@ -57,20 +57,25 @@ export class BalanceModification {
     this.metadata = params.metadata;
   }
 
+  updateJsValues() {
+    this.jsAmount = this.amount.toNumber();
+    this.jsDate = this.date.toDate();
+    this.jsUsedAmount = this.usedAmount.toNumber();
+    this.jsUnusedAmount = this.unusedAmount.toNumber();
+  }
+
   resetUsedAmount() {
     this.usedAmount = 0;
   }
 
-  syncValuesFromJSProperties() {
+  updateModelValues() {
     this.amount = this.jsAmount;
     this.date = this.jsDate;
-    this.usedAmount = this.jsUsedAmount;
+    this.updateUsedAmount();
   }
 
-  syncJSPropertiesFromValues() {
-    this.jsAmount = this.amount.toNumber();
-    this.jsDate = this.date.toDate();
-    this.jsUsedAmount = this.usedAmount.toNumber();
+  updateUsedAmount() {
+    this.usedAmount = this.jsUsedAmount;
   }
 
   private set unusedAmount(amount: Currency) {
@@ -201,7 +206,7 @@ export class BalanceModification {
    * Serializes the BalanceModification instance into a JSON object.
    * @returns A JSON-compatible object representing the BalanceModification instance.
    */
-  public toJSON(): any {
+  get json(): any {
     return {
       id: this.id,
       amount: this.amount.toNumber(),

@@ -4,7 +4,7 @@
   <div class="formgrid grid">
     <!-- Principal Amount -->
     <div class="field col">
-      <label for="principal">
+      <label for="loanAmount">
         Principal Amount
         <i
           class="pi pi-info-circle tooltip-icon"
@@ -12,12 +12,12 @@
         ></i>
       </label>
       <p-inputNumber
-        inputId="principal"
-        [(ngModel)]="loan.principal"
+        inputId="loanAmount"
+        [(ngModel)]="loan.jsLoanAmount"
+        (ngModelChange)="inputChanged($event)"
         mode="currency"
         currency="USD"
         locale="en-US"
-        (ngModelChange)="submitLoan()"
         class="w-full"
       ></p-inputNumber>
 
@@ -40,11 +40,11 @@
       </label>
       <p-inputNumber
         inputId="originationFee"
-        [(ngModel)]="loan.originationFee"
+        [(ngModel)]="loan.jsOriginationFee"
+        (ngModelChange)="inputChanged($event)"
         mode="currency"
         currency="USD"
         locale="en-US"
-        (ngModelChange)="submitLoan()"
         class="w-full"
       ></p-inputNumber>
 
@@ -69,11 +69,11 @@
       </label>
       <p-inputNumber
         inputId="interestRate"
-        [(ngModel)]="loan.interestRate"
+        [(ngModel)]="loan.jsAnnualInterestRate"
+        (ngModelChange)="inputChanged($event)"
         mode="decimal"
         minFractionDigits="2"
         suffix="%"
-        (ngModelChange)="submitLoan()"
         class="w-full"
       ></p-inputNumber>
 
@@ -88,7 +88,7 @@
     <!-- Term (Months) -->
     <div class="field col">
       <label for="term">
-        Term ({{ amortization?.loanTermInMonths }} months)
+        Term ({{ loan.term }} months)
         <i
           class="pi pi-info-circle tooltip-icon"
           (click)="showTooltip($event, termTooltip)"
@@ -96,8 +96,8 @@
       </label>
       <p-inputNumber
         inputId="term"
-        [(ngModel)]="loan.term"
-        (ngModelChange)="updateTerm()"
+        [(ngModel)]="loan.jsTerm"
+        (ngModelChange)="inputChanged($event)"
         class="w-full"
       ></p-inputNumber>
 
@@ -122,12 +122,12 @@
       <p-datepicker
         appendTo="body"
         inputId="startDate"
-        [(ngModel)]="loan.startDate"
+        [(ngModel)]="loan.jsStartDate"
+        (ngModelChange)="inputChanged($event)"
         dateFormat="mm/dd/yy"
         [numberOfMonths]="2"
         [showButtonBar]="true"
         [showIcon]="true"
-        (ngModelChange)="updateStartDate()"
         [style]="{ width: '100%' }"
         [inputStyle]="{
           width: '100%',
@@ -157,22 +157,22 @@
           <p-checkbox
             id="enableFirstPaymentDate"
             name="enableFirstPaymentDate"
-            [(ngModel)]="enableFirstPaymentDate"
+            [(ngModel)]="loan.jshasCustomFirstPaymentDate"
+            (ngModelChange)="inputChanged($event)"
             binary="true"
             inputId="enableFirstPaymentDate"
-            (onChange)="onFirstPaymentToggle()"
             size="small"
           ></p-checkbox>
         </p-inputgroup-addon>
 
         <p-datepicker
           inputId="firstPaymentDate"
-          [(ngModel)]="loan.firstPaymentDate"
+          [(ngModel)]="loan.jsFirstPaymentDate"
+          (ngModelChange)="inputChanged($event)"
           dateFormat="mm/dd/yy"
           [numberOfMonths]="2"
           [showButtonBar]="true"
-          (ngModelChange)="submitLoan()"
-          [disabled]="!enableFirstPaymentDate"
+          [disabled]="!loan.jshasCustomFirstPaymentDate"
           [style]="{ width: '100%' }"
           appendTo="body"
           [inputStyle]="{
@@ -208,23 +208,23 @@
         <p-inputgroup-addon>
           <p-checkbox
             inputId="enableEndDate"
-            [(ngModel)]="enableEndDate"
+            [(ngModel)]="loan.jsHasCustomEndDate"
             binary="true"
             inputId="enableEndDate"
-            (onChange)="onEndDateToggle()"
+            (ngModelChange)="inputChanged($event)"
             size="small"
           ></p-checkbox>
         </p-inputgroup-addon>
 
         <p-datepicker
-          id="endDate"
-          [(ngModel)]="loan.endDate"
-          name="endDate"
+          inputId="endDate"
+          [(ngModel)]="loan.jsEndDate"
+          (ngModelChange)="inputChanged($event)"
           dateFormat="mm/dd/yy"
+          dataType="string"
           [numberOfMonths]="2"
           [showButtonBar]="true"
-          (ngModelChange)="submitLoan()"
-          [disabled]="!enableEndDate"
+          [disabled]="!loan.jsHasCustomEndDate"
           [style]="{ width: '100%' }"
           appendTo="body"
           [inputStyle]="{

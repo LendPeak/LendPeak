@@ -54,13 +54,24 @@ export const proxyController = async (ctx: Context, next: Next) => {
       })}`
     );
 
-    logger.info("Proxy Request:", {
-      method,
-      url: targetUrl,
-      headers,
-      body: ctx.request.body,
-      query: ctx.query,
-    });
+    // logger.info("Proxy Request:", {
+    //   method,
+    //   url: targetUrl,
+    //   headers,
+    //   body: ctx.request.body,
+    //   query: ctx.query,
+    // });
+
+    // print curl string with all parameters and headers, make sure to include query parameters
+    logger.info(
+      `curl -X ${method.toUpperCase()} '${targetUrl}' ${Object.entries(headers)
+        .map(([key, value]) => `-H "${key}: ${value}"`)
+        .join(" ")} ${Object.entries(params)
+        .map(([key, value]) => `--data-urlencode "${key}=${value}"`)
+        .join(" ")}`
+    );
+
+    
 
     const response = await axios({
       method,
@@ -68,7 +79,7 @@ export const proxyController = async (ctx: Context, next: Next) => {
       headers,
       data: ctx.request.body,
       params: ctx.query,
-      responseType: "arraybuffer", // Changed from 'stream' to 'arraybuffer'
+      responseType: "arraybuffer", 
       validateStatus: () => true, // Allow handling of all HTTP status codes
     });
 
@@ -82,12 +93,10 @@ export const proxyController = async (ctx: Context, next: Next) => {
       }
     }
 
-    // Set content type
     if (response.headers["content-type"]) {
       ctx.type = response.headers["content-type"];
     }
 
-    // Set body
     ctx.body = Buffer.from(response.data as ArrayBuffer);
 
     logger.info(`Received ${response.status} response from ${targetUrl}`);

@@ -178,7 +178,10 @@
         <p-accordion-content>
           <div class="p-fluid">
             <table
-              *ngIf="loan.ratesSchedule.length > 0"
+              *ngIf="
+                loan.rateSchedules.hasCustom &&
+                loan.rateSchedules.allCustom.length > 0
+              "
               class="p-datatable p-component"
             >
               <thead>
@@ -190,11 +193,16 @@
                 </tr>
               </thead>
               <tbody>
-                <tr *ngFor="let rate of loan.ratesSchedule; let i = index">
+                <tr
+                  *ngFor="
+                    let rate of loan.rateSchedules.allCustom;
+                    let i = index
+                  "
+                >
                   <!-- Start Date -->
                   <td>
                     <p-datepicker
-                      [(ngModel)]="rate.startDate"
+                      [(ngModel)]="rate.jsStartDate"
                       name="overrideStartDate-{{ i }}"
                       dateFormat="mm/dd/yy"
                       showIcon
@@ -226,7 +234,7 @@
                   <td>
                     <p-datepicker
                       appendTo="body"
-                      [(ngModel)]="rate.endDate"
+                      [(ngModel)]="rate.jsEndDate"
                       name="overrideEndDate-{{ i }}"
                       dateFormat="mm/dd/yy"
                       showIcon
@@ -256,7 +264,7 @@
                   <!-- Interest Rate -->
                   <td>
                     <p-inputNumber
-                      [(ngModel)]="rate.annualInterestRate"
+                      [(ngModel)]="rate.jsAnnualInterestRate"
                       name="overrideInterestRate-{{ i }}"
                       mode="decimal"
                       minFractionDigits="2"
@@ -294,13 +302,14 @@
           <div class="p-fluid">
             <table
               *ngIf="
-                loan.termInterestOverride &&
-                loan.termInterestOverride.length > 0
+                loan.termInterestAmountOverride &&
+                loan.termInterestAmountOverride.length > 0
               "
               class="p-datatable p-component"
             >
               <thead>
                 <tr>
+                  <th></th>
                   <th>Dates</th>
                   <th>Term Number</th>
                   <th>Interest Amount</th>
@@ -310,22 +319,25 @@
               <tbody>
                 <tr
                   *ngFor="
-                    let override of loan.termInterestOverride;
+                    let override of loan.termInterestAmountOverride.all;
                     let i = index
                   "
                 >
                   <!-- Term Dates -->
                   <td>
+                    <span class="font-bold">{{ i + 1 }}.</span>
+                  </td>
+                  <td>
                     <span class="font-medium text-md">
                       {{
-                        getStartDateForTerm(override.termNumber).format(
+                        getStartDateForTerm(override.jsTermNumber).format(
                           "MM/DD/YYYY"
                         )
                       }}
                     </span>
                     <span class="font-bold text-xl"> - </span>
                     <span class="font-medium text-md">{{
-                      getEndDateForTerm(override.termNumber).format(
+                      getEndDateForTerm(override.jsTermNumber).format(
                         "MM/DD/YYYY"
                       )
                     }}</span>
@@ -333,7 +345,7 @@
                   <!-- Term Number -->
                   <td>
                     <p-inputNumber
-                      [(ngModel)]="override.termNumber"
+                      [(ngModel)]="override.jsTermNumber"
                       name="termInterestOverride-term{{ i }}"
                       (ngModelChange)="onInputChange($event)"
                     ></p-inputNumber>
@@ -341,7 +353,7 @@
                   <!-- Interest Amount -->
                   <td>
                     <p-inputNumber
-                      [(ngModel)]="override.interestAmount"
+                      [(ngModel)]="override.jsInterestAmount"
                       name="termInterestOverride-amount-{{ i }}"
                       mode="currency"
                       currency="USD"
@@ -471,22 +483,35 @@
           <div class="p-fluid">
             <!-- Term Payment Amount -->
             <div class="field">
-              <label for="termPaymentAmount">
+              <label for="jsEquitedMonthlyPayment">
                 Term Payment Amount
                 <i
                   class="pi pi-info-circle tooltip-icon"
                   (click)="showTooltip($event, termPaymentAmountTooltip)"
                 ></i>
               </label>
-              <p-inputNumber
-                inputId="termPaymentAmount"
-                [(ngModel)]="loan.termPaymentAmount"
-                name="termPaymentAmount"
-                mode="currency"
-                currency="USD"
-                locale="en-US"
-                (ngModelChange)="onInputChange($event)"
-              ></p-inputNumber>
+              <p-inputgroup>
+                <p-inputgroup-addon>
+                  <p-checkbox
+                    [(ngModel)]="loan.jsHasCustomEquitedMonthlyPayment"
+                    (ngModelChange)="onInputChange($event)"
+                    binary="true"
+                    inputId="hasCustomEquitedMonthlyPayment"
+                    size="small"
+                  ></p-checkbox>
+                </p-inputgroup-addon>
+
+                <p-inputNumber
+                  inputId="jsEquitedMonthlyPayment"
+                  [(ngModel)]="loan.jsEquitedMonthlyPayment"
+                  mode="currency"
+                  currency="USD"
+                  locale="en-US"
+                  [disabled]="!loan.hasCustomEquitedMonthlyPayment"
+                  (ngModelChange)="onInputChange($event)"
+                ></p-inputNumber>
+              </p-inputgroup>
+
               <!-- Tooltip Overlay -->
               <p-popover #termPaymentAmountTooltip>
                 <ng-template pTemplate="content">
@@ -519,7 +544,8 @@
               <tbody>
                 <tr
                   *ngFor="
-                    let paymentConfiguration of loan.termPaymentAmountOverride;
+                    let paymentConfiguration of loan.termPaymentAmountOverride
+                      .all;
                     let i = index
                   "
                 >
@@ -542,7 +568,7 @@
                   <!-- Term Number -->
                   <td>
                     <p-inputNumber
-                      [(ngModel)]="paymentConfiguration.termNumber"
+                      [(ngModel)]="paymentConfiguration.jsTermNumber"
                       name="overrideTermPayment-term{{ i }}"
                       (ngModelChange)="onInputChange($event)"
                     ></p-inputNumber>
@@ -550,7 +576,7 @@
                   <!-- Payment Amount -->
                   <td>
                     <p-inputNumber
-                      [(ngModel)]="paymentConfiguration.paymentAmount"
+                      [(ngModel)]="paymentConfiguration.jsPaymentAmount"
                       name="overrideTermPaymentAmount-{{ i }}"
                       mode="currency"
                       currency="USD"
@@ -601,7 +627,7 @@
               <tbody>
                 <tr
                   *ngFor="
-                    let changePaymentDate of loan.changePaymentDates;
+                    let changePaymentDate of loan.changePaymentDates.all;
                     let i = index
                   "
                 >
@@ -622,23 +648,22 @@
                     }}</span>
                   </td>
                   <!-- Term Number -->
+
                   <td>
                     <p-inputNumber
-                      [(ngModel)]="changePaymentDate.termNumber"
+                      [(ngModel)]="changePaymentDate.jsTermNumber"
                       name="changePaymentDate-term{{ i }}"
-                      (ngModelChange)="
-                        updateTermForCPD(i, changePaymentDate.termNumber)
-                      "
+                      (ngModelChange)="cpdUpdated()"
                     ></p-inputNumber>
                   </td>
                   <!-- New Date -->
                   <td>
                     <p-datepicker
-                      [(ngModel)]="changePaymentDate.newDate"
+                      [(ngModel)]="changePaymentDate.jsNewDate"
                       name="changePaymentDateNewDate-{{ i }}"
                       dateFormat="mm/dd/yy"
                       showIcon
-                      (ngModelChange)="onInputChange($event)"
+                      (ngModelChange)="cpdUpdated()"
                       appendTo="body"
                     ></p-datepicker>
                   </td>
@@ -671,7 +696,7 @@
         <p-accordion-content>
           <div class="p-fluid">
             <table
-              *ngIf="loan.preBillDays.length > 0"
+              *ngIf="loan.preBillDays.hasCustom"
               class="p-datatable p-component"
             >
               <thead>
@@ -683,7 +708,12 @@
                 </tr>
               </thead>
               <tbody>
-                <tr *ngFor="let preBillDay of loan.preBillDays; let i = index">
+                <tr
+                  *ngFor="
+                    let preBillDay of loan.preBillDays.allCustom;
+                    let i = index
+                  "
+                >
                   <!-- Term Dates -->
                   <td>
                     <span class="font-medium text-md">
@@ -703,7 +733,7 @@
                   <!-- Term Number -->
                   <td>
                     <p-inputNumber
-                      [(ngModel)]="preBillDay.termNumber"
+                      [(ngModel)]="preBillDay.jsTermNumber"
                       name="preBillDayConfiguration-term{{ i }}"
                       (ngModelChange)="onInputChange($event)"
                     ></p-inputNumber>
@@ -711,7 +741,7 @@
                   <!-- Days -->
                   <td>
                     <p-inputNumber
-                      [(ngModel)]="preBillDay.preBillDays"
+                      [(ngModel)]="preBillDay.jsPreBillDays"
                       name="prebillDays-day-{{ i }}"
                       (ngModelChange)="onInputChange($event)"
                     ></p-inputNumber>
@@ -745,7 +775,7 @@
         <p-accordion-content>
           <div class="p-fluid">
             <table
-              *ngIf="loan.dueBillDays.length > 0"
+              *ngIf="loan.dueBillDays.hasCustom"
               class="p-datatable p-component"
             >
               <thead>
@@ -757,7 +787,12 @@
                 </tr>
               </thead>
               <tbody>
-                <tr *ngFor="let dueBillDay of loan.dueBillDays; let i = index">
+                <tr
+                  *ngFor="
+                    let dueBillDay of loan.dueBillDays.allCustom;
+                    let i = index
+                  "
+                >
                   <!-- Term Dates -->
                   <td>
                     <span class="font-medium text-md">
@@ -777,7 +812,7 @@
                   <!-- Term Number -->
                   <td>
                     <p-inputNumber
-                      [(ngModel)]="dueBillDay.termNumber"
+                      [(ngModel)]="dueBillDay.jsTermNumber"
                       name="dueBillDayConfiguration-term{{ i }}"
                       (ngModelChange)="onInputChange($event)"
                     ></p-inputNumber>
@@ -785,7 +820,7 @@
                   <!-- Days -->
                   <td>
                     <p-inputNumber
-                      [(ngModel)]="dueBillDay.daysDueAfterPeriodEnd"
+                      [(ngModel)]="dueBillDay.jsDaysDueAfterPeriodEnd"
                       name="duebillDays-day-{{ i }}"
                       (ngModelChange)="onInputChange($event)"
                     ></p-inputNumber>
@@ -819,7 +854,7 @@
         <p-accordion-content>
           <div class="grid">
             <div class="col-12">
-              <p-table [value]="loan.balanceModifications">
+              <p-table [value]="loan.balanceModifications.all">
                 <ng-template pTemplate="header">
                   <tr>
                     <th style="width: 10%">Date</th>
@@ -925,7 +960,6 @@
           </div>
         </p-accordion-content>
       </p-accordion-panel>
-
       <!-- Fees That Apply to All Terms -->
       <p-accordion-panel value="feesForAllTerms">
         <p-accordion-header>Fees That Apply to All Terms</p-accordion-header>
@@ -962,7 +996,7 @@
                     <ng-container *ngIf="fee.type === 'fixed'">
                       <p-inputNumber
                         inputId="feeAmountCurrency"
-                        [(ngModel)]="fee.amount"
+                        [(ngModel)]="fee.jsAmount"
                         mode="currency"
                         currency="USD"
                         locale="en-US"
@@ -972,7 +1006,7 @@
                     <ng-container *ngIf="fee.type === 'percentage'">
                       <p-inputNumber
                         inputId="feeAmountPercentage"
-                        [(ngModel)]="fee.percentage"
+                        [(ngModel)]="fee.jsPercentage"
                         mode="decimal"
                         minFractionDigits="2"
                         suffix="%"
@@ -1049,12 +1083,17 @@
                 </tr>
               </thead>
               <tbody>
-                <tr *ngFor="let fee of loan.feesPerTerm; let i = index">
+                <tr
+                  *ngFor="
+                    let termFee of loan.feesPerTerm.flatFeesPerTerm;
+                    let i = index
+                  "
+                >
                   <!-- Term Number -->
                   <td>
                     <p-inputNumber
                       inputId="feeTermNumber"
-                      [(ngModel)]="fee.termNumber"
+                      [(ngModel)]="termFee.termNumber"
                       (ngModelChange)="onInputChange($event)"
                     ></p-inputNumber>
                   </td>
@@ -1062,7 +1101,7 @@
                   <td>
                     <p-select
                       inputId="feeTermType"
-                      [(ngModel)]="fee.type"
+                      [(ngModel)]="termFee.fee.type"
                       [options]="[
                         { label: 'Fixed', value: 'fixed' },
                         { label: 'Percentage', value: 'percentage' },
@@ -1072,20 +1111,20 @@
                   </td>
                   <!-- Amount or Percentage -->
                   <td>
-                    <ng-container *ngIf="fee.type === 'fixed'">
+                    <ng-container *ngIf="termFee.fee.type === 'fixed'">
                       <p-inputNumber
                         inputId="feeTermAmountCurrency"
-                        [(ngModel)]="fee.amount"
+                        [(ngModel)]="termFee.fee.jsAmount"
                         mode="currency"
                         currency="USD"
                         locale="en-US"
                         (ngModelChange)="onInputChange($event)"
                       ></p-inputNumber>
                     </ng-container>
-                    <ng-container *ngIf="fee.type === 'percentage'">
+                    <ng-container *ngIf="termFee.fee.type === 'percentage'">
                       <p-inputNumber
                         inputId="feeTermAmountPercentage"
-                        [(ngModel)]="fee.percentage"
+                        [(ngModel)]="termFee.fee.jsPercentage"
                         mode="decimal"
                         minFractionDigits="2"
                         suffix="%"
@@ -1097,8 +1136,8 @@
                   <td>
                     <p-select
                       inputId="feeTermBasedOn"
-                      [disabled]="fee.type !== 'percentage'"
-                      [(ngModel)]="fee.basedOn"
+                      [disabled]="termFee.fee.type !== 'percentage'"
+                      [(ngModel)]="termFee.fee.basedOn"
                       [options]="[
                         { label: 'Interest', value: 'interest' },
                         { label: 'Principal', value: 'principal' },
@@ -1113,7 +1152,7 @@
                       id="feeTermDescription"
                       pInputText
                       type="text"
-                      [(ngModel)]="fee.description"
+                      [(ngModel)]="termFee.fee.description"
                       (ngModelChange)="onInputChange($event)"
                     />
                   </td>

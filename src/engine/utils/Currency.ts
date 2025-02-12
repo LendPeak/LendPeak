@@ -18,8 +18,9 @@ export enum RoundingMethod {
  * The class supports various rounding methods and tracks rounding errors.
  */
 export class Currency {
-  private value!: Decimal;
+  private _value!: Decimal;
   private roundingError!: Decimal;
+  jsValue!: number;
 
   constructor(amount: number | string | Decimal | Currency, roundingError?: Decimal | number | string) {
     if (amount === undefined || amount === null) {
@@ -40,7 +41,27 @@ export class Currency {
     }
   }
 
-  toJSON(): any {
+  get value(): Decimal {
+    return this._value;
+  }
+
+  set value(value: Decimal | number | Currency | string) {
+    if (value instanceof Currency) {
+      this._value = value.getValue();
+    } else if (value instanceof Decimal) {
+      this._value = value;
+    } else {
+      this._value = new Decimal(value);
+    }
+    this.jsValue = this._value.toNumber();
+    this.roundingError = new Decimal(0);
+  }
+
+  syncJsToValues(): void {
+    this.value = this.jsValue;
+  }
+
+  get json() {
     return {
       value: this.value.toString(),
       roundingError: this.roundingError.toString(),
@@ -98,6 +119,10 @@ export class Currency {
     return new Currency(0);
   }
 
+  static get zero(): Currency {
+    return Currency.Zero();
+  }
+
   static of(amount: number | string | Decimal | Currency): Currency {
     return new Currency(amount);
   }
@@ -129,6 +154,10 @@ export class Currency {
   }
 
   getValue(): Decimal {
+    return this.value;
+  }
+
+  get decimal(): Decimal {
     return this.value;
   }
 
@@ -194,7 +223,7 @@ export class Currency {
     return this.value.toDecimalPlaces(decimalPlaces, this.getRoundingMode(method)).toNumber();
   }
 
-  private getRoundingMode(method: RoundingMethod): Decimal.Rounding {
+  private getRoundingMode(method: RoundingMethod) {
     switch (method) {
       case RoundingMethod.ROUND_UP:
         return Decimal.ROUND_UP;

@@ -1,6 +1,8 @@
 import dayjs from "dayjs";
 import { Currency, RoundingMethod } from "@utils/Currency";
 import { Amortization, FlushUnbilledInterestDueToRoundingErrorType } from "@models/Amortization";
+import { ChangePaymentDate } from "@models/ChangePaymentDate";
+import { ChangePaymentDates } from "@models/ChangePaymentDates";
 import { CalendarType } from "@models/Calendar";
 import Decimal from "decimal.js";
 
@@ -15,10 +17,10 @@ describe("Amortization", () => {
     const schedule = amortization.generateSchedule();
 
     expect(schedule.length).toBe(term);
-    expect(schedule[0].principal).toBeDefined();
-    expect(schedule[0].accruedInterestForPeriod).toBeDefined();
-    expect(schedule[0].totalPayment).toBeDefined();
-    expect(schedule[0].endBalance).toBeDefined();
+    expect(schedule.firstEntry.principal).toBeDefined();
+    expect(schedule.firstEntry.accruedInterestForPeriod).toBeDefined();
+    expect(schedule.firstEntry.totalPayment).toBeDefined();
+    expect(schedule.firstEntry.endBalance).toBeDefined();
   });
 
   it("should adjust the final payment to ensure the balance is zero", () => {
@@ -30,7 +32,7 @@ describe("Amortization", () => {
     const amortization = new Amortization({ loanAmount, annualInterestRate: interestRate, term, startDate });
     const schedule = amortization.generateSchedule();
 
-    const lastPayment = schedule[schedule.length - 1];
+    const lastPayment = schedule.lastEntry;
 
     expect(lastPayment.endBalance.getValue().toNumber()).toBe(0);
     expect(lastPayment.metadata.finalAdjustment).toBe(true);
@@ -58,10 +60,10 @@ describe("Amortization", () => {
       const schedule = amortization.generateSchedule();
 
       expect(schedule.length).toBe(term);
-      expect(schedule[0].principal).toBeDefined();
-      expect(schedule[0].accruedInterestForPeriod).toBeDefined();
-      expect(schedule[0].totalPayment).toBeDefined();
-      expect(schedule[0].endBalance).toBeDefined();
+      expect(schedule.firstEntry.principal).toBeDefined();
+      expect(schedule.firstEntry.accruedInterestForPeriod).toBeDefined();
+      expect(schedule.firstEntry.totalPayment).toBeDefined();
+      expect(schedule.firstEntry.endBalance).toBeDefined();
     });
   });
 
@@ -81,7 +83,7 @@ describe("Amortization", () => {
 
       if (index === schedule.length - 1 && entry.metadata.finalAdjustment) {
         // Verify the final adjustment
-        const totalPrincipalPaid = schedule.slice(0, -1).reduce((acc, e) => acc.add(e.principal), Currency.of(0));
+        const totalPrincipalPaid = schedule.entries.slice(0, -1).reduce((acc, e) => acc.add(e.principal), Currency.of(0));
         const expectedFinalPrincipal = loanAmount.subtract(totalPrincipalPaid).getRoundedValue().toNumber();
         expect(entry.principal.getRoundedValue().toNumber()).toBeCloseTo(expectedFinalPrincipal, 3);
       } else {
@@ -101,10 +103,10 @@ describe("Amortization", () => {
     const schedule = amortization.generateSchedule();
 
     expect(schedule.length).toBe(term);
-    expect(schedule[0].principal).toBeDefined();
-    expect(schedule[0].accruedInterestForPeriod).toBeDefined();
-    expect(schedule[0].totalPayment).toBeDefined();
-    expect(schedule[0].endBalance.getValue().toNumber()).toBe(0);
+    expect(schedule.firstEntry.principal).toBeDefined();
+    expect(schedule.firstEntry.accruedInterestForPeriod).toBeDefined();
+    expect(schedule.firstEntry.totalPayment).toBeDefined();
+    expect(schedule.firstEntry.endBalance.getValue().toNumber()).toBe(0);
   });
 
   it("should handle edge cases with very long terms", () => {
@@ -117,10 +119,10 @@ describe("Amortization", () => {
     const schedule = amortization.generateSchedule();
 
     expect(schedule.length).toBe(term);
-    expect(schedule[0].principal).toBeDefined();
-    expect(schedule[0].accruedInterestForPeriod).toBeDefined();
-    expect(schedule[0].totalPayment).toBeDefined();
-    expect(schedule[0].endBalance).toBeDefined();
+    expect(schedule.firstEntry.principal).toBeDefined();
+    expect(schedule.firstEntry.accruedInterestForPeriod).toBeDefined();
+    expect(schedule.firstEntry.totalPayment).toBeDefined();
+    expect(schedule.firstEntry.endBalance).toBeDefined();
   });
 
   it("should set finalAdjustment to true for the last payment if necessary", () => {
@@ -132,10 +134,38 @@ describe("Amortization", () => {
     const amortization = new Amortization({ loanAmount, annualInterestRate: interestRate, term, startDate });
     const schedule = amortization.generateSchedule();
 
-    const lastPayment = schedule[schedule.length - 1];
+    const lastPayment = schedule.lastEntry;
 
     expect(lastPayment.metadata.finalAdjustment).toBe(true);
     expect(lastPayment.endBalance.getValue().toNumber()).toBe(0);
+  });
+
+  it("should detect correct term # for Change Payment Date at the beginning of the contract", () => {
+    const loanAmount = Currency.of(1000);
+    const annualInterestRate = new Decimal(0.05); // 5% annual interest rate
+    const term = 24; // 24 months
+    const startDate = dayjs("2023-01-01");
+
+    const changePaymentDates = new ChangePaymentDates([
+      new ChangePaymentDate({
+        termNumber: -1,
+        newDate: "2023-02-01",
+        originalDate: "2023-01-01",
+      }),
+      new ChangePaymentDate({
+        termNumber: -1,
+        newDate: "2023-05-05",
+        originalDate: "2023-05-01",
+      }),
+    ]);
+
+    const amortization = new Amortization({ loanAmount, annualInterestRate, term, startDate, changePaymentDates: changePaymentDates });
+    const schedule = amortization.repaymentSchedule;
+
+    const updatedChangePaymentDates = amortization.changePaymentDates;
+
+    expect(updatedChangePaymentDates.atIndex(0).termNumber).toBe(0);
+    expect(updatedChangePaymentDates.atIndex(1).termNumber).toBe(4);
   });
 
   it("should throw an error for a zero loan amount", () => {
@@ -261,7 +291,7 @@ describe("Amortization", () => {
     const schedule = amortization.generateSchedule();
 
     expect(schedule.length).toBe(term);
-    const entry = schedule[0];
+    const entry = schedule.firstEntry;
     expect(entry.principal.getValue().toNumber()).toBeGreaterThan(0);
     expect(entry.accruedInterestForPeriod.getValue().toNumber()).toBeGreaterThan(0);
     expect(entry.totalPayment.getValue().toNumber()).toBeGreaterThan(0);
@@ -282,7 +312,7 @@ describe("Amortization", () => {
       expect(entry.accruedInterestForPeriod.getValue().toNumber()).toBe(0);
 
       if (index === schedule.length - 1 && entry.metadata.finalAdjustment) {
-        const totalPrincipalPaid = schedule.slice(0, -1).reduce((acc, e) => acc.add(e.principal), Currency.of(0));
+        const totalPrincipalPaid = schedule.entries.slice(0, -1).reduce((acc, e) => acc.add(e.principal), Currency.of(0));
         const expectedFinalPrincipal = loanAmount.subtract(totalPrincipalPaid).getRoundedValue().toNumber();
         expect(entry.principal.getRoundedValue().toNumber()).toBeCloseTo(expectedFinalPrincipal, 3);
       } else {
@@ -301,7 +331,7 @@ describe("Amortization", () => {
     const schedule = amortization.generateSchedule();
 
     expect(schedule.length).toBe(term);
-    const entry = schedule[0];
+    const entry = schedule.firstEntry;
     expect(entry.principal.getValue().toNumber()).toBe(1000);
     expect(entry.accruedInterestForPeriod.getValue().toNumber()).toBe(0);
     expect(entry.totalPayment.getValue().toNumber()).toBe(1000);

@@ -146,7 +146,7 @@ export class DepositRecord implements Deposit {
     this.unusedAmount = params.unusedAmount ? Currency.of(params.unusedAmount) : Currency.of(0);
     this.balanceModificationId = params.balanceModificationId;
 
-    this.syncJSPropertiesFromValues();
+    this.updateJsValues();
   }
 
   static rehydrateFromJSON(json: any): DepositRecord {
@@ -328,7 +328,7 @@ export class DepositRecord implements Deposit {
     this.jsBalanceModificationId = value;
   }
 
-  syncValuesFromJSProperties(): void {
+  updateModelValues(): void {
     this.amount = Currency.of(this.jsAmount || 0);
     this.currency = this.jsCurrency || "";
     this.createdDate = dayjs(this.jsCreatedDate);
@@ -345,7 +345,7 @@ export class DepositRecord implements Deposit {
     this.balanceModificationId = this.jsBalanceModificationId;
   }
 
-  syncJSPropertiesFromValues(): void {
+  updateJsValues(): void {
     this.jsAmount = this.amount.toNumber();
     this.jsCurrency = this.currency;
     this.jsCreatedDate = this.createdDate.toDate();
@@ -366,5 +366,32 @@ export class DepositRecord implements Deposit {
     // Simple unique ID generator (you can replace this with UUID if needed)
     const sequencePrefix = sequence !== undefined ? `${sequence}-` : "";
     return "DEPOSIT-" + sequencePrefix + Math.random().toString(36).substr(2, 9);
+  }
+
+  toJSON() {
+    return this.json;
+  }
+
+  get json() {
+    return {
+      id: this.id,
+      amount: this.amount.toNumber(),
+      currency: this.currency,
+      createdDate: this.createdDate.toDate(),
+      insertedDate: this.insertedDate.toDate(),
+      effectiveDate: this.effectiveDate.toDate(),
+      clearingDate: this.clearingDate?.toDate(),
+      systemDate: this.systemDate.toDate(),
+      paymentMethod: this.paymentMethod,
+      depositor: this.depositor,
+      depositLocation: this.depositLocation,
+      applyExcessToPrincipal: this.applyExcessToPrincipal,
+      excessAppliedDate: this.excessAppliedDate?.toDate(),
+      usageDetails: this.usageDetails.map((detail) => detail.json),
+      unusedAmount: this.unusedAmount.toNumber(),
+      balanceModificationId: this.balanceModificationId,
+      metadata: this.metadata,
+      active: this.active,
+    };
   }
 }

@@ -118,4 +118,20 @@ export class UsageDetail {
     this.allocatedFees = Currency.of(this.jsAllocatedFees);
     this.date = dayjs(this.jsDate);
   }
+
+  toJSON() {
+    return this.json;
+  }
+
+  get json() {
+    return {
+      jsBillId: this.billId,
+      period: this.period,
+      jsBillDueDate: this.jsBillDueDate,
+      allocatedPrincipal: this.allocatedPrincipal.toNumber(),
+      allocatedInterest: this.allocatedInterest.toNumber(),
+      allocatedFees: this.allocatedFees.toNumber(),
+      jsDate: this.jsDate,
+    };
+  }
 }

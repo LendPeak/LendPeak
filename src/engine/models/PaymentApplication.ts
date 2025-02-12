@@ -1,7 +1,8 @@
 import { Currency } from "../utils/Currency";
 import { DepositRecord } from "./Deposit";
-import { Decimal } from "decimal.js";
+import Decimal from "decimal.js";
 import { Bill } from "./Bill";
+import { Bills } from "./Bills";
 import { BalanceModification } from "./Amortization/BalanceModification";
 import { UsageDetail } from "./Bill/Deposit/UsageDetail";
 import dayjs, { Dayjs } from "dayjs";
@@ -36,12 +37,12 @@ export interface PaymentApplicationResult {
 
 // Payment Application Module
 export class PaymentApplication {
-  bills: Bill[];
+  bills: Bills;
   private deposits: DepositRecord[];
   private allocationStrategy: AllocationStrategy;
   private paymentPriority: PaymentPriority;
 
-  constructor(bills: Bill[], deposits: DepositRecord[], options?: { allocationStrategy?: AllocationStrategy; paymentPriority?: PaymentPriority }) {
+  constructor(bills: Bills, deposits: DepositRecord[], options?: { allocationStrategy?: AllocationStrategy; paymentPriority?: PaymentPriority }) {
     this.bills = bills;
     this.deposits = deposits;
 
@@ -160,7 +161,7 @@ export class PaymentApplication {
     }
 
     const depositEffectiveDayjs = dayjs(deposit.effectiveDate);
-    const openBillsAtDepositDate = this.bills.filter((bill) => !bill.isPaid && bill.isOpen && bill.dueDate.isSameOrAfter(depositEffectiveDayjs));
+    const openBillsAtDepositDate = this.bills.all.filter((bill) => !bill.isPaid && bill.isOpen && bill.dueDate.isSameOrAfter(depositEffectiveDayjs));
 
     let balanceModificationDate: Dayjs;
 
@@ -183,7 +184,7 @@ export class PaymentApplication {
 
 // Allocation Strategy Interface
 export interface AllocationStrategy {
-  apply(deposit: DepositRecord, bills: Bill[], paymentPriority: PaymentPriority): PaymentApplicationResult;
+  apply(deposit: DepositRecord, bills: Bills, paymentPriority: PaymentPriority): PaymentApplicationResult;
 }
 
 // Allocation Strategies
@@ -198,12 +199,12 @@ Explanation:
 - Bill Status Update: Marks bills as paid if all components are fully allocated.
 */
 export class LIFOStrategy implements AllocationStrategy {
-  apply(deposit: DepositRecord, bills: Bill[], paymentPriority: PaymentPriority): PaymentApplicationResult {
+  apply(deposit: DepositRecord, bills: Bills, paymentPriority: PaymentPriority): PaymentApplicationResult {
     let remainingAmount = deposit.amount;
     const allocations: PaymentAllocation[] = [];
 
     // Sort bills by due date descending (most recent first)
-    let sortedBills = bills.filter((bill) => bill.isOpen === true && !bill.isPaid).sort((a, b) => b.dueDate.diff(a.dueDate));
+    let sortedBills = bills.all.filter((bill) => bill.isOpen === true && !bill.isPaid).sort((a, b) => b.dueDate.diff(a.dueDate));
 
     if (deposit.applyExcessToPrincipal) {
       const excessAppliedDate = deposit.excessAppliedDate || deposit.effectiveDate;
@@ -237,12 +238,12 @@ export class LIFOStrategy implements AllocationStrategy {
 }
 // FIFO Strategy (First-In, First-Out)
 export class FIFOStrategy implements AllocationStrategy {
-  apply(deposit: DepositRecord, bills: Bill[], paymentPriority: PaymentPriority): PaymentApplicationResult {
+  apply(deposit: DepositRecord, bills: Bills, paymentPriority: PaymentPriority): PaymentApplicationResult {
     let remainingAmount = deposit.amount;
     const allocations: PaymentAllocation[] = [];
 
     // Sort bills by due date ascending
-    let sortedBills = bills.filter((bill) => bill.isOpen === true && !bill.isPaid).sort((a, b) => a.dueDate.diff(b.dueDate));
+    let sortedBills = bills.all.filter((bill) => bill.isOpen === true && !bill.isPaid).sort((a, b) => a.dueDate.diff(b.dueDate));
 
     // if deposit setup to apply excess to principal then we need to remove bills
     // that are not open on or before the deposit effective date
@@ -283,12 +284,12 @@ Explanation:
 - Handling Remainders: Any unallocated amount due to rounding is captured and can be handled per your business rules.
 */
 export class EqualDistributionStrategy implements AllocationStrategy {
-  apply(deposit: DepositRecord, bills: Bill[], paymentPriority: PaymentPriority): PaymentApplicationResult {
+  apply(deposit: DepositRecord, bills: Bills, paymentPriority: PaymentPriority): PaymentApplicationResult {
     const remainingAmount = deposit.amount;
     const allocations: PaymentAllocation[] = [];
 
     // Filter unpaid bills
-    let unpaidBills = bills.filter((bill) => bill.isOpen === true && !bill.isPaid);
+    let unpaidBills = bills.all.filter((bill) => bill.isOpen === true && !bill.isPaid);
 
     if (deposit.applyExcessToPrincipal) {
       const excessAppliedDate = deposit.excessAppliedDate || deposit.effectiveDate;
@@ -346,12 +347,12 @@ export class CustomOrderStrategy implements AllocationStrategy {
     this.compareFunction = compareFunction;
   }
 
-  apply(deposit: DepositRecord, bills: Bill[], paymentPriority: PaymentPriority): PaymentApplicationResult {
+  apply(deposit: DepositRecord, bills: Bills, paymentPriority: PaymentPriority): PaymentApplicationResult {
     let remainingAmount = deposit.amount;
     const allocations: PaymentAllocation[] = [];
 
     // Sort bills using the custom compare function
-    let sortedBills = bills.filter((bill) => bill.isOpen === true && !bill.isPaid).sort(this.compareFunction);
+    let sortedBills = bills.all.filter((bill) => bill.isOpen === true && !bill.isPaid).sort(this.compareFunction);
 
     if (deposit.applyExcessToPrincipal) {
       const excessAppliedDate = deposit.excessAppliedDate || deposit.effectiveDate;
@@ -382,11 +383,11 @@ export class CustomOrderStrategy implements AllocationStrategy {
 // Proportional Strategy
 // The Proportional Strategy allocates the payment proportionally across all outstanding bills based on the total amount due for each bill.
 export class ProportionalStrategy implements AllocationStrategy {
-  apply(deposit: DepositRecord, bills: Bill[], paymentPriority: PaymentPriority): PaymentApplicationResult {
+  apply(deposit: DepositRecord, bills: Bills, paymentPriority: PaymentPriority): PaymentApplicationResult {
     const allocations: PaymentAllocation[] = [];
 
     // Filter unpaid bills
-    let unpaidBills = bills.filter((bill) => bill.isOpen === true && !bill.isPaid);
+    let unpaidBills = bills.all.filter((bill) => bill.isOpen === true && !bill.isPaid);
 
     if (deposit.applyExcessToPrincipal) {
       const excessAppliedDate = deposit.excessAppliedDate || deposit.effectiveDate;

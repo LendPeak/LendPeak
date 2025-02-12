@@ -17,11 +17,11 @@ dayjs.extend(isSameOrBefore);
  * - `THIRTY_ACTUAL`: Uses 30 days per month when over 30 days, otherwise actual days.
  */
 export enum CalendarType {
-  ACTUAL_ACTUAL,
-  ACTUAL_360,
-  ACTUAL_365,
-  THIRTY_360,
-  THIRTY_ACTUAL,
+  ACTUAL_ACTUAL = 0,
+  ACTUAL_360 = 1,
+  ACTUAL_365 = 2,
+  THIRTY_360 = 3,
+  THIRTY_ACTUAL = 4,
 }
 
 /**

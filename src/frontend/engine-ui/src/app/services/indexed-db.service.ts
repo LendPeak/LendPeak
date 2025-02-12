@@ -30,7 +30,7 @@ export class IndexedDbService extends Dexie {
    * Save a loan object by key.
    */
   async saveLoan(key: string, data: any): Promise<void> {
-    console.log('saving loan', key, data);
+    //console.log('saving loan', key, data);
     const dataString = JSON.stringify(data);
     await this.loans.put({ key, data: dataString });
   }

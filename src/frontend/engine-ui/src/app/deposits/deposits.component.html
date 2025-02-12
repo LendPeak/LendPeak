@@ -21,12 +21,14 @@
       <div class="p-fluid">
         <p-table
           [hidden]="deposits.length === 0"
-          [value]="deposits"
+          [value]="deposits.all"
           editMode="cell"
           dataKey="id"
           class="p-datatable-sm"
           [scrollable]="true"
           scrollHeight="600px"
+          sortField="effectiveDate"
+          [sortOrder]="-1"
         >
           <ng-template pTemplate="header">
             <tr>

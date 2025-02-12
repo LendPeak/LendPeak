@@ -4,38 +4,35 @@ import { CalendarType } from "./Calendar";
 import { RoundingMethod } from "../utils/Currency";
 import { FlushUnbilledInterestDueToRoundingErrorType } from "./Amortization";
 import Decimal from "decimal.js";
-import { AmortizationEntry } from "./Amortization/AmortizationEntry";
+import { AmortizationEntries } from "./Amortization/AmortizationEntries";
 import { PerDiemCalculationType } from "./InterestCalculator";
 
 export class AmortizationExplainer {
   private amortization: Amortization;
-  private params: AmortizationParams;
-  private schedule: AmortizationEntry[];
+  private schedule: AmortizationEntries;
 
   constructor(amortization: Amortization) {
     this.amortization = amortization;
-    this.params = this.amortization.getInputParams();
     this.schedule = this.amortization.getRepaymentSchedule();
   }
 
   getLoanOverview(): string {
-    const params = this.params;
     let result = `Loan Overview:\n`;
-    result += `- Principal: ${params.loanAmount.toCurrencyString()}\n`;
-    result += `- Term: ${params.term} periods\n`;
-    const annualRatePercent = params.annualInterestRate.mul(100).toFixed(2);
+    result += `- Principal: ${this.amortization.loanAmount.toCurrencyString()}\n`;
+    result += `- Term: ${this.amortization.term} periods\n`;
+    const annualRatePercent = this.amortization.annualInterestRate.mul(100).toFixed(2);
     result += `- Annual Interest Rate: ${annualRatePercent}%\n`;
 
-    if (params.originationFee && !params.originationFee.isZero()) {
-      result += `- Origination Fee: ${params.originationFee.toCurrencyString()}\n`;
+    if (this.amortization.originationFee && !this.amortization.originationFee.isZero()) {
+      result += `- Origination Fee: ${this.amortization.originationFee.toCurrencyString()}\n`;
     }
 
-    result += `- Billing Model: ${params.billingModel === "dailySimpleInterest" ? "Daily Simple Interest" : "Amortized"}\n`;
+    result += `- Billing Model: ${this.amortization.billingModel === "dailySimpleInterest" ? "Daily Simple Interest" : "Amortized"}\n`;
     return result;
   }
 
   getCalendarExplanation(): string {
-    const params = this.params;
+    const params = this.amortization;
     let explanation = `Calendar and Day Counting:\n`;
     explanation += `- Calendar Type: ${this.amortization.calendar.calendarType}.\n`;
     explanation += `  This defines how days between dates are counted.\n`;
@@ -51,7 +48,7 @@ export class AmortizationExplainer {
   }
 
   getManualModificationsExplanation(): string {
-    const params = this.params;
+    const params = this.amortization;
     let explanation = `Manual Modifications:\n`;
 
     if (params.balanceModifications && params.balanceModifications.length > 0) {
@@ -60,7 +57,7 @@ export class AmortizationExplainer {
       explanation += `- No Balance Modifications.\n`;
     }
 
-    if (params.termInterestOverride && params.termInterestOverride.length > 0) {
+    if (params.termInterestAmountOverride && params.termInterestAmountOverride.length > 0) {
       explanation += `- Static Interest Overrides: Some terms have a predefined interest amount, overriding normal calculation.\n`;
     } else {
       explanation += `- No Static Interest Overrides.\n`;
@@ -76,7 +73,7 @@ export class AmortizationExplainer {
   }
 
   getInterestCalculationExplanation(): string {
-    const params = this.params;
+    const params = this.amortization;
     let explanation = `Interest Calculation and Rounding:\n`;
     explanation += `- Interest is computed based on the calendar and annual rate.\n`;
 
@@ -96,7 +93,7 @@ export class AmortizationExplainer {
   }
 
   getFeesExplanation(): string {
-    const params = this.params;
+    const params = this.amortization;
     let explanation = `Fees Explanation:\n`;
 
     const hasFees = (params.feesForAllTerms && params.feesForAllTerms.length > 0) || (params.feesPerTerm && params.feesPerTerm.length > 0);
@@ -112,7 +109,7 @@ export class AmortizationExplainer {
 
   getTermByTermExplanation(): string {
     let explanation = `Term-by-Term Breakdown:\n`;
-    for (const entry of this.schedule) {
+    for (const entry of this.schedule.entries) {
       explanation += `Term ${entry.term}:\n`;
       explanation += `  Period: ${entry.periodStartDate.format("YYYY-MM-DD")} to ${entry.periodEndDate.format("YYYY-MM-DD")}\n`;
       explanation += `  Start Balance: ${entry.startBalance.toCurrencyString()} | End Balance: ${entry.endBalance.toCurrencyString()}\n`;

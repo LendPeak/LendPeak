@@ -61,22 +61,12 @@
     <!-- Interest Rate (%) -->
     <div class="field col">
       <label for="interestRate">
-        Interest Rate (%)
+        Interest Rate (1% = 0.01)
         <i
           class="pi pi-info-circle tooltip-icon"
           (click)="showTooltip($event, interestRateTooltip)"
         ></i>
       </label>
-      <p-inputNumber
-        inputId="interestRate"
-        [(ngModel)]="loan.jsAnnualInterestRate"
-        (ngModelChange)="inputChanged($event)"
-        mode="decimal"
-        minFractionDigits="2"
-        maxFractionDigits="10"
-        suffix="%"
-        class="w-full"
-      ></p-inputNumber>
 
       <!-- Popover for Interest Rate Tooltip -->
       <p-popover #interestRateTooltip>
@@ -84,6 +74,26 @@
           Annual interest rate for the loan. E.g., 5%
         </ng-template>
       </p-popover>
+
+      <p-inputgroup>
+        <p-inputNumber
+          inputId="interestRate"
+          name="interestRate"
+          id="interestRate"
+          [(ngModel)]="loan.jsAnnualInterestRate"
+          (ngModelChange)="inputChanged($event)"
+          mode="decimal"
+          minFractionDigits="2"
+          maxFractionDigits="10"
+        ></p-inputNumber>
+
+        <p-inputgroup-addon
+          >{{
+            (loan.jsAnnualInterestRate * 100).toFixed(4)
+          }}
+          %</p-inputgroup-addon
+        >
+      </p-inputgroup>
     </div>
 
     <!-- Term (Months) -->

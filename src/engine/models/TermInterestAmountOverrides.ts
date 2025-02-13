@@ -74,4 +74,17 @@ export class TermInterestAmountOverrides {
   toJSON() {
     return this.json;
   }
+
+  isDuplicateTermNumber(termNumber: number): boolean {
+    // detect if there are more than one override for the same term number
+    return this._overrides.filter((bm) => bm.termNumber === termNumber).length > 1;
+  }
+
+  reSort() {
+    this.updateModelValues();
+    this._overrides = this._overrides.sort((a, b) => {
+      return a.termNumber - b.termNumber;
+    });
+    this.updateJsValues();
+  }
 }

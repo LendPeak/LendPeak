@@ -88,4 +88,14 @@ export class TermPaymentAmounts {
   toJSON() {
     return this.json;
   }
+
+  isDuplicateTermNumber(termNumber: number): boolean {
+    return this._paymentAmounts.filter((val) => val.termNumber === termNumber).length > 1;
+  }
+
+  reSort() {
+    this._paymentAmounts = this._paymentAmounts.sort((a, b) => {
+      return a.termNumber < b.termNumber ? -1 : 1;
+    });
+  }
 }

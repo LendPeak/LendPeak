@@ -24,6 +24,12 @@ export class DepositRecords {
   //   this._records.forEach((bm) => (bm.modified = false));
   // }
 
+  clearHistory() {
+    this.all.forEach((deposit) => {
+      deposit.clearHistory();
+    });
+  }
+
   set modified(value: boolean) {
     this._modified = value;
   }
@@ -103,6 +109,12 @@ export class DepositRecords {
     this.modified = true;
     this._records = this._records.filter((record) => record.id !== id);
     this._records = this._records.sort((a, b) => {
+      return dayjs(a.effectiveDate).isBefore(dayjs(b.effectiveDate)) ? -1 : 1;
+    });
+  }
+
+  get allSorted(): DepositRecord[] {
+    return this._records.sort((a, b) => {
       return dayjs(a.effectiveDate).isBefore(dayjs(b.effectiveDate)) ? -1 : 1;
     });
   }

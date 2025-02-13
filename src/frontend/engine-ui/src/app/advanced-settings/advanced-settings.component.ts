@@ -28,7 +28,7 @@ import { RoundingMethod, Currency } from 'lendpeak-engine/utils/Currency';
 })
 export class AdvancedSettingsComponent implements OnInit {
   @Input() loan!: Amortization;
-  @Input() paymentAllocationStrategyName!: PaymentAllocationStrategyName;
+  @Input() paymentAllocationStrategyName: PaymentAllocationStrategyName = 'FIFO';
   @Output() loanChange = new EventEmitter<Amortization>();
   @Output() loanUpdated = new EventEmitter<void>();
 

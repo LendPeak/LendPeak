@@ -1374,14 +1374,9 @@ export class AppComponent implements OnChanges {
   applyPayments() {
     console.log('running applyPayments');
     // Reset usageDetails and related fields for each deposit
-    this.deposits.all.forEach((deposit) => {
-      deposit.clearHistory();
-    });
-
+    this.deposits.clearHistory();
     // Apply payments to the loan
-    const deposits: DepositRecord[] = this.deposits.all.map((deposit) => {
-      return new DepositRecord(deposit);
-    });
+    const deposits: DepositRecords = this.deposits;
 
     const bills: Bills = this.bills;
 

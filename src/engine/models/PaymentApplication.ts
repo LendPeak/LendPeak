@@ -1,5 +1,6 @@
 import { Currency } from "../utils/Currency";
 import { DepositRecord } from "./Deposit";
+import { DepositRecords } from "./DepositRecords";
 import Decimal from "decimal.js";
 import { Bill } from "./Bill";
 import { Bills } from "./Bills";
@@ -38,11 +39,11 @@ export interface PaymentApplicationResult {
 // Payment Application Module
 export class PaymentApplication {
   bills: Bills;
-  private deposits: DepositRecord[];
+  private deposits: DepositRecords;
   private allocationStrategy: AllocationStrategy;
   private paymentPriority: PaymentPriority;
 
-  constructor(bills: Bills, deposits: DepositRecord[], options?: { allocationStrategy?: AllocationStrategy; paymentPriority?: PaymentPriority }) {
+  constructor(bills: Bills, deposits: DepositRecords, options?: { allocationStrategy?: AllocationStrategy; paymentPriority?: PaymentPriority }) {
     this.bills = bills;
     this.deposits = deposits;
 
@@ -90,7 +91,7 @@ export class PaymentApplication {
   processDeposits(): PaymentApplicationResult[] {
     const results: PaymentApplicationResult[] = [];
 
-    for (const deposit of this.deposits) {
+    for (const deposit of this.deposits.all) {
       if (deposit.active !== true) {
         console.debug(`Skipping deposit ${deposit.id} because it is not active`);
         continue;

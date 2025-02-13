@@ -80,4 +80,15 @@ export class ChangePaymentDates {
   get json() {
     return this.changePaymentDates.map((cpd) => cpd.json);
   }
+
+  isDuplicateTermNumber(termNumber: number): boolean {
+    // detect if there are more than one override for the same term number
+    return this._changePaymentDates.filter((bm) => bm.termNumber === termNumber).length > 1;
+  }
+
+  reSort() {
+    this.changePaymentDates = this.changePaymentDates.sort((a, b) => {
+      return a.termNumber < b.termNumber ? -1 : 1;
+    });
+  }
 }

@@ -413,8 +413,8 @@ export class OverridesComponent implements OnInit {
       paymentAmount = termPaymentAmountOverride.last.paymentAmount;
     }
 
-    if (termNumber > this.loan.term) {
-      termNumber = this.loan.term;
+    if (termNumber >= this.loan.term) {
+      termNumber = this.loan.term - 1;
     }
 
     termPaymentAmountOverride.addPaymentAmount(
@@ -426,6 +426,18 @@ export class OverridesComponent implements OnInit {
 
     this.loan.termPaymentAmountOverride = termPaymentAmountOverride;
     this.onInputChange(true);
+  }
+
+  refreshSortForTermPaymentAmountOverride() {
+    this.loan.termInterestAmountOverride.reSort();
+  }
+
+  refreshSortForChangePaymentDates() {
+    this.loan.changePaymentDates.reSort();
+  }
+
+  refreshSortForTermInterestOverride() {
+    this.loan.termInterestAmountOverride.reSort();
   }
 
   removeTermPaymentAmountOverride(index: number) {

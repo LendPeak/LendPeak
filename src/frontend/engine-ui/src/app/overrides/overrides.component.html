@@ -322,6 +322,12 @@
                     let override of loan.termInterestAmountOverride.all;
                     let i = index
                   "
+                  [ngClass]="{
+                    'bg-red-100':
+                      loan.termInterestAmountOverride.isDuplicateTermNumber(
+                        override.jsTermNumber
+                      ),
+                  }"
                 >
                   <!-- Term Dates -->
                   <td>
@@ -375,9 +381,16 @@
             </table>
             <div class="p-mt-2">
               <p-button
+                class="pr-2"
                 label="Add Interest Override"
                 icon="pi pi-plus"
                 (click)="addTermInterestOverrideRow()"
+              ></p-button>
+              <p-button
+                severity="info"
+                label="Re-Sort"
+                icon="pi pi-refresh"
+                (click)="refreshSortForTermInterestOverride()"
               ></p-button>
             </div>
           </div>
@@ -548,6 +561,12 @@
                       .all;
                     let i = index
                   "
+                  [ngClass]="{
+                    'bg-red-100':
+                      loan.termPaymentAmountOverride.isDuplicateTermNumber(
+                        paymentConfiguration.jsTermNumber
+                      ),
+                  }"
                 >
                   <!-- Term Dates -->
                   <td>
@@ -598,9 +617,16 @@
             </table>
             <div class="p-mt-2">
               <p-button
+                class="pr-2"
                 label="Add New Term Row"
                 icon="pi pi-plus"
                 (click)="addTermPaymentAmountOverride()"
+              ></p-button>
+              <p-button
+                severity="info"
+                label="Re-Sort"
+                icon="pi pi-refresh"
+                (click)="refreshSortForTermPaymentAmountOverride()"
               ></p-button>
             </div>
           </div>
@@ -630,6 +656,12 @@
                     let changePaymentDate of loan.changePaymentDates.all;
                     let i = index
                   "
+                  [ngClass]="{
+                    'bg-red-100':
+                      loan.changePaymentDates.isDuplicateTermNumber(
+                        changePaymentDate.jsTermNumber
+                      ),
+                  }"
                 >
                   <!-- Term Dates -->
                   <td>
@@ -681,9 +713,16 @@
             </table>
             <div class="p-mt-2">
               <p-button
+              class="pr-2"
                 label="Add Change Payment Date Row"
                 icon="pi pi-plus"
                 (click)="addNewChangePaymentTermRow()"
+              ></p-button>
+              <p-button
+                severity="info"
+                label="Re-Sort"
+                icon="pi pi-refresh"
+                (click)="refreshSortForChangePaymentDates()"
               ></p-button>
             </div>
           </div>

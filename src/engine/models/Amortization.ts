@@ -813,8 +813,12 @@ export class Amortization {
 
   set feesForAllTerms(value: Fees) {
     this.modifiedSinceLastCalculation = true;
-
-    this._feesForAllTerms = value;
+    // check type and inflate
+    if (value instanceof Fees) {
+      this._feesForAllTerms = value;
+    } else {
+      this._feesForAllTerms = new Fees(value);
+    }
   }
 
   get feesPerTerm() {
@@ -2418,7 +2422,7 @@ export class Amortization {
       perDiemCalculationType: this.perDiemCalculationType,
       billingModel: this.billingModel,
       feesPerTerm: this.feesPerTerm.json,
-      feesForAllTerms: this.feesForAllTerms,
+      feesForAllTerms: this.feesForAllTerms.json,
       repaymentSchedule: this.repaymentSchedule.json,
     };
   }

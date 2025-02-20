@@ -23,6 +23,7 @@ export class Fees {
 
   set fees(value: Fee[]) {
     // check type and inflate if necessary
+    console.log("setting fees", value);
     this._fees = value.map((c) => {
       if (c instanceof Fee) {
         return c;

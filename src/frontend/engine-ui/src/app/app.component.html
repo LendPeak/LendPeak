@@ -30,19 +30,23 @@
     <div class="p-fluid">
       <div class="field">
         <label for="loanName">Loan Name</label>
-        <input
-          id="loanName"
-          type="text"
-          pInputText
-          [(ngModel)]="loanToSave.name"
-        />
+        <input id="loanName" type="text" pInputText [(ngModel)]="loan.name" />
       </div>
       <div class="field">
         <label for="loanDescription">Description</label>
         <textarea
           id="loanDescription"
           pInputTextarea
-          [(ngModel)]="loanToSave.description"
+          [(ngModel)]="loan.description"
+          rows="3"
+        ></textarea>
+      </div>
+      <div class="field">
+        <label for="loanDescription">Changes Summary</label>
+        <textarea
+          id="changesSummary"
+          pInputTextarea
+          [(ngModel)]="changesSummary"
           rows="3"
         ></textarea>
       </div>

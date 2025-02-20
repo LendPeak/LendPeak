@@ -28,6 +28,7 @@ import {
 import { Fee } from 'lendpeak-engine/models/Fee';
 import { ChangePaymentDate } from 'lendpeak-engine/models/ChangePaymentDate';
 
+import { AmortizationVersionManager } from 'lendpeak-engine/models/AmortizationVersionManager';
 import { AmortizationEntry } from 'lendpeak-engine/models/Amortization/AmortizationEntry';
 import { BalanceModification } from 'lendpeak-engine/models/Amortization/BalanceModification';
 import { Deposit, DepositRecord } from 'lendpeak-engine/models/Deposit';
@@ -123,6 +124,8 @@ export class AppComponent implements OnChanges {
   };
 
   loan: Amortization = new Amortization(this.defaultLoanParams);
+  manager = new AmortizationVersionManager(this.loan);
+  changesSummary: string = 'Initial Version';
 
   bills: Bills = new Bills();
   deposits: DepositRecords = new DepositRecords();
@@ -813,17 +816,16 @@ export class AppComponent implements OnChanges {
   }
 
   openSaveLoanDialog() {
-    if (this.currentLoanName && this.currentLoanName !== 'New Loan') {
-      // Existing loan, save directly
-      this.saveLoan();
-    } else {
-      // New loan, prompt for name
-      this.loanToSave = {
-        name: '',
-        description: '',
-      };
-      this.showSaveLoanDialog = true;
-    }
+    // if (this.currentLoanName && this.currentLoanName !== 'New Loan') {
+    //   // Existing loan, save directly
+    //   this.saveLoan();
+    // } else {
+    this.loanToSave = {
+      name: this.loan.name || '',
+      description: this.loan.description || '',
+    };
+    this.showSaveLoanDialog = true;
+    //}
   }
 
   openManageLoansDialog() {
@@ -981,6 +983,8 @@ export class AppComponent implements OnChanges {
       summary: 'Success',
       detail: `Loan "${this.currentLoanName}" saved successfully`,
     });
+
+    this.manager.commitTransaction(this.changesSummary);
 
     this.showSaveLoanDialog = false;
   }

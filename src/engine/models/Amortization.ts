@@ -10,6 +10,7 @@ import { AmortizationEntry, AmortizationScheduleMetadata } from "./Amortization/
 import { TermInterestAmountOverride } from "./TermInterestAmountOverride";
 import { TermInterestAmountOverrides } from "./TermInterestAmountOverrides";
 import { TermInterestRateOverride } from "./TermInterestRateOverride";
+import { TermInterestRateOverrides } from "./TermInterestRateOverrides";
 import { RateSchedule } from "./RateSchedule";
 import { RateSchedules } from "./RateSchedules";
 import { PeriodSchedule } from "./PeriodSchedule";
@@ -17,6 +18,7 @@ import { PeriodSchedules } from "./PeriodSchedules";
 import { AmortizationSummary } from "./AmortizationSummary";
 import { TILA } from "./TILA";
 import { Fee } from "./Fee";
+import { Fees } from "./Fees";
 import { FeesPerTerm } from "./FeesPerTerm";
 import { PreBillDaysConfiguration } from "./PreBillDaysConfiguration";
 import { PreBillDaysConfigurations } from "./PreBillDaysConfigurations";
@@ -64,6 +66,7 @@ export interface AmortizationParams {
   defaultPreBillDaysConfiguration?: number;
   defaultBillDueDaysAfterPeriodEndConfiguration?: number;
   startDate: Dayjs | Date;
+  hasCustomEndDate?: boolean;
   endDate?: Dayjs | Date;
   calendarType?: CalendarType | string;
   roundingMethod?: RoundingMethod | string;
@@ -85,10 +88,10 @@ export interface AmortizationParams {
   // feePercentageOfTotalPayment?: Decimal; // A percentage of the total payment to be applied as a fee.
   // customFeePercentagesPerTerm?: { termNumber: number; feePercentage: Decimal }[]; // An array specifying custom percentages per term.
   feesPerTerm?: FeesPerTerm;
-  feesForAllTerms?: Fee[];
+  feesForAllTerms?: Fees;
   billingModel?: BillingModel;
   termInterestAmountOverride?: TermInterestAmountOverrides;
-  termInterestRateOverride?: TermInterestRateOverride[];
+  termInterestRateOverride?: TermInterestRateOverrides;
 }
 
 export type BillingModel = "amortized" | "dailySimpleInterest";
@@ -198,10 +201,10 @@ export class Amortization {
   private _perDiemCalculationType: PerDiemCalculationType = "AnnualRateDividedByDaysInYear";
   private _billingModel: BillingModel = "amortized";
   private _feesPerTerm: FeesPerTerm = FeesPerTerm.empty();
-  private _feesForAllTerms: Fee[] = [];
+  private _feesForAllTerms: Fees = new Fees();
   private _inputParams: AmortizationParams;
   private _termInterestAmountOverride: TermInterestAmountOverrides = new TermInterestAmountOverrides();
-  private _termInterestRateOverride: TermInterestRateOverride[] = [];
+  private _termInterestRateOverride: TermInterestRateOverrides = new TermInterestRateOverrides();
   private _modifiedSinceLastCalculation: boolean = true;
   private _modificationCount: number = 0;
   private _modificationOptimizationTracker: any = {};
@@ -748,23 +751,23 @@ export class Amortization {
     this._defaultBillDueDaysAfterPeriodEndConfiguration = value;
   }
 
-  get termInterestRateOverride(): TermInterestRateOverride[] {
+  get termInterestRateOverride(): TermInterestRateOverrides {
     return this._termInterestRateOverride;
   }
 
-  set termInterestRateOverride(value: TermInterestRateOverride[]) {
+  set termInterestRateOverride(value: TermInterestRateOverrides) {
     this.modifiedSinceLastCalculation = true;
 
-    this._termInterestRateOverride = [];
+    this._termInterestRateOverride = new TermInterestRateOverrides();
 
-    for (const override of value) {
+    for (const override of value.all) {
       if (override.termNumber <= 0 || override.termNumber > this.term) {
         throw new Error(`Invalid termInterestRateOverride: termNumber ${override.termNumber} out of range`);
       }
       if (override.interestRate.isNegative()) {
         throw new Error("Invalid termInterestRateOverride: interestAmount cannot be negative");
       }
-      this._termInterestRateOverride.push(override);
+      this._termInterestRateOverride.addOverride(override);
     }
   }
 
@@ -808,7 +811,7 @@ export class Amortization {
     return this._feesForAllTerms;
   }
 
-  set feesForAllTerms(value: Fee[]) {
+  set feesForAllTerms(value: Fees) {
     this.modifiedSinceLastCalculation = true;
 
     this._feesForAllTerms = value;
@@ -903,6 +906,7 @@ export class Amortization {
   }
 
   set hasCustomEquitedMonthlyPayment(value: boolean) {
+    // console.trace("custom equited monthly payment set to", value);
     this.modifiedSinceLastCalculation = true;
 
     this._hasCustomEquitedMonthlyPayment = value;
@@ -1010,6 +1014,10 @@ export class Amortization {
 
   set rateSchedules(rateSchedules: RateSchedules) {
     this.modifiedSinceLastCalculation = true;
+    // check type and inflate
+    if (!(rateSchedules instanceof RateSchedules)) {
+      rateSchedules = new RateSchedules(rateSchedules);
+    }
 
     const newRateSchedules = rateSchedules.allCustomAsObject;
 
@@ -1348,6 +1356,7 @@ export class Amortization {
   }
 
   set hasCustomEndDate(value: boolean) {
+    // console.trace("hasCustomEndDate is being set", value);
     this.modifiedSinceLastCalculation = true;
     this._endDate = undefined;
     this._hasCustomEndDate = value;
@@ -1401,7 +1410,7 @@ export class Amortization {
     ];
 
     // Combine the fees
-    const fees = [...deferredFees, ...allTermFees, ...termFees];
+    const fees = [...deferredFees, ...allTermFees.all, ...termFees];
 
     let totalFees = Currency.zero;
     let feesBeforePrincipal: Fee[] = [];
@@ -2059,7 +2068,7 @@ export class Amortization {
           break;
         }
         currentBalanceIndex++;
-        const termInterestRateOverride = this.termInterestRateOverride.find((override) => override.termNumber === termIndex)?.interestRate;
+        const termInterestRateOverride = this.termInterestRateOverride.all.find((override) => override.termNumber === termIndex)?.interestRate;
 
         let periodRates: RateSchedule[];
         if (termInterestRateOverride) {
@@ -2420,53 +2429,6 @@ export class Amortization {
    */
   public toJSON() {
     return this.json;
-  }
-
-  /**
-   * Recreates an Amortization instance from a JSON object.
-   * @param json The JSON object representing an Amortization instance.
-   * @returns A new Amortization instance.
-   */
-  public static fromJSON(json: any): Amortization {
-    const params: AmortizationParams = {
-      loanAmount: Currency.of(json.loanAmount),
-      originationFee: json.originationFee ? Currency.of(json.originationFee) : undefined,
-      annualInterestRate: new Decimal(json.annualInterestRate),
-      term: json.term,
-      preBillDays: json.preBillDays,
-      dueBillDays: json.dueBillDays,
-      defaultPreBillDaysConfiguration: json.defaultPreBillDaysConfiguration,
-      defaultBillDueDaysAfterPeriodEndConfiguration: json.defaultBillDueDaysAfterPeriodEndConfiguration,
-      startDate: dayjs(json.startDate),
-      endDate: json.endDate ? dayjs(json.endDate) : undefined,
-      calendarType: json.calendarType,
-      roundingMethod: json.roundingMethod,
-      flushUnbilledInterestRoundingErrorMethod: json.flushUnbilledInterestRoundingErrorMethod,
-      roundingPrecision: json.roundingPrecision,
-      flushThreshold: Currency.of(json.flushThreshold),
-      periodsSchedule: json.periodsSchedule.map((period: any) => ({
-        startDate: dayjs(period.startDate),
-        endDate: dayjs(period.endDate),
-      })),
-      ratesSchedule: json.rateSchedules.map((rate: any) => ({
-        annualInterestRate: new Decimal(rate.annualInterestRate),
-        startDate: dayjs(rate.startDate),
-        endDate: dayjs(rate.endDate),
-      })),
-      allowRateAbove100: json.allowRateAbove100,
-      termPaymentAmountOverride: json.termPaymentAmountOverride,
-      termPeriodDefinition: json.termPeriodDefinition,
-      changePaymentDates: json.changePaymentDates,
-      balanceModifications: json.balanceModifications.map((mod: any) => BalanceModification.fromJSON(mod)),
-      perDiemCalculationType: json.perDiemCalculationType,
-      billingModel: json.billingModel,
-      feesPerTerm: json.feesPerTerm,
-      feesForAllTerms: json.feesForAllTerms,
-    };
-
-    const amortization = new Amortization(params);
-
-    return amortization;
   }
 
   /**

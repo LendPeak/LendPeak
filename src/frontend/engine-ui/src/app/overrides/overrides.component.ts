@@ -25,6 +25,7 @@ import { ChangePaymentDates } from 'lendpeak-engine/models/ChangePaymentDates';
 import { FeesPerTerm } from 'lendpeak-engine/models/FeesPerTerm';
 import { TermFees } from 'lendpeak-engine/models/TermFees';
 import { Fee } from 'lendpeak-engine/models/Fee';
+import { Fees } from 'lendpeak-engine/models/Fees';
 import { RateSchedule } from 'lendpeak-engine/models/RateSchedule';
 import { Currency } from 'lendpeak-engine/utils/Currency';
 import { BalanceModifications } from 'lendpeak-engine/models/Amortization/BalanceModifications';
@@ -193,7 +194,7 @@ export class OverridesComponent implements OnInit {
     this.loan.preBillDays = new PreBillDaysConfigurations();
     this.loan.dueBillDays = new BillDueDaysConfigurations();
     this.loan.balanceModifications = new BalanceModifications();
-    this.loan.feesForAllTerms = [];
+    this.loan.feesForAllTerms = new Fees();
     this.loan.feesPerTerm = FeesPerTerm.empty();
     // Add other properties as needed
 
@@ -680,11 +681,7 @@ export class OverridesComponent implements OnInit {
 
   // Methods related to Fees That Apply to All Terms
   addFeeForAllTerms() {
-    if (!this.loan.feesForAllTerms) {
-      this.loan.feesForAllTerms = [];
-    }
-
-    this.loan.feesForAllTerms.push(
+    this.loan.feesForAllTerms.addFee(
       new Fee({
         type: 'fixed',
         amount: 0,
@@ -697,7 +694,7 @@ export class OverridesComponent implements OnInit {
 
   removeFeeForAllTerms(index: number) {
     if (this.loan.feesForAllTerms && this.loan.feesForAllTerms.length > 0) {
-      this.loan.feesForAllTerms.splice(index, 1);
+      this.loan.feesForAllTerms.removeFeeAtIndex(index);
       this.emitLoanChange();
     }
   }
@@ -761,15 +758,8 @@ export class OverridesComponent implements OnInit {
   }
 
   addTermInterestRateOverrideRow() {
-    if (!this.loan.termInterestRateOverride) {
-      this.loan.termInterestRateOverride = [];
-    }
-
     // Default values for a new row
-    const lastEntry =
-      this.loan.termInterestRateOverride[
-        this.loan.termInterestRateOverride.length - 1
-      ];
+    const lastEntry = this.loan.termInterestRateOverride.last;
     let termNumber = 1;
     let interestRate = this.loan.annualInterestRate;
 
@@ -778,7 +768,7 @@ export class OverridesComponent implements OnInit {
       interestRate = lastEntry.interestRate;
     }
 
-    this.loan.termInterestRateOverride.push(
+    this.loan.termInterestRateOverride.addOverride(
       new TermInterestRateOverride({
         termNumber: termNumber,
         interestRate: interestRate,
@@ -789,10 +779,6 @@ export class OverridesComponent implements OnInit {
   }
   // Add row for termInterestOverride
   addTermInterestOverrideRow() {
-    if (!this.loan.termInterestAmountOverride) {
-      this.loan.termInterestAmountOverride = new TermInterestAmountOverrides();
-    }
-
     // Default values for a new row
     const lastEntry = this.loan.termInterestAmountOverride.last;
     let termNumber = 1;
@@ -814,11 +800,8 @@ export class OverridesComponent implements OnInit {
   }
 
   removeTermInterestRateOverride(index: number) {
-    if (
-      this.loan.termInterestRateOverride &&
-      this.loan.termInterestRateOverride.length > 0
-    ) {
-      this.loan.termInterestRateOverride.splice(index, 1);
+    if (this.loan.termInterestRateOverride.length > 0) {
+      this.loan.termInterestRateOverride.removeOverrideAtIndex(index);
       this.onInputChange(true);
     }
   }

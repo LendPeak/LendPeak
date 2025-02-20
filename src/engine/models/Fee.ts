@@ -25,8 +25,7 @@ export interface FeeParams {
 
 export class Fee {
   id: string;
-  jsTermNumber?: number;
-  jsHumanTermNumber?: number;
+  jsTermNumber!: number;
 
   private _type!: FeeType;
   private _amount?: Currency;
@@ -119,9 +118,23 @@ export class Fee {
     this._metadata = value;
   }
 
-  syncJsToValues(): void {
-    this.amount = this.jsAmount;
-    this.percentage = this.jsPercentage;
+  updateModelValues(): void {
+    if (this.jsAmount !== undefined) {
+      this.amount = this.jsAmount;
+    } else {
+      this.amount = undefined;
+    }
+
+    if (this.jsPercentage) {
+      this.percentage = this.jsPercentage;
+    } else {
+      this.percentage = undefined;
+    }
+  }
+
+  updateJsValues(): void {
+    this.jsAmount = this.amount?.toNumber();
+    this.jsPercentage = this.percentage?.toNumber();
   }
 
   get json(): FeeParams {

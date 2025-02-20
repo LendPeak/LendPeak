@@ -98,184 +98,6 @@ export class AppComponent implements OnChanges {
   showExplanationDialog: boolean = false;
   loanExplanationText: string = '';
 
-  showNewVersionModal = false;
-  currentReleaseNotes: any;
-  releaseNotes = [
-    {
-      version: '1.0.0',
-      date: '2024-10-09',
-      details: ['Initial release with basic features.'],
-    },
-    {
-      version: '1.1.0',
-      date: '2024-10-09',
-      details: [
-        'Added version tracking and release notes. Now you can see the release notes for the current version along with the release notes for previous versions. You will also get a notification when a new version is released.',
-      ],
-    },
-    {
-      version: '1.2.0',
-      date: '2024-10-09',
-      details: [
-        'Added logic to expand accordion section in overrides tab if override exists, allowing user to identify quickly areas that have some configuration present',
-        'Implemented deferred fee logic, so if total term payment amount cannot satisfy fees, fees are deferred to next term',
-      ],
-    },
-    {
-      version: '1.3.0',
-      date: '2024-10-10',
-      details: [
-        'Minor cosmetic changes to the UI to text input fields to align with the rest of the application',
-        'Added to deposit option to apply excess to principal balance',
-      ],
-    },
-    {
-      version: '1.4.0',
-      date: '2024-10-12',
-      details: [
-        'Implemented early repayment where user can pay off the loan early',
-      ],
-    },
-    {
-      version: '1.5.0',
-      date: '2024-10-13',
-      details: [
-        'Simplified programmatic interfaces for UI moving logic to the engine',
-        'Added principal prepayment logic with excess application date, so payment can be forced allocated to principal balance',
-        'added balance modification locking to system generated modifications so principal prepayments that apply balance modifications automatically cannot be removed through UI',
-      ],
-    },
-    {
-      version: '1.6.0',
-      date: '2024-10-17',
-      details: [
-        'Added export to CSV repayment plan functionality',
-        'Added copy to clipboard repayment plan functionality',
-      ],
-    },
-    {
-      version: '1.7.0',
-      date: '2024-10-18',
-      details: [
-        'Added "Per Diem Calculation Type" setting in the Interest Settings. Users can now choose between calculating per diem interest based on the annual rate divided by days in the year or the monthly rate divided by days in the month.',
-        'Improved tooltip formatting for better clarity and user experience.',
-      ],
-    },
-    {
-      version: '1.8.0',
-      date: '2024-10-19',
-      details: [
-        'Deprecated Reset and Save UI buttons in the toolbar as they are no longer relevant with the introduction of manage loans functionality.',
-        'Improved the usability of the "More" menu by breaking it into multiple, context-aware buttons for better user interaction.',
-        'Added indicators for loan modification status, allowing users to see when a loan has unsaved changes.',
-        'Fixed Save Loan button alignment issue in dialogs.',
-        'Implemented loan not found handling, providing users with a clear message and suggestion to go back to the home page.',
-      ],
-    },
-    {
-      version: '1.9.0',
-      date: '2024-10-22',
-      details: [
-        'Added accrued interest functionality to get current accrued interest for mid term, for demo UI it is represented as a tag above the repayment plan',
-        'Added loan object tracking to simplify loan modification detection in the UI',
-      ],
-    },
-    {
-      version: '1.10.0',
-      date: '2024-10-28',
-      details: [
-        'Implemented URL updating when loading loans, so that refreshing the browser reloads the same loan.',
-        'Fixed an issue where loading a loan through the Manage Loans screen would cause the loan to load twice.',
-        'Enhanced the user experience by updating the URL without triggering navigation or component re-initialization.',
-        'Resolved accumulation of `usageDetails` in deposits by resetting them before processing payments, ensuring accurate tracking of deposit usage.',
-        'Added serialization and deserialization methods to the `Currency` class, enabling instances to be reconstructed from JSON objects for database storage and retrieval.',
-        'Improved error handling in `InterestCalculator` when calculating APR by validating inputs and providing more descriptive error messages when inputs are invalid or calculations fail.',
-      ],
-    },
-    {
-      version: '1.12.0',
-      date: '2024-11-27',
-      details: [
-        'Refactored the AppComponent by externalizing advanced settings into separate components.',
-        'Added support to load and retrieve overrides and advanced settings.',
-        'Implemented versioning support and preview for settings.',
-        'Reorganized the toolbar in the OverridesComponent and AdvancedSettingsComponent for improved usability.',
-        'Fixed an issue where date fields were not correctly restored when loading settings from JSON by converting date strings back to Date objects upon deserialization.',
-        'Enhanced user experience by simplifying the workflow for saving and updating settings, reducing confusion with button placement and functionality.',
-      ],
-    },
-    {
-      version: '1.13.0',
-      date: '2024-11-30',
-      details: [
-        'Implemented logging with Winston, enhancing application monitoring and error tracking.',
-        'Updated LoanProService to utilize the `$expand` parameter for systemId searches, allowing retrieval of LoanSetup, LoanSettings, and Payments in a single API call.',
-        'Refactored Proxy Controller to improve error handling and prevent circular JSON serialization errors.',
-        'Created comprehensive TypeScript interfaces for loan data responses, ensuring type safety and improving code maintainability.',
-        'Enhanced AppComponent to integrate new LoanProService functionalities, including loan import by displayId and systemId, and updated the UI to display detailed loan information with related entities.',
-      ],
-    },
-    {
-      version: '1.14.0',
-      date: '2024-12-09',
-      details: [
-        'Refined amortization calculations and interest rounding approaches.',
-        'Explored and then removed the AmortizationExplainer prototype after user feedback.',
-        'Enhanced UI transparency and pipeline stability.',
-        'Improved integration with TILA disclosure components and overall user experience.',
-      ],
-    },
-    {
-      version: '1.15.0',
-      date: '2024-12-09',
-      details: [
-        'Refined calculation for days left in the current term to accurately reflect the next due date instead of the contract end date.',
-        'Enhanced the loan summary section to include payoff amount (principal + accrued interest), accrued interest to date, and projected future interest if the loan runs to maturity.',
-        'Improved UI layout to better utilize space and provide a cleaner, more modern look for the loan summary and repayment plan overview.',
-        'These changes aim to increase transparency and clarity for the user, providing a more intuitive understanding of their loan status.',
-      ],
-    },
-    {
-      version: '1.16.0',
-      date: '2024-12-10',
-      details: [
-        'Added daysContractIsPastDue metric to Past Due Bills Status, reflecting contract-level delinquency from the earliest unpaid bill.',
-        'Improved partial payment handling for past due bills, now calculating unpaid amounts dynamically for greater accuracy.',
-        'Enhanced transparency and clarity in delinquency reporting, providing a more accurate and actionable status overview for all stakeholders.',
-      ],
-    },
-    {
-      version: '1.17.0',
-      date: '2024-12-10',
-      details: [
-        'Added a new feature that allows users to quickly scroll to the last due line in the repayment plan and automatically highlight it.',
-        'This improvement assists users in easily locating and reviewing the most recently due portion of their loan schedule.',
-        'Continued refinements to user experience and interface clarity to better guide users through their loan details.',
-      ],
-    },
-    {
-      version: '1.18.0',
-      date: '2024-12-10',
-      details: [
-        'Enhanced the Bills and Deposits views with "Go to Last Due Bill" and "Go to Last Deposit" functionalities.',
-        'Implemented row highlighting on scroll to visually emphasize the relevant record.',
-        'Improved reliability of scrolling by ensuring DOM elements are accessible after view rendering.',
-        'Minor UI adjustments and code refactoring to maintain consistency across components.',
-      ],
-    },
-    {
-      version: '1.19.0',
-      date: '2024-12-11',
-      details: [
-        'Added bulk import functionality from systemId range, allowing multi-loan imports in a single action.',
-        'Enhanced loan preview dialog to display multiple loans and aid in selecting the correct ones before import.',
-        'Updated onLoanImported method to handle single or multiple loans seamlessly, saving and loading each accordingly.',
-        'Fixed UI layout of preview and import buttons to appear side by side for better user experience.',
-        'General UI and code improvements for clarity, consistency, and easier maintenance.',
-      ],
-    },
-  ];
-
   showConnectorManagementDialog: boolean = false;
   showLoanImportDialog: boolean = false;
 
@@ -473,7 +295,7 @@ export class AppComponent implements OnChanges {
   // Handle loan change event
   onLoanChange(updatedLoan: any) {
     this.loan = updatedLoan;
-    this.loanModified = true; // Mark as modified
+    this.loanModified = true;
   }
 
   paymentApplicationResults: PaymentApplicationResult[] = [];
@@ -1781,4 +1603,182 @@ export class AppComponent implements OnChanges {
       }, 500); // a small delay to ensure scrolling completes
     }
   }
+
+  showNewVersionModal = false;
+  currentReleaseNotes: any;
+  releaseNotes = [
+    {
+      version: '1.0.0',
+      date: '2024-10-09',
+      details: ['Initial release with basic features.'],
+    },
+    {
+      version: '1.1.0',
+      date: '2024-10-09',
+      details: [
+        'Added version tracking and release notes. Now you can see the release notes for the current version along with the release notes for previous versions. You will also get a notification when a new version is released.',
+      ],
+    },
+    {
+      version: '1.2.0',
+      date: '2024-10-09',
+      details: [
+        'Added logic to expand accordion section in overrides tab if override exists, allowing user to identify quickly areas that have some configuration present',
+        'Implemented deferred fee logic, so if total term payment amount cannot satisfy fees, fees are deferred to next term',
+      ],
+    },
+    {
+      version: '1.3.0',
+      date: '2024-10-10',
+      details: [
+        'Minor cosmetic changes to the UI to text input fields to align with the rest of the application',
+        'Added to deposit option to apply excess to principal balance',
+      ],
+    },
+    {
+      version: '1.4.0',
+      date: '2024-10-12',
+      details: [
+        'Implemented early repayment where user can pay off the loan early',
+      ],
+    },
+    {
+      version: '1.5.0',
+      date: '2024-10-13',
+      details: [
+        'Simplified programmatic interfaces for UI moving logic to the engine',
+        'Added principal prepayment logic with excess application date, so payment can be forced allocated to principal balance',
+        'added balance modification locking to system generated modifications so principal prepayments that apply balance modifications automatically cannot be removed through UI',
+      ],
+    },
+    {
+      version: '1.6.0',
+      date: '2024-10-17',
+      details: [
+        'Added export to CSV repayment plan functionality',
+        'Added copy to clipboard repayment plan functionality',
+      ],
+    },
+    {
+      version: '1.7.0',
+      date: '2024-10-18',
+      details: [
+        'Added "Per Diem Calculation Type" setting in the Interest Settings. Users can now choose between calculating per diem interest based on the annual rate divided by days in the year or the monthly rate divided by days in the month.',
+        'Improved tooltip formatting for better clarity and user experience.',
+      ],
+    },
+    {
+      version: '1.8.0',
+      date: '2024-10-19',
+      details: [
+        'Deprecated Reset and Save UI buttons in the toolbar as they are no longer relevant with the introduction of manage loans functionality.',
+        'Improved the usability of the "More" menu by breaking it into multiple, context-aware buttons for better user interaction.',
+        'Added indicators for loan modification status, allowing users to see when a loan has unsaved changes.',
+        'Fixed Save Loan button alignment issue in dialogs.',
+        'Implemented loan not found handling, providing users with a clear message and suggestion to go back to the home page.',
+      ],
+    },
+    {
+      version: '1.9.0',
+      date: '2024-10-22',
+      details: [
+        'Added accrued interest functionality to get current accrued interest for mid term, for demo UI it is represented as a tag above the repayment plan',
+        'Added loan object tracking to simplify loan modification detection in the UI',
+      ],
+    },
+    {
+      version: '1.10.0',
+      date: '2024-10-28',
+      details: [
+        'Implemented URL updating when loading loans, so that refreshing the browser reloads the same loan.',
+        'Fixed an issue where loading a loan through the Manage Loans screen would cause the loan to load twice.',
+        'Enhanced the user experience by updating the URL without triggering navigation or component re-initialization.',
+        'Resolved accumulation of `usageDetails` in deposits by resetting them before processing payments, ensuring accurate tracking of deposit usage.',
+        'Added serialization and deserialization methods to the `Currency` class, enabling instances to be reconstructed from JSON objects for database storage and retrieval.',
+        'Improved error handling in `InterestCalculator` when calculating APR by validating inputs and providing more descriptive error messages when inputs are invalid or calculations fail.',
+      ],
+    },
+    {
+      version: '1.12.0',
+      date: '2024-11-27',
+      details: [
+        'Refactored the AppComponent by externalizing advanced settings into separate components.',
+        'Added support to load and retrieve overrides and advanced settings.',
+        'Implemented versioning support and preview for settings.',
+        'Reorganized the toolbar in the OverridesComponent and AdvancedSettingsComponent for improved usability.',
+        'Fixed an issue where date fields were not correctly restored when loading settings from JSON by converting date strings back to Date objects upon deserialization.',
+        'Enhanced user experience by simplifying the workflow for saving and updating settings, reducing confusion with button placement and functionality.',
+      ],
+    },
+    {
+      version: '1.13.0',
+      date: '2024-11-30',
+      details: [
+        'Implemented logging with Winston, enhancing application monitoring and error tracking.',
+        'Updated LoanProService to utilize the `$expand` parameter for systemId searches, allowing retrieval of LoanSetup, LoanSettings, and Payments in a single API call.',
+        'Refactored Proxy Controller to improve error handling and prevent circular JSON serialization errors.',
+        'Created comprehensive TypeScript interfaces for loan data responses, ensuring type safety and improving code maintainability.',
+        'Enhanced AppComponent to integrate new LoanProService functionalities, including loan import by displayId and systemId, and updated the UI to display detailed loan information with related entities.',
+      ],
+    },
+    {
+      version: '1.14.0',
+      date: '2024-12-09',
+      details: [
+        'Refined amortization calculations and interest rounding approaches.',
+        'Explored and then removed the AmortizationExplainer prototype after user feedback.',
+        'Enhanced UI transparency and pipeline stability.',
+        'Improved integration with TILA disclosure components and overall user experience.',
+      ],
+    },
+    {
+      version: '1.15.0',
+      date: '2024-12-09',
+      details: [
+        'Refined calculation for days left in the current term to accurately reflect the next due date instead of the contract end date.',
+        'Enhanced the loan summary section to include payoff amount (principal + accrued interest), accrued interest to date, and projected future interest if the loan runs to maturity.',
+        'Improved UI layout to better utilize space and provide a cleaner, more modern look for the loan summary and repayment plan overview.',
+        'These changes aim to increase transparency and clarity for the user, providing a more intuitive understanding of their loan status.',
+      ],
+    },
+    {
+      version: '1.16.0',
+      date: '2024-12-10',
+      details: [
+        'Added daysContractIsPastDue metric to Past Due Bills Status, reflecting contract-level delinquency from the earliest unpaid bill.',
+        'Improved partial payment handling for past due bills, now calculating unpaid amounts dynamically for greater accuracy.',
+        'Enhanced transparency and clarity in delinquency reporting, providing a more accurate and actionable status overview for all stakeholders.',
+      ],
+    },
+    {
+      version: '1.17.0',
+      date: '2024-12-10',
+      details: [
+        'Added a new feature that allows users to quickly scroll to the last due line in the repayment plan and automatically highlight it.',
+        'This improvement assists users in easily locating and reviewing the most recently due portion of their loan schedule.',
+        'Continued refinements to user experience and interface clarity to better guide users through their loan details.',
+      ],
+    },
+    {
+      version: '1.18.0',
+      date: '2024-12-10',
+      details: [
+        'Enhanced the Bills and Deposits views with "Go to Last Due Bill" and "Go to Last Deposit" functionalities.',
+        'Implemented row highlighting on scroll to visually emphasize the relevant record.',
+        'Improved reliability of scrolling by ensuring DOM elements are accessible after view rendering.',
+        'Minor UI adjustments and code refactoring to maintain consistency across components.',
+      ],
+    },
+    {
+      version: '1.19.0',
+      date: '2024-12-11',
+      details: [
+        'Added bulk import functionality from systemId range, allowing multi-loan imports in a single action.',
+        'Enhanced loan preview dialog to display multiple loans and aid in selecting the correct ones before import.',
+        'Updated onLoanImported method to handle single or multiple loans seamlessly, saving and loading each accordingly.',
+        'Fixed UI layout of preview and import buttons to appear side by side for better user experience.',
+        'General UI and code improvements for clarity, consistency, and easier maintenance.',
+      ],
+    },
+  ];
 }

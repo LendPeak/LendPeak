@@ -7,7 +7,7 @@ export class RateSchedules {
   constructor(schedules: RateSchedule[] = []) {
     this.schedules = schedules;
     this.updateJsValues();
-     this.modified = false;
+    this.modified = false;
   }
 
   resetModified() {
@@ -40,8 +40,16 @@ export class RateSchedules {
   }
 
   set schedules(value: RateSchedule[]) {
+    // check type and inflate if necessary
+
+    this._schedules = value.map((c) => {
+      if (c instanceof RateSchedule) {
+        return c;
+      }
+      return new RateSchedule(c);
+    });
+
     this.modified = true;
-    this._schedules = value;
   }
 
   get all(): RateSchedule[] {
@@ -95,6 +103,7 @@ export class RateSchedules {
   }
 
   get json() {
-    return this._schedules.map((s) => s.json);
+    const json = this._schedules.map((s) => s.json);
+    return json;
   }
 }

@@ -420,7 +420,7 @@
               <tbody>
                 <tr
                   *ngFor="
-                    let override of loan.termInterestRateOverride;
+                    let override of loan.termInterestRateOverride.all;
                     let i = index
                   "
                 >
@@ -657,10 +657,9 @@
                     let i = index
                   "
                   [ngClass]="{
-                    'bg-red-100':
-                      loan.changePaymentDates.isDuplicateTermNumber(
-                        changePaymentDate.jsTermNumber
-                      ),
+                    'bg-red-100': loan.changePaymentDates.isDuplicateTermNumber(
+                      changePaymentDate.jsTermNumber
+                    ),
                   }"
                 >
                   <!-- Term Dates -->
@@ -713,7 +712,7 @@
             </table>
             <div class="p-mt-2">
               <p-button
-              class="pr-2"
+                class="pr-2"
                 label="Add Change Payment Date Row"
                 icon="pi pi-plus"
                 (click)="addNewChangePaymentTermRow()"
@@ -1018,7 +1017,7 @@
                 </tr>
               </thead>
               <tbody>
-                <tr *ngFor="let fee of loan.feesForAllTerms; let i = index">
+                <tr *ngFor="let fee of loan.feesForAllTerms.all; let i = index">
                   <!-- Fee Type -->
                   <td>
                     <p-select

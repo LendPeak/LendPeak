@@ -17,10 +17,8 @@ export interface TermInterestAmountOverrideParams {
 
 export class TermInterestAmountOverride {
   private _termNumber!: number;
-  private _humanTermNumber!: number;
   private _interestAmount!: Currency;
   jsTermNumber!: number;
-  jsHumanTermNumber!: number;
   jsInterestAmount!: number;
   _date?: Dayjs;
   jsDate?: Date;
@@ -38,21 +36,6 @@ export class TermInterestAmountOverride {
   set termNumber(value: number) {
     this._termNumber = value;
     this.jsTermNumber = value;
-
-    this._humanTermNumber = value + 1;
-    this.jsHumanTermNumber = this._humanTermNumber;
-  }
-
-  set humanTermNumber(value: number) {
-    this._termNumber = value - 1;
-    this.jsTermNumber = this._termNumber;
-
-    this._humanTermNumber = value;
-    this.jsHumanTermNumber = this._humanTermNumber;
-  }
-
-  get humanTermNumber(): number {
-    return this._humanTermNumber;
   }
 
   get date(): Dayjs | undefined {
@@ -97,6 +80,4 @@ export class TermInterestAmountOverride {
       date: this.date?.toDate(),
     };
   }
-
-
 }

@@ -379,7 +379,7 @@ export class LoanImportComponent implements OnInit, OnDestroy {
       term: loanData.d.Transactions.filter(
         (tr) => tr.type === 'scheduledPayment',
       ).length,
-      feesForAllTerms: [],
+      //   feesForAllTerms: [],
       feesPerTerm: FeesPerTerm.empty(),
       startDate: parseODataDate(loanData.d.LoanSetup.contractDate, true),
       firstPaymentDate: parseODataDate(

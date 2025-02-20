@@ -80,6 +80,7 @@ export class RateSchedule {
       annualInterestRate: this.annualInterestRate.toNumber(),
       startDate: this.startDate.toDate(),
       endDate: this.endDate.toDate(),
+      type: this.type,
     };
   }
 

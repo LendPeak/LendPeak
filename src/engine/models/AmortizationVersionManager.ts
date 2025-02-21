@@ -1,6 +1,15 @@
 import { Amortization } from "./Amortization";
 import { AmortizationVersion } from "./AmortizationVersion";
 import cloneDeep from "lodash/cloneDeep";
+import dayjs from "dayjs";
+import isSameOrAfter from "dayjs/plugin/isSameOrAfter";
+import isSameOrBefore from "dayjs/plugin/isSameOrBefore";
+import isBetween from "dayjs/plugin/isBetween";
+
+dayjs.extend(isSameOrAfter);
+dayjs.extend(isSameOrBefore);
+dayjs.extend(isBetween);
+
 /**
  * Utility that checks if the dot-notation path is excluded.
  */
@@ -16,7 +25,7 @@ function isOutputPath(pathString: string, outputPaths: string[]): boolean {
 }
 
 function isDate(value: any): boolean {
-  return value instanceof Date && !isNaN(value.valueOf());
+  return (value instanceof Date && !isNaN(value.valueOf())) || dayjs.isDayjs(value);
 }
 
 function inflateAmortizationIfNeeded(obj: any): any {

@@ -1,0 +1,56 @@
+<ng-container *ngIf="value !== null && value !== undefined; else blank">
+  <!-- 1) If value is a JS Date -->
+  <ng-container *ngIf="isDate(value); else checkDayjs">
+    <span>{{ datePipe.transform(value, "medium") }}</span>
+  </ng-container>
+
+  <!-- 2) If value is a Dayjs instance -->
+  <ng-template #checkDayjs>
+    <ng-container *ngIf="isDayjs(value); else checkArray">
+      <span>{{ value.format("YYYY-MM-DD HH:mm:ss") }}</span>
+    </ng-container>
+
+    <!-- 3) If value is an Array, show each item as a p-chip -->
+    <ng-template #checkArray>
+      <ng-container *ngIf="isArray(value); else checkObject">
+        <ng-container *ngFor="let item of value">
+          <p-chip [label]="formatSimple(item)" class="mr-2 mb-1"></p-chip>
+        </ng-container>
+      </ng-container>
+
+      <!-- 4) If value is a Plain Object, render a nested p-table of key-value pairs -->
+      <ng-template #checkObject>
+        <ng-container *ngIf="isPlainObject(value); else simple">
+          <p-table [value]="objectKeys(value)" styleClass="nested-table">
+            <ng-template pTemplate="header">
+              <tr>
+                <th>Key</th>
+                <th>Value</th>
+              </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-keyProp>
+              <tr>
+                <td>{{ keyProp }}</td>
+                <td>
+                  <app-value-renderer
+                    [value]="value[keyProp]"
+                  ></app-value-renderer>
+                </td>
+              </tr>
+            </ng-template>
+          </p-table>
+        </ng-container>
+
+        <!-- 5) Otherwise, fallback to simple string display -->
+        <ng-template #simple>
+          <span [ngClass]="{ 'text-red-500': value === '' }">
+            {{ value === "" ? "Blank" : value }}
+          </span>
+        </ng-template>
+      </ng-template>
+    </ng-template>
+  </ng-template>
+</ng-container>
+
+<!-- If value is null or undefined => show 'Blank' -->
+<ng-template #blank>Blank</ng-template>

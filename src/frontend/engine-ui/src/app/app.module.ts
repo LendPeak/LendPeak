@@ -63,6 +63,7 @@ import { ConnectorManagementComponent } from './connector-management/connector-m
 import { LoanImportComponent } from './loan-import/loan-import.component';
 
 import { VersionHistoryComponent } from './version-history/version-history.component';
+import { ValueRendererComponent } from './value-renderer/value-renderer.component';
 
 import { HighlightModule, LineNumbersOptions } from 'ngx-highlightjs';
 import { provideHighlightOptions } from 'ngx-highlightjs';
@@ -92,6 +93,7 @@ import {
     ConnectorManagementComponent,
     LoanImportComponent,
     VersionHistoryComponent,
+    ValueRendererComponent,
   ],
   imports: [
     BrowserModule,

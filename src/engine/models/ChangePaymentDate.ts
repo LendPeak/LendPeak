@@ -91,6 +91,7 @@ export class ChangePaymentDate {
       termNumber: this.termNumber,
       humanTermNumber: this.humanTermNumber,
       newDate: this.newDate.toDate(),
+      originalEndDate: this.originalEndDate?.toDate(),
       originalDate: this.originalDate?.toDate(),
     };
   }

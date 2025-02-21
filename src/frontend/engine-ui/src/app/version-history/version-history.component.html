@@ -44,8 +44,16 @@
                     <tbody>
                       <tr *ngFor="let key of objectKeys(version.inputChanges)">
                         <td>{{ key }}</td>
-                        <td>{{ version.inputChanges[key].oldValue }}</td>
-                        <td>{{ version.inputChanges[key].newValue }}</td>
+                        <td>
+                          <app-value-renderer
+                            [value]="version.inputChanges[key].oldValue"
+                          ></app-value-renderer>
+                        </td>
+                        <td>
+                          <app-value-renderer
+                            [value]="version.inputChanges[key].newValue"
+                          ></app-value-renderer>
+                        </td>
                       </tr>
                     </tbody>
                   </table>

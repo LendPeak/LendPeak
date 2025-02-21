@@ -9,6 +9,8 @@ import {
 import { AmortizationVersionManager } from 'lendpeak-engine/models/AmortizationVersionManager';
 import { AmortizationVersion } from 'lendpeak-engine/models/AmortizationVersion';
 import { Subscription } from 'rxjs';
+import dayjs from 'dayjs';
+import { DatePipe } from '@angular/common';
 
 @Component({
   selector: 'app-version-history',
@@ -25,6 +27,7 @@ export class VersionHistoryComponent implements OnChanges {
   versions: AmortizationVersion[] = [];
   public versionEvents: any[] = [];
   private refreshSub?: Subscription;
+  private datePipe = new DatePipe('en-US');
 
   constructor() {}
 
@@ -66,6 +69,35 @@ export class VersionHistoryComponent implements OnChanges {
     }
   }
 
+  formatValue(value: any): string {
+    if (value == null) {
+      return 'Blank';
+    }
+
+    // 1) If it’s a Date object
+    if (value instanceof Date) {
+      return this.datePipe.transform(value, 'medium') ?? String(value);
+    }
+
+    // 2) If it’s a Dayjs object
+    if (dayjs.isDayjs(value)) {
+      return value.format('YYYY-MM-DD HH:mm:ss'); // or any format you like
+    }
+
+    // 3) If it's a normal object or array, just show JSON.
+    //    (Optionally you can do a partial approach if the object is huge.)
+    if (typeof value === 'object') {
+      try {
+        return JSON.stringify(value, null, 2); // multiline JSON if you want
+      } catch (err) {
+        return '[object Object]'; // fallback
+      }
+    }
+
+    // 4) For everything else (numbers, strings, booleans, etc.)
+    return String(value);
+  }
+
   rollbackToVersion(versionId: string) {
     // Optionally emit to the parent
     this.onRollback.emit(versionId);
@@ -80,5 +112,9 @@ export class VersionHistoryComponent implements OnChanges {
   rollbackVersion(versionId: string) {
     // e.g. call your manager.rollback(...) or emit an event to your parent
     console.log('Rollback to version: ', versionId);
+  }
+
+  isObject(value: any): boolean {
+    return value && typeof value === 'object' && !Array.isArray(value);
   }
 }

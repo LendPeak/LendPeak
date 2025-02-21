@@ -12,6 +12,7 @@ import {
   SimpleChanges,
   ElementRef,
   ViewChild,
+  EventEmitter,
 } from '@angular/core';
 
 import {
@@ -63,6 +64,7 @@ import {
   ActualLoanSummary,
 } from 'lendpeak-engine/models/UIInterfaces';
 import { UsageDetail } from 'lendpeak-engine/models/Bill/Deposit/UsageDetail';
+import { __await } from 'tslib';
 
 @Component({
   selector: 'app-root',
@@ -75,6 +77,7 @@ export class AppComponent implements OnChanges {
   @ViewChild('confirmPopup') confirmPopup!: ConfirmPopup;
   @ViewChild('repaymentPlanTable', { static: false })
   repaymentPlanTableRef!: ElementRef;
+  public versionHistoryRefresh = new EventEmitter<AmortizationVersionManager>();
 
   constructor(
     private route: ActivatedRoute,
@@ -125,7 +128,7 @@ export class AppComponent implements OnChanges {
 
   loan: Amortization = new Amortization(this.defaultLoanParams);
   manager = new AmortizationVersionManager(this.loan);
-  changesSummary: string = 'Initial Version';
+  changesSummary: string = '';
 
   bills: Bills = new Bills();
   deposits: DepositRecords = new DepositRecords();
@@ -144,7 +147,7 @@ export class AppComponent implements OnChanges {
     this.showLoanImportDialog = true;
   }
 
-  onLoanImported(
+  async onLoanImported(
     loanData: {
       loan: Amortization;
       deposits: DepositRecords;
@@ -153,9 +156,10 @@ export class AppComponent implements OnChanges {
     if (loanData.length > 1) {
       // Multiple loans imported
       // For example, save each loan individually under its own name
-      loanData.forEach((singleLoan) => {
-        this.saveLoanWithoutLoading(singleLoan);
-      });
+
+      for (let singleLoan of loanData) {
+        await this.saveLoanWithoutLoading(singleLoan);
+      }
       this.messageService.add({
         severity: 'success',
         summary: 'Success',
@@ -163,7 +167,7 @@ export class AppComponent implements OnChanges {
       });
     } else {
       // Single loan imported
-      this.saveAndLoadLoan(loanData[0]);
+      await this.saveAndLoadLoan(loanData[0]);
       this.messageService.add({
         severity: 'success',
         summary: 'Success',
@@ -175,15 +179,15 @@ export class AppComponent implements OnChanges {
   }
 
   // A helper function to avoid repeating code:
-  private saveAndLoadLoan(loanData: {
+  private async saveAndLoadLoan(loanData: {
     loan: Amortization;
     deposits: DepositRecords;
   }) {
-    this.saveLoanWithoutLoading(loanData);
+    await this.saveLoanWithoutLoading(loanData);
     this.executeLoadLoan(this.loan.name);
   }
 
-  private saveLoanWithoutLoading(loanData: {
+  private async saveLoanWithoutLoading(loanData: {
     loan: Amortization;
     deposits: DepositRecords;
   }) {
@@ -196,7 +200,8 @@ export class AppComponent implements OnChanges {
     this.currentLoanDescription =
       this.loan.description || 'Imported from LoanPro';
 
-    this.saveLoan();
+    this.manager = new AmortizationVersionManager(this.loan);
+    await this.saveLoan();
   }
 
   // Handle any actions emitted by the bills component
@@ -353,6 +358,7 @@ export class AppComponent implements OnChanges {
     customPeriodsSchedule: 3,
     deposits: 4,
     bills: 5,
+    history: 6,
   };
 
   tabNames: string[] = [
@@ -362,6 +368,7 @@ export class AppComponent implements OnChanges {
     'customPeriodsSchedule',
     'deposits',
     'bills',
+    'history',
   ];
 
   onTabChange(tabIndex: any) {
@@ -820,6 +827,7 @@ export class AppComponent implements OnChanges {
     //   // Existing loan, save directly
     //   this.saveLoan();
     // } else {
+
     this.loanToSave = {
       name: this.loan.name || '',
       description: this.loan.description || '',
@@ -922,9 +930,11 @@ export class AppComponent implements OnChanges {
       if (!loanData.loan.hasCustomEndDate) {
         delete loanData.loan.endDate;
       }
-      this.loan = new Amortization(loanData.loan);
+      //this.loan = new Amortization(loanData.loan);
       this.deposits = new DepositRecords(loanData.deposits);
-
+      this.manager = AmortizationVersionManager.fromJSON(loanData.manager);
+      this.loan = this.manager.getAmortization();
+      // console.log('manager', this.manager);
       // Set the current loan name
       this.currentLoanName = loanData.name || 'Loaded Loan';
       this.currentLoanDescription = loanData.loan.description;
@@ -963,6 +973,10 @@ export class AppComponent implements OnChanges {
     this.loan.updateModelValues();
     // Existing loan, save to the same key
     const key = `loan_${this.loan.name}`;
+    this.manager.commitTransaction(
+      this.changesSummary || 'Initial Version',
+    );
+    this.versionHistoryRefresh.emit(this.manager);
 
     const loanData = {
       loan: this.loan.toJSON(),
@@ -970,6 +984,7 @@ export class AppComponent implements OnChanges {
       deposits: this.deposits.toJSON(),
       description: this.loan.description || '',
       name: this.loan.name,
+      manager: this.manager.toJSON(),
     };
 
     //localStorage.setItem(key, JSON.stringify(loanData));
@@ -983,8 +998,6 @@ export class AppComponent implements OnChanges {
       summary: 'Success',
       detail: `Loan "${this.currentLoanName}" saved successfully`,
     });
-
-    this.manager.commitTransaction(this.changesSummary);
 
     this.showSaveLoanDialog = false;
   }
@@ -1567,6 +1580,36 @@ export class AppComponent implements OnChanges {
       totalPastDueAmount,
       daysContractIsPastDue,
     };
+  }
+
+  public handleRollback(versionId: string) {
+    // Possibly confirm with user
+    const confirmed = confirm(
+      `Are you sure you want to rollback to version ${versionId}?`,
+    );
+    if (!confirmed) return;
+
+    try {
+      this.manager.rollback(versionId, `Rollback to version ${versionId}`);
+      // After rollback, the manager has a new version at the top referencing the old version
+      // Re-sync the loan in your UI
+      this.loan = this.manager.getAmortization();
+      this.loanModified = true; // or false, depending on your logic
+      // Then re-run the schedule if needed
+      this.submitLoan();
+      this.messageService.add({
+        severity: 'success',
+        summary: 'Rollback Successful',
+        detail: `Rolled back to version ${versionId}`,
+      });
+    } catch (err) {
+      console.error('Rollback error:', err);
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Rollback Failed',
+        detail: 'Error rolling back loan: ' + err,
+      });
+    }
   }
 
   scrollToLastDueLine(): void {

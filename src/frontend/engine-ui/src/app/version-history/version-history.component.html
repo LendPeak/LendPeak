@@ -1,0 +1,76 @@
+<p-dataView #dv [value]="versionEvents" layout="list" [paginator]="false">
+  <!-- "list" template for DataView v19+ -->
+  <ng-template #list let-items>
+    <!-- Container (example using Tailwind classes, you can remove them if not needed) -->
+    <div class="grid grid-cols-12 gap-4 grid-nogutter">
+      <!-- We iterate over 'items' (the chunk of data given to us by DataView) -->
+      <div
+        class="col-span-12 w-full"
+        *ngFor="let version of items; let last = last"
+      >
+        <div class="p-6 flex flex-col gap-4">
+          <!-- Basic Info (Version ID, timestamp, commit message, rollback button) -->
+          <div style="min-width: 300px">
+            <h3>Version {{ version.versionId }}</h3>
+            <small>{{ version.timestamp | date: "long" }}</small>
+            <p *ngIf="version.commitMessage" class="mt-2">
+              {{ version.commitMessage }}
+            </p>
+            <p-button
+              *ngIf="!version.isRollback"
+              label="Rollback"
+              (click)="rollbackVersion(version.versionId)"
+            ></p-button>
+          </div>
+
+          <!-- Accordion for Changes -->
+          <p-accordion class="w-full">
+            <!-- Input Changes -->
+            <p-accordion-panel value="0">
+              <p-accordion-header>Input Changes</p-accordion-header>
+              <p-accordion-content>
+                <div *ngIf="isEmpty(version.inputChanges)">
+                  <em>No input changes in this version.</em>
+                </div>
+                <ng-container *ngIf="!isEmpty(version.inputChanges)">
+                  <table class="changes-table">
+                    <thead>
+                      <tr>
+                        <th>Field</th>
+                        <th>Old</th>
+                        <th>New</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let key of objectKeys(version.inputChanges)">
+                        <td>{{ key }}</td>
+                        <td>{{ version.inputChanges[key].oldValue }}</td>
+                        <td>{{ version.inputChanges[key].newValue }}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </ng-container>
+              </p-accordion-content>
+            </p-accordion-panel>
+
+            <!-- Output Changes -->
+            <p-accordion-panel value="1">
+              <p-accordion-header>Output Changes</p-accordion-header>
+              <p-accordion-content>
+                <div *ngIf="isEmpty(version.outputChanges)">
+                  <em>No output changes in this version.</em>
+                </div>
+                <ng-container *ngIf="!isEmpty(version.outputChanges)">
+                  <p>Output changes detail...</p>
+                  <!-- Or insert a table for output changes similar to input changes -->
+                </ng-container>
+              </p-accordion-content>
+            </p-accordion-panel>
+          </p-accordion>
+        </div>
+        <hr *ngIf="!last" class="my-2" />
+      </div>
+      <!-- end *ngFor over items -->
+    </div>
+  </ng-template>
+</p-dataView>

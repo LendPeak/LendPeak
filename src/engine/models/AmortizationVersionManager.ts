@@ -15,6 +15,30 @@ function isOutputPath(pathString: string, outputPaths: string[]): boolean {
   return outputPaths.some((op) => pathString === op || pathString.startsWith(op + "."));
 }
 
+function isDate(value: any): boolean {
+  return value instanceof Date && !isNaN(value.valueOf());
+}
+
+function inflateAmortizationIfNeeded(obj: any): any {
+  // Already an instance?
+  if (obj instanceof Amortization) {
+    return obj;
+  } else if (!obj || Object.keys(obj).length === 0) {
+    // if it is empty object, we just return that
+    // usually that is when initial version is being compared
+    return obj;
+  }
+  try {
+    const amort = new Amortization(obj);
+    amort.generateSchedule();
+    return amort;
+  } catch (e) {
+    console.error("Error inflating Amortization", e);
+    console.trace("Original object", obj);
+    throw e;
+  }
+}
+
 /**
  * Recursive function that populates two diff objects:
  * - inputDiffs: fields not excluded and not in outputPaths
@@ -31,32 +55,39 @@ function computeDualDiff(
   excludedPaths: string[],
   outputPaths: string[]
 ): void {
-  // If they are exactly the same (including null/undefined), no diff.
+  // 1. If exactly the same (including null/undefined), no diff
   if (oldObj === newObj) return;
+
+  // 2. If both are Date objects, compare getTime()
+  if (isDate(oldObj) && isDate(newObj)) {
+    if (oldObj.getTime() !== newObj.getTime()) {
+      console.error("Date mismatch", path.join("."), oldObj, newObj);
+      recordChange(path.join("."), oldObj, newObj, inputDiffs, outputDiffs, outputPaths);
+    }
+    return;
+  }
 
   const currentPath = path.join(".");
 
-  // 1. Exclusion check
+  // 3. Exclusion check
   if (isExcluded(currentPath, excludedPaths)) {
-    // We ignore this path entirely. Return without recording or recursing further.
     return;
   }
 
   const oldType = typeof oldObj;
   const newType = typeof newObj;
 
-  // 2. If one side is primitive (or array vs. object mismatch), record a direct diff
-  //    (Alternatively, if either is null, or different array lengths, etc.)
+  // 4. If one side is primitive or mismatch (array vs. object, etc.), record a direct diff
+  //    (Also handles if either is null or different array lengths, etc.)
   const bothAreObjects = oldType === "object" && newType === "object" && oldObj !== null && newObj !== null;
   const bothAreArrays = bothAreObjects && Array.isArray(oldObj) && Array.isArray(newObj);
 
   if (!bothAreObjects || Array.isArray(oldObj) !== Array.isArray(newObj)) {
-    // We have a direct difference
     recordChange(currentPath, oldObj, newObj, inputDiffs, outputDiffs, outputPaths);
     return;
   }
 
-  // 3. If both are arrays
+  // 5. If both are arrays
   if (bothAreArrays) {
     const maxLen = Math.max(oldObj.length, newObj.length);
     for (let i = 0; i < maxLen; i++) {
@@ -65,7 +96,7 @@ function computeDualDiff(
     return;
   }
 
-  // 4. If both are plain objects
+  // 6. If both are plain objects
   const allKeys = new Set([...Object.keys(oldObj), ...Object.keys(newObj)]);
   for (const key of allKeys) {
     computeDualDiff(oldObj[key], newObj[key], [...path, key], inputDiffs, outputDiffs, excludedPaths, outputPaths);
@@ -92,12 +123,12 @@ function recordChange(
 }
 
 // Re-use any existing helpers or define them here
-function generateVersionId(): string {
-  return Date.now().toString(36) + Math.random().toString(36).substring(2);
+function generateVersionId(versionNumber?: number): string {
+  return (versionNumber || 0).toString() + "." + Date.now().toString(36) + Math.random().toString(36).substring(2);
 }
 
 export class AmortizationVersionManager {
-  private versions: AmortizationVersion[] = [];
+  versions: AmortizationVersion[] = [];
 
   // Configure which paths go to "outputDiffs" vs. "excluded entirely"
   // e.g., ["repaymentSchedule"] means "repaymentSchedule.*" is output.
@@ -107,30 +138,76 @@ export class AmortizationVersionManager {
   // e.g. ["summary", "export", "tila"]
   private excludedPaths = ["export", "summary"];
 
+  private _versionNumber: number = 0;
+
   constructor(private amortization: Amortization) {}
+
+  get versionNumber(): number {
+    return this._versionNumber;
+  }
+
+  set versionNumber(value: number) {
+    this._versionNumber = value;
+  }
+
+  increaseVersionNumber() {
+    this._versionNumber++;
+  }
 
   public getAmortization(): Amortization {
     return this.amortization;
   }
 
   /**
+   * Returns a preview of what would change if we committed the current state
+   * right now, without actually committing.
+   */
+  public previewChanges(): {
+    inputChanges: Record<string, { oldValue: any; newValue: any }>;
+    outputChanges: Record<string, { oldValue: any; newValue: any }>;
+  } {
+    // 1. Pull the current in-memory snapshot
+    const fullNewSnapshot = cloneDeep(this.amortization.json);
+
+    // 2. Grab the latest committed snapshot (if any)
+    const lastVersion = this.versions[this.versions.length - 1];
+    const fullOldSnapshot = inflateAmortizationIfNeeded(lastVersion?.snapshot || {});
+    const fullOldSnapshotJson = fullOldSnapshot?.json || {};
+
+    // 3. Prepare diff maps
+    const inputChanges: Record<string, { oldValue: any; newValue: any }> = {};
+    const outputChanges: Record<string, { oldValue: any; newValue: any }> = {};
+
+    // 4. Compute the diffs (using the same function as commitTransaction)
+    computeDualDiff(fullOldSnapshotJson, fullNewSnapshot, [], inputChanges, outputChanges, this.excludedPaths, this.outputPaths);
+
+    // 5. Return them (no commit performed)
+    return { inputChanges, outputChanges };
+  }
+
+  /**
    * Commits the current state as a new version, splitting changes into
    * "inputChanges" vs. "outputChanges."
    */
-  public commitTransaction(commitMessage?: string): AmortizationVersion {
+  commitTransaction(commitMessage?: string): AmortizationVersion {
     const fullNewSnapshot = cloneDeep(this.amortization.json);
     const lastVersion = this.versions[this.versions.length - 1];
-    const fullOldSnapshot = lastVersion?.snapshot || {};
+    const fullOldSnapshot = inflateAmortizationIfNeeded(lastVersion?.snapshot || {});
+    const fullOldSnapshotJson = fullOldSnapshot?.json || {};
+    // console.log("fullOldSnapshotJson", fullOldSnapshotJson);
+    // console.log("lastVersion", lastVersion);
 
     // We'll track two separate result objects
     const inputChanges: Record<string, { oldValue: any; newValue: any }> = {};
     const outputChanges: Record<string, { oldValue: any; newValue: any }> = {};
 
     // Compute diffs in one pass
-    computeDualDiff(fullOldSnapshot, fullNewSnapshot, [], inputChanges, outputChanges, this.excludedPaths, this.outputPaths);
+    computeDualDiff(fullOldSnapshotJson, fullNewSnapshot, [], inputChanges, outputChanges, this.excludedPaths, this.outputPaths);
+
+    this.increaseVersionNumber();
 
     const version: AmortizationVersion = {
-      versionId: generateVersionId(),
+      versionId: generateVersionId(this.versionNumber),
       timestamp: Date.now(),
       commitMessage,
       snapshot: fullNewSnapshot, // The entire snapshot for rollback
@@ -185,7 +262,7 @@ export class AmortizationVersionManager {
     computeDualDiff(fullOldSnapshot, fullNewSnapshot, [], inputChanges, outputChanges, this.excludedPaths, this.outputPaths);
 
     const rollbackVersion: AmortizationVersion = {
-      versionId: generateVersionId(),
+      versionId: generateVersionId(this.versionNumber),
       timestamp: Date.now(),
       commitMessage: commitMessage || `Rollback to version ${versionId}`,
       snapshot: fullNewSnapshot,
@@ -215,7 +292,78 @@ export class AmortizationVersionManager {
    * Return all versions (optionally including deleted).
    */
   public getVersionHistory(includeDeleted = false): AmortizationVersion[] {
-    if (includeDeleted) return [...this.versions];
-    return this.versions.filter((v) => !v.isDeleted);
+    if (includeDeleted) {
+      const toReturn = [...this.versions];
+      return toReturn;
+    } else {
+      const toReturn = this.versions.filter((v) => !v.isDeleted);
+      console.log("toReturn ELSE", toReturn);
+      return toReturn;
+    }
+  }
+
+  /**
+   * Exports the Version Manager as a plain JSON object that includes:
+   *   - all versions (each with its snapshot, diffs, etc.)
+   *   - the current amortization’s snapshot
+   */
+  public toJSON(): any {
+    // We'll store the entire versions array plus the current amortization JSON.
+    return {
+      versionNumber: this.versionNumber,
+      // Make sure to store the *raw* array, not a reference.
+      versions: JSON.parse(JSON.stringify(this.versions)),
+
+      // Also include the current (live) Amortization in JSON form
+      currentAmortization: this.amortization.json,
+    };
+  }
+
+  /**
+   * Recreates a Version Manager from the plain JSON data produced by toJSON().
+   *   - Rebuilds the current Amortization from the stored snapshot
+   *   - Restores the versions array as-is
+   *
+   * If you want to avoid the “smart” constructor logic that flips flags, you
+   * can call `Amortization.fromSnapshotDirect(...)`. If your normal constructor
+   * is safe, you can just do `new Amortization(...)`.
+   */
+  public static fromJSON(data: any): AmortizationVersionManager {
+    if (!data || !data.currentAmortization) {
+      throw new Error("Invalid data: missing currentAmortization");
+    }
+
+    // 1. Rebuild the current amortization.
+    //    If you have a “fromSnapshotDirect” method, use it here:
+    //       const am = Amortization.fromSnapshotDirect(data.currentAmortization);
+    //
+    //    Otherwise, if it's safe to call the normal constructor, do:
+    const am = new Amortization(data.currentAmortization);
+
+    // 2. Create a new manager with that amortization
+    const manager = new AmortizationVersionManager(am);
+    manager.versionNumber = data.versionNumber || 0;
+
+    // 3. Restore the versions array (each version is plain data:
+    //    we don't need special logic unless you want additional validation).
+    if (Array.isArray(data.versions)) {
+      manager.versions = data.versions.map((v: any) => {
+        // If you want to ensure the shape is correct,
+        // or do any casting, do it here. Otherwise, just store as is.
+        return {
+          versionId: v.versionId,
+          timestamp: v.timestamp,
+          commitMessage: v.commitMessage,
+          snapshot: v.snapshot, // The old amortization snapshot
+          inputChanges: v.inputChanges,
+          outputChanges: v.outputChanges,
+          isDeleted: v.isDeleted,
+          isRollback: v.isRollback,
+          rolledBackFromVersionId: v.rolledBackFromVersionId,
+        } as AmortizationVersion;
+      });
+    }
+
+    return manager;
   }
 }

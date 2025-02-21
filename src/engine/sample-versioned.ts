@@ -32,6 +32,31 @@ const v1 = manager.commitTransaction("Initial version");
 // 4. Make more changes
 loan.loanAmount = 6000;
 loan.generateSchedule();
+
+loan.loanAmount = 6000;
+loan.generateSchedule();
+
+// You want to see the changes, but NOT commit yet
+const preview = manager.previewChanges();
+
+// console.log("PREVIEW INPUT CHANGES:");
+// console.table(
+//   Object.entries(preview.inputChanges).map(([key, val]) => ({
+//     path: key,
+//     oldValue: JSON.stringify(val.oldValue),
+//     newValue: JSON.stringify(val.newValue),
+//   }))
+// );
+
+// console.log("PREVIEW OUTPUT CHANGES:");
+// console.table(
+//   Object.entries(preview.outputChanges).map(([key, val]) => ({
+//     path: key,
+//     oldValue: JSON.stringify(val.oldValue),
+//     newValue: JSON.stringify(val.newValue),
+//   }))
+// );
+
 const v2 = manager.commitTransaction("Increased loan amount");
 
 // 5. Let's show the diffs for v2 in a nice table format

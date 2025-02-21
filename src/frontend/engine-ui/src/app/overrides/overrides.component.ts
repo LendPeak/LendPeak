@@ -539,7 +539,7 @@ export class OverridesComponent implements OnInit {
     const term = this.loan.repaymentSchedule.entries.filter(
       (row) => row.term === termNumber,
     );
-    if (term) {
+    if (term?.length > 0) {
       return term[term.length - 1].periodEndDate;
     }
     return dayjs().startOf('day');
@@ -554,7 +554,7 @@ export class OverridesComponent implements OnInit {
     const term = this.loan.repaymentSchedule.entries.filter(
       (row) => row.term === termNumber,
     );
-    if (term) {
+    if (term?.length > 0) {
       return term[term.length - 1].periodStartDate;
     }
     return dayjs().startOf('day');

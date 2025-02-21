@@ -39,6 +39,8 @@ import { SplitButtonModule } from 'primeng/splitbutton';
 import { ChipModule } from 'primeng/chip';
 import { PaginatorModule } from 'primeng/paginator';
 import { TooltipModule } from 'primeng/tooltip';
+import { TimelineModule } from 'primeng/timeline';
+import { DataViewModule } from 'primeng/dataview';
 
 import { TilaDisclosureComponent } from './tila-disclosure.component';
 import { ToolbarComponent } from './toolbar/toolbar.component';
@@ -59,6 +61,8 @@ import { MessageService, ConfirmationService } from 'primeng/api';
 
 import { ConnectorManagementComponent } from './connector-management/connector-management.component';
 import { LoanImportComponent } from './loan-import/loan-import.component';
+
+import { VersionHistoryComponent } from './version-history/version-history.component';
 
 import { HighlightModule, LineNumbersOptions } from 'ngx-highlightjs';
 import { provideHighlightOptions } from 'ngx-highlightjs';
@@ -87,6 +91,7 @@ import {
     AdvancedSettingsComponent,
     ConnectorManagementComponent,
     LoanImportComponent,
+    VersionHistoryComponent,
   ],
   imports: [
     BrowserModule,
@@ -114,6 +119,7 @@ import {
     DividerModule,
     ToolbarModule,
     CheckboxModule,
+    DataViewModule,
     TagModule,
     DialogModule,
     PanelModule,
@@ -129,6 +135,7 @@ import {
     MessageModule,
     HighlightModule,
     ConfirmDialogModule,
+    TimelineModule,
     RouterModule.forRoot([]),
   ],
   providers: [

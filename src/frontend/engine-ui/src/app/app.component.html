@@ -16,6 +16,10 @@
 </div>
 
 <div *ngIf="!loanNotFound">
+  <app-system-settings
+    [(showSystemSettingsDialog)]="showSystemSettingsDialog"
+  ></app-system-settings>
+
   <p-dialog
     header="Save Loan"
     [(visible)]="showSaveLoanDialog"
@@ -32,6 +36,7 @@
           pInputText
           [(ngModel)]="loan.name"
           class="w-full"
+          [disabled]="aiSummaryInProgress"
         />
       </div>
       <div class="field">
@@ -42,6 +47,7 @@
           [(ngModel)]="loan.description"
           rows="3"
           class="w-full"
+          [disabled]="aiSummaryInProgress"
         ></textarea>
       </div>
       <div class="field">
@@ -52,7 +58,16 @@
           [(ngModel)]="changesSummary"
           rows="10"
           class="w-full"
+          [disabled]="aiSummaryInProgress"
         ></textarea>
+      </div>
+      <div class="field">
+        <p-progressbar
+          mode="indeterminate"
+          *ngIf="aiSummaryInProgress"
+          [style]="{ height: '1rem' }"
+          color="black"
+        />
       </div>
     </div>
     <div class="flex justify-content-end gap-2">
@@ -62,7 +77,11 @@
         class="p-button-text"
         (click)="showSaveLoanDialog = false"
       ></button>
-      <button pButton label="Summarize Changes" (click)="summarize()"></button>
+      <button
+        pButton
+        label="Summarize Changes ({{ getAiAssistantName() }})"
+        (click)="summarize()"
+      ></button>
 
       <button pButton label="Save" (click)="saveLoan()"></button>
     </div>

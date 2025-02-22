@@ -1,5 +1,5 @@
 import Router from "@koa/router";
-import { summarizeLoanChanges } from "../controllers/xaiController";
+import { summarizeLoanChanges } from "../controllers/openAiController";
 
 const router = new Router();
 

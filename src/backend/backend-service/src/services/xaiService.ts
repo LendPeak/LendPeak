@@ -112,7 +112,7 @@ Output a short paragraph or bullet list with a single final summary sentence.
           content: prompt,
         },
       ],
-      max_tokens: 300, // adjust as needed
+      max_tokens: 300,
       temperature: 0.7, // a bit of creativity but still fairly factual
     };
 

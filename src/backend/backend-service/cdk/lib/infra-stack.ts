@@ -42,6 +42,15 @@ export class InfraStack extends cdk.Stack {
       },
     });
 
+    const openAIGptSecret = new secretsmanager.Secret(this, "OpenAIGptSecret", {
+      secretName: "lendpeak-openai-keys",
+      generateSecretString: {
+        secretStringTemplate: JSON.stringify({ systemKey: "PLACEHOLDER_OPENAI_KEY" }),
+        generateStringKey: "unusedKey",
+        excludePunctuation: true,
+      },
+    });
+
     // Define the Lambda function
     const backendLambda = new lambda.Function(this, "BackendLambda", {
       runtime: lambda.Runtime.NODEJS_22_X,
@@ -58,6 +67,7 @@ export class InfraStack extends cdk.Stack {
 
     // 3. Grant Lambda permission to read the secret
     xaiKeysSecret.grantRead(backendLambda);
+    openAIGptSecret.grantRead(backendLambda);
 
     // Create a log group for API Gateway access logs
     const logGroup = new logs.LogGroup(this, "HttpApiAccessLogs", {

@@ -11,8 +11,8 @@ import { environment } from '../../environments/environment';
 })
 export class XaiSummarizeService {
   // Example: If your backend is at environment.apiUrl, e.g., "https://backend-service.lendpeak.io"
-  // then your summarization endpoint might be "/xai/reason"
-  private summarizeUrl = `${environment.apiUrl}/xai/reason`;
+  // then your summarization endpoint might be "/xai/summarizeLoanChanges"
+  private summarizeUrl = `${environment.apiUrl}/xai/summarizeLoanChanges`;
 
   constructor(private http: HttpClient) {}
 
@@ -28,7 +28,9 @@ export class XaiSummarizeService {
 
     // POST to /xai/reason with a JSON body { changes: ... }
     return this.http
-      .post<{ summary: string }>(this.summarizeUrl, { changes }, { headers: {} })
+      .post<{
+        summary: string;
+      }>(this.summarizeUrl, { changes }, { headers: {} })
       .pipe(
         map((response) => {
           // The backend is expected to return { summary: string }
@@ -38,32 +40,6 @@ export class XaiSummarizeService {
           this.handleError(error, 'Error summarizing loan changes'),
         ),
       );
-  }
-
-  /**
-   * Build headers for the request, similar to how LoanProService does it.
-   */
-  private buildHeaders(connector: Connector): HttpHeaders {
-    return new HttpHeaders({
-      //   'Content-Type': 'application/json',
-      //   'LendPeak-target-domain': connector.credentials.apiUrl || '',
-      //   'LendPeak-forward-headers': forwardHeaders.join(','),
-      //   'LendPeak-Autopal-Instance-Id': connector.credentials.autopalId || '',
-      //   'LendPeak-Authorization': `Bearer ${connector.credentials.apiToken || ''}`,
-    });
-
-    // const forwardHeaders = [
-    //   'LendPeak-Autopal-Instance-Id',
-    //   'LendPeak-Authorization',
-    // ];
-
-    // return new HttpHeaders({
-    //   'Content-Type': 'application/json',
-    //   'LendPeak-target-domain': connector.credentials.apiUrl || '',
-    //   'LendPeak-forward-headers': forwardHeaders.join(','),
-    //   'LendPeak-Autopal-Instance-Id': connector.credentials.autopalId || '',
-    //   'LendPeak-Authorization': `Bearer ${connector.credentials.apiToken || ''}`,
-    // });
   }
 
   /**

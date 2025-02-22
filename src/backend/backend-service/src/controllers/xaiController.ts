@@ -4,7 +4,7 @@ import { XAIService } from "../services/xaiService";
 
 const xaiService = new XAIService();
 
-export const postReason = async (ctx: Context) => {
+export const summarizeLoanChanges = async (ctx: Context) => {
   try {
     // Suppose we pass "changes" in the request body
     const { changes } = ctx.request.body as { changes: any };

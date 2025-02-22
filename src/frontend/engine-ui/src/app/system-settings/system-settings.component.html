@@ -1,0 +1,35 @@
+<p-dialog
+  header="System Settings"
+  [(visible)]="showSystemSettingsDialog"
+  [modal]="true"
+  [closable]="true"
+  (onHide)="onDialogHide()"
+  [style]="{ width: '450px' }"
+  (onShow)="onDialogShow()"
+>
+  <!-- Example Subsection: AI Summary Assistant -->
+  <h3>AI Summary Assistant</h3>
+  <p-select
+    [options]="aiAssistantOptions"
+    [(ngModel)]="selectedAiAssistant"
+    placeholder="Select Summary AI Assistant"
+    optionLabel="label"
+    styleClass="w-full"
+    appendTo="body"
+  ></p-select>
+
+  <div class="flex gap-2 mt-4 justify-content-end">
+    <button
+      pButton
+      label="Close"
+      icon="pi pi-times"
+      (click)="closeDialog()"
+    ></button>
+    <button
+      pButton
+      label="Save"
+      icon="pi pi-times"
+      (click)="saveAndClose()"
+    ></button>
+  </div>
+</p-dialog>

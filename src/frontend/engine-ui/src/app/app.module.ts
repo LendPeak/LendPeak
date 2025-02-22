@@ -52,6 +52,7 @@ import { AdvancedSettingsComponent } from './advanced-settings/advanced-settings
 import { AdvancedSettingsService } from './services/advanced-settings.service';
 import { OverrideSettingsService } from './services/override-settings.service';
 import { LoanProService } from './services/loanpro.service';
+import { SystemSettingsService } from './services/system-settings.service';
 
 import { ToastModule } from 'primeng/toast';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
@@ -64,6 +65,8 @@ import { LoanImportComponent } from './loan-import/loan-import.component';
 
 import { VersionHistoryComponent } from './version-history/version-history.component';
 import { ValueRendererComponent } from './value-renderer/value-renderer.component';
+
+import { SystemSettingsComponent } from './system-settings/system-settings.component';
 
 import { HighlightModule, LineNumbersOptions } from 'ngx-highlightjs';
 import { provideHighlightOptions } from 'ngx-highlightjs';
@@ -94,6 +97,7 @@ import {
     LoanImportComponent,
     VersionHistoryComponent,
     ValueRendererComponent,
+    SystemSettingsComponent,
   ],
   imports: [
     BrowserModule,
@@ -144,6 +148,7 @@ import {
     AdvancedSettingsService,
     OverrideSettingsService,
     LoanProService,
+    SystemSettingsService,
     MessageService,
     ConfirmationService,
     provideHttpClient(withInterceptorsFromDi()),

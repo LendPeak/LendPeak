@@ -48,6 +48,8 @@ import { BillGenerator } from 'lendpeak-engine/models/BillGenerator';
 import { Currency, RoundingMethod } from 'lendpeak-engine/utils/Currency';
 import Decimal from 'decimal.js';
 import { XaiSummarizeService } from './services/xai-summarize-service';
+import { OpenAiChatService } from './services/openai-summarize-service';
+import { SystemSettingsService } from './services/system-settings.service';
 
 import { CalendarType } from 'lendpeak-engine/models/Calendar';
 
@@ -89,6 +91,8 @@ export class AppComponent implements OnChanges {
     private confirmationService: ConfirmationService,
     private indexedDbService: IndexedDbService,
     private xaiService: XaiSummarizeService,
+    private openaiService: OpenAiChatService,
+    private systemSettingsService: SystemSettingsService,
   ) {}
 
   actualLoanSummary?: ActualLoanSummary;
@@ -181,23 +185,41 @@ export class AppComponent implements OnChanges {
     this.showLoanImportDialog = false;
   }
 
+  aiSummaryInProgress: boolean = false;
+
+  getAiAssistantName(): string {
+    const name: any = this.systemSettingsService.getAiAssistant();
+    return name;
+  }
+
   summarize() {
     // Example changes object
     // const changes = {
     //   loanAmount: { oldValue: 1000, newValue: 1200 },
     //   originationFee: { oldValue: 50, newValue: 75 },
     // };
-
+    this.aiSummaryInProgress = true;
     const changes = this.manager.previewChanges();
     const inputChanges = changes.inputChanges;
 
-    this.xaiService.summarizeLoanChanges(inputChanges).subscribe({
+    // const aiChangeSummaryService = this.xaiService;
+    //const aiChangeSummaryService = this.openaiService;
+
+    const aiAssistant = this.systemSettingsService.getAiAssistant();
+    console.log('assistant used in summary', aiAssistant);
+    const aiChangeSummaryService =
+      aiAssistant === 'xAI' ? this.xaiService : this.openaiService;
+
+    aiChangeSummaryService.summarizeLoanChanges(inputChanges).subscribe({
+      // this.xaiService.summarizeLoanChanges(inputChanges).subscribe({
       next: (summaryText) => {
         this.changesSummary = summaryText;
+        this.aiSummaryInProgress = false;
       },
       error: (err) => {
         console.error('Error from XAI summary:', err);
         this.changesSummary = '';
+        this.aiSummaryInProgress = false;
       },
     });
   }
@@ -747,6 +769,11 @@ export class AppComponent implements OnChanges {
 
   toolbarActions = [
     {
+      label: 'System Settings',
+      icon: 'pi pi-cog',
+      command: () => this.showSystemSettings(),
+    },
+    {
       label: 'New Loan',
       icon: 'pi pi-plus',
       command: () => this.newLoan(),
@@ -820,6 +847,12 @@ export class AppComponent implements OnChanges {
     const explainer = new AmortizationExplainer(this.loan);
     this.loanExplanationText = explainer.getFullExplanation();
     this.showExplanationDialog = true;
+  }
+
+  showSystemSettingsDialog = false;
+
+  showSystemSettings() {
+    this.showSystemSettingsDialog = true;
   }
 
   getLineNumbers(code: string): number[] {

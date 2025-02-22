@@ -1,4 +1,7 @@
 // src/app.ts
+import * as dotenv from "dotenv";
+dotenv.config();
+
 import Koa from "koa";
 import bodyParser from "koa-bodyparser";
 import router from "./routes";

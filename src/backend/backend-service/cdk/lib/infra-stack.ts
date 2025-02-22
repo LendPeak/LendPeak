@@ -1,7 +1,8 @@
 import * as cdk from "aws-cdk-lib";
 import { Construct } from "constructs";
-import * as path from "path";
 import * as lambda from "aws-cdk-lib/aws-lambda";
+import * as secretsmanager from "aws-cdk-lib/aws-secretsmanager";
+import * as path from "path";
 import * as apigatewayv2 from "aws-cdk-lib/aws-apigatewayv2";
 import * as integrations from "aws-cdk-lib/aws-apigatewayv2-integrations";
 import * as certificatemanager from "aws-cdk-lib/aws-certificatemanager";
@@ -25,6 +26,22 @@ export class InfraStack extends cdk.Stack {
       validation: certificatemanager.CertificateValidation.fromDns(hostedZone),
     });
 
+    // ─────────────────────────────────────────────────────────────────────────────
+    // 1. Create or Import Your XAI Secrets from AWS Secrets Manager
+    //    For demonstration, we create a new Secret named 'lendpeak-xai-keys'
+    //    containing a JSON structure with "systemKey" by default. You could add
+    //    additional keys for special users, e.g., "specialUserKey", etc.
+    // ─────────────────────────────────────────────────────────────────────────────
+    const xaiKeysSecret = new secretsmanager.Secret(this, "XAIKeysSecret", {
+      secretName: "lendpeak-xai-keys",
+      // Optionally seed with a placeholder JSON so you can easily add more keys later
+      generateSecretString: {
+        secretStringTemplate: JSON.stringify({ systemKey: "PLACEHOLDER_SYSTEM_KEY" }),
+        generateStringKey: "randomUnusedKey", // not actually used in this example
+        excludePunctuation: true,
+      },
+    });
+
     // Define the Lambda function
     const backendLambda = new lambda.Function(this, "BackendLambda", {
       runtime: lambda.Runtime.NODEJS_22_X,
@@ -34,8 +51,13 @@ export class InfraStack extends cdk.Stack {
       timeout: cdk.Duration.seconds(30),
       environment: {
         NODE_ENV: "production",
+        // 2. Provide the secret name as an environment variable
+        XAI_KEYS_SECRET_NAME: xaiKeysSecret.secretName,
       },
     });
+
+    // 3. Grant Lambda permission to read the secret
+    xaiKeysSecret.grantRead(backendLambda);
 
     // Create a log group for API Gateway access logs
     const logGroup = new logs.LogGroup(this, "HttpApiAccessLogs", {
@@ -43,7 +65,7 @@ export class InfraStack extends cdk.Stack {
       removalPolicy: cdk.RemovalPolicy.DESTROY,
     });
 
-    // Create an HTTP API without an automatic default stage
+    // Create an HTTP API
     const httpApi = new apigatewayv2.HttpApi(this, "HttpApi", {
       createDefaultStage: false,
       corsPreflight: {
@@ -69,7 +91,6 @@ export class InfraStack extends cdk.Stack {
       autoDeploy: true,
     });
 
-    // Access the underlying CfnStage to set accessLogSettings
     const cfnStage = stage.node.defaultChild as apigatewayv2.CfnStage;
     cfnStage.accessLogSettings = {
       destinationArn: logGroup.logGroupArn,

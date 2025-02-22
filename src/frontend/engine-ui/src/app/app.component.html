@@ -20,7 +20,7 @@
     header="Save Loan"
     [(visible)]="showSaveLoanDialog"
     [modal]="true"
-    [style]="{ width: '400px' }"
+    [style]="{ width: '600px' }"
     [closable]="true"
   >
     <div class="p-fluid">
@@ -50,7 +50,7 @@
           id="changesSummary"
           pInputTextarea
           [(ngModel)]="changesSummary"
-          rows="6"
+          rows="10"
           class="w-full"
         ></textarea>
       </div>
@@ -62,6 +62,8 @@
         class="p-button-text"
         (click)="showSaveLoanDialog = false"
       ></button>
+      <button pButton label="Summarize Changes" (click)="summarize()"></button>
+
       <button pButton label="Save" (click)="saveLoan()"></button>
     </div>
   </p-dialog>

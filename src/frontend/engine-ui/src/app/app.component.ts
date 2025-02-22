@@ -4,6 +4,7 @@ import { ActivatedRoute, Router, NavigationEnd } from '@angular/router';
 import { Location } from '@angular/common';
 import { AmortizationExplainer } from 'lendpeak-engine/models/AmortizationExplainer';
 import { ConfirmationService } from 'primeng/api';
+
 import { ConfirmPopup } from 'primeng/confirmpopup';
 
 import {
@@ -46,6 +47,7 @@ import { BillPaymentDetail } from 'lendpeak-engine/models/Bill/BillPaymentDetail
 import { BillGenerator } from 'lendpeak-engine/models/BillGenerator';
 import { Currency, RoundingMethod } from 'lendpeak-engine/utils/Currency';
 import Decimal from 'decimal.js';
+import { XaiSummarizeService } from './services/xai-summarize-service';
 
 import { CalendarType } from 'lendpeak-engine/models/Calendar';
 
@@ -86,6 +88,7 @@ export class AppComponent implements OnChanges {
     private messageService: MessageService,
     private confirmationService: ConfirmationService,
     private indexedDbService: IndexedDbService,
+    private xaiService: XaiSummarizeService,
   ) {}
 
   actualLoanSummary?: ActualLoanSummary;
@@ -176,6 +179,27 @@ export class AppComponent implements OnChanges {
     }
 
     this.showLoanImportDialog = false;
+  }
+
+  summarize() {
+    // Example changes object
+    // const changes = {
+    //   loanAmount: { oldValue: 1000, newValue: 1200 },
+    //   originationFee: { oldValue: 50, newValue: 75 },
+    // };
+
+    const changes = this.manager.previewChanges();
+    const inputChanges = changes.inputChanges;
+
+    this.xaiService.summarizeLoanChanges(inputChanges).subscribe({
+      next: (summaryText) => {
+        this.changesSummary = summaryText;
+      },
+      error: (err) => {
+        console.error('Error from XAI summary:', err);
+        this.changesSummary = '';
+      },
+    });
   }
 
   // A helper function to avoid repeating code:
@@ -973,9 +997,7 @@ export class AppComponent implements OnChanges {
     this.loan.updateModelValues();
     // Existing loan, save to the same key
     const key = `loan_${this.loan.name}`;
-    this.manager.commitTransaction(
-      this.changesSummary || 'Initial Version',
-    );
+    this.manager.commitTransaction(this.changesSummary || 'Initial Version');
     this.versionHistoryRefresh.emit(this.manager);
 
     const loanData = {

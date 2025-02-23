@@ -60,7 +60,14 @@
                 />
               </td>
               <td>
-                {{ deposit.id }}
+                <span
+                  [class.opacity-30]="
+                    !deposit.active ||
+                    deposit.effectiveDate.isAfter(snapshotDate)
+                  "
+                >
+                  {{ deposit.id }}
+                </span>
                 <p-badge
                   *ngIf="deposit.effectiveDate.isAfter(snapshotDate)"
                   value="Future"

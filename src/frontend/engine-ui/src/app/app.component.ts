@@ -1059,6 +1059,8 @@ export class AppComponent implements OnChanges {
 
   exportData() {
     // Code to export data
+    console.log('Exporting data', this.loan.json);
+    console.log('Exporting data', JSON.stringify(this.loan.json));
   }
 
   importData() {

@@ -58,6 +58,7 @@ import { ToastModule } from 'primeng/toast';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 
 import { MessageModule } from 'primeng/message';
+import { MenuModule } from 'primeng/menu';
 import { MessageService, ConfirmationService } from 'primeng/api';
 
 import { ConnectorManagementComponent } from './connector-management/connector-management.component';
@@ -118,6 +119,7 @@ import {
     FieldsetModule,
     PopoverModule,
     CardModule,
+    MenuModule,
     InputGroupModule,
     InputGroupAddonModule,
     TabMenuModule,

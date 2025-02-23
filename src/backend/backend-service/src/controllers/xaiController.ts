@@ -19,3 +19,26 @@ export const summarizeLoanChanges = async (ctx: Context) => {
     ctx.body = { error: error.message };
   }
 };
+
+/**
+ * POST /xai/loan-explanation
+ * Expects JSON body: { loanData: object, userKey?: string }
+ */
+export const postLoanExplanation = async (ctx: Context) => {
+  try {
+    const { loanData } = ctx.request.body as { loanData: any };
+    if (!loanData) {
+      ctx.status = 400;
+      ctx.body = { error: "Missing loanData in request body." };
+      return;
+    }
+
+    const explanation = await xaiService.explainLoanForServicing(loanData /* or userKey */);
+
+    ctx.body = { explanation };
+    ctx.status = 200;
+  } catch (err: any) {
+    ctx.status = 500;
+    ctx.body = { error: err.message };
+  }
+};

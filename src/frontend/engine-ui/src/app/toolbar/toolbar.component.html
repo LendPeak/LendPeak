@@ -42,13 +42,11 @@
 
     <!-- Remove Save and Reset Buttons -->
     <!-- Actions SplitButton -->
-    <p-splitButton
-      label="More"
+    <p-menu #menu [model]="toolbarActions" [popup]="true" />
+    <p-button
+      (click)="menu.toggle($event)"
       icon="pi pi-ellipsis-v"
-      [model]="toolbarActions"
-      class="toolbar-button"
-      pTooltip="More actions"
-      tooltipPosition="bottom"
-    ></p-splitButton>
+      severity="contrast"
+    />
   </div>
 </p-toolbar>

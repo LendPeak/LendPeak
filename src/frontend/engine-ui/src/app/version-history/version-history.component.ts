@@ -21,7 +21,10 @@ import { DatePipe } from '@angular/common';
 export class VersionHistoryComponent implements OnChanges {
   @Input() manager!: AmortizationVersionManager;
   @Input() refreshEvent?: EventEmitter<AmortizationVersionManager>;
-  @Output() onRollback = new EventEmitter<string>(); // if you want to notify parent
+  @Output() onRollback = new EventEmitter<{
+    versionId: string;
+    event: Event;
+  }>();
 
   // If you want to store version history as a local array:
   versions: AmortizationVersion[] = [];
@@ -98,20 +101,14 @@ export class VersionHistoryComponent implements OnChanges {
     return String(value);
   }
 
-  rollbackToVersion(versionId: string) {
-    // Optionally emit to the parent
-    this.onRollback.emit(versionId);
-  }
-
   objectKeys = Object.keys; // for *ngFor over object keys
 
   isEmpty(obj: any): boolean {
     return !obj || Object.keys(obj).length === 0;
   }
 
-  rollbackVersion(versionId: string) {
-    // e.g. call your manager.rollback(...) or emit an event to your parent
-    console.log('Rollback to version: ', versionId);
+  rollbackVersion(versionId: string, event: Event): void {
+    this.onRollback.emit({ versionId, event });
   }
 
   isObject(value: any): boolean {

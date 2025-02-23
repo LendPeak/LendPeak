@@ -75,6 +75,7 @@
         pButton
         label="Cancel"
         class="p-button-text"
+        [disabled]="aiSummaryInProgress"
         (click)="showSaveLoanDialog = false"
       ></button>
       <button

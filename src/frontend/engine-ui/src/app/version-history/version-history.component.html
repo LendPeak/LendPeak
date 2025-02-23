@@ -10,7 +10,7 @@
       >
         <div class="p-6 flex flex-col gap-4">
           <!-- Basic Info (Version ID, timestamp, commit message, rollback button) -->
-          <div style="min-width: 300px; max-width: 400px">
+          <div style="width: 400px">
             <h3>Version {{ version.versionId }}</h3>
             <span class="text-lg text-300">{{
               version.timestamp | date: "long"
@@ -20,9 +20,10 @@
               {{ version.commitMessage }}
             </p>
             <p-button
+              [disabled]="manager.isLatestVersion(version.versionId)"
               *ngIf="!version.isRollback"
               label="Rollback"
-              (click)="rollbackVersion(version.versionId)"
+              (click)="rollbackVersion(version.versionId, $event)"
             ></p-button>
           </div>
 

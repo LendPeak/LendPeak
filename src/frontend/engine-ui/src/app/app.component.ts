@@ -1030,7 +1030,12 @@ export class AppComponent implements OnChanges {
     this.loan.updateModelValues();
     // Existing loan, save to the same key
     const key = `loan_${this.loan.name}`;
-    this.manager.commitTransaction(this.changesSummary || 'Initial Version');
+    // check if there are no changes, then that means
+    // we did a rollback and nothing else
+    // in that instance we wont commit a transaction because manager has been updated already
+    if ( this.manager.hasChanges() ) {
+      this.manager.commitTransaction(this.changesSummary || 'Initial Version');
+    }
     this.versionHistoryRefresh.emit(this.manager);
 
     const loanData = {
@@ -1290,7 +1295,9 @@ export class AppComponent implements OnChanges {
     });
 
     // Process deposits
-    this.paymentApplicationResults = paymentApp.processDeposits(this.snapshotDate);
+    this.paymentApplicationResults = paymentApp.processDeposits(
+      this.snapshotDate,
+    );
 
     // Update bills and deposits based on payment results
     this.paymentApplicationResults.forEach((result) => {
@@ -1639,34 +1646,50 @@ export class AppComponent implements OnChanges {
     };
   }
 
-  public handleRollback(versionId: string) {
+  public handleRollback(params: { versionId: string; event?: Event }) {
     // Possibly confirm with user
-    const confirmed = confirm(
-      `Are you sure you want to rollback to version ${versionId}?`,
-    );
-    if (!confirmed) return;
+    // const confirmed = confirm(
+    //   `Are you sure you want to rollback to version ${versionId}?`,
+    // );
+    // if (!confirmed) return;
+    const versionId = params.versionId;
+    const event = params.event;
 
-    try {
-      this.manager.rollback(versionId, `Rollback to version ${versionId}`);
-      // After rollback, the manager has a new version at the top referencing the old version
-      // Re-sync the loan in your UI
-      this.loan = this.manager.getAmortization();
-      this.loanModified = true; // or false, depending on your logic
-      // Then re-run the schedule if needed
-      this.submitLoan();
-      this.messageService.add({
-        severity: 'success',
-        summary: 'Rollback Successful',
-        detail: `Rolled back to version ${versionId}`,
-      });
-    } catch (err) {
-      console.error('Rollback error:', err);
-      this.messageService.add({
-        severity: 'error',
-        summary: 'Rollback Failed',
-        detail: 'Error rolling back loan: ' + err,
-      });
-    }
+    this.confirmationService.confirm({
+      target: (event?.currentTarget || event?.target) as EventTarget, // anchor to the button,
+      message: `Are you sure you want to rollback to version ${versionId}?`,
+      icon: 'pi pi-exclamation-triangle',
+      acceptLabel: 'Yes',
+      rejectLabel: 'Cancel',
+      accept: () => {
+        // user clicked 'Yes' => proceed to rollback
+        try {
+          this.manager.rollback(versionId, `Rollback to version ${versionId}`);
+          // After rollback, the manager has a new version at the top referencing the old version
+          // Re-sync the loan in your UI
+          this.loan = this.manager.getAmortization();
+          this.loanModified = true; // or false, depending on your logic
+          // Then re-run the schedule if needed
+          this.submitLoan();
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Rollback Successful',
+            detail: `Rolled back to version ${versionId}`,
+          });
+          this.versionHistoryRefresh.emit(this.manager);
+        } catch (err) {
+          console.error('Rollback error:', err);
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Rollback Failed',
+            detail: 'Error rolling back loan: ' + err,
+          });
+        }
+      },
+      reject: () => {
+        // user clicked 'Cancel' => do nothing
+      },
+    });
   }
 
   scrollToLastDueLine(): void {

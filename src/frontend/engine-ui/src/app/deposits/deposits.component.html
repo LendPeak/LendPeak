@@ -52,10 +52,6 @@
             <tr
               #depositRow
               [class.selected-row]="isDepositHighlighted(deposit)"
-              [class.bg-red-200]="!deposit.active"
-              [class.bg-orange-200]="
-                deposit.effectiveDate.isAfter(snapshotDate)
-              "
             >
               <td>
                 <p-toggleswitch
@@ -63,7 +59,27 @@
                   (ngModelChange)="depositActiveUpdated()"
                 />
               </td>
-              <td>{{ deposit.id }}</td>
+              <td>
+                {{ deposit.id }}
+                <p-badge
+                  *ngIf="deposit.effectiveDate.isAfter(snapshotDate)"
+                  value="Future"
+                  severity="warn"
+                  styleClass="mr-2"
+                  pTooltip="Deposit's effective date is after the snapshot date"
+                  tooltipPosition="top"
+                  tooltipStyleClass="wide-tooltip"
+                ></p-badge>
+                <p-badge
+                  *ngIf="!deposit.active"
+                  value="Inactive"
+                  severity="danger"
+                  styleClass="mr-2"
+                  pTooltip="Deposit is inactive"
+                  tooltipPosition="top"
+                  tooltipStyleClass="wide-tooltip"
+                ></p-badge>
+              </td>
               <td>{{ deposit.jsAmount | currency }}</td>
               <td>{{ deposit.currency }}</td>
               <td>

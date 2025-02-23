@@ -10,6 +10,10 @@ dayjs.extend(isSameOrAfter);
 dayjs.extend(isSameOrBefore);
 dayjs.extend(isBetween);
 
+function isGeneratedObject(val: any): boolean {
+  return val && typeof val === "object" && !Array.isArray(val) && val.type === "generated";
+}
+
 /**
  * Utility that checks if the dot-notation path is excluded.
  */
@@ -69,7 +73,9 @@ function computeDualDiff(
 
   // 2. If both are Date objects, compare getTime()
   if (isDate(oldObj) && isDate(newObj)) {
-    if (oldObj.getTime() !== newObj.getTime()) {
+    const oldObjDate = dayjs(oldObj);
+    const newObjDate = dayjs(newObj);
+    if (!oldObjDate.isSame(newObjDate)) {
       console.error("Date mismatch", path.join("."), oldObj, newObj);
       recordChange(path.join("."), oldObj, newObj, inputDiffs, outputDiffs, outputPaths);
     }
@@ -124,9 +130,21 @@ function recordChange(
   outputDiffs: Record<string, { oldValue: any; newValue: any }>,
   outputPaths: string[]
 ) {
-  if (isOutputPath(pathString, outputPaths)) {
+  // Check if this path is "output" or "input"
+  const isOutput = isOutputPath(pathString, outputPaths);
+
+  if (isOutput) {
+    // This difference belongs in outputDiffs
     outputDiffs[pathString] = { oldValue, newValue };
   } else {
+    // It's an input path
+    // If oldValue or newValue is an object with type='generated', skip.
+    if (isGeneratedObject(oldValue) || isGeneratedObject(newValue)) {
+      // Simply do nothing (skip recording the diff).
+      return;
+    }
+
+    // Otherwise record it in inputDiffs
     inputDiffs[pathString] = { oldValue, newValue };
   }
 }
@@ -165,6 +183,11 @@ export class AmortizationVersionManager {
 
   public getAmortization(): Amortization {
     return this.amortization;
+  }
+
+  public hasChanges(): boolean {
+    const previewChanges = this.previewChanges();
+    return Object.keys(previewChanges.inputChanges).length > 0;
   }
 
   /**
@@ -231,18 +254,39 @@ export class AmortizationVersionManager {
   }
 
   /**
+   * Method that returns if versionId is latest version
+   * @param versionId
+   * @returns boolean
+   */
+
+  public isLatestVersion(versionId: string): boolean {
+    return this.versions[this.versions.length - 1].versionId === versionId;
+  }
+
+  /**
    * Rolls back to an older version by rehydrating a new Amortization
    * from that version's full snapshot.
    * Then commits a new version flagged as a rollback.
    */
   public rollback(versionId: string, commitMessage?: string): AmortizationVersion {
+    // you cannot rollback to the current version, lets check for that
+    if (this.versions.length === 0) {
+      throw new Error("No versions to rollback to");
+    }
+
+    if (this.isLatestVersion(versionId)) {
+      throw new Error("Cannot rollback to the current version");
+    }
+
     const targetVersion = this.versions.find((v) => v.versionId === versionId);
     if (!targetVersion) {
       throw new Error(`Version not found: ${versionId}`);
     }
 
+    const targetVersionSnapshot = inflateAmortizationIfNeeded(targetVersion?.snapshot || {});
+
     // Rebuild from old snapshot
-    const oldSnapshot = targetVersion.snapshot;
+    const oldSnapshot = targetVersionSnapshot;
 
     // some changes like endDate and equited montly payment amounts are returned however they might be calcuilated
     // and in those instances when they are calculated, we dont want to roll them back
@@ -263,13 +307,15 @@ export class AmortizationVersionManager {
     // Now commit a new version that references the rollback
     const fullNewSnapshot = cloneDeep(this.amortization.json);
     const lastVersion = this.versions[this.versions.length - 1];
-    const fullOldSnapshot = lastVersion?.snapshot || {};
+    const fullOldSnapshot = inflateAmortizationIfNeeded(lastVersion?.snapshot || {});
+    const fullOldSnapshotJson = fullOldSnapshot?.json || {};
 
     const inputChanges: Record<string, { oldValue: any; newValue: any }> = {};
     const outputChanges: Record<string, { oldValue: any; newValue: any }> = {};
 
-    computeDualDiff(fullOldSnapshot, fullNewSnapshot, [], inputChanges, outputChanges, this.excludedPaths, this.outputPaths);
+    computeDualDiff(fullOldSnapshotJson, fullNewSnapshot, [], inputChanges, outputChanges, this.excludedPaths, this.outputPaths);
 
+    this.increaseVersionNumber();
     const rollbackVersion: AmortizationVersion = {
       versionId: generateVersionId(this.versionNumber),
       timestamp: Date.now(),

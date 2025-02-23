@@ -1,4 +1,10 @@
-import { Component, Input } from '@angular/core';
+import {
+  Component,
+  Input,
+  OnChanges,
+  SimpleChange,
+  OnInit,
+} from '@angular/core';
 import { DatePipe } from '@angular/common';
 import dayjs from 'dayjs';
 
@@ -10,10 +16,29 @@ import dayjs from 'dayjs';
   // Provide DatePipe if you want to inject it
   providers: [DatePipe],
 })
-export class ValueRendererComponent {
+export class ValueRendererComponent implements OnChanges, OnInit {
   @Input() value: any;
 
   constructor(public datePipe: DatePipe) {}
+
+  ngOnChanges(changes: { [propName: string]: SimpleChange }): void {
+    if (changes['value']) {
+      this.fixValue();
+    }
+  }
+
+  ngOnInit(): void {
+    this.fixValue();
+  }
+
+  fixValue(): void {
+    if (
+      typeof this.value === 'string' &&
+      this.value.match(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z$/)
+    ) {
+      this.value = dayjs(this.value);
+    }
+  }
 
   isDate(val: any): boolean {
     return val instanceof Date && !isNaN(val.getTime());
@@ -49,6 +74,7 @@ export class ValueRendererComponent {
     if (item === null || item === undefined || item === '') {
       return 'Blank';
     }
+
     if (this.isDate(item)) {
       return this.datePipe.transform(item, 'short') ?? item.toString();
     }

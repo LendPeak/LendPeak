@@ -1290,7 +1290,7 @@ export class AppComponent implements OnChanges {
     });
 
     // Process deposits
-    this.paymentApplicationResults = paymentApp.processDeposits();
+    this.paymentApplicationResults = paymentApp.processDeposits(this.snapshotDate);
 
     // Update bills and deposits based on payment results
     this.paymentApplicationResults.forEach((result) => {

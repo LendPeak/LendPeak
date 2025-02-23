@@ -88,12 +88,21 @@ export class PaymentApplication {
     return allocationStrategy;
   }
 
-  processDeposits(): PaymentApplicationResult[] {
+  processDeposits(currentDate: Dayjs | Date | string = dayjs()): PaymentApplicationResult[] {
+    if (currentDate instanceof Date || typeof currentDate === "string") {
+      currentDate = dayjs(currentDate);
+    }
+    currentDate = currentDate.startOf("day");
     const results: PaymentApplicationResult[] = [];
 
     for (const deposit of this.deposits.all) {
       if (deposit.active !== true) {
         console.debug(`Skipping deposit ${deposit.id} because it is not active`);
+        continue;
+      }
+      // if effective date is after the current date, skip the deposit
+      if (dayjs(deposit.effectiveDate).isAfter(currentDate)) {
+        console.debug(`Skipping deposit ${deposit.id} because its effective date is after the current date`);
         continue;
       }
       const result = this.applyDeposit(deposit, {

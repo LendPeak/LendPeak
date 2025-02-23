@@ -53,6 +53,9 @@
               #depositRow
               [class.selected-row]="isDepositHighlighted(deposit)"
               [class.bg-red-200]="!deposit.active"
+              [class.bg-orange-200]="
+                deposit.effectiveDate.isAfter(snapshotDate)
+              "
             >
               <td>
                 <p-toggleswitch

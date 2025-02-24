@@ -330,6 +330,37 @@ export class LoanImportComponent implements OnInit, OnDestroy {
     return true;
   }
 
+  patchInterestOverrideDates(overrides: TermInterestAmountOverride[]) {
+    // Make sure they are sorted chronologically if needed
+    overrides.sort(
+      (a, b) => (a.date?.valueOf() ?? 0) - (b.date?.valueOf() ?? 0),
+    );
+
+    for (let i = 1; i < overrides.length; i++) {
+      const prev = overrides[i - 1];
+      const current = overrides[i];
+
+      const prevDate = dayjs(prev.date);
+      const currDate = dayjs(current.date);
+
+      // If the previous date is day=28, and the current is day=27 in the very next month,
+      // We patch current to day=28.
+      // For example: 1/28 -> 2/27 => patch to 2/28
+      if (
+        prevDate.date() === 28 &&
+        prevDate.add(1, 'month').month() === currDate.month() &&
+        currDate.date() === 27
+      ) {
+        // Bump current to the 28th
+        const fixedDate = currDate.date(28);
+        console.warn(
+          `Patching interest override date from ${currDate.format('MM/DD/YYYY')} to ${fixedDate.format('MM/DD/YYYY')}`,
+        );
+        (overrides[i] as any).date = fixedDate; // or overrides[i].date = fixedDate.toDate() if needed
+      }
+    }
+  }
+
   private getSelectedConnector(): Connector | null {
     const connector = this.connectorService.getConnectorById(
       this.selectedConnectorId,
@@ -366,6 +397,33 @@ export class LoanImportComponent implements OnInit, OnDestroy {
       FlushUnbilledInterestDueToRoundingErrorType.NONE;
 
     console.log('loanData', loanData);
+
+    // 1. Filter duplicates
+    const rawInterestAdjustments = loanData.d.Transactions.filter(
+      (tr) => tr.type === 'intAdjustment',
+    ).filter(
+      (tr, index, self) =>
+        index ===
+        self.findIndex(
+          (t) => t.date === tr.date && t.infoDetails === tr.infoDetails,
+        ),
+    );
+
+    // 2. Convert them
+    const interestOverrides = rawInterestAdjustments.map((tr) => {
+      const infoDetail = JSON.parse(tr.infoDetails);
+      const amount = infoDetail.type === 'increase' ? infoDetail.amount : '0';
+
+      return new TermInterestAmountOverride({
+        termNumber: -1,
+        interestAmount: parseFloat(amount),
+        date: parseODataDate(tr.date, true),
+      });
+    });
+
+    // 3. Patch them if needed
+    this.patchInterestOverrideDates(interestOverrides);
+
     const uiLoan: AmortizationParams = {
       // objectVersion: 9,
       id: loanData.d.id.toString(),
@@ -415,36 +473,7 @@ export class LoanImportComponent implements OnInit, OnDestroy {
       allowRateAbove100: false,
       periodsSchedule: new PeriodSchedules(),
       termInterestAmountOverride: new TermInterestAmountOverrides(
-        loanData.d.Transactions.filter((tr) => tr.type === 'intAdjustment')
-          // remove duplicate entries where date and amount are the same
-          .filter(
-            (tr, index, self) =>
-              index ===
-              self.findIndex(
-                (t) => t.date === tr.date && t.infoDetails === tr.infoDetails,
-              ),
-          )
-          .map((tr) => {
-            // "infoDetails": "{\"type\":\"increase\",\"amount\":\"273.47\"}",
-
-            const infoDetail = JSON.parse(tr.infoDetails);
-            let amount = '0';
-            if (infoDetail.type == 'increase') {
-              amount = infoDetail.amount;
-            } else {
-              amount = '0';
-              console.error(
-                'Unknown interest adjustment type:',
-                infoDetail.type,
-              );
-            }
-
-            return new TermInterestAmountOverride({
-              termNumber: -1,
-              interestAmount: parseFloat(amount),
-              date: parseODataDate(tr.date, true),
-            });
-          }),
+        interestOverrides,
       ),
       changePaymentDates: new ChangePaymentDates(
         loanData.d.DueDateChanges.map((change: DueDateChange) => {

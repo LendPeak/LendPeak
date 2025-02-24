@@ -1587,27 +1587,35 @@ export class Amortization {
   generatePeriodicSchedule(): PeriodSchedule[] {
     const periodsSchedule: PeriodSchedule[] = [];
 
+    // Determine ONCE if the *original* loan startDate is the last day of its month
+    // This value will control whether subsequent payments fall on the last day.
+    const shouldUseEndOfMonth = this.startDate.isSame(this.startDate.endOf("month"), "day");
+
     let startDate = dayjs(this.startDate);
+
     for (let currentTerm = 0; currentTerm < this.term; currentTerm++) {
       let endDate: Dayjs;
-      const isStartDateLastDayOfMonth = startDate.isSame(startDate.endOf("month"), "day");
 
       if (currentTerm === 0 && this.firstPaymentDate) {
+        // If there's a custom first payment date, use that for the first period.
         endDate = this.firstPaymentDate.startOf("day");
       } else {
+        // For subsequent periods, either we continue end-of-month alignment (if we began that way)
+        // or we simply add the defined term count normally.
         const termUnit = this.termPeriodDefinition.unit === "complex" ? "day" : this.termPeriodDefinition.unit;
-        if (isStartDateLastDayOfMonth && termUnit === "month") {
+
+        if (shouldUseEndOfMonth && termUnit === "month") {
           endDate = startDate.add(this.termPeriodDefinition.count[0], termUnit).endOf("month").startOf("day");
         } else {
           endDate = startDate.add(this.termPeriodDefinition.count[0], termUnit).startOf("day");
         }
       }
 
-      // Check for change payment date
+      // Check if we have a custom "change payment date" for this term
       if (this.changePaymentDates.length > 0) {
-        const changePaymentDate = this.changePaymentDates.all.find((changePaymentDate) => {
+        const matchingChange = this.changePaymentDates.all.find((changePaymentDate) => {
           if (changePaymentDate.termNumber < 0 && changePaymentDate.originalDate) {
-            // it is false if original date is after the current period
+            // i.e. if the original date is exactly the startDate
             if (startDate.isSame(changePaymentDate.originalDate)) {
               changePaymentDate.termNumber = currentTerm;
               return true;
@@ -1616,11 +1624,13 @@ export class Amortization {
             return changePaymentDate.termNumber === currentTerm;
           }
         });
-        if (changePaymentDate) {
-          changePaymentDate.originalEndDate = endDate;
-          endDate = changePaymentDate.newDate.startOf("day");
+
+        if (matchingChange) {
+          matchingChange.originalEndDate = endDate;
+          endDate = matchingChange.newDate.startOf("day");
         }
       }
+
       periodsSchedule.push(
         new PeriodSchedule({
           startDate: startDate,
@@ -1628,6 +1638,7 @@ export class Amortization {
           type: "generated",
         })
       );
+
       startDate = endDate;
     }
 

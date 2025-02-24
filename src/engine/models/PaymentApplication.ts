@@ -253,33 +253,66 @@ export class FIFOStrategy implements AllocationStrategy {
     const allocations: PaymentAllocation[] = [];
 
     // Sort bills by due date ascending
-    let sortedBills = bills.all.filter((bill) => bill.isOpen === true && !bill.isPaid).sort((a, b) => a.dueDate.diff(b.dueDate));
+    let sortedBills = bills.all.filter((bill) => bill.isOpen && !bill.isPaid).sort((a, b) => a.dueDate.diff(b.dueDate));
 
-    // if deposit setup to apply excess to principal then we need to remove bills
-    // that are not open on or before the deposit effective date
-
+    // If applying excess to principal, further filter by deposit date
     if (deposit.applyExcessToPrincipal) {
-      const excessAppliedDate = deposit.excessAppliedDate || deposit.effectiveDate;
-      sortedBills = sortedBills.filter((bill) => bill.openDate.isSameOrBefore(excessAppliedDate));
+      const excessDate = deposit.excessAppliedDate || deposit.effectiveDate;
+      sortedBills = sortedBills.filter((bill) => bill.openDate.isSameOrBefore(excessDate));
     }
 
     for (const bill of sortedBills) {
       if (remainingAmount.round().isZero()) break;
 
-      const { allocation, remainingAmount: newRemainingAmount } = AllocationHelper.allocateToBill(bill, remainingAmount, paymentPriority, deposit.id);
+      // Track whether bill was already paid (unlikely, but let's be explicit)
+      const wasPaid = bill.isPaid;
+
+      // Allocate to the bill
+      const { allocation, remainingAmount: newRemaining } = AllocationHelper.allocateToBill(bill, remainingAmount, paymentPriority, deposit.id);
 
       allocations.push(allocation);
-      remainingAmount = newRemainingAmount;
+      remainingAmount = newRemaining;
+
+      // Check if the bill *just now* got fully paid
+      if (!wasPaid && bill.isPaid) {
+        // Bill moved from unpaid -> paid by this deposit
+        const diffInDays = deposit.effectiveDate.diff(bill.dueDate, "day");
+        let daysLate = 0;
+        let daysEarly = 0;
+        if (diffInDays > 0) {
+          daysLate = diffInDays; // Bill is fully paid X days after due date
+        } else if (diffInDays < 0) {
+          daysEarly = Math.abs(diffInDays); // Bill is fully paid X days before due date
+        }
+
+        // Create usage detail only if you want to record the payoff event
+        const usageDetail = new UsageDetail({
+          billId: bill.id,
+          period: bill.period,
+          billDueDate: bill.dueDate,
+          allocatedPrincipal: allocation.allocatedPrincipal,
+          allocatedInterest: allocation.allocatedInterest,
+          allocatedFees: allocation.allocatedFees,
+          date: deposit.effectiveDate,
+          daysLate,
+          daysEarly,
+        });
+
+        // Attach usage detail to the deposit
+        deposit.addUsageDetail(usageDetail);
+      }
     }
 
+    // Calculate total allocated
     const totalAllocated = deposit.amount.subtract(remainingAmount);
 
+    // Return normal allocation result
     return {
       depositId: deposit.id,
       totalAllocated,
       allocations,
       unallocatedAmount: remainingAmount,
-      excessAmount: Currency.Zero(), // Handle excess according to business rules
+      excessAmount: Currency.Zero(),
     };
   }
 }

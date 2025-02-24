@@ -14,6 +14,8 @@ export interface UsageDetailParams {
   allocatedInterest: Currency | number;
   allocatedFees: Currency | number;
   date: Dayjs | Date;
+  daysLate?: number;
+  daysEarly?: number;
 }
 
 export class UsageDetail {
@@ -35,6 +37,9 @@ export class UsageDetail {
   _date!: Dayjs;
   jsDate!: Date;
 
+  daysLate?: number;
+  daysEarly?: number;
+
   constructor(params: UsageDetailParams) {
     this.billId = params.billId;
     this.period = params.period;
@@ -43,6 +48,9 @@ export class UsageDetail {
     this.allocatedInterest = Currency.of(params.allocatedInterest);
     this.allocatedFees = Currency.of(params.allocatedFees);
     this.date = dayjs(params.date);
+        this.daysLate = params.daysLate;
+        this.daysEarly = params.daysEarly;
+
   }
 
   static rehydrateFromJSON(json: any): UsageDetail {
@@ -55,6 +63,8 @@ export class UsageDetail {
       allocatedInterest: json.allocatedInterest ? Currency.fromJSON(json.allocatedInterest) : Currency.Zero(),
       allocatedFees: json.allocatedFees ? Currency.fromJSON(json.allocatedFees) : Currency.Zero(),
       date: json.jsDate,
+      daysLate: json.daysLate,
+      daysEarly: json.daysEarly,
     });
   }
 
@@ -132,6 +142,8 @@ export class UsageDetail {
       allocatedInterest: this.allocatedInterest.toNumber(),
       allocatedFees: this.allocatedFees.toNumber(),
       jsDate: this.jsDate,
+      daysLate: this.daysLate,
+      daysEarly: this.daysEarly,
     };
   }
 }

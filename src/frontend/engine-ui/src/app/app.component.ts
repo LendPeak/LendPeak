@@ -14,6 +14,7 @@ import {
   ElementRef,
   ViewChild,
   EventEmitter,
+  SecurityContext,
 } from '@angular/core';
 
 import {
@@ -50,6 +51,8 @@ import Decimal from 'decimal.js';
 import { XaiSummarizeService } from './services/xai-summarize-service';
 import { OpenAiChatService } from './services/openai-summarize-service';
 import { SystemSettingsService } from './services/system-settings.service';
+import { FinancialOpsVersionManager } from 'lendpeak-engine/models/FinancialOpsVersionManager';
+import { MarkdownService } from 'ngx-markdown';
 
 import { CalendarType } from 'lendpeak-engine/models/Calendar';
 
@@ -74,7 +77,7 @@ import { __await } from 'tslib';
   selector: 'app-root',
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.css'],
-  providers: [MessageService, ConfirmationService],
+  providers: [MessageService, ConfirmationService, MarkdownService],
   standalone: false,
 })
 export class AppComponent implements OnChanges {
@@ -93,6 +96,7 @@ export class AppComponent implements OnChanges {
     private xaiService: XaiSummarizeService,
     private openaiService: OpenAiChatService,
     private systemSettingsService: SystemSettingsService,
+    private markdownService: MarkdownService,
   ) {}
 
   actualLoanSummary?: ActualLoanSummary;
@@ -139,6 +143,10 @@ export class AppComponent implements OnChanges {
 
   bills: Bills = new Bills();
   deposits: DepositRecords = new DepositRecords();
+  financialOpsManager = new FinancialOpsVersionManager(
+    this.bills,
+    this.deposits,
+  );
 
   toggleFullNumberDisplay() {
     this.showFullNumbers = !this.showFullNumbers;
@@ -247,6 +255,10 @@ export class AppComponent implements OnChanges {
       this.loan.description || 'Imported from LoanPro';
 
     this.manager = new AmortizationVersionManager(this.loan);
+    this.financialOpsManager = new FinancialOpsVersionManager(
+      this.bills,
+      this.deposits,
+    );
     await this.saveLoan();
   }
 
@@ -404,7 +416,8 @@ export class AppComponent implements OnChanges {
     customPeriodsSchedule: 3,
     deposits: 4,
     bills: 5,
-    history: 6,
+    loanHistory: 6,
+    financialHistory: 7,
   };
 
   tabNames: string[] = [
@@ -414,7 +427,8 @@ export class AppComponent implements OnChanges {
     'customPeriodsSchedule',
     'deposits',
     'bills',
-    'history',
+    'loanHistory',
+    'financialHistory',
   ];
 
   onTabChange(tabIndex: any) {
@@ -975,6 +989,67 @@ export class AppComponent implements OnChanges {
     });
   }
 
+  async saveFinancialOps() {
+    // If changes exist
+    if (this.financialOpsManager.hasChanges()) {
+      this.financialOpsManager.commitTransaction(
+        'User updated some bills/deposits',
+      );
+    }
+
+    // Then store to IndexedDB (like your main loan data)
+    const data = this.financialOpsManager.toJSON();
+    await this.indexedDbService.saveLoan(
+      'financial_ops_' + this.loan.name,
+      data,
+    );
+
+    this.messageService.add({
+      severity: 'success',
+      summary: 'Bills/Deposits Saved',
+      detail: 'Financial operations saved successfully',
+    });
+  }
+
+  public handleFinancialOpsRollback(payload: {
+    versionId: string;
+    event: Event;
+  }): void {
+    const { versionId, event } = payload;
+    // Show a confirm popup if desired
+    this.confirmationService.confirm({
+      target: event.currentTarget as EventTarget,
+      message: `Are you sure you want to rollback financial ops to version ${versionId}?`,
+      icon: 'pi pi-exclamation-triangle',
+      acceptLabel: 'Yes',
+      rejectLabel: 'Cancel',
+      accept: () => {
+        try {
+          this.financialOpsManager.rollback(
+            versionId,
+            `Rollback to version ${versionId}`,
+          );
+          // Re-sync the domain objects
+          this.bills = this.financialOpsManager.getBills();
+          this.deposits = this.financialOpsManager.getDeposits();
+          // Possibly re-run any calculations needed
+          // ...
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Rollback successful',
+            detail: `Rolled back financial ops to version ${versionId}`,
+          });
+        } catch (err) {
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Rollback Failed',
+            detail: String(err),
+          });
+        }
+      },
+    });
+  }
+
   async executeLoadLoan(key: string) {
     // check if key starts with loan_ if not lets add it
     if (!key.startsWith('loan_')) {
@@ -989,8 +1064,27 @@ export class AppComponent implements OnChanges {
       }
       //this.loan = new Amortization(loanData.loan);
       this.deposits = new DepositRecords(loanData.deposits);
+
       this.manager = AmortizationVersionManager.fromJSON(loanData.manager);
       this.loan = this.manager.getAmortization();
+
+      if (loanData.financialOpsManager) {
+        this.financialOpsManager = FinancialOpsVersionManager.fromJSON(
+          loanData.financialOpsManager,
+        );
+        // Extract the domain objects from it
+        this.bills = this.financialOpsManager.getBills();
+        this.deposits = this.financialOpsManager.getDeposits();
+      } else {
+        // fallback if older data didn't store financialOpsManager
+        this.bills = new Bills(loanData.bills || []);
+        this.deposits = new DepositRecords(loanData.deposits || []);
+        this.financialOpsManager = new FinancialOpsVersionManager(
+          this.bills,
+          this.deposits,
+        );
+      }
+
       // console.log('manager', this.manager);
       // Set the current loan name
       this.currentLoanName = loanData.name || 'Loaded Loan';
@@ -1036,6 +1130,12 @@ export class AppComponent implements OnChanges {
     if (this.manager.hasChanges()) {
       this.manager.commitTransaction(this.changesSummary || 'Initial Version');
     }
+
+    // Also commit Bills+Deposits if changed
+    if (this.financialOpsManager.hasChanges()) {
+      this.financialOpsManager.commitTransaction('Financial ops changes');
+    }
+
     this.versionHistoryRefresh.emit(this.manager);
 
     const loanData = {
@@ -1045,6 +1145,7 @@ export class AppComponent implements OnChanges {
       description: this.loan.description || '',
       name: this.loan.name,
       manager: this.manager.toJSON(),
+      financialOpsManager: this.financialOpsManager.toJSON(),
     };
 
     //localStorage.setItem(key, JSON.stringify(loanData));
@@ -1729,6 +1830,19 @@ export class AppComponent implements OnChanges {
         rowElement.click();
       }, 500); // a small delay to ensure scrolling completes
     }
+  }
+
+  /**
+   * For the Markdown preview demo:
+   */
+  previewVisible: boolean = false; // Whether the preview dialog is open
+
+  openPreview() {
+    this.previewVisible = true;
+  }
+
+  closePreview() {
+    this.previewVisible = false;
   }
 
   showNewVersionModal = false;

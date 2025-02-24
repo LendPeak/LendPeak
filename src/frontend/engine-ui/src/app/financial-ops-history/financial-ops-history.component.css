@@ -1,0 +1,14 @@
+.changes-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.changes-table th,
+.changes-table td {
+    border: 1px solid #ccc;
+    padding: 0.5rem;
+}
+
+.changes-table th {
+    background-color: #f9f9f9;
+}

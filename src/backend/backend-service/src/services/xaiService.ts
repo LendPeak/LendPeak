@@ -96,7 +96,7 @@ You are given a set of loan parameters that have recently changed, including old
 Changes:
 ${JSON.stringify(changes)}
 
-Output a short paragraph or bullet list with a single final summary sentence.
+Output the summary in plain markdown format with bullet points for each change and a final summary sentence.
 `;
 
     // 4. Make the chat completion request to the "grok-2-latest" model
@@ -150,7 +150,8 @@ Please:
 1) Summarize the loan's basic details (principal, interest rate, term, next payment).
 2) Mention any past due amounts or special conditions (e.g. late fees, modifications).
 3) Provide any advice on how an agent might approach assisting the borrower (e.g. potential repayment challenges, upcoming deadlines).
-Keep it short, direct, and helpful. Output in a small set of bullet points or a brief paragraph.
+
+Keep it short, direct, and helpful. Output must be formatted using plain markdown in a small set of bullet points or a brief paragraph.
 `;
 
     const params: OpenAI.Chat.ChatCompletionCreateParams = {

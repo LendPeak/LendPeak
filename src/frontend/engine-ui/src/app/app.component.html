@@ -21,6 +21,16 @@
   ></app-system-settings>
 
   <p-dialog
+    header="Markdown Preview"
+    [(visible)]="previewVisible"
+    [style]="{ width: '400px', position: 'fixed', top: '50px', left: '50px' }"
+    [modal]="false"
+    (onHide)="closePreview()"
+  >
+    <markdown [data]="changesSummary"></markdown>
+  </p-dialog>
+
+  <p-dialog
     header="Save Loan"
     [(visible)]="showSaveLoanDialog"
     [modal]="true"
@@ -78,6 +88,12 @@
         [disabled]="aiSummaryInProgress"
         (click)="showSaveLoanDialog = false"
       ></button>
+      <p-button
+        label="Preview"
+        icon="pi pi-eye"
+        (click)="openPreview()"
+        [disabled]="previewVisible"
+      ></p-button>
       <button
         pButton
         label="Summarize Changes ({{ getAiAssistantName() }})"
@@ -340,7 +356,11 @@
         <span class="font-bold whitespace-nowrap">Settings</span></p-tab
       >
       <p-tab [value]="6">
-        <span class="font-bold whitespace-nowrap">History</span>
+        <span class="font-bold whitespace-nowrap">Loan History</span>
+      </p-tab>
+
+      <p-tab [value]="7">
+        <span class="font-bold whitespace-nowrap">Financial History</span>
       </p-tab>
       <!-- <p-tab [value]="3"
           ><span class="font-bold whitespace-nowrap"
@@ -484,6 +504,14 @@
         ></app-version-history>
       </p-tabpanel>
     </p-tabpanels>
+
+    <p-tabpanel [value]="7">
+      <app-financial-ops-history
+        [manager]="financialOpsManager"
+        (onRollback)="handleFinancialOpsRollback($event)"
+      >
+      </app-financial-ops-history>
+    </p-tabpanel>
   </p-tabs>
 
   <!-- Repayment Plan at the Bottom -->

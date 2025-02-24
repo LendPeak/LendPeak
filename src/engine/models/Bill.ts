@@ -68,7 +68,13 @@ export class Bill {
     this.isDue = params.isDue;
     this.isPastDue = params.isPastDue;
     this.daysPastDue = params.daysPastDue;
-    this.amortizationEntry = params.amortizationEntry;
+    // check if amortizationEntry is an instance of AmortizationEntry
+    // if not, create a new AmortizationEntry object from the value
+    if (params.amortizationEntry instanceof AmortizationEntry) {
+      this.amortizationEntry = params.amortizationEntry;
+    } else {
+      this.amortizationEntry = new AmortizationEntry(params.amortizationEntry);
+    }
     this.isDSIBill = params.isDSIBill || false;
 
     if (params.paymentMetadata) {

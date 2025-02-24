@@ -41,6 +41,7 @@ import { PaginatorModule } from 'primeng/paginator';
 import { TooltipModule } from 'primeng/tooltip';
 import { TimelineModule } from 'primeng/timeline';
 import { DataViewModule } from 'primeng/dataview';
+import { MarkdownModule } from 'ngx-markdown';
 
 import { TilaDisclosureComponent } from './tila-disclosure.component';
 import { ToolbarComponent } from './toolbar/toolbar.component';
@@ -65,6 +66,7 @@ import { ConnectorManagementComponent } from './connector-management/connector-m
 import { LoanImportComponent } from './loan-import/loan-import.component';
 
 import { VersionHistoryComponent } from './version-history/version-history.component';
+import { FinancialOpsHistoryComponent } from './financial-ops-history/financial-ops-history.component';
 import { ValueRendererComponent } from './value-renderer/value-renderer.component';
 
 import { SystemSettingsComponent } from './system-settings/system-settings.component';
@@ -99,6 +101,7 @@ import {
     VersionHistoryComponent,
     ValueRendererComponent,
     SystemSettingsComponent,
+    FinancialOpsHistoryComponent,
   ],
   imports: [
     BrowserModule,
@@ -144,6 +147,7 @@ import {
     HighlightModule,
     ConfirmDialogModule,
     TimelineModule,
+    MarkdownModule.forRoot(),
     RouterModule.forRoot([]),
   ],
   providers: [

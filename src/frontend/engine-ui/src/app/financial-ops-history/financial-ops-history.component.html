@@ -1,35 +1,32 @@
-<p-dataView #dv [value]="versionEvents" layout="list" [paginator]="false">
-  <!-- "list" template for DataView v19+ -->
+<!-- financial-ops-history.component.html -->
+<p-dataView [value]="versionEvents" layout="list" [paginator]="false">
   <ng-template #list let-items>
-    <!-- Container (example using Tailwind classes, you can remove them if not needed) -->
     <div class="grid grid-cols-12 gap-4 grid-nogutter">
-      <!-- We iterate over 'items' (the chunk of data given to us by DataView) -->
       <div
         class="col-span-12 w-full"
         *ngFor="let version of items; let last = last"
       >
         <div class="p-6 flex flex-col gap-4">
-          <!-- Basic Info (Version ID, timestamp, commit message, rollback button) -->
+          <!-- Basic Info: versionId, timestamp, commitMessage, rollback button -->
           <div style="width: 400px">
-            <p-card>
-              <h3>Version {{ version.versionId }}</h3>
-              <span class="text-lg text-300">{{
-                version.timestamp | date: "long"
-              }}</span>
-            </p-card>
-            <hr />
+            <h3>Financial Ops Version {{ version.versionId }}</h3>
+            <span class="text-lg text-300">
+              {{ version.timestamp | date: "long" }}
+            </span>
+
             <p-card *ngIf="version.commitMessage">
               <markdown [data]="version.commitMessage"></markdown>
             </p-card>
+
             <p-button
-              [disabled]="manager.isLatestVersion(version.versionId)"
+              [disabled]="isLatestVersion(version)"
               *ngIf="!version.isRollback"
               label="Rollback"
               (click)="rollbackVersion(version.versionId, $event)"
             ></p-button>
           </div>
 
-          <!-- Accordion for Changes -->
+          <!-- Accordion for inputChanges / outputChanges -->
           <p-accordion class="w-full">
             <!-- Input Changes -->
             <p-accordion-panel value="0">
@@ -51,14 +48,10 @@
                       <tr *ngFor="let key of objectKeys(version.inputChanges)">
                         <td>{{ key }}</td>
                         <td>
-                          <app-value-renderer
-                            [value]="version.inputChanges[key].oldValue"
-                          ></app-value-renderer>
+                          {{ formatValue(version.inputChanges[key].oldValue) }}
                         </td>
                         <td>
-                          <app-value-renderer
-                            [value]="version.inputChanges[key].newValue"
-                          ></app-value-renderer>
+                          {{ formatValue(version.inputChanges[key].newValue) }}
                         </td>
                       </tr>
                     </tbody>
@@ -75,8 +68,26 @@
                   <em>No output changes in this version.</em>
                 </div>
                 <ng-container *ngIf="!isEmpty(version.outputChanges)">
-                  <p>Output changes detail...</p>
-                  <!-- Or insert a table for output changes similar to input changes -->
+                  <table class="changes-table">
+                    <thead>
+                      <tr>
+                        <th>Field</th>
+                        <th>Old</th>
+                        <th>New</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let key of objectKeys(version.outputChanges)">
+                        <td>{{ key }}</td>
+                        <td>
+                          {{ formatValue(version.outputChanges[key].oldValue) }}
+                        </td>
+                        <td>
+                          {{ formatValue(version.outputChanges[key].newValue) }}
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
                 </ng-container>
               </p-accordion-content>
             </p-accordion-panel>
@@ -84,7 +95,6 @@
         </div>
         <hr *ngIf="!last" class="my-2" />
       </div>
-      <!-- end *ngFor over items -->
     </div>
   </ng-template>
 </p-dataView>

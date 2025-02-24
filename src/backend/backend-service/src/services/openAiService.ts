@@ -85,7 +85,7 @@ You are given a set of loan parameters that have recently changed, including old
 Changes:
 ${JSON.stringify(changes)}
 
-Output a short paragraph or bullet list with a single final summary sentence.
+Output the summary in plain markdown format with bullet points for each change and a final summary sentence.
 `;
 
     const params: OpenAI.Chat.ChatCompletionCreateParams = {

@@ -275,14 +275,23 @@ export class FIFOStrategy implements AllocationStrategy {
 
       // Check if the bill *just now* got fully paid
       if (!wasPaid && bill.isPaid) {
+        bill.dateFullySatisfied = deposit.effectiveDate;
+
         // Bill moved from unpaid -> paid by this deposit
         const diffInDays = deposit.effectiveDate.diff(bill.dueDate, "day");
         let daysLate = 0;
         let daysEarly = 0;
         if (diffInDays > 0) {
           daysLate = diffInDays; // Bill is fully paid X days after due date
+          bill.daysLate = diffInDays;
+          bill.daysEarly = 0;
         } else if (diffInDays < 0) {
           daysEarly = Math.abs(diffInDays); // Bill is fully paid X days before due date
+          bill.daysEarly = Math.abs(diffInDays);
+          bill.daysLate = 0;
+        } else {
+          bill.daysLate = 0;
+          bill.daysEarly = 0;
         }
 
         // Create usage detail only if you want to record the payoff event
@@ -296,6 +305,7 @@ export class FIFOStrategy implements AllocationStrategy {
           date: deposit.effectiveDate,
           daysLate,
           daysEarly,
+          billFullySatisfiedDate: deposit.effectiveDate,
         });
 
         // Attach usage detail to the deposit

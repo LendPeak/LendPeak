@@ -25,22 +25,27 @@
         <ng-template pTemplate="header">
           <tr>
             <th pSortableColumn="id">
-              Bill ID <p-sortIcon field="id"></p-sortIcon>
+              Bill ID
+              <p-sortIcon field="id"></p-sortIcon>
             </th>
             <th pSortableColumn="period">
-              Period <p-sortIcon field="period"></p-sortIcon>
+              Period
+              <p-sortIcon field="period"></p-sortIcon>
             </th>
             <th pSortableColumn="dueDate">
-              Due Date <p-sortIcon field="dueDate"></p-sortIcon>
+              Due Date
+              <p-sortIcon field="dueDate"></p-sortIcon>
             </th>
             <th>Principal Due</th>
             <th>Interest Due</th>
             <th>Fees Due</th>
             <th>Total Due</th>
+            <th>Satisfied On</th>
             <th>Status</th>
             <th>Actions</th>
           </tr>
         </ng-template>
+
         <ng-template pTemplate="body" let-bill let-rowIndex="rowIndex">
           <tr #billRow [class.selected-row]="isBillHighlighted(bill)">
             <td>{{ bill.id }}</td>
@@ -50,7 +55,45 @@
             <td>{{ bill.jsInterestDue | currency }}</td>
             <td>{{ bill.jsFeesDue | currency }}</td>
             <td>{{ bill.jsTotalDue | currency }}</td>
+            <!-- NEW COLUMN BODY: Show "Date Satisfied" & Days Late/Early if fully paid -->
             <td>
+              <!-- Only show if the bill is paid and we have a satisfied date -->
+              <ng-container *ngIf="bill.isPaid && bill.dateFullySatisfied">
+                <!-- Display date satisfied -->
+                <span class="mr-3">{{
+                  bill.dateFullySatisfied | date: "MM/dd/yyyy"
+                }}</span>
+
+                <!-- Show how many days late/early in a p-tag -->
+                <ng-container *ngIf="bill.daysLate > 0">
+                  <p-tag
+                    value="{{ bill.daysLate + ' Days Late' }}"
+                    severity="warn"
+                    class="status-tag"
+                  ></p-tag>
+                </ng-container>
+
+                <ng-container *ngIf="bill.daysEarly > 0">
+                  <p-tag
+                    value="{{ bill.daysEarly + ' Days Early' }}"
+                    severity="success"
+                    class="status-tag"
+                  ></p-tag>
+                </ng-container>
+
+                <!-- If daysLate = 0 & daysEarly = 0, then it's on-time -->
+                <ng-container *ngIf="!bill.daysLate && !bill.daysEarly">
+                  <p-tag
+                    value="On-Time"
+                    severity="info"
+                    class="status-tag"
+                  ></p-tag>
+                </ng-container>
+              </ng-container>
+            </td>
+
+            <td>
+              <!-- Existing Status Tags -->
               <p-tag
                 *ngIf="bill.isOpen && !bill.isPaid"
                 value="Open Bill"
@@ -82,6 +125,7 @@
                 class="status-tag"
               ></p-tag>
             </td>
+
             <td>
               <p-button
                 label="View Payment Details"

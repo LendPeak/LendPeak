@@ -29,6 +29,9 @@ export interface BillParams {
     depositIds?: string[];
   };
   paymentDetails?: BillPaymentDetail[];
+  dateFullySatisfied?: Dayjs | Date;
+  daysLate?: number;
+  daysEarly?: number;
 }
 
 export class Bill {
@@ -53,6 +56,10 @@ export class Bill {
     depositIds?: string[];
   };
   paymentDetails: BillPaymentDetail[] = [];
+
+  dateFullySatisfied?: Dayjs;
+  daysLate?: number;
+  daysEarly?: number;
 
   constructor(params: BillParams) {
     this.id = params.id;
@@ -85,6 +92,11 @@ export class Bill {
         return new BillPaymentDetail(detail);
       });
     }
+    if (params.dateFullySatisfied) {
+      this.dateFullySatisfied = dayjs(params.dateFullySatisfied).startOf("day");
+    }
+    this.daysLate = params.daysLate ?? 0;
+    this.daysEarly = params.daysEarly ?? 0;
   }
 
   get jsOpenDate(): Date {
@@ -111,6 +123,10 @@ export class Bill {
     return this.feesDue.toNumber();
   }
 
+  get jsDateFullySatisfied(): Date | undefined {
+    return this.dateFullySatisfied?.toDate();
+  }
+
   toJSON() {
     return this.json;
   }
@@ -134,6 +150,9 @@ export class Bill {
       amortizationEntry: this.amortizationEntry.toJSON(),
       paymentMetadata: this.paymentMetadata,
       paymentDetails: this.paymentDetails.map((detail) => detail.json),
+      dateFullySatisfied: this.jsDateFullySatisfied,
+      daysLate: this.daysLate,
+      daysEarly: this.daysEarly,
     };
   }
 }

@@ -16,6 +16,7 @@ export interface UsageDetailParams {
   date: Dayjs | Date;
   daysLate?: number;
   daysEarly?: number;
+  billFullySatisfiedDate?: Dayjs | Date;
 }
 
 export class UsageDetail {
@@ -40,6 +41,9 @@ export class UsageDetail {
   daysLate?: number;
   daysEarly?: number;
 
+  private _billFullySatisfiedDate?: Dayjs;
+  jsBillFullySatisfiedDate?: Date;
+
   constructor(params: UsageDetailParams) {
     this.billId = params.billId;
     this.period = params.period;
@@ -48,9 +52,12 @@ export class UsageDetail {
     this.allocatedInterest = Currency.of(params.allocatedInterest);
     this.allocatedFees = Currency.of(params.allocatedFees);
     this.date = dayjs(params.date);
-        this.daysLate = params.daysLate;
-        this.daysEarly = params.daysEarly;
+    this.daysLate = params.daysLate;
+    this.daysEarly = params.daysEarly;
 
+    if (params.billFullySatisfiedDate) {
+      this.billFullySatisfiedDate = params.billFullySatisfiedDate;
+    }
   }
 
   static rehydrateFromJSON(json: any): UsageDetail {
@@ -65,6 +72,7 @@ export class UsageDetail {
       date: json.jsDate,
       daysLate: json.daysLate,
       daysEarly: json.daysEarly,
+      billFullySatisfiedDate: json.jsBillFullySatisfiedDate,
     });
   }
 
@@ -119,6 +127,9 @@ export class UsageDetail {
     this.jsAllocatedInterest = this.allocatedInterest.toNumber();
     this.jsAllocatedFees = this.allocatedFees.toNumber();
     this.jsDate = this.date.toDate();
+    if (this.billFullySatisfiedDate) {
+      this.jsBillFullySatisfiedDate = this.billFullySatisfiedDate.toDate();
+    }
   }
 
   syncValuesFromJSProperties(): void {
@@ -127,6 +138,22 @@ export class UsageDetail {
     this.allocatedInterest = Currency.of(this.jsAllocatedInterest);
     this.allocatedFees = Currency.of(this.jsAllocatedFees);
     this.date = dayjs(this.jsDate);
+    if (this.jsBillFullySatisfiedDate) {
+      this.billFullySatisfiedDate = dayjs(this.jsBillFullySatisfiedDate);
+    }
+  }
+
+  get billFullySatisfiedDate(): Dayjs | undefined {
+    return this._billFullySatisfiedDate;
+  }
+  set billFullySatisfiedDate(date: Dayjs | Date | undefined) {
+    if (date) {
+      this._billFullySatisfiedDate = dayjs(date).startOf("day");
+      this.jsBillFullySatisfiedDate = this._billFullySatisfiedDate.toDate();
+    } else {
+      this._billFullySatisfiedDate = undefined;
+      this.jsBillFullySatisfiedDate = undefined;
+    }
   }
 
   toJSON() {
@@ -144,6 +171,7 @@ export class UsageDetail {
       jsDate: this.jsDate,
       daysLate: this.daysLate,
       daysEarly: this.daysEarly,
+      jsBillFullySatisfiedDate: this.jsBillFullySatisfiedDate,
     };
   }
 }

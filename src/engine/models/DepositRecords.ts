@@ -1,6 +1,3 @@
-import { Currency } from "../utils/Currency";
-import { UsageDetail } from "./Bill/Deposit/UsageDetail";
-
 import dayjs, { Dayjs } from "dayjs";
 import utc from "dayjs/plugin/utc";
 dayjs.extend(utc);

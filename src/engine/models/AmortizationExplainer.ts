@@ -1,11 +1,101 @@
 // AmortizationExplainer.ts
-import { AmortizationParams, Amortization } from "./Amortization";
+
+import { Amortization, FlushUnbilledInterestDueToRoundingErrorType } from "./Amortization";
 import { CalendarType } from "./Calendar";
 import { RoundingMethod } from "../utils/Currency";
-import { FlushUnbilledInterestDueToRoundingErrorType } from "./Amortization";
 import Decimal from "decimal.js";
 import { AmortizationEntries } from "./Amortization/AmortizationEntries";
 import { PerDiemCalculationType } from "./InterestCalculator";
+
+/**
+ * Helper to get a friendly label + short explanation for the calendar type.
+ */
+function getCalendarTypeLabelAndExplanation(type: CalendarType): { label: string; explanation: string } {
+  switch (type) {
+    case CalendarType.ACTUAL_ACTUAL:
+      return {
+        label: "Actual/Actual",
+        explanation: "Calculates interest using actual days between dates and an actual number of days per year.",
+      };
+    case CalendarType.ACTUAL_360:
+      return {
+        label: "Actual/360",
+        explanation: "Uses actual days between dates but scales calculations to a 360-day year.",
+      };
+    case CalendarType.ACTUAL_365:
+      return {
+        label: "Actual/365",
+        explanation: "Uses actual days between dates and assumes a 365-day year for interest accrual.",
+      };
+    case CalendarType.THIRTY_360:
+      return {
+        label: "30/360",
+        explanation: "Assumes 30 days per month and a 360-day year for calculation simplicity.",
+      };
+    case CalendarType.THIRTY_ACTUAL:
+      return {
+        label: "30/Actual",
+        explanation: "Uses 30 days for months but actual days in the year (365).",
+      };
+    default:
+      // Fallback
+      return {
+        label: `Unknown (${type})`,
+        explanation: "No explanation available.",
+      };
+  }
+}
+
+/**
+ * Helper to get a friendly label + short explanation for how daily interest is derived.
+ */
+function getPerDiemCalculationLabelAndExplanation(type: PerDiemCalculationType): { label: string; explanation: string } {
+  switch (type) {
+    case "AnnualRateDividedByDaysInYear":
+      return {
+        label: "Annual Rate / Days in Year",
+        explanation: "A consistent daily rate: (Annual Rate) / (365 or 360, depending on calendar).",
+      };
+    case "MonthlyRateDividedByDaysInMonth":
+      return {
+        label: "Monthly Rate / Days in Month",
+        explanation: "Divides the annual rate by 12 for a monthly rate, then divides by the exact days in that month. The effective daily rate varies each month.",
+      };
+    default:
+      // Fallback or additional cases if you have more
+      return {
+        label: type,
+        explanation: "No additional explanation provided.",
+      };
+  }
+}
+
+/**
+ * Helper to get a friendly label + short explanation for rounding methods.
+ */
+function getRoundingMethodLabelAndExplanation(method: RoundingMethod): { label: string; explanation: string } {
+  switch (method) {
+    case RoundingMethod.ROUND_UP:
+      return { label: "Round Up", explanation: "Always rounds fractional cent amounts up." };
+    case RoundingMethod.ROUND_DOWN:
+      return { label: "Round Down", explanation: "Always rounds fractional cent amounts down." };
+    case RoundingMethod.ROUND_HALF_UP:
+      return { label: "Round Half Up", explanation: "Rounds .5 and above up, below .5 down." };
+    case RoundingMethod.ROUND_HALF_DOWN:
+      return { label: "Round Half Down", explanation: "Rounds .5 and above down, below .5 up." };
+    case RoundingMethod.ROUND_HALF_EVEN:
+      return {
+        label: "Round Half to Even (Banker's Rounding)",
+        explanation: "Rounds .5 to the nearest even digit, reducing bias.",
+      };
+    case RoundingMethod.ROUND_HALF_CEIL:
+      return { label: "Round Half Ceiling", explanation: "Rounds .5 and above up, otherwise down." };
+    case RoundingMethod.ROUND_HALF_FLOOR:
+      return { label: "Round Half Floor", explanation: "Rounds .5 and above down, otherwise up." };
+    default:
+      return { label: `Unknown (${method})`, explanation: "No explanation available." };
+  }
+}
 
 export class AmortizationExplainer {
   private amortization: Amortization;
@@ -32,17 +122,15 @@ export class AmortizationExplainer {
   }
 
   getCalendarExplanation(): string {
-    const params = this.amortization;
-    let explanation = `Calendar and Day Counting:\n`;
-    explanation += `- Calendar Type: ${this.amortization.calendar.calendarType}.\n`;
-    explanation += `  This defines how days between dates are counted.\n`;
+    const calInfo = getCalendarTypeLabelAndExplanation(this.amortization.calendar.calendarType);
+    const perDiemInfo = getPerDiemCalculationLabelAndExplanation(this.amortization.perDiemCalculationType);
 
-    explanation += `- Per Diem Calculation: ${params.perDiemCalculationType}\n`;
-    if (params.perDiemCalculationType === "AnnualRateDividedByDaysInYear") {
-      explanation += `  Interest is calculated by dividing the annual rate by the number of days in the year.\n`;
-    } else if (params.perDiemCalculationType === "MonthlyRateDividedByDaysInMonth") {
-      explanation += `  Interest is calculated by dividing the monthly rate by the number of days in that month.\n`;
-    }
+    let explanation = `Calendar and Day Counting:\n`;
+    explanation += `- Calendar Type: ${calInfo.label}\n`;
+    explanation += `  ${calInfo.explanation}\n\n`;
+
+    explanation += `- Per Diem Calculation: ${perDiemInfo.label}\n`;
+    explanation += `  ${perDiemInfo.explanation}\n`;
 
     return explanation;
   }
@@ -77,8 +165,9 @@ export class AmortizationExplainer {
     let explanation = `Interest Calculation and Rounding:\n`;
     explanation += `- Interest is computed based on the calendar and annual rate.\n`;
 
-    explanation += `- Rounding Method: ${this.amortization.roundingMethod}.\n`;
-    explanation += `  This method is used to round interest and other financial values.\n`;
+    const roundingInfo = getRoundingMethodLabelAndExplanation(params.roundingMethod);
+    explanation += `- Rounding Method: ${roundingInfo.label}\n`;
+    explanation += `  ${roundingInfo.explanation}\n\n`;
 
     explanation += `- Unbilled Interest Due to Rounding: `;
     if (params.flushUnbilledInterestRoundingErrorMethod === FlushUnbilledInterestDueToRoundingErrorType.NONE) {
@@ -99,7 +188,8 @@ export class AmortizationExplainer {
     const hasFees = (params.feesForAllTerms && params.feesForAllTerms.length > 0) || (params.feesPerTerm && params.feesPerTerm.length > 0);
 
     if (hasFees) {
-      explanation += `- Fees may apply each term or globally. Fees can be fixed or percentage-based (on interest, principal, or total payment).\n`;
+      explanation += `- Fees may apply each term or globally. Fees can be fixed or percentage-based.\n`;
+      explanation += `  Fee percentages can be based on principal, interest, or total payment.\n`;
     } else {
       explanation += `- No fees applied.\n`;
     }
@@ -116,15 +206,17 @@ export class AmortizationExplainer {
       explanation += `  Interest: ${entry.accruedInterestForPeriod.toCurrencyString()}, Principal: ${entry.principal.toCurrencyString()}, Fees: ${entry.fees.toCurrencyString()}\n`;
       explanation += `  Payment: ${entry.totalPayment.toCurrencyString()}\n`;
 
+      // Metadata indicators
       if (entry.metadata.staticInterestOverrideApplied) {
         explanation += `  *Static interest override applied.\n`;
       }
       if (entry.metadata.splitInterestPeriod) {
-        explanation += `  *Interest split due to varying conditions in the period.\n`;
+        explanation += `  *Interest split into multiple segments in this period.\n`;
       }
       if (entry.metadata.finalAdjustment) {
         explanation += `  *Final adjustment made to fully settle the loan.\n`;
       }
+
       explanation += "\n";
     }
     return explanation;

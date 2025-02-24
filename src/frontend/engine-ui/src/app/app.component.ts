@@ -914,13 +914,13 @@ export class AppComponent implements OnChanges {
           name,
           id: row.data.loan.id || '',
           description: row.data.loan.description || '',
-          loanAmount: row.data.loan?.principal ?? 0,
+          loanAmount: row.data.loan.loanAmount ?? 0,
           startDate: row.data.loan?.startDate ?? '',
           endDate: row.data.loan?.endDate ?? '',
-          interestRate: row.data.loan?.interestRate ?? 0,
+          annualInterestRate: (row.data.loan?.annualInterestRate ?? 0) * 100,
         };
       });
-      console.log('loadSavedLoans:', this.savedLoans);
+      // console.log('loadSavedLoans:', this.savedLoans);
     } catch (err) {
       console.error('loadSavedLoans error:', err);
       this.messageService.add({
@@ -1033,7 +1033,7 @@ export class AppComponent implements OnChanges {
     // check if there are no changes, then that means
     // we did a rollback and nothing else
     // in that instance we wont commit a transaction because manager has been updated already
-    if ( this.manager.hasChanges() ) {
+    if (this.manager.hasChanges()) {
       this.manager.commitTransaction(this.changesSummary || 'Initial Version');
     }
     this.versionHistoryRefresh.emit(this.manager);

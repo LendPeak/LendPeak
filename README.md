@@ -7,8 +7,8 @@ Welcome to LendPeak, an open-source lending software designed to be the best in 
 LendPeak is built using the following technologies:
 
 - **Backend**: Node.js with TypeScript
-- **Frontend**: Angular with Material Design by Google
-- **Database**: MySQL
+- **Frontend**: Angular with PrimeNG
+- **Database**: NoSQL
 - **Version Control**: Git
 - **IDE**: Visual Studio Code
 

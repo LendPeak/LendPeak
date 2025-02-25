@@ -55,6 +55,7 @@
             >
               <td>
                 <p-toggleswitch
+                  inputId="active-{{ deposit.id }}"
                   [(ngModel)]="deposit.active"
                   (ngModelChange)="depositActiveUpdated()"
                 />
@@ -160,11 +161,10 @@
 >
   <div class="p-grid p-nogutter">
     <div class="field">
-      <label for="amount">Amount</label>
+      <label for="amount-{{ depositData.id }}">Amount</label>
       <p-inputNumber
-        inputId="amount"
+        inputId="amount-{{ depositData.id }}"
         [(ngModel)]="depositData.jsAmount"
-        name="amount"
         mode="currency"
         currency="USD"
         locale="en-US"
@@ -175,9 +175,9 @@
       ></p-inputNumber>
     </div>
     <div class="field">
-      <label for="effectiveDate">Effective Date</label>
+      <label for="effectiveDate-{{ depositData.id }}">Effective Date</label>
       <p-datepicker
-        inputId="effectiveDate"
+        inputId="effectiveDate-{{ depositData.id }}"
         [(ngModel)]="depositData.jsEffectiveDate"
         (ngModelChange)="onDataChange($event)"
         dateFormat="mm/dd/yy"
@@ -195,9 +195,9 @@
       ></p-datepicker>
     </div>
     <div class="field">
-      <label for="clearingDate">Clearing Date</label>
+      <label for="clearingDate-{{ depositData.id }}">Clearing Date</label>
       <p-datepicker
-        inputId="clearingDate"
+        inputId="clearingDate-{{ depositData.id }}"
         [(ngModel)]="depositData.jsClearingDate"
         (ngModelChange)="onDataChange($event)"
         [minDate]="depositData.jsEffectiveDate"
@@ -214,7 +214,7 @@
       ></p-datepicker>
     </div>
     <div class="field">
-      <label for="excessAppliedDate">Excess Applied Date</label>
+      <label for="excessAppliedDate-{{depositData.id}}">Excess Applied Date</label>
 
       <p-inputgroup>
         <p-inputgroup-addon>
@@ -229,7 +229,7 @@
         </p-inputgroup-addon>
 
         <p-datepicker
-          inputId="excessAppliedDate"
+          inputId="excessAppliedDate-{{depositData.id}}"
           [disabled]="!depositData.applyExcessToPrincipal"
           [(ngModel)]="depositData.jsExcessAppliedDate"
           (ngModelChange)="onDataChange($event)"

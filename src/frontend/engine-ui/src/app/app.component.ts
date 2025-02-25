@@ -432,7 +432,7 @@ export class AppComponent implements OnChanges {
   ];
 
   onTabChange(tabIndex: any) {
-    console.log('tab changed:', tabIndex);
+    // console.log('tab changed:', tabIndex);
     this.activeTabIndex = tabIndex;
     const tabName = this.tabNames[this.activeTabIndex];
     const queryParams = { ...this.route.snapshot.queryParams, tab: tabName };
@@ -660,7 +660,7 @@ export class AppComponent implements OnChanges {
       repaymentSchedule,
       this.snapshotDate,
     );
-    console.log('generated new bills', this.bills);
+    // console.log('generated new bills', this.bills);
   }
 
   downloadRepaymentPlanAsCSV() {

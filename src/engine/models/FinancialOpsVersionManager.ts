@@ -36,7 +36,6 @@ function isExcluded(pathString: string, excludedPaths: string[]): boolean {
   return excludedPaths.some((ex) => pathString === ex || pathString.startsWith(ex + "."));
 }
 
-
 /**
  * Recursive function that populates two diff objects:
  * - inputDiffs: fields not excluded and not in outputPaths
@@ -102,7 +101,6 @@ function computeDualDiff(
     computeDualDiff(oldObj[key], newObj[key], [...path, key], inputDiffs, outputDiffs, excludedPaths, outputPaths);
   }
 }
-
 
 function recordChange(pathStr: string, oldVal: any, newVal: any, inputDiffs: Record<string, { oldValue: any; newValue: any }>, outputDiffs: Record<string, { oldValue: any; newValue: any }>, outputPaths: string[]) {
   // For demonstration, let's say we treat everything as "input" by default
@@ -175,7 +173,7 @@ export class FinancialOpsVersionManager {
     const inputChanges: Record<string, { oldValue: any; newValue: any }> = {};
     const outputChanges: Record<string, { oldValue: any; newValue: any }> = {};
 
-    computeDualDiff(oldSnap.json, currentSnap.json, [], inputChanges, outputChanges, this.excludedPaths, this.outputPaths);
+    computeDualDiff(oldSnap, currentSnap, [], inputChanges, outputChanges, this.excludedPaths, this.outputPaths);
     return { inputChanges, outputChanges };
   }
 
@@ -187,7 +185,7 @@ export class FinancialOpsVersionManager {
     const inputChanges: Record<string, { oldValue: any; newValue: any }> = {};
     const outputChanges: Record<string, { oldValue: any; newValue: any }> = {};
 
-    computeDualDiff(oldSnap.json, currentSnap.json, [], inputChanges, outputChanges, this.excludedPaths, this.outputPaths);
+    computeDualDiff(oldSnap, currentSnap, [], inputChanges, outputChanges, this.excludedPaths, this.outputPaths);
 
     this._versionNumber++;
 

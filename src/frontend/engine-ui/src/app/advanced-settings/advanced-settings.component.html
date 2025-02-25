@@ -70,9 +70,8 @@
               ></i>
             </label>
             <p-select
-              id="termPeriodUnit"
+              inputId="termPeriodUnit"
               [(ngModel)]="loan.termPeriodDefinition.unit"
-              name="termPeriodUnit"
               [options]="termPeriodUnits"
               placeholder="Select a term period unit"
               (ngModelChange)="termPeriodDefinitionChange()"
@@ -97,9 +96,8 @@
               ></i>
             </label>
             <p-inputNumber
-              id="termPeriodCount"
+              inputId="termPeriodCount"
               [(ngModel)]="loan.termPeriodDefinition.count[0]"
-              name="termPeriodCount"
               (ngModelChange)="termPeriodDefinitionChange()"
             ></p-inputNumber>
             <!-- Popover replacing OverlayPanel -->
@@ -121,9 +119,8 @@
               ></i>
             </label>
             <p-select
-              id="calendarType"
+              inputId="calendarType"
               [(ngModel)]="loan.calendar.calendarType"
-              name="calendarType"
               [options]="calendarTypes"
               placeholder="Select a calendar type"
               (ngModelChange)="onInputChange()"
@@ -190,6 +187,7 @@
           <div class="p-grid">
             <div class="p-col-4">
               <p-select
+                inputId="paymentPriority"
                 [(ngModel)]="paymentPriority[0]"
                 [options]="paymentPriorityOptions"
                 placeholder="First"

@@ -26,6 +26,8 @@ export class BillGenerator {
         continue;
       }
 
+      
+
       const totalDue = entry.totalPayment;
       const id = BillGenerator.generateId(billIdSequence++);
       const isPaid = totalDue.getValue().isZero() ? true : false;
@@ -50,6 +52,7 @@ export class BillGenerator {
 
       bills.addBill(bill);
     }
+    bills.sortBills();
 
     return bills;
   }

@@ -45,7 +45,9 @@ export class PaymentApplication {
 
   constructor(bills: Bills, deposits: DepositRecords, options?: { allocationStrategy?: AllocationStrategy; paymentPriority?: PaymentPriority }) {
     this.bills = bills;
+    this.bills.sortBills();
     this.deposits = deposits;
+    this.deposits.sortByEffectiveDate();
 
     // Default to LIFO strategy if not provided
     options = options || {};
@@ -97,12 +99,12 @@ export class PaymentApplication {
 
     for (const deposit of this.deposits.all) {
       if (deposit.active !== true) {
-        console.debug(`Skipping deposit ${deposit.id} because it is not active`);
+        // console.debug(`Skipping deposit ${deposit.id} because it is not active`);
         continue;
       }
       // if effective date is after the current date, skip the deposit
       if (dayjs(deposit.effectiveDate).isAfter(currentDate)) {
-        console.debug(`Skipping deposit ${deposit.id} because its effective date is after the current date`);
+        // console.debug(`Skipping deposit ${deposit.id} because its effective date is after the current date`);
         continue;
       }
       const result = this.applyDeposit(deposit, {
@@ -254,6 +256,7 @@ export class FIFOStrategy implements AllocationStrategy {
 
     // Sort bills by due date ascending
     let sortedBills = bills.all.filter((bill) => bill.isOpen && !bill.isPaid).sort((a, b) => a.dueDate.diff(b.dueDate));
+    //console.log("sorted bills", sortedBills);
 
     // If applying excess to principal, further filter by deposit date
     if (deposit.applyExcessToPrincipal) {

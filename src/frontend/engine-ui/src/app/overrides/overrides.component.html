@@ -65,13 +65,18 @@
       <label for="settingName">Setting Name</label>
       <input
         id="settingName"
+        name="settingName"
         type="text"
         pInputText
         [(ngModel)]="newSetting.name"
       />
     </div>
     <div class="field-checkbox">
-      <p-checkbox [(ngModel)]="newSetting.isDefault" binary="true"></p-checkbox>
+      <p-checkbox
+        inputId="isDefault"
+        [(ngModel)]="newSetting.isDefault"
+        binary="true"
+      ></p-checkbox>
       <label for="isDefault">Set as default</label>
     </div>
   </div>

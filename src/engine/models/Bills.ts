@@ -19,6 +19,10 @@ export class Bills {
     return this._bills;
   }
 
+  get sortedByDueDate(): Bill[] {
+    return this._bills.sort((a, b) => a.dueDate.diff(b.dueDate));
+  }
+
   get unpaid(): Bill[] {
     return this._bills.filter((bill) => !bill.isPaid);
   }
@@ -35,6 +39,10 @@ export class Bills {
     });
 
     // sort bills from olders to newest
+    this._bills = this._bills.sort((a, b) => a.period - b.period);
+  }
+
+  sortBills() {
     this._bills = this._bills.sort((a, b) => a.period - b.period);
   }
 

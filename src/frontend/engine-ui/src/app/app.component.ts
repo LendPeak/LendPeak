@@ -654,12 +654,13 @@ export class AppComponent implements OnChanges {
   }
 
   generateBills() {
-    console.log('generating bills');
+    // console.log('generating bills');
     const repaymentSchedule = this.loan.repaymentSchedule;
     this.bills = BillGenerator.generateBills(
       repaymentSchedule,
       this.snapshotDate,
     );
+    console.log('generated new bills', this.bills);
   }
 
   downloadRepaymentPlanAsCSV() {

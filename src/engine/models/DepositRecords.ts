@@ -116,6 +116,12 @@ export class DepositRecords {
     });
   }
 
+  sortByEffectiveDate() {
+    this._records = this._records.sort((a, b) => {
+      return dayjs(a.effectiveDate).isBefore(dayjs(b.effectiveDate)) ? -1 : 1;
+    });
+  }
+
   get all(): DepositRecord[] {
     return this._records;
   }

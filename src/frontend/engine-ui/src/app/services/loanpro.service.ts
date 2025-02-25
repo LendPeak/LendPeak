@@ -104,11 +104,14 @@ export class LoanProService {
       .pipe(
         switchMap((response) => {
           // d.results.[0].id is the systemId of the first result
-          if (response.data && response.data.d.results.length > 0) {
-            const systemId = response.data.d.results[0].id;
+          // console.log('response from display search:', response);
+          const typedResponse = response as { d: { results: any[] } };
+          if (typedResponse && typedResponse.d.results.length > 0) {
+            // console.log('Loan found by displayId:', response.d.results[0]);
+            const systemId = response.d.results[0].id;
             return this.fetchBySystemId(headers, systemId);
           } else {
-            throw new Error('Loan not found by displayId');
+            return throwError('Loan not found by displayId');
           }
         }),
         catchError((error) =>

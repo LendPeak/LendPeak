@@ -1578,6 +1578,7 @@ export class AppComponent implements OnChanges {
     );
     //this.tilaDisclosures = this.loan.tila.generateTILADisclosures();
 
+    console.log('updated loan', this.loan);
     // this.repaymentPlanEndDates = this.loan.repaymentSchedule.map((entry) => {
     //   // mm/dd/yy
     //   return entry.periodEndDate.format('MM/DD/YY');

@@ -10,7 +10,7 @@ import dayjs from "dayjs";
 import { Currency, RoundingMethod } from "./utils/Currency";
 import { CalendarType } from "./models/Calendar";
 import Decimal from "decimal.js";
-import { TermPaymentAmounts } from "@models/TermPaymentAmounts";
+import { TermPaymentAmounts } from "./models/TermPaymentAmounts";
 
 // const loanAmount = Currency.of(1); // 1 unit of currency
 // const interestRate = 0.05; // 5% annual interest rate
@@ -49,11 +49,11 @@ const amortization = new Amortization({
   ]),
 
   balanceModifications: new BalanceModifications([
-    new BalanceModification({
-      amount: 0,
-      date: startDate,
-      type: "decrease",
-    }),
+    // new BalanceModification({
+    //   amount: 0,
+    //   date: startDate,
+    //   type: "decrease",
+    // }),
     // {
     //   amount: Currency.of(1000),
     //   date: dayjs("2024-09-25"),

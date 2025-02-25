@@ -31,7 +31,7 @@ export class ChangePaymentDate {
   jsOriginalEndDate?: Date;
 
   constructor(params: ChangePaymentDateParams) {
-    this.termNumber = params.termNumber || -1;
+    this.termNumber = params.termNumber ?? -1;
 
     this.newDate = params.newDate;
     if (params.originalDate) {

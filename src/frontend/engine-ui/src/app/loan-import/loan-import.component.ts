@@ -424,6 +424,16 @@ export class LoanImportComponent implements OnInit, OnDestroy {
     // 3. Patch them if needed
     this.patchInterestOverrideDates(interestOverrides);
 
+    // find all scheduled periods by looking at Transactions and getting entries matching title that starts with "Scheduled Payment"
+    // and sort it by period from 0 to n
+    const scheduledPayments = loanData.d.Transactions.filter(
+      (tr) => tr.type === 'scheduledPayment',
+    ).sort((a, b) => a.period - b.period);
+    const lastScheduledPeriod = scheduledPayments[scheduledPayments.length - 1];
+    const lastScheduledPeriodEndDate = dayjs(
+      parseODataDate(lastScheduledPeriod.periodEnd, true),
+    ).add(1, 'day');
+
     const uiLoan: AmortizationParams = {
       // objectVersion: 9,
       id: loanData.d.id.toString(),
@@ -434,9 +444,7 @@ export class LoanImportComponent implements OnInit, OnDestroy {
       annualInterestRate: parseFloat(loanData.d.LoanSetup.loanRate) / 100,
       //term: parseFloat(loanData.d.LoanSetup.loanTerm),
       // we will set term to the number of scheduled payments
-      term: loanData.d.Transactions.filter(
-        (tr) => tr.type === 'scheduledPayment',
-      ).length,
+      term: scheduledPayments.length,
       //   feesForAllTerms: [],
       feesPerTerm: FeesPerTerm.empty(),
       startDate: parseODataDate(loanData.d.LoanSetup.contractDate, true),
@@ -444,7 +452,8 @@ export class LoanImportComponent implements OnInit, OnDestroy {
         loanData.d.LoanSetup.firstPaymentDate,
         true,
       ),
-      endDate: parseODataDate(loanData.d.LoanSetup.origFinalPaymentDate, true),
+      // endDate: parseODataDate(loanData.d.LoanSetup.origFinalPaymentDate, true),
+      endDate: lastScheduledPeriodEndDate,
       calendarType: calendarType,
       roundingMethod: 'ROUND_HALF_EVEN',
       billingModel: billingModel,

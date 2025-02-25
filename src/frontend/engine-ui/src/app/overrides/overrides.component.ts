@@ -511,7 +511,7 @@ export class OverridesComponent implements OnInit {
       // First entry: use loan's start date
       changePaymentDates.addChangePaymentDate(
         new ChangePaymentDate({
-          termNumber: 1,
+          termNumber: 0,
           newDate: dayjs(this.loan.startDate).add(1, 'month').toDate(),
         }),
       );
@@ -737,6 +737,34 @@ export class OverridesComponent implements OnInit {
     }
 
     return false;
+  }
+
+  cpdTermUpdated(term: number) {
+    // when term is changed, we want to populate new oringinal date
+    // to do that we need to:
+    // - remove modification first
+    // - generate new schedule
+    // - find end date for the term
+    // - populate date
+    // - add modification
+    // - emit loan change
+    this.removeChangePaymentDate(term);
+    // find schedule for the term
+    const termSchedule = this.loan.repaymentSchedule.entries.find(
+      (row) => row.term === term,
+    );
+
+    const newDate =
+      termSchedule?.periodEndDate.toDate() ||
+      this.loan.repaymentSchedule.lastEntry.periodEndDate.toDate();
+    // dayjs(this.loan.startDate).add(1, 'month').toDate();
+    this.loan.changePaymentDates.addChangePaymentDate(
+      new ChangePaymentDate({
+        termNumber: term,
+        newDate: newDate,
+      }),
+    );
+    this.emitLoanChange();
   }
 
   cpdUpdated() {

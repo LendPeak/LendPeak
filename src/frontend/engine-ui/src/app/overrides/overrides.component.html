@@ -666,6 +666,9 @@
                       changePaymentDate.jsTermNumber
                     ),
                   }"
+                  [ngClass]="{
+                    'bg-red-100': changePaymentDate.jsTermNumber < 0,
+                  }"
                 >
                   <!-- Term Dates -->
                   <td>
@@ -689,7 +692,7 @@
                     <p-inputNumber
                       [(ngModel)]="changePaymentDate.jsTermNumber"
                       name="changePaymentDate-term{{ i }}"
-                      (ngModelChange)="cpdUpdated()"
+                      (ngModelChange)="cpdTermUpdated(i)"
                     ></p-inputNumber>
                   </td>
                   <!-- New Date -->

@@ -168,6 +168,60 @@ describe("Amortization", () => {
     expect(updatedChangePaymentDates.atIndex(1).termNumber).toBe(4);
   });
 
+  it("should detect correct term # for Change Payment Date and handle merge with overlapping dates", () => {
+    // const loanAmount = Currency.of(1000);
+    // const annualInterestRate = new Decimal(0.1482); // 14.82% annual interest rate
+    // const term = 55; // 55 months
+    // const startDate = dayjs("2022-04-06");
+
+    const changePaymentDates = new ChangePaymentDates([
+      new ChangePaymentDate({
+        termNumber: 0,
+        newDate: "2023-01-06",
+      }),
+      new ChangePaymentDate({
+        termNumber: -1,
+        originalDate: "2023-02-06",
+        newDate: "2023-03-06",
+      }),
+      new ChangePaymentDate({
+        termNumber: -1,
+        originalDate: "2023-04-06",
+        newDate: "2023-04-20",
+      }),
+      new ChangePaymentDate({
+        termNumber: -1,
+        originalDate: "2023-04-20",
+        newDate: "2023-06-20",
+      }),
+      new ChangePaymentDate({
+        termNumber: -1,
+        originalDate: "2027-01-20",
+        newDate: "2027-01-06",
+      }),
+      new ChangePaymentDate({
+        termNumber: 20,
+        newDate: "2027-02-20",
+      }),
+    ]);
+
+    expect(changePaymentDates.length).toBe(5);
+    expect(changePaymentDates.atIndex(0).newDate.toDate()).toEqual(dayjs("2023-01-06").startOf("day").toDate());
+    expect(changePaymentDates.atIndex(0).termNumber).toEqual(0);
+
+    expect(changePaymentDates.atIndex(1)?.originalDate?.toDate()).toEqual(dayjs("2023-02-06").startOf("day").toDate());
+    expect(changePaymentDates.atIndex(1).newDate.toDate()).toEqual(dayjs("2023-03-06").startOf("day").toDate());
+
+    expect(changePaymentDates.atIndex(2)?.originalDate?.toDate()).toEqual(dayjs("2023-04-06").startOf("day").toDate());
+    expect(changePaymentDates.atIndex(2).newDate.toDate()).toEqual(dayjs("2023-06-20").startOf("day").toDate());
+
+    expect(changePaymentDates.atIndex(3)?.originalDate?.toDate()).toEqual(dayjs("2027-01-20").startOf("day").toDate());
+    expect(changePaymentDates.atIndex(3).newDate.toDate()).toEqual(dayjs("2027-01-06").startOf("day").toDate());
+
+    expect(changePaymentDates.atIndex(4).termNumber).toEqual(20);
+    expect(changePaymentDates.atIndex(4).newDate.toDate()).toEqual(dayjs("2027-02-20").startOf("day").toDate());
+  });
+
   it("should throw an error for a zero loan amount", () => {
     const loanAmount = Currency.of(0);
     const interestRate = new Decimal(0.05); // 5% annual interest rate

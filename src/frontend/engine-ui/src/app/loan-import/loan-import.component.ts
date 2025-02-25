@@ -331,32 +331,41 @@ export class LoanImportComponent implements OnInit, OnDestroy {
   }
 
   patchInterestOverrideDates(overrides: TermInterestAmountOverride[]) {
-    // Make sure they are sorted chronologically if needed
+    // 1. Sort them chronologically
     overrides.sort(
       (a, b) => (a.date?.valueOf() ?? 0) - (b.date?.valueOf() ?? 0),
     );
 
+    // 2. First pass: if it’s February and day < 28 => add 1 day
+    for (let i = 0; i < overrides.length; i++) {
+      const currentDate = dayjs(overrides[i].date);
+
+      // Day.js months are zero-based: January=0, February=1, ...
+      if (currentDate.month() === 1 && currentDate.date() < 28) {
+        const patched = currentDate.add(1, 'day');
+        console.log(
+          `Adding one day because it's before Feb 28. Changing ${currentDate.format('MM/DD/YYYY')} to ${patched.format('MM/DD/YYYY')}`,
+        );
+        overrides[i].date = patched; // or overrides[i].date = patched.toDate() if your code expects a JS Date
+      }
+    }
+
+    // 3. Second pass: your existing “end of month” patch logic
     for (let i = 1; i < overrides.length; i++) {
-      const prev = overrides[i - 1];
-      const current = overrides[i];
+      const prevDate = dayjs(overrides[i - 1].date);
+      const currDate = dayjs(overrides[i].date);
 
-      const prevDate = dayjs(prev.date);
-      const currDate = dayjs(current.date);
-
-      // If the previous date is day=28, and the current is day=27 in the very next month,
-      // We patch current to day=28.
-      // For example: 1/28 -> 2/27 => patch to 2/28
+      // If the previous date = 28, and the current is 27 in the very next month => patch current to 28
       if (
         prevDate.date() === 28 &&
         prevDate.add(1, 'month').month() === currDate.month() &&
         currDate.date() === 27
       ) {
-        // Bump current to the 28th
         const fixedDate = currDate.date(28);
-        console.warn(
+        console.log(
           `Patching interest override date from ${currDate.format('MM/DD/YYYY')} to ${fixedDate.format('MM/DD/YYYY')}`,
         );
-        (overrides[i] as any).date = fixedDate; // or overrides[i].date = fixedDate.toDate() if needed
+        overrides[i].date = fixedDate;
       }
     }
   }

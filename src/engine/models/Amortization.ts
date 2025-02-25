@@ -359,6 +359,8 @@ export class Amortization {
   updateJsValues() {
     this.termPaymentAmountOverride.updateJsValues();
     this.changePaymentDates.updateJsValues();
+    this.termInterestAmountOverride.updateJsValues();
+
     this.jsId = this.id;
     this.jsName = this.name;
     this.jsDescription = this.description;
@@ -432,6 +434,7 @@ export class Amortization {
 
     this.termPaymentAmountOverride.updateModelValues();
     this.changePaymentDates.updateModelValues();
+    this.termInterestAmountOverride.updateModelValues();
 
     this.defaultPreBillDaysConfiguration = this.jsDefaultPreBillDaysConfiguration;
     this.defaultBillDueDaysAfterPeriodEndConfiguration = this.jsDefaultBillDueDaysAfterPeriodEndConfiguration;

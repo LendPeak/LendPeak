@@ -1,6 +1,14 @@
 import { Bills } from "./Bills";
 import { DepositRecords } from "./DepositRecords";
 import cloneDeep from "lodash/cloneDeep";
+import dayjs from "dayjs";
+import isSameOrAfter from "dayjs/plugin/isSameOrAfter";
+import isSameOrBefore from "dayjs/plugin/isSameOrBefore";
+import isBetween from "dayjs/plugin/isBetween";
+
+dayjs.extend(isSameOrAfter);
+dayjs.extend(isSameOrBefore);
+dayjs.extend(isBetween);
 
 /**
  * A version record for Bills+Deposits changes.
@@ -17,8 +25,24 @@ export interface FinancialOpsVersion {
   rolledBackFromVersionId?: string;
 }
 
+function isDate(value: any): boolean {
+  return (value instanceof Date && !isNaN(value.valueOf())) || dayjs.isDayjs(value);
+}
+
 /**
- * Minimal computeDualDiff (same approach as in your AmortizationVersionManager)
+ * Utility that checks if the dot-notation path is excluded.
+ */
+function isExcluded(pathString: string, excludedPaths: string[]): boolean {
+  return excludedPaths.some((ex) => pathString === ex || pathString.startsWith(ex + "."));
+}
+
+
+/**
+ * Recursive function that populates two diff objects:
+ * - inputDiffs: fields not excluded and not in outputPaths
+ * - outputDiffs: fields matching outputPaths
+ *
+ * If a path is in excludedPaths, we skip it entirely.
  */
 function computeDualDiff(
   oldObj: any,
@@ -29,22 +53,42 @@ function computeDualDiff(
   excludedPaths: string[],
   outputPaths: string[]
 ): void {
+  // 1. If exactly the same (including null/undefined), no diff
   if (oldObj === newObj) return;
 
+  // 2. If both are Date objects, compare getTime()
+  if (isDate(oldObj) && isDate(newObj)) {
+    const oldObjDate = dayjs(oldObj);
+    const newObjDate = dayjs(newObj);
+    if (!oldObjDate.isSame(newObjDate)) {
+      console.error("Date mismatch", path.join("."), oldObj, newObj);
+      recordChange(path.join("."), oldObj, newObj, inputDiffs, outputDiffs, outputPaths);
+    }
+    return;
+  }
+
   const currentPath = path.join(".");
-  // Example: if you have excludedPaths or outputPaths, adapt the logic:
-  // if (excludedPaths.some(...)) return;
+
+  // 3. Exclusion check
+  if (isExcluded(currentPath, excludedPaths)) {
+    return;
+  }
 
   const oldType = typeof oldObj;
   const newType = typeof newObj;
-  const bothObjects = oldType === "object" && newType === "object" && oldObj !== null && newObj !== null;
-  const bothArrays = bothObjects && Array.isArray(oldObj) && Array.isArray(newObj);
 
-  if (!bothObjects || Array.isArray(oldObj) !== Array.isArray(newObj)) {
+  // 4. If one side is primitive or mismatch (array vs. object, etc.), record a direct diff
+  //    (Also handles if either is null or different array lengths, etc.)
+  const bothAreObjects = oldType === "object" && newType === "object" && oldObj !== null && newObj !== null;
+  const bothAreArrays = bothAreObjects && Array.isArray(oldObj) && Array.isArray(newObj);
+
+  if (!bothAreObjects || Array.isArray(oldObj) !== Array.isArray(newObj)) {
     recordChange(currentPath, oldObj, newObj, inputDiffs, outputDiffs, outputPaths);
     return;
   }
-  if (bothArrays) {
+
+  // 5. If both are arrays
+  if (bothAreArrays) {
     const maxLen = Math.max(oldObj.length, newObj.length);
     for (let i = 0; i < maxLen; i++) {
       computeDualDiff(oldObj[i], newObj[i], [...path, String(i)], inputDiffs, outputDiffs, excludedPaths, outputPaths);
@@ -52,12 +96,13 @@ function computeDualDiff(
     return;
   }
 
-  // Both plain objects
+  // 6. If both are plain objects
   const allKeys = new Set([...Object.keys(oldObj), ...Object.keys(newObj)]);
   for (const key of allKeys) {
     computeDualDiff(oldObj[key], newObj[key], [...path, key], inputDiffs, outputDiffs, excludedPaths, outputPaths);
   }
 }
+
 
 function recordChange(pathStr: string, oldVal: any, newVal: any, inputDiffs: Record<string, { oldValue: any; newValue: any }>, outputDiffs: Record<string, { oldValue: any; newValue: any }>, outputPaths: string[]) {
   // For demonstration, let's say we treat everything as "input" by default
@@ -130,7 +175,7 @@ export class FinancialOpsVersionManager {
     const inputChanges: Record<string, { oldValue: any; newValue: any }> = {};
     const outputChanges: Record<string, { oldValue: any; newValue: any }> = {};
 
-    computeDualDiff(oldSnap, currentSnap, [], inputChanges, outputChanges, this.excludedPaths, this.outputPaths);
+    computeDualDiff(oldSnap.json, currentSnap.json, [], inputChanges, outputChanges, this.excludedPaths, this.outputPaths);
     return { inputChanges, outputChanges };
   }
 
@@ -142,7 +187,7 @@ export class FinancialOpsVersionManager {
     const inputChanges: Record<string, { oldValue: any; newValue: any }> = {};
     const outputChanges: Record<string, { oldValue: any; newValue: any }> = {};
 
-    computeDualDiff(oldSnap, currentSnap, [], inputChanges, outputChanges, this.excludedPaths, this.outputPaths);
+    computeDualDiff(oldSnap.json, currentSnap.json, [], inputChanges, outputChanges, this.excludedPaths, this.outputPaths);
 
     this._versionNumber++;
 

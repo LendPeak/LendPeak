@@ -1062,6 +1062,14 @@ export class AppComponent implements OnChanges {
       if (!loanData.loan.hasCustomEndDate) {
         delete loanData.loan.endDate;
       }
+
+      if (!loanData.loan.hasCustomPreBillDays) {
+        delete loanData.loan.preBillDays;
+      }
+
+      if (!loanData.loan.hasCustomBillDueDays) {
+        delete loanData.loan.dueBillDays;
+      }
       //this.loan = new Amortization(loanData.loan);
       this.deposits = new DepositRecords(loanData.deposits);
 

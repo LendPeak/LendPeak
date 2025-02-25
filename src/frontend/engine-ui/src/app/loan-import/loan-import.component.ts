@@ -468,8 +468,8 @@ export class LoanImportComponent implements OnInit, OnDestroy {
       ),
       //  termPaymentAmount: undefined,
       equitedMonthlyPayment: parseFloat(loanData.d.LoanSetup.payment),
-      defaultBillDueDaysAfterPeriodEndConfiguration: 3,
-      defaultPreBillDaysConfiguration: 5,
+      // defaultBillDueDaysAfterPeriodEndConfiguration: 3,
+      // defaultPreBillDaysConfiguration: 5,
       allowRateAbove100: false,
       periodsSchedule: new PeriodSchedules(),
       termInterestAmountOverride: new TermInterestAmountOverrides(

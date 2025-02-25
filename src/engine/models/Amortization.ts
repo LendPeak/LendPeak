@@ -188,7 +188,11 @@ export class Amortization {
   private _balanceModifications: BalanceModifications = new BalanceModifications();
 
   private _defaultPreBillDaysConfiguration: number = Amortization.DEFAULT_PRE_BILL_DAYS_CONFIGURATION;
+  jsDefaultPreBillDaysConfiguration!: number;
+
   private _defaultBillDueDaysAfterPeriodEndConfiguration: number = Amortization.DEFAULT_BILL_DUE_DAYS_AFTER_PERIO_END_CONFIGURATION;
+  jsDefaultBillDueDaysAfterPeriodEndConfiguration!: number;
+
   private _calendar: Calendar = new Calendar(CalendarType.ACTUAL_ACTUAL);
   private _roundingMethod: RoundingMethod = RoundingMethod.ROUND_HALF_EVEN;
   private _flushUnbilledInterestRoundingErrorMethod: FlushUnbilledInterestDueToRoundingErrorType = FlushUnbilledInterestDueToRoundingErrorType.NONE;
@@ -381,6 +385,8 @@ export class Amortization {
     this.jshasCustomFirstPaymentDate = this.hasCustomFirstPaymentDate;
     this.jsHasCustomEndDate = this.hasCustomEndDate;
     this.jsEndDate = this.endDate.toDate();
+    this.jsDefaultPreBillDaysConfiguration = this.defaultPreBillDaysConfiguration;
+    this.jsDefaultBillDueDaysAfterPeriodEndConfiguration = this.defaultBillDueDaysAfterPeriodEndConfiguration;
   }
 
   updateModelValues() {
@@ -426,6 +432,9 @@ export class Amortization {
 
     this.termPaymentAmountOverride.updateModelValues();
     this.changePaymentDates.updateModelValues();
+
+    this.defaultPreBillDaysConfiguration = this.jsDefaultPreBillDaysConfiguration;
+    this.defaultBillDueDaysAfterPeriodEndConfiguration = this.jsDefaultBillDueDaysAfterPeriodEndConfiguration;
   }
 
   /**
@@ -630,9 +639,20 @@ export class Amortization {
   }
 
   private generatePreBillDays(): void {
-    const value = this._preBillDays.all.filter((dueBillDay) => dueBillDay.type !== "generated");
+    let value = this._preBillDays.all.filter((dueBillDay) => dueBillDay.type === "custom");
 
     const completedPreBillDays: PreBillDaysConfigurations = new PreBillDaysConfigurations();
+
+    if (value.length === 0) {
+      value = [
+        new PreBillDaysConfiguration({
+          preBillDays: this.defaultPreBillDaysConfiguration,
+          termNumber: 0,
+          type: "default",
+        }),
+      ];
+    }
+
     for (let preBillDay of value) {
       completedPreBillDays.all[preBillDay.termNumber - 1] = preBillDay;
     }
@@ -661,10 +681,20 @@ export class Amortization {
 
   private generateDueBillDays(): void {
     // lets remove all generated values and re-generate them
-    const value = this._dueBillDays.all.filter((dueBillDay) => dueBillDay.type !== "generated");
+    let value = this._dueBillDays.all.filter((dueBillDay) => dueBillDay.type === "custom");
     const completedDueDayBillDays: BillDueDaysConfigurations = new BillDueDaysConfigurations();
-    for (let dueBillDay of value) {
-      completedDueDayBillDays.all[dueBillDay.termNumber - 1] = dueBillDay;
+    if (value.length === 0) {
+      value = [
+        new BillDueDaysConfiguration({
+          daysDueAfterPeriodEnd: this.defaultBillDueDaysAfterPeriodEndConfiguration,
+          termNumber: 0,
+          type: "default",
+        }),
+      ];
+    } else {
+      for (let dueBillDay of value) {
+        completedDueDayBillDays.all[dueBillDay.termNumber - 1] = dueBillDay;
+      }
     }
 
     let lastUserDefinedTerm = value[0];
@@ -697,7 +727,7 @@ export class Amortization {
       this._dueBillDays = new BillDueDaysConfigurations([
         new BillDueDaysConfiguration({
           daysDueAfterPeriodEnd: this.defaultBillDueDaysAfterPeriodEndConfiguration,
-          termNumber: 1,
+          termNumber: 0,
           type: "default",
         }),
       ]);
@@ -1255,7 +1285,7 @@ export class Amortization {
   set billingModel(value: BillingModel) {
     this.modifiedSinceLastCalculation = true;
 
-    if (this.billingModel === "dailySimpleInterest") {
+    if (value === "dailySimpleInterest") {
       if (this.preBillDays.length > 1) {
         throw new Error("Pre-bill days are not used in Daily Simple Interest billing model");
       }
@@ -2408,7 +2438,9 @@ export class Amortization {
       totalLoanAmount: this.totalLoanAmount.toNumber(),
       annualInterestRate: this.annualInterestRate.toString(),
       term: this.term,
+      hasCustomPreBillDays: this.hasCustomPreBillDays,
       preBillDays: this.preBillDays,
+      hasCustomBillDueDays: this.hasCustomBillDueDays,
       dueBillDays: this.dueBillDays,
       defaultPreBillDaysConfiguration: this.defaultPreBillDaysConfiguration,
       defaultBillDueDaysAfterPeriodEndConfiguration: this.defaultBillDueDaysAfterPeriodEndConfiguration,

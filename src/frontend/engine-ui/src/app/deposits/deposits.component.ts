@@ -8,7 +8,7 @@ import {
   ElementRef,
 } from '@angular/core';
 import { DropDownOptionString } from '../models/common.model';
-import { DepositRecord } from 'lendpeak-engine/models/Deposit';
+import { DepositRecord } from 'lendpeak-engine/models/DepositRecord';
 import { DepositRecords } from 'lendpeak-engine/models/DepositRecords';
 import { Bills } from 'lendpeak-engine/models/Bills';
 import { Currency } from 'lendpeak-engine/utils/Currency';
@@ -42,6 +42,7 @@ export class DepositsComponent {
   showDepositDialog: boolean = false;
   selectedDepositForEdit: DepositRecord | null = null;
   depositData: DepositRecord = this.getEmptyDepositData();
+  originalDepositData: DepositRecord = this.getEmptyDepositData();
 
   nextDuePrincipal: Currency = Currency.Zero();
   nextDueInterest: Currency = Currency.Zero();
@@ -70,6 +71,29 @@ export class DepositsComponent {
   baselineNextDueFees: Currency = Currency.Zero();
 
   ngAfterViewInit(): void {}
+
+  allocationTypes: DropDownOptionString[] = [
+    { label: `Loan's Default`, value: 'default' },
+    { label: 'Static Distribution', value: 'staticDistribution' },
+  ];
+
+  selectedAllocationType: string = 'default';
+  staticUnusedAmount = 0;
+
+  onAllocationTypeChange(event: any) {
+    if (event.value === 'default') {
+      this.depositData.removeStaticAllocation();
+    } else {
+      this.depositData.staticAllocation = {
+        principal: 0,
+        interest: 0,
+        fees: 0,
+        prepayment: 0,
+      };
+      this.staticUnusedAmount = this.depositData.amount.toNumber();
+      this.depositData.updateJsValues();
+    }
+  }
 
   scrollToLastDeposit() {
     if (this.deposits.length === 0) {
@@ -111,6 +135,8 @@ export class DepositsComponent {
     if (deposit) {
       this.selectedDepositForEdit = deposit;
       this.depositData = deposit;
+      this.originalDepositData = deposit;
+
       if (deposit.effectiveDate) {
         this.depositData.effectiveDate = deposit.effectiveDate;
       }
@@ -124,14 +150,38 @@ export class DepositsComponent {
       }
       this.depositData.applyExcessToPrincipal =
         deposit.applyExcessToPrincipal ?? false;
+      if (this.depositData.staticAllocation) {
+        this.selectedAllocationType = 'staticDistribution';
+        this.staticUnusedAmount = this.depositData.amount
+          .subtract(this.depositData.staticAllocation.principal)
+          .subtract(this.depositData.staticAllocation.interest)
+          .subtract(this.depositData.staticAllocation.fees)
+          .subtract(this.depositData.staticAllocation.prepayment)
+          .toNumber();
+      }
     } else {
       this.depositData = this.getEmptyDepositData();
+      this.originalDepositData = this.getEmptyDepositData();
       this.selectedDepositForEdit = null;
+      this.selectedAllocationType = 'default';
     }
     this.showDepositDialog = true;
   }
 
   onDataChange(event: any) {
+    if (this.depositData.staticAllocation) {
+      this.staticUnusedAmount = this.depositData.amount
+        .subtract(this.depositData?.jsStaticAllocation?.principal || 0)
+        .subtract(this.depositData?.jsStaticAllocation?.interest || 0)
+        .subtract(this.depositData?.jsStaticAllocation?.fees || 0)
+        .subtract(this.depositData?.jsStaticAllocation?.prepayment || 0)
+        .toNumber();
+
+      if (this.staticUnusedAmount < 0) {
+        console.error('Static allocation exceeds deposit amount');
+        return;
+      }
+    }
     this.depositData.updateModelValues();
 
     if (
@@ -145,6 +195,10 @@ export class DepositsComponent {
   onDepositDialogHide() {
     this.showDepositDialog = false;
     this.selectedDepositForEdit = null;
+    // we want to rollback any changes made to the deposit data
+    // simplest way is to sync model values back to js
+    this.selectedAllocationType = 'default';
+    //  this.depositData = this.originalDepositData.clone();
     this.depositUpdated.emit();
   }
 

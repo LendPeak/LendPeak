@@ -4,7 +4,7 @@ dayjs.extend(utc);
 
 import isBetween from "dayjs/plugin/isBetween";
 dayjs.extend(isBetween);
-import { DepositRecord } from "./Deposit";
+import { DepositRecord } from "./DepositRecord";
 
 export class DepositRecords {
   private _records: DepositRecord[] = [];

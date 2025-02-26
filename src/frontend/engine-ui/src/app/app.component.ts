@@ -34,14 +34,15 @@ import { ChangePaymentDate } from 'lendpeak-engine/models/ChangePaymentDate';
 import { AmortizationVersionManager } from 'lendpeak-engine/models/AmortizationVersionManager';
 import { AmortizationEntry } from 'lendpeak-engine/models/Amortization/AmortizationEntry';
 import { BalanceModification } from 'lendpeak-engine/models/Amortization/BalanceModification';
-import { Deposit, DepositRecord } from 'lendpeak-engine/models/Deposit';
+import { DepositRecord } from 'lendpeak-engine/models/DepositRecord';
 import { DepositRecords } from 'lendpeak-engine/models/DepositRecords';
+import { PaymentApplication } from 'lendpeak-engine/models/PaymentApplication';
+import { PaymentApplicationResult } from 'lendpeak-engine/models/PaymentApplication/PaymentApplicationResult';
 import {
-  PaymentApplication,
-  PaymentApplicationResult,
-  PaymentComponent,
   PaymentAllocationStrategyName,
-} from 'lendpeak-engine/models/PaymentApplication';
+  PaymentComponent,
+} from 'lendpeak-engine/models/PaymentApplication/Types';
+
 import { Bill } from 'lendpeak-engine/models/Bill';
 import { Bills } from 'lendpeak-engine/models/Bills';
 import { BillPaymentDetail } from 'lendpeak-engine/models/Bill/BillPaymentDetail';
@@ -1384,126 +1385,84 @@ export class AppComponent implements OnChanges {
 
   applyPayments() {
     console.log('running applyPayments');
-    // Reset usageDetails and related fields for each deposit
+
+    // 1) Clear usageDetails from each deposit
     this.deposits.clearHistory();
-    // Apply payments to the loan
-    const deposits: DepositRecords = this.deposits;
 
-    const bills: Bills = this.bills;
-
-    // Build the allocation strategy based on user selection
-    let allocationStrategy = PaymentApplication.getAllocationStrategyFromName(
+    // 2) Build PaymentApplication & process
+    const allocationStrategy = PaymentApplication.getAllocationStrategyFromName(
       this.paymentAllocationStrategy,
     );
-
-    // Build the payment priority
     const paymentPriority = this.paymentPriority;
-
-    const paymentApp = new PaymentApplication(bills, deposits, {
-      allocationStrategy: allocationStrategy,
-      paymentPriority: paymentPriority,
+    const paymentApp = new PaymentApplication(this.bills, this.deposits, {
+      allocationStrategy,
+      paymentPriority,
     });
-
-    // Process deposits
     this.paymentApplicationResults = paymentApp.processDeposits(
       this.snapshotDate,
     );
 
-    // Update bills and deposits based on payment results
+    // 3) Loop over results
     this.paymentApplicationResults.forEach((result) => {
-      const depositId = result.depositId;
-      const deposit = this.deposits.all.find((d) => d.id === depositId);
+      // Here's where we find the deposit, storing it in a local `deposit` variable
+      const deposit = this.deposits.all.find((d) => d.id === result.depositId);
       if (!deposit) {
-        console.error(`Deposit with id ${depositId} not found`);
+        console.error('No deposit found for', result.depositId);
         return;
       }
 
-      deposit.usageDetails = deposit.usageDetails || [];
-
+      // Handle balance modification etc.
       if (result.balanceModification) {
-        console.log(
-          'Applying balance modification',
-          result.balanceModification,
-        );
-
-        // 1) Remove existing UI modifications for this deposit
+        // Remove any existing BMs for this deposit
         this.loan.balanceModifications.balanceModifications =
           this.loan.balanceModifications.all.filter(
-            (uiMod) =>
-              !(uiMod.metadata && uiMod.metadata.depositId === deposit.id),
+            (bm) => !(bm.metadata && bm.metadata.depositId === deposit.id),
           );
 
-        // 2) Push the new UI object
+        // Add the new BM
         this.loan.balanceModifications.addBalanceModification(
           result.balanceModification,
         );
-
-        // 3) Also store the ID
         deposit.balanceModificationId = result.balanceModification.id;
       } else {
-        // Remove any existing UI modifications for this deposit
+        // Remove old BMs for this deposit if none returned
         this.loan.balanceModifications.balanceModifications =
           this.loan.balanceModifications.all.filter(
-            (uiMod) =>
-              !(uiMod.metadata && uiMod.metadata.depositId === deposit.id),
+            (bm) => !(bm.metadata && bm.metadata.depositId === deposit.id),
           );
         deposit.balanceModificationId = undefined;
       }
 
-      // Update deposit's unused amount
+      // Update deposit's leftover
       deposit.unusedAmount = result.unallocatedAmount;
 
-      // Process allocations to update bills
+      // 4) Populate BillPaymentDetail on each Bill if needed
+      //    (And now `deposit.effectiveDate` is safely in scope)
       result.allocations.forEach((allocation) => {
-        const billId = allocation.billId;
-        const bill = this.bills.all.find((b) => b.id === billId);
-        if (!bill) {
-          console.info(`Bill with id ${billId} not found`);
-          return;
-        }
+        const bill = this.bills.all.find((b) => b.id === allocation.billId);
+        if (!bill) return;
 
         bill.paymentDetails = bill.paymentDetails || [];
         bill.paymentDetails.push(
           new BillPaymentDetail({
-            depositId: depositId,
+            depositId: deposit.id,
             allocatedPrincipal: allocation.allocatedPrincipal,
             allocatedInterest: allocation.allocatedInterest,
             allocatedFees: allocation.allocatedFees,
-            date: deposit.effectiveDate,
-          }),
-        );
-
-        deposit.usageDetails.push(
-          new UsageDetail({
-            billId: billId,
-            period: bill.amortizationEntry?.term || 0,
-            billDueDate: bill.dueDate.toDate(),
-            allocatedPrincipal: allocation.allocatedPrincipal.toNumber(),
-            allocatedInterest: allocation.allocatedInterest.toNumber(),
-            allocatedFees: allocation.allocatedFees.toNumber(),
-            date: deposit.effectiveDate,
+            date: deposit.effectiveDate, // <--- Now deposit is in scope
           }),
         );
       });
     });
 
-    // Update bills with new payment details
+    // 5) Mark bills as paid if principalDue, interestDue, feesDue are all zero
     this.bills.bills = this.bills.all.map((bill) => {
-      const updatedBill = this.paymentApplicationResults
-        .flatMap((result) => result.allocations)
-        .find((allocation) => allocation.billId === bill.id);
-
-      if (updatedBill) {
-        bill.isPaid =
-          bill.principalDue.isZero() &&
-          bill.interestDue.isZero() &&
-          bill.feesDue.isZero();
-      }
-
+      bill.isPaid =
+        bill.principalDue.isZero() &&
+        bill.interestDue.isZero() &&
+        bill.feesDue.isZero();
       return bill;
     });
-
-    // console.log('Payments applied');
   }
 
   onPaymentPriorityChange() {

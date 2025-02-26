@@ -174,47 +174,51 @@
         inputStyleClass="w-full"
       ></p-inputNumber>
     </div>
-    <div class="field">
-      <label for="effectiveDate-{{ depositData.id }}">Effective Date</label>
-      <p-datepicker
-        inputId="effectiveDate-{{ depositData.id }}"
-        [(ngModel)]="depositData.jsEffectiveDate"
-        (ngModelChange)="onDataChange($event)"
-        dateFormat="mm/dd/yy"
-        [showClear]="false"
-        [showButtonBar]="true"
-        showIcon
-        required
-        appendTo="body"
-        inputStyleClass="w-full"
-        class="w-full"
-        [style]="{ width: '100%' }"
-        [inputStyle]="{
-          width: '100%',
-        }"
-      ></p-datepicker>
+    <div class="formgrid grid">
+      <div class="field col">
+        <label for="effectiveDate-{{ depositData.id }}">Effective Date</label>
+        <p-datepicker
+          inputId="effectiveDate-{{ depositData.id }}"
+          [(ngModel)]="depositData.jsEffectiveDate"
+          (ngModelChange)="onDataChange($event)"
+          dateFormat="mm/dd/yy"
+          [showClear]="false"
+          [showButtonBar]="true"
+          showIcon
+          required
+          appendTo="body"
+          inputStyleClass="w-full"
+          class="w-full"
+          [style]="{ width: '100%' }"
+          [inputStyle]="{
+            width: '100%',
+          }"
+        ></p-datepicker>
+      </div>
+      <div class="field col">
+        <label for="clearingDate-{{ depositData.id }}">Clearing Date</label>
+        <p-datepicker
+          inputId="clearingDate-{{ depositData.id }}"
+          [(ngModel)]="depositData.jsClearingDate"
+          (ngModelChange)="onDataChange($event)"
+          [minDate]="depositData.jsEffectiveDate"
+          dateFormat="mm/dd/yy"
+          appendTo="body"
+          [showButtonBar]="true"
+          showIcon
+          inputStyleClass="w-full"
+          class="w-full"
+          [style]="{ width: '100%' }"
+          [inputStyle]="{
+            width: '100%',
+          }"
+        ></p-datepicker>
+      </div>
     </div>
     <div class="field">
-      <label for="clearingDate-{{ depositData.id }}">Clearing Date</label>
-      <p-datepicker
-        inputId="clearingDate-{{ depositData.id }}"
-        [(ngModel)]="depositData.jsClearingDate"
-        (ngModelChange)="onDataChange($event)"
-        [minDate]="depositData.jsEffectiveDate"
-        dateFormat="mm/dd/yy"
-        appendTo="body"
-        [showButtonBar]="true"
-        showIcon
-        inputStyleClass="w-full"
-        class="w-full"
-        [style]="{ width: '100%' }"
-        [inputStyle]="{
-          width: '100%',
-        }"
-      ></p-datepicker>
-    </div>
-    <div class="field">
-      <label for="excessAppliedDate-{{depositData.id}}">Excess Applied Date</label>
+      <label for="excessAppliedDate-{{ depositData.id }}"
+        >Excess Applied Date</label
+      >
 
       <p-inputgroup>
         <p-inputgroup-addon>
@@ -229,7 +233,7 @@
         </p-inputgroup-addon>
 
         <p-datepicker
-          inputId="excessAppliedDate-{{depositData.id}}"
+          inputId="excessAppliedDate-{{ depositData.id }}"
           [disabled]="!depositData.applyExcessToPrincipal"
           [(ngModel)]="depositData.jsExcessAppliedDate"
           (ngModelChange)="onDataChange($event)"
@@ -254,6 +258,101 @@
         </p-inputgroup-addon>
       </p-inputgroup>
     </div>
+    <div class="field">
+      <label for="allocationType">Allocation Type</label>
+      <p-select
+        inputId="allocationType"
+        [(ngModel)]="selectedAllocationType"
+        (ngModelChange)="onAllocationTypeChange($event)"
+        [options]="allocationTypes"
+        optionLabel="label"
+        optionValue="value"
+        required
+        appendTo="body"
+        inputStyleClass="w-full"
+        class="w-full"
+      ></p-select>
+    </div>
+    <p-card *ngIf="selectedAllocationType === 'staticDistribution'">
+      <div class="field w-full text-xl text-center">
+        <span class="text-300">Remaining Amount: </span
+        ><span
+          class="font-medium"
+          [class]="{
+            'text-red-500': staticUnusedAmount < 0,
+          }"
+          >{{ staticUnusedAmount | currency }}</span
+        >
+      </div>
+
+      <div class="formgrid grid">
+        <div class="field col">
+          <label for="staticPrincipal-{{ depositData.id }}">Principal</label>
+          <p-inputNumber
+            inputId="staticPrincipal-{{ depositData.id }}"
+            [(ngModel)]="depositData.jsStaticAllocation!.principal"
+            mode="currency"
+            currency="USD"
+            locale="en-US"
+            (ngModelChange)="onDataChange($event)"
+            required
+            class="w-full"
+            inputStyleClass="w-full"
+            [min]="0"
+          ></p-inputNumber>
+        </div>
+        <div class="field col">
+          <label for="staticInterest-{{ depositData.id }}">Interest</label>
+          <p-inputNumber
+            inputId="staticInterest-{{ depositData.id }}"
+            [(ngModel)]="depositData.jsStaticAllocation!.interest"
+            mode="currency"
+            currency="USD"
+            locale="en-US"
+            (ngModelChange)="onDataChange($event)"
+            required
+            class="w-full"
+            inputStyleClass="w-full"
+            [min]="0"
+          ></p-inputNumber>
+        </div>
+      </div>
+
+      <div class="formgrid grid">
+        <div class="field col">
+          <label for="staticFees-{{ depositData.id }}">Fees</label>
+          <p-inputNumber
+            inputId="staticFees-{{ depositData.id }}"
+            [(ngModel)]="depositData.jsStaticAllocation!.fees"
+            mode="currency"
+            currency="USD"
+            locale="en-US"
+            (ngModelChange)="onDataChange($event)"
+            required
+            class="w-full"
+            inputStyleClass="w-full"
+            [min]="0"
+          ></p-inputNumber>
+        </div>
+        <div class="field col">
+          <label for="staticPrincipal-{{ depositData.id }}"
+            >Principal Prepayment</label
+          >
+          <p-inputNumber
+            inputId="staticPrincipal-{{ depositData.id }}"
+            [(ngModel)]="depositData.jsStaticAllocation!.prepayment"
+            mode="currency"
+            currency="USD"
+            locale="en-US"
+            (ngModelChange)="onDataChange($event)"
+            required
+            class="w-full"
+            inputStyleClass="w-full"
+            [min]="0"
+          ></p-inputNumber>
+        </div>
+      </div>
+    </p-card>
   </div>
 
   <div class="flex justify-content-end gap-2">
@@ -268,6 +367,7 @@
       label="Save"
       icon="pi pi-check"
       type="submit"
+      [disabled]="staticUnusedAmount < 0"
       (click)="saveDeposit()"
     ></p-button>
   </div>

@@ -27,7 +27,7 @@ import {
 import { ChangePaymentDate } from 'lendpeak-engine/models/ChangePaymentDate';
 import { ChangePaymentDates } from 'lendpeak-engine/models/ChangePaymentDates';
 import { LoanResponse, DueDateChange } from '../models/loanpro.model';
-import { DepositRecord } from 'lendpeak-engine/models/Deposit';
+import { DepositRecord } from 'lendpeak-engine/models/DepositRecord';
 import { FeesPerTerm } from 'lendpeak-engine/models/FeesPerTerm';
 import { PeriodSchedules } from 'lendpeak-engine/models/PeriodSchedules';
 import { BalanceModifications } from 'lendpeak-engine/models/Amortization/BalanceModifications';
@@ -536,6 +536,7 @@ export class LoanImportComponent implements OnInit, OnDestroy {
       loanData.d.Payments.filter(
         (payment: any) => payment.childId === null,
       ).map((payment: any) => {
+        console.log('adding payment');
         return new DepositRecord({
           amount: parseFloat(payment.amount),
           active: payment.active === 1,
@@ -544,6 +545,11 @@ export class LoanImportComponent implements OnInit, OnDestroy {
           clearingDate: parseODataDate(payment.date, true),
           systemDate: parseODataDate(payment.created, true),
           id: `(${payment.id}) ${payment.info}`,
+          // LPTs had excess applied to principal
+          applyExcessToPrincipal: payment.info.includes('LPT') ? true : false,
+          excessAppliedDate: payment.info.includes('LPT')
+            ? parseODataDate(payment.date, true)
+            : undefined,
         });
       }),
     );

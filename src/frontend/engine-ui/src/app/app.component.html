@@ -1036,6 +1036,8 @@
                     plan.metadata.actualInterestValue | currency
                   }}, calculated equivalent interest rate is {{
                     plan.metadata.equivalentAnnualRate * 100 | number: '1.2-6'
+                  }}% while the loan's contractual rate is {{
+                    loan.jsAnnualInterestRate * 100 | number: '1.2-6'
                   }}%"
                   tooltipPosition="top"
                   tooltipStyleClass="wide-tooltip"

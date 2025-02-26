@@ -41,6 +41,10 @@ export class Currency {
     }
   }
 
+  clone() {
+    return new Currency(this.value, this.roundingError);
+  }
+
   get value(): Decimal {
     return this._value;
   }

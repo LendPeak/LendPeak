@@ -6,13 +6,16 @@ import { v4 as uuidv4 } from 'uuid';
 // import { OverlayPanel } from 'primeng/overlaypanel';
 // ADD this import for p-popover:
 import { Popover } from 'primeng/popover';
-import { DropDownOptionNumber, DropDownOptionString } from '../models/common.model';
+import {
+  DropDownOptionNumber,
+  DropDownOptionString,
+} from '../models/common.model';
 import { CalendarType } from 'lendpeak-engine/models/Calendar';
 
 import {
   PaymentAllocationStrategyName,
   PaymentComponent,
-} from 'lendpeak-engine/models/PaymentApplication';
+} from 'lendpeak-engine/models/PaymentApplication/Types';
 import {
   Amortization,
   FlushUnbilledInterestDueToRoundingErrorType,
@@ -28,7 +31,8 @@ import { RoundingMethod, Currency } from 'lendpeak-engine/utils/Currency';
 })
 export class AdvancedSettingsComponent implements OnInit {
   @Input() loan!: Amortization;
-  @Input() paymentAllocationStrategyName: PaymentAllocationStrategyName = 'FIFO';
+  @Input() paymentAllocationStrategyName: PaymentAllocationStrategyName =
+    'FIFO';
   @Output() loanChange = new EventEmitter<Amortization>();
   @Output() loanUpdated = new EventEmitter<void>();
 

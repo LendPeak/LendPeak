@@ -242,6 +242,7 @@ export class Amortization {
     }
 
     if (params.balanceModifications) {
+      console.trace("setting balance modification with params", params.balanceModifications);
       this.balanceModifications = params.balanceModifications;
     }
 
@@ -360,6 +361,7 @@ export class Amortization {
     this.termPaymentAmountOverride.updateJsValues();
     this.changePaymentDates.updateJsValues();
     this.termInterestAmountOverride.updateJsValues();
+    this.balanceModifications.updateJsValues();
 
     this.jsId = this.id;
     this.jsName = this.name;
@@ -435,6 +437,7 @@ export class Amortization {
     this.termPaymentAmountOverride.updateModelValues();
     this.changePaymentDates.updateModelValues();
     this.termInterestAmountOverride.updateModelValues();
+    this.balanceModifications.updateModelValues();
 
     this.defaultPreBillDaysConfiguration = this.jsDefaultPreBillDaysConfiguration;
     this.defaultBillDueDaysAfterPeriodEndConfiguration = this.jsDefaultBillDueDaysAfterPeriodEndConfiguration;
@@ -1858,7 +1861,7 @@ export class Amortization {
       // see if there are any modifications in the range
       // console.log(`Checking modification ${modification.date.format("YYYY-MM-DD")} and comparing it to ${startDate.format("YYYY-MM-DD")} and ${endDate.format("YYYY-MM-DD")}`);
 
-      if (modification.date.isBetween(startDate, endDate, "day", "[]")) {
+      if (modification.date.isBetween(startDate, endDate, "day", "[)")) {
         // we found a modification, lets get its start date
         let modificationStartDate = balances.length > 0 ? balances[balances.length - 1].endDate : startDate;
         let modificationEndDate = modification.date;

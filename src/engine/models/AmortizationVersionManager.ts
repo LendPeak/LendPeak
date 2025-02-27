@@ -190,6 +190,21 @@ export class AmortizationVersionManager {
     return Object.keys(previewChanges.inputChanges).length > 0;
   }
 
+  public hasNewInputChanges(inputChanges: Record<string, { oldValue: any; newValue: any }>): boolean {
+    const previewChanges = this.previewChanges();
+    // before going into comparison lets check if the inputChanges has any keys
+    if (Object.keys(inputChanges).length === 0 && Object.keys(previewChanges.inputChanges).length === 0) {
+      return false;
+    }
+
+    if (Object.keys(inputChanges).length !== Object.keys(previewChanges.inputChanges).length) {
+      return true;
+    }
+
+    return Object.keys(previewChanges.inputChanges).some((key) => {
+      return previewChanges.inputChanges[key].newValue !== inputChanges[key].newValue;
+    });
+  }
   /**
    * Returns a preview of what would change if we committed the current state
    * right now, without actually committing.

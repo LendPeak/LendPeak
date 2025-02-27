@@ -34,6 +34,7 @@ import { ChangePaymentDate } from 'lendpeak-engine/models/ChangePaymentDate';
 import { AmortizationVersionManager } from 'lendpeak-engine/models/AmortizationVersionManager';
 import { AmortizationEntry } from 'lendpeak-engine/models/Amortization/AmortizationEntry';
 import { BalanceModification } from 'lendpeak-engine/models/Amortization/BalanceModification';
+import { BalanceModifications } from 'lendpeak-engine/models/Amortization/BalanceModifications';
 import { DepositRecord } from 'lendpeak-engine/models/DepositRecord';
 import { DepositRecords } from 'lendpeak-engine/models/DepositRecords';
 import { PaymentApplication } from 'lendpeak-engine/models/PaymentApplication';
@@ -1355,7 +1356,7 @@ export class AppComponent implements OnChanges {
     return balanceModificationDate.toDate();
   }
 
-  balanceModificationRemoved = false;
+  balanceModificationChanged = false;
 
   generateUniqueId(): string {
     return uuidv4();
@@ -1364,23 +1365,58 @@ export class AppComponent implements OnChanges {
   cleanupBalanceModifications() {
     // remove any existing balance modifications that were associated with deposits
     // but deposits are no longer present
-    const filteredBalanceModifications: BalanceModification[] = [];
+    const filteredBalanceModifications: BalanceModifications =
+      new BalanceModifications();
+    console.log(
+      'Cleaning up balance modifications',
+      this.loan.balanceModifications,
+    );
     this.loan.balanceModifications.all.forEach((balanceModification) => {
       if (balanceModification.metadata?.depositId) {
-        const deposit = this.deposits.all.find(
-          (d) => d.id === balanceModification.metadata.depositId,
+        const deposit = this.deposits.getById(
+          balanceModification.metadata.depositId,
         );
         if (!deposit) {
           // Deposit not found; remove this balance modification
           // console.log('Removing balance modification', balanceModification);
-          this.balanceModificationRemoved = true;
+          console.warn(
+            'removing balance modification because deposit is missing',
+            balanceModification,
+          );
+          this.balanceModificationChanged = true;
+          return;
+        }
+
+        if (deposit.active !== true) {
+          // Deposit is not active; remove this balance modification
+          // console.log('Removing balance modification', balanceModification);
+          this.balanceModificationChanged = true;
+          console.warn(
+            'removing balance modification because deposit is not active',
+            balanceModification,
+          );
+          return;
+        }
+
+        if (deposit.effectiveDate.isAfter(this.snapshotDate)) {
+          // Deposit is before snapshot date; remove this balance modification
+          // console.log('Removing balance modification', balanceModification);
+          this.balanceModificationChanged = true;
+          console.warn(
+            'removing balance modification because deposit is after snapshot date',
+            balanceModification,
+          );
           return;
         }
       }
-      filteredBalanceModifications.push(balanceModification);
+      filteredBalanceModifications.addBalanceModification(balanceModification);
     });
-    this.loan.balanceModifications.balanceModifications =
-      filteredBalanceModifications;
+
+    console.log(
+      'replacing balance modifications with',
+      filteredBalanceModifications,
+    );
+    this.loan.balanceModifications = filteredBalanceModifications;
   }
 
   applyPayments() {
@@ -1413,24 +1449,29 @@ export class AppComponent implements OnChanges {
 
       // Handle balance modification etc.
       if (result.balanceModification) {
-        // Remove any existing BMs for this deposit
-        this.loan.balanceModifications.balanceModifications =
-          this.loan.balanceModifications.all.filter(
-            (bm) => !(bm.metadata && bm.metadata.depositId === deposit.id),
-          );
+        this.loan.balanceModifications.removeBalanceModificationByDepositId(
+          deposit.id,
+        );
 
         // Add the new BM
-        this.loan.balanceModifications.addBalanceModification(
-          result.balanceModification,
-        );
-        deposit.balanceModificationId = result.balanceModification.id;
+        console.log('Adding balance modification!', result.balanceModification);
+        const addedNewBalanceModification =
+          this.loan.balanceModifications.addBalanceModification(
+            result.balanceModification,
+          );
+        if (addedNewBalanceModification) {
+          deposit.balanceModificationId = result.balanceModification.id;
+          this.balanceModificationChanged = true;
+        }
+        // this.balanceModificationChanged = true;
       } else {
         // Remove old BMs for this deposit if none returned
-        this.loan.balanceModifications.balanceModifications =
-          this.loan.balanceModifications.all.filter(
-            (bm) => !(bm.metadata && bm.metadata.depositId === deposit.id),
-          );
+        this.loan.balanceModifications.removeBalanceModificationByDepositId(
+          deposit.id,
+        );
+
         deposit.balanceModificationId = undefined;
+        // this.balanceModificationChanged = true;
       }
 
       // Update deposit's leftover
@@ -1482,13 +1523,60 @@ export class AppComponent implements OnChanges {
     this.submitLoan();
   }
 
-  submitLoan(loanModified: boolean = false) {
+  previousChanges: Record<string, { oldValue: any; newValue: any }> = {};
+
+  rebuildRepaymentPlan() {
+    this.repaymentPlan = this.loan.repaymentSchedule.entries.map(
+      (entry, index) => {
+        return {
+          period: entry.term,
+          zeroPeriod: entry.zeroPeriod,
+          periodStartDate: entry.periodStartDate.format('YYYY-MM-DD'),
+          periodEndDate: entry.periodEndDate.format('YYYY-MM-DD'),
+          prebillDaysConfiguration: entry.prebillDaysConfiguration,
+          billDueDaysAfterPeriodEndConfiguration:
+            entry.billDueDaysAfterPeriodEndConfiguration,
+          periodBillOpenDate: entry.periodBillOpenDate.format('YYYY-MM-DD'),
+          periodBillDueDate: entry.periodBillDueDate.format('YYYY-MM-DD'),
+          periodInterestRate: entry.periodInterestRate.times(100).toNumber(),
+          principal: entry.principal.toNumber(),
+          fees: entry.fees.toNumber(),
+          // interest transactions
+          accruedInterestForPeriod: entry.accruedInterestForPeriod.toNumber(), // track accrued interest for the period
+          billedInterestForTerm: entry.billedInterestForTerm.toNumber(), // tracks total accrued interest along with any deferred interest from previous periods
+          dueInterestForTerm: entry.dueInterestForTerm.toNumber(), // tracks total interest that is due for the term
+          dueInterestForTermError: entry.dueInterestForTerm
+            .getRoundingError()
+            .toNumber(), // tracks total interest that is due for the term
+          billedDeferredInterest: entry.billedDeferredInterest.toNumber(),
+          unbilledTotalDeferredInterest:
+            entry.unbilledTotalDeferredInterest.toNumber(), // tracks deferred interest
+
+          totalInterestForPeriod: entry.billedInterestForTerm.toNumber(),
+          //  realInterest: entry.unroundedInterestForPeriod.toNumber(),
+          interestRoundingError: entry.interestRoundingError.toNumber(),
+          totalPayment: entry.totalPayment.toNumber(),
+          perDiem: entry.perDiem,
+          daysInPeriod: entry.daysInPeriod,
+          startBalance: entry.startBalance.toNumber(),
+          endBalance: entry.endBalance.toNumber(),
+          balanceModificationAmount: entry.balanceModificationAmount.toNumber(),
+          unbilledInterestDueToRounding:
+            entry.unbilledInterestDueToRounding.toNumber(),
+          totalDeferredInterest: entry.unbilledTotalDeferredInterest.toNumber(),
+          metadata: entry.metadata,
+        };
+      },
+    );
+  }
+
+  submitLoan(loanModified: boolean = false): void {
     if (loanModified) {
       this.loanModified = true;
     }
     this.cleanupBalanceModifications();
 
-    console.log('submitting a loan');
+    console.log('submitting a loan', this.loan);
     // const interestRateAsDecimal = new Decimal(this.loan.annualInterestRate);
 
     // let uiAmortizationParams: UIAmortizationParams = {
@@ -1552,66 +1640,31 @@ export class AppComponent implements OnChanges {
     //   return entry.periodEndDate.format('MM/DD/YY');
     // });
 
-    this.repaymentPlan = this.loan.repaymentSchedule.entries.map(
-      (entry, index) => {
-        return {
-          period: entry.term,
-          zeroPeriod: entry.zeroPeriod,
-          periodStartDate: entry.periodStartDate.format('YYYY-MM-DD'),
-          periodEndDate: entry.periodEndDate.format('YYYY-MM-DD'),
-          prebillDaysConfiguration: entry.prebillDaysConfiguration,
-          billDueDaysAfterPeriodEndConfiguration:
-            entry.billDueDaysAfterPeriodEndConfiguration,
-          periodBillOpenDate: entry.periodBillOpenDate.format('YYYY-MM-DD'),
-          periodBillDueDate: entry.periodBillDueDate.format('YYYY-MM-DD'),
-          periodInterestRate: entry.periodInterestRate.times(100).toNumber(),
-          principal: entry.principal.toNumber(),
-          fees: entry.fees.toNumber(),
-          // interest transactions
-          accruedInterestForPeriod: entry.accruedInterestForPeriod.toNumber(), // track accrued interest for the period
-          billedInterestForTerm: entry.billedInterestForTerm.toNumber(), // tracks total accrued interest along with any deferred interest from previous periods
-          dueInterestForTerm: entry.dueInterestForTerm.toNumber(), // tracks total interest that is due for the term
-          dueInterestForTermError: entry.dueInterestForTerm
-            .getRoundingError()
-            .toNumber(), // tracks total interest that is due for the term
-          billedDeferredInterest: entry.billedDeferredInterest.toNumber(),
-          unbilledTotalDeferredInterest:
-            entry.unbilledTotalDeferredInterest.toNumber(), // tracks deferred interest
-
-          totalInterestForPeriod: entry.billedInterestForTerm.toNumber(),
-          //  realInterest: entry.unroundedInterestForPeriod.toNumber(),
-          interestRoundingError: entry.interestRoundingError.toNumber(),
-          totalPayment: entry.totalPayment.toNumber(),
-          perDiem: entry.perDiem,
-          daysInPeriod: entry.daysInPeriod,
-          startBalance: entry.startBalance.toNumber(),
-          endBalance: entry.endBalance.toNumber(),
-          balanceModificationAmount: entry.balanceModificationAmount.toNumber(),
-          unbilledInterestDueToRounding:
-            entry.unbilledInterestDueToRounding.toNumber(),
-          totalDeferredInterest: entry.unbilledTotalDeferredInterest.toNumber(),
-          metadata: entry.metadata,
-        };
-      },
-    );
+    this.rebuildRepaymentPlan();
 
     this.showTable = true;
     // after balance modifications are applied amortization will add usage values and
     // it is possible that modification amount exceeds the principal amount
     // this will show user how much was unused
 
-    this.loan.balanceModifications = this.loan.balanceModifications;
-
     this.generateBills();
     this.applyPayments();
-    if (this.balanceModificationRemoved === true) {
-      this.balanceModificationRemoved = false;
-      this.submitLoan();
+
+    if (this.balanceModificationChanged === true) {
+      this.balanceModificationChanged = false;
+      //return this.submitLoan();
+      this.loan.jsGenerateSchedule();
+      this.rebuildRepaymentPlan();
     }
 
-    // change payment dates will get updated with term number if only original date
-    // is passed and term is set to zero.
-    this.loan.changePaymentDates = this.loan.changePaymentDates;
+    // if (this.manager.hasNewInputChanges(this.previousChanges)) {
+    //   console.log('re-running submit loan because facts were changed');
+    //   // there could be changes to a loan since generation, like adding a new
+    //   // balance modifications. This will rerun the submit loan until
+    //   // we no longer have modifications
+    //   this.previousChanges = this.manager.previewChanges().inputChanges;
+    //   return this.submitLoan();
+    // }
 
     //console.log('change payment dates', this.loan.changePaymentDates);
 

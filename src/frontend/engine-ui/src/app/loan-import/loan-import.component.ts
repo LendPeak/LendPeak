@@ -592,7 +592,10 @@ export class LoanImportComponent implements OnInit, OnDestroy {
             prepayment: depositRecord.amount,
           };
           depositRecord.applyExcessToPrincipal = true;
-          depositRecord.excessAppliedDate = depositRecord.effectiveDate;
+          depositRecord.excessAppliedDate = depositRecord.effectiveDate.add(
+            1,
+            'day',
+          );
         }
         return depositRecord;
       }),

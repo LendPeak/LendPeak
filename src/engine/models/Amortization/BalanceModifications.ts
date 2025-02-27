@@ -7,8 +7,6 @@ export class BalanceModifications {
     this.balanceModifications = balanceModifications;
   }
 
-
-
   get all(): BalanceModification[] {
     return this._balanceModifications;
   }
@@ -18,9 +16,18 @@ export class BalanceModifications {
   }
 
   set balanceModifications(value: BalanceModification[]) {
-    this._balanceModifications = value.sort((a, b) => {
-      return a.date.diff(b.date);
-    });
+    // console.trace("setting balance modification", value);
+    this._balanceModifications = value
+      .map((bm) => {
+        if (bm instanceof BalanceModification) {
+          return bm;
+        } else {
+          return new BalanceModification(bm);
+        }
+      })
+      .sort((a, b) => {
+        return a.date.diff(b.date);
+      });
   }
 
   get lastModification(): BalanceModification | undefined {
@@ -31,8 +38,27 @@ export class BalanceModifications {
     return this._balanceModifications[0];
   }
 
-  addBalanceModification(balanceModification: BalanceModification) {
-    this._balanceModifications.push(balanceModification);
+  removeBalanceModificationByDepositId(depositId: string) {
+    this._balanceModifications = this._balanceModifications.filter((bm) => !(bm.metadata && bm.metadata.depositId === depositId));
+  }
+
+  addBalanceModification(balanceModification: BalanceModification): boolean {
+    // before adding balance modification, lets check if it already exists
+    // we will use bm.metadata.depositId, amount, date, and type
+    // to find if the balance modification already exists
+    const existingBalanceModification = this._balanceModifications.find((bm) => {
+      if (bm.metadata && balanceModification.metadata) {
+        return bm.metadata.depositId === balanceModification.metadata.depositId && bm.amount.equals(balanceModification.amount) && bm.date.isSame(balanceModification.date) && bm.type === balanceModification.type;
+      }
+      return false;
+    });
+
+    if (existingBalanceModification) {
+      return false;
+    } else {
+      this._balanceModifications.push(balanceModification);
+      return true;
+    }
   }
 
   removeBalanceModification(balanceModification: BalanceModification) {

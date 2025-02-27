@@ -135,7 +135,7 @@ export class DepositsComponent {
     if (deposit) {
       this.selectedDepositForEdit = deposit;
       this.depositData = deposit;
-      this.originalDepositData = deposit;
+      this.originalDepositData = deposit.clone();
 
       if (deposit.effectiveDate) {
         this.depositData.effectiveDate = deposit.effectiveDate;
@@ -198,7 +198,7 @@ export class DepositsComponent {
     // we want to rollback any changes made to the deposit data
     // simplest way is to sync model values back to js
     this.selectedAllocationType = 'default';
-    //  this.depositData = this.originalDepositData.clone();
+    this.depositData = this.originalDepositData.clone();
     this.depositUpdated.emit();
   }
 

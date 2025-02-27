@@ -176,9 +176,9 @@ export class DepositRecord implements Deposit {
     const fees = Currency.of(value.fees);
     const prepayment = Currency.of(value.prepayment);
     const total = principal.add(interest).add(fees).add(prepayment);
-    if (total.greaterThan(this.amount)) {
+    if (!total.equals(this.amount)) {
       throw new Error(
-        `Sum of static allocations for principal(${principal.toNumber()}) + interest(${interest.toNumber()}) + fees(${fees.toNumber()}) + prepayment(${prepayment.toNumber()}) is greater than the deposit amount(${this.amount.toNumber()})`
+        `Sum of static allocations for principal(${principal.toNumber()}) + interest(${interest.toNumber()}) + fees(${fees.toNumber()}) + prepayment(${prepayment.toNumber()}) must be equal to deposit amount(${this.amount.toNumber()})`
       );
     }
 

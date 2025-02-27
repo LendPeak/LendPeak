@@ -87,6 +87,15 @@
                   tooltipPosition="top"
                   tooltipStyleClass="wide-tooltip"
                 ></p-badge>
+                <p-badge
+                  *ngIf="deposit.staticAllocation"
+                  value="Static"
+                  severity="info"
+                  styleClass="mr-2"
+                  pTooltip="Deposit is using static amounts allocation"
+                  tooltipPosition="top"
+                  tooltipStyleClass="wide-tooltip"
+                ></p-badge>
               </td>
               <td>{{ deposit.jsAmount | currency }}</td>
               <td>{{ deposit.currency }}</td>
@@ -279,7 +288,7 @@
         ><span
           class="font-medium"
           [class]="{
-            'text-red-500': staticUnusedAmount < 0,
+            'text-red-500': staticUnusedAmount != 0,
           }"
           >{{ staticUnusedAmount | currency }}</span
         >
@@ -335,11 +344,11 @@
           ></p-inputNumber>
         </div>
         <div class="field col">
-          <label for="staticPrincipal-{{ depositData.id }}"
+          <label for="staticPrepayment-{{ depositData.id }}"
             >Principal Prepayment</label
           >
           <p-inputNumber
-            inputId="staticPrincipal-{{ depositData.id }}"
+            inputId="staticPrepayment-{{ depositData.id }}"
             [(ngModel)]="depositData.jsStaticAllocation!.prepayment"
             mode="currency"
             currency="USD"
@@ -367,7 +376,7 @@
       label="Save"
       icon="pi pi-check"
       type="submit"
-      [disabled]="staticUnusedAmount < 0"
+      [disabled]="staticUnusedAmount != 0"
       (click)="saveDeposit()"
     ></p-button>
   </div>

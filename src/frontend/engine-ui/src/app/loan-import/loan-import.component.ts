@@ -400,7 +400,7 @@ export class LoanImportComponent implements OnInit, OnDestroy {
       calendarType = 'ACTUAL_360';
     }
 
-    let billingModel: BillingModel = 'dailySimpleInterest';
+    let billingModel: BillingModel = 'amortized';
 
     let flushUnbilledInterestRoundingErrorMethod: FlushUnbilledInterestDueToRoundingErrorType =
       FlushUnbilledInterestDueToRoundingErrorType.NONE;
@@ -486,8 +486,8 @@ export class LoanImportComponent implements OnInit, OnDestroy {
       ),
       //  termPaymentAmount: undefined,
       equitedMonthlyPayment: parseFloat(loanData.d.LoanSetup.payment),
-      // defaultBillDueDaysAfterPeriodEndConfiguration: 3,
-      // defaultPreBillDaysConfiguration: 5,
+      defaultBillDueDaysAfterPeriodEndConfiguration: 0,
+      defaultPreBillDaysConfiguration: 28,
       allowRateAbove100: false,
       periodsSchedule: new PeriodSchedules(),
       termInterestAmountOverride: new TermInterestAmountOverrides(
@@ -536,8 +536,8 @@ export class LoanImportComponent implements OnInit, OnDestroy {
       loanData.d.Payments.filter(
         (payment: any) => payment.childId === null,
       ).map((payment: any) => {
-        console.log('adding payment');
-        return new DepositRecord({
+        // console.log('adding payment', payment);
+        const depositRecord = new DepositRecord({
           amount: parseFloat(payment.amount),
           active: payment.active === 1,
           currency: 'USD',
@@ -551,6 +551,22 @@ export class LoanImportComponent implements OnInit, OnDestroy {
             ? parseODataDate(payment.date, true)
             : undefined,
         });
+        if (
+          payment.info
+            .toLowerCase()
+            .includes('remediation principal adjustment')
+        ) {
+          // switch to manual allocation and apply all of the payment as a pre-payment
+          depositRecord.staticAllocation = {
+            principal: 0,
+            interest: 0,
+            fees: 0,
+            prepayment: depositRecord.amount,
+          };
+          depositRecord.applyExcessToPrincipal = true;
+          depositRecord.excessAppliedDate = depositRecord.effectiveDate;
+        }
+        return depositRecord;
       }),
     );
   }

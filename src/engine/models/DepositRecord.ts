@@ -201,6 +201,8 @@ export class DepositRecord implements Deposit {
       return;
     }
     this._usageDetails.push(detail);
+    // order by date
+    this._usageDetails = this._usageDetails.sort((a, b) => a.billDueDate.diff(b.billDueDate));
   }
 
   removeUsageDetail(index: number): void {

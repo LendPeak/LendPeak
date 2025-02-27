@@ -12,16 +12,12 @@ import { PaymentAllocation } from "./PaymentAllocation";
 import { AllocationHelper } from "./AllocationHelper";
 import { BalanceModification } from "../Amortization/BalanceModification";
 import { v4 as uuidv4 } from "uuid";
+import { UsageDetail } from "../Bill/Deposit/UsageDetail";
 
 /**
  * Helper function for static-allocations only.
- * Splits the deposit into interest portion, fees portion, principal portion,
- * ignoring normal PaymentPriority. We accumulate each portion into a
- * PaymentAllocation for that Bill.
- *
- * We also remove any "final payoff" usage detail creation here,
- * because we only want the single usage detail from the helper
- * (or none if no funds are allocated).
+ * Splits the deposit into interest portion, fees portion, principal portion
+ * in FIFO order across open, unpaid Bills.
  */
 function allocateSingleComponentFIFO(
   bills: Bills,
@@ -39,22 +35,16 @@ function allocateSingleComponentFIFO(
   for (const bill of openBills) {
     if (leftover.isZero()) break;
 
-    let amountDue: Currency;
-    if (component === "interest") {
-      amountDue = bill.interestDue;
-    } else if (component === "fees") {
-      amountDue = bill.feesDue;
-    } else {
-      amountDue = bill.principalDue;
-    }
+    let amountDue = component === "interest" ? bill.interestDue : component === "fees" ? bill.feesDue : bill.principalDue;
 
     if (amountDue.isZero()) continue;
 
+    // Allocate as much as possible
     const allocated = Currency.min(leftover, amountDue);
     leftover = leftover.subtract(allocated);
     totalAllocatedToComponent = totalAllocatedToComponent.add(allocated);
 
-    // Deduct from the Bill
+    // Deduct from Bill
     if (component === "interest") {
       bill.interestDue = bill.interestDue.subtract(allocated);
     } else if (component === "fees") {
@@ -63,7 +53,7 @@ function allocateSingleComponentFIFO(
       bill.principalDue = bill.principalDue.subtract(allocated);
     }
 
-    // Update or insert PaymentAllocation in the existingAllocations array
+    // Update the PaymentAllocation array (no usage detail here!)
     let billAllocation = existingAllocations.find((a) => a.billId === bill.id);
     if (!billAllocation) {
       billAllocation = {
@@ -83,12 +73,12 @@ function allocateSingleComponentFIFO(
       billAllocation.allocatedPrincipal = billAllocation.allocatedPrincipal.add(allocated);
     }
 
-    // Mark paid if everything is zero
+    // Mark paid if all due amounts are zero
     if (bill.principalDue.isZero() && bill.interestDue.isZero() && bill.feesDue.isZero()) {
       bill.isPaid = true;
     }
 
-    // Ensure Bill's metadata includes this deposit
+    // Ensure deposit ID is in bill’s paymentMetadata
     if (!bill.paymentMetadata) {
       bill.paymentMetadata = { depositIds: [] };
     }
@@ -98,13 +88,6 @@ function allocateSingleComponentFIFO(
     if (!bill.paymentMetadata.depositIds.includes(deposit.id)) {
       bill.paymentMetadata.depositIds.push(deposit.id);
     }
-
-    // If it just got fully paid, we do NOT add a usage detail
-    // in static allocation helper, because we rely on the
-    // normal partial-chunk or final logic.
-    // We *only* want a single usage detail from the main helper
-    // if we do partial-chunk logging, but here we are distributing
-    // lumps. So we skip final payoff usage detail.
   }
 
   return {
@@ -203,24 +186,27 @@ export class FIFOStrategy implements AllocationStrategy {
       throw new Error("applyStaticAllocation called but deposit.staticAllocation is undefined!");
     }
 
+    // STEP 1: Track which bills were already paid
+    const wasPaidMap = new Map<string, boolean>();
+    for (const b of bills.all) {
+      wasPaidMap.set(b.id, b.isPaid);
+    }
+
     const { principal, interest, fees, prepayment } = deposit.staticAllocation;
     const allocations: PaymentAllocation[] = [];
     let unallocatedAmount = deposit.amount.clone();
 
-    // 1) interest portion in FIFO
-    const { totalAllocatedToComponent: totalAllocatedInterest } = allocateSingleComponentFIFO(bills, "interest", interest, deposit, allocations);
-    unallocatedAmount = unallocatedAmount.subtract(totalAllocatedInterest);
+    // STEP 2: Do the 3-part allocation, capturing into 'allocations'
+    const { totalAllocatedToComponent: interestAllocated } = allocateSingleComponentFIFO(bills, "interest", interest, deposit, allocations);
+    unallocatedAmount = unallocatedAmount.subtract(interestAllocated);
 
-    // 2) fees portion in FIFO
-    const { totalAllocatedToComponent: totalAllocatedFees } = allocateSingleComponentFIFO(bills, "fees", fees, deposit, allocations);
-    unallocatedAmount = unallocatedAmount.subtract(totalAllocatedFees);
+    const { totalAllocatedToComponent: feesAllocated } = allocateSingleComponentFIFO(bills, "fees", fees, deposit, allocations);
+    unallocatedAmount = unallocatedAmount.subtract(feesAllocated);
 
-    // 3) principal portion in FIFO
-    const { totalAllocatedToComponent: totalAllocatedPrincipal } = allocateSingleComponentFIFO(bills, "principal", principal, deposit, allocations);
-    unallocatedAmount = unallocatedAmount.subtract(totalAllocatedPrincipal);
+    const { totalAllocatedToComponent: principalAllocated } = allocateSingleComponentFIFO(bills, "principal", principal, deposit, allocations);
+    unallocatedAmount = unallocatedAmount.subtract(principalAllocated);
 
-    // 4) If there's a separate prepayment chunk,
-    //    create a BalanceModification & usage detail
+    // STEP 2a: Optional separate "prepayment" chunk
     let balanceModification: BalanceModification | undefined;
     if (prepayment && prepayment.greaterThan(0)) {
       unallocatedAmount = unallocatedAmount.subtract(prepayment);
@@ -235,7 +221,7 @@ export class FIFOStrategy implements AllocationStrategy {
         metadata: { depositId: deposit.id },
       });
 
-      // This usage detail for the prepayment chunk
+      // Single usage detail for the prepayment chunk
       deposit.addUsageDetail({
         billId: "Principal Prepayment",
         period: 0,
@@ -245,6 +231,59 @@ export class FIFOStrategy implements AllocationStrategy {
         allocatedFees: Currency.Zero(),
         date: deposit.effectiveDate,
       } as any);
+    }
+
+    // STEP 3: Merge allocations -> single usage detail per Bill
+    const usageMap = new Map<string, PaymentAllocation>();
+    for (const alloc of allocations) {
+      if (!usageMap.has(alloc.billId)) {
+        usageMap.set(alloc.billId, {
+          billId: alloc.billId,
+          allocatedPrincipal: Currency.Zero(),
+          allocatedInterest: Currency.Zero(),
+          allocatedFees: Currency.Zero(),
+        });
+      }
+      const merged = usageMap.get(alloc.billId)!;
+      merged.allocatedPrincipal = merged.allocatedPrincipal.add(alloc.allocatedPrincipal);
+      merged.allocatedInterest = merged.allocatedInterest.add(alloc.allocatedInterest);
+      merged.allocatedFees = merged.allocatedFees.add(alloc.allocatedFees);
+    }
+
+    for (const merged of usageMap.values()) {
+      const totalAllocated = merged.allocatedPrincipal.add(merged.allocatedInterest).add(merged.allocatedFees);
+      if (!totalAllocated.isZero()) {
+        const bill = bills.all.find((b) => b.id === merged.billId);
+        if (!bill) continue;
+        deposit.addUsageDetail({
+          billId: bill.id,
+          period: bill.period,
+          billDueDate: bill.dueDate,
+          allocatedPrincipal: merged.allocatedPrincipal,
+          allocatedInterest: merged.allocatedInterest,
+          allocatedFees: merged.allocatedFees,
+          date: deposit.effectiveDate,
+        } as any);
+      }
+    }
+
+    // STEP 4: Mark newly paid bills' daysLate/daysEarly
+    for (const bill of bills.all) {
+      const wasPaid = wasPaidMap.get(bill.id) ?? false;
+      if (!wasPaid && bill.isPaid) {
+        bill.dateFullySatisfied = deposit.effectiveDate;
+        const diffInDays = deposit.effectiveDate.diff(bill.dueDate, "day");
+        if (diffInDays > 0) {
+          bill.daysLate = diffInDays;
+          bill.daysEarly = 0;
+        } else if (diffInDays < 0) {
+          bill.daysLate = 0;
+          bill.daysEarly = Math.abs(diffInDays);
+        } else {
+          bill.daysLate = 0;
+          bill.daysEarly = 0;
+        }
+      }
     }
 
     const totalAllocated = deposit.amount.subtract(unallocatedAmount);

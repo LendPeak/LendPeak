@@ -536,7 +536,7 @@ export class LoanImportComponent implements OnInit, OnDestroy {
       loanData.d.Payments.filter(
         (payment: any) => payment.childId === null,
       ).map((payment: any) => {
-        // console.log('adding payment', payment);
+        console.log('adding payment', payment);
         const depositRecord = new DepositRecord({
           amount: parseFloat(payment.amount),
           active: payment.active === 1,
@@ -551,6 +551,34 @@ export class LoanImportComponent implements OnInit, OnDestroy {
             ? parseODataDate(payment.date, true)
             : undefined,
         });
+
+        if (payment.customApplication && payment.active === 1) {
+          // custom application is a JSON string with the following format:
+          // '{"discount":0,"interest":88.01,"payoffFees":0,"principal":39.99,"fees":0,"escrow":{"1":0}}')
+          try {
+            // check if payment.customApplication is a string, if it is, lets parse that json string
+            let customApplication: any;
+            if (typeof payment.customApplication === 'string') {
+              //console.log('parsing string', payment.customApplication);
+              customApplication = JSON.parse(payment.customApplication);
+            } else {
+              customApplication = payment.customApplication;
+            }
+
+            depositRecord.staticAllocation = {
+              principal: customApplication.principal,
+              interest: customApplication.interest,
+              fees: 0,
+              prepayment: 0,
+            };
+          } catch (e) {
+            console.error(
+              'unable to deserialize customApplication string',
+              payment.customApplication,
+              e,
+            );
+          }
+        }
         if (
           payment.info
             .toLowerCase()

@@ -82,6 +82,10 @@ export class DepositRecords {
     return this._records.length;
   }
 
+  getById(id: string): DepositRecord | undefined {
+    return this._records.find((record) => record.id === id);
+  }
+
   atIndex(index: number): DepositRecord {
     return this._records[index];
   }

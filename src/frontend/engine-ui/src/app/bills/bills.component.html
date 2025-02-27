@@ -46,7 +46,20 @@
 
         <ng-template #body let-bill let-rowIndex="rowIndex">
           <tr #billRow [class.selected-row]="isBillHighlighted(bill)">
-            <td>{{ bill.id }}</td>
+            <td>
+              {{ bill.id }}
+
+              <!-- Show a tag if there is more than 1 payment for this bill -->
+              <p-tag
+                *ngIf="bill.paymentDetails?.length > 1"
+                value="{{ bill.paymentDetails.length + ' Payments' }}"
+                severity="warn"
+                styleClass="ml-2"
+                pTooltip="This bill was satisfied by multiple payments"
+                tooltipPosition="top"
+              >
+              </p-tag>
+            </td>
             <td>{{ bill.period }}</td>
             <td>{{ bill.jsDueDate | date: "MM/dd/yyyy" }}</td>
             <td>{{ bill.jsPrincipalDue | currency }}</td>
@@ -145,7 +158,7 @@
   header="Payment Details"
   [(visible)]="showPaymentDetailsDialog"
   [modal]="true"
-  [style]="{ width: '50vw' }"
+  [style]="{ width: '70%' }"
   [closable]="true"
   (onHide)="onPaymentDetailsDialogHide()"
 >
@@ -153,6 +166,7 @@
     <ng-template #header>
       <tr>
         <th>Deposit ID</th>
+        <th>Deposit Amount</th>
         <th>Date</th>
         <th>Allocated Total</th>
         <th>Allocated Principal</th>
@@ -160,19 +174,21 @@
         <th>Allocated Fees</th>
       </tr>
       <!-- Original row: how much was allocated in total -->
+
       <tr>
-        <th></th>
-        <th></th>
-        <th style="font-weight: bold">
+        <th class="bg-blue-50"></th>
+        <th class="bg-blue-50"></th>
+        <th class="bg-blue-50 text-right">Original Bill:</th>
+        <th class="bg-blue-50" style="font-weight: bold">
           {{ selectedBill?.jsOriginalTotalDue | currency }}
         </th>
-        <th style="font-weight: bold">
+        <th class="bg-blue-50" style="font-weight: bold">
           {{ selectedBill?.jsOriginalPrincipalDue | currency }}
         </th>
-        <th style="font-weight: bold">
+        <th class="bg-blue-50" style="font-weight: bold">
           {{ selectedBill?.jsOriginalInterestDue | currency }}
         </th>
-        <th style="font-weight: bold">
+        <th class="bg-blue-50" style="font-weight: bold">
           {{ selectedBill?.jsOriginalFeesDue | currency }}
         </th>
       </tr>
@@ -181,6 +197,11 @@
     <ng-template #body let-detail>
       <tr>
         <td>{{ detail.depositId }}</td>
+        <td>
+          {{
+            depositRecords.getById(detail.depositId)?.jsAmount || 0 | currency
+          }}
+        </td>
         <td>{{ detail.jsDate | date: "MM/dd/yyyy" }}</td>
         <td>{{ detail.jsAllocatedTotal | currency }}</td>
         <td>{{ detail.jsAllocatedPrincipal | currency }}</td>
@@ -191,38 +212,46 @@
     <ng-template #footer>
       <!-- Totals row: how much was allocated in total -->
       <tr>
-        <td colspan="2" style="text-align: right; font-weight: bold">
+        <td
+          class="bg-blue-50"
+          colspan="3"
+          style="text-align: right; font-weight: bold"
+        >
           Allocated:
         </td>
-        <td style="font-weight: bold">
+        <td class="bg-blue-50" style="font-weight: bold">
           {{ selectedBill?.jsAllocatedTotalSum | currency }}
         </td>
-        <td style="font-weight: bold">
+        <td class="bg-blue-50" style="font-weight: bold">
           {{ selectedBill?.jsAllocatedPrincipalSum | currency }}
         </td>
-        <td style="font-weight: bold">
+        <td class="bg-blue-50" style="font-weight: bold">
           {{ selectedBill?.jsAllocatedInterestSum | currency }}
         </td>
-        <td style="font-weight: bold">
+        <td class="bg-blue-50" style="font-weight: bold">
           {{ selectedBill?.jsAllocatedFeesSum | currency }}
         </td>
       </tr>
 
       <!-- Remaining row: original minus allocated -->
       <tr>
-        <td colspan="2" style="text-align: right; font-weight: bold">
+        <td
+          class="bg-blue-50"
+          colspan="3"
+          style="text-align: right; font-weight: bold"
+        >
           Remaining:
         </td>
-        <td style="font-weight: bold">
+        <td class="bg-blue-50" style="font-weight: bold">
           {{ selectedBill?.jsRemainingTotal | currency }}
         </td>
-        <td style="font-weight: bold">
+        <td class="bg-blue-50" style="font-weight: bold">
           {{ selectedBill?.jsRemainingPrincipal | currency }}
         </td>
-        <td style="font-weight: bold">
+        <td class="bg-blue-50" style="font-weight: bold">
           {{ selectedBill?.jsRemainingInterest | currency }}
         </td>
-        <td style="font-weight: bold">
+        <td class="bg-blue-50" style="font-weight: bold">
           {{ selectedBill?.jsRemainingFees | currency }}
         </td>
       </tr>

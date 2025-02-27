@@ -10,6 +10,7 @@ import {
 } from '@angular/core';
 import { Bill } from 'lendpeak-engine/models/Bill';
 import { Bills } from 'lendpeak-engine/models/Bills';
+import { DepositRecords } from 'lendpeak-engine/models/DepositRecords';
 
 @Component({
   selector: 'app-bills',
@@ -19,6 +20,7 @@ import { Bills } from 'lendpeak-engine/models/Bills';
 })
 export class BillsComponent implements AfterViewInit {
   @Input() bills: Bills = new Bills();
+  @Input() depositRecords: DepositRecords = new DepositRecords();
   @Input() snapshotDate: Date = new Date();
 
   @Output() billAction = new EventEmitter<void>();

@@ -11,15 +11,21 @@
           (click)="showTooltip($event, principalTooltip)"
         ></i>
       </label>
-      <p-inputNumber
-        inputId="loanAmount"
-        [(ngModel)]="loan.jsLoanAmount"
-        (ngModelChange)="inputChanged($event)"
-        mode="currency"
-        currency="USD"
-        locale="en-US"
-        class="w-full"
-      ></p-inputNumber>
+
+      <p-inputgroup>
+        <p-inputNumber
+          inputId="loanAmount"
+          [(ngModel)]="loan.jsLoanAmount"
+          (ngModelChange)="inputChanged($event)"
+          mode="currency"
+          currency="USD"
+          locale="en-US"
+          class="w-full"
+        ></p-inputNumber>
+        <p-inputgroup-addon
+          >{{ loan.totalLoanAmount.toNumber() | currency }}
+        </p-inputgroup-addon>
+      </p-inputgroup>
 
       <!-- Popover for Principal Tooltip -->
       <p-popover #principalTooltip>

@@ -1867,6 +1867,34 @@ export class AppComponent implements OnChanges {
     this.previewVisible = false;
   }
 
+  get amortizationFeesTotal(): number {
+    return this.loan.repaymentSchedule.entries.reduce(
+      (total, entry) => total + entry.fees.toNumber(),
+      0,
+    );
+  }
+
+  get amortizationInterestTotal(): number {
+    return this.loan.repaymentSchedule.entries.reduce(
+      (total, entry) => total + entry.dueInterestForTerm.toNumber(),
+      0,
+    );
+  }
+
+  get amortizationPrincipalTotal(): number {
+    return this.loan.repaymentSchedule.entries.reduce(
+      (total, entry) => total + entry.principal.toNumber(),
+      0,
+    );
+  }
+
+  get amortizationTotal(): number {
+    return this.loan.repaymentSchedule.entries.reduce(
+      (total, entry) => total + entry.totalPayment.toNumber(),
+      0,
+    );
+  }
+
   showNewVersionModal = false;
   currentReleaseNotes: any;
   releaseNotes = [

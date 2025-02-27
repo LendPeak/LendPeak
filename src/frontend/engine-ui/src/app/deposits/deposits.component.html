@@ -69,6 +69,15 @@
                 >
                   {{ deposit.id }}
                 </span>
+                <!-- Display a badge if there's more than one usage detail -->
+                <p-badge
+                  *ngIf="deposit.usageDetails?.length > 1"
+                  value="{{ deposit.usageDetails.length + ' Bills' }}"
+                  severity="warn"
+                  styleClass="mr-2"
+                  pTooltip="This deposit covers multiple bills"
+                  tooltipPosition="top"
+                ></p-badge>
                 <p-badge
                   *ngIf="deposit.effectiveDate.isAfter(snapshotDate)"
                   value="Future"

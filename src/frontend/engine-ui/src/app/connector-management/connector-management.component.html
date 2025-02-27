@@ -1,3 +1,4 @@
+<p-confirmDialog></p-confirmDialog>
 <!-- Connector Dialog -->
 <p-dialog
   [(visible)]="showConnectorDialog"
@@ -18,6 +19,7 @@
       class="w-full"
     />
   </div>
+
   <div class="field">
     <label for="type">Connector Type</label>
     <p-select
@@ -29,6 +31,7 @@
       class="w-full"
     ></p-select>
   </div>
+
   <!-- LoanPro Credentials -->
   <div *ngIf="newConnector.type === 'LoanPro'">
     <div class="field">
@@ -65,6 +68,7 @@
       />
     </div>
   </div>
+
   <div class="flex gap-2 mt-4 justify-content-end">
     <p-button
       label="Cancel"
@@ -103,6 +107,7 @@
           pTooltip="Edit Connector"
         ></button>
 
+        <!-- Delete Button -->
         <button
           pButton
           icon="pi pi-trash"
@@ -110,13 +115,37 @@
           (click)="deleteConnector(connector)"
           pTooltip="Delete Connector"
         ></button>
-        <!-- Edit functionality can be added here -->
       </td>
     </tr>
   </ng-template>
 </p-table>
 
 <div class="flex gap-2 mt-4 justify-content-end">
+  <!-- Export Button -->
+  <button
+    pButton
+    severity="secondary"
+    label="Export Connectors"
+    icon="pi pi-download"
+    (click)="exportConnectors()"
+  ></button>
+
+  <!-- Import Button -->
+  <!-- We hide the file input and trigger it with this button -->
+  <button
+    pButton
+    severity="secondary"
+    label="Import Connectors"
+    icon="pi pi-upload"
+    (click)="fileInput.click()"
+  ></button>
+  <input
+    #fileInput
+    type="file"
+    accept=".json"
+    style="display: none"
+    (change)="importConnectors($event)"
+  />
   <button
     pButton
     label="Add Connector"

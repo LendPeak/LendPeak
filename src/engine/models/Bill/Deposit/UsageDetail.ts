@@ -161,17 +161,19 @@ export class UsageDetail {
   }
 
   get json() {
-    return {
-      jsBillId: this.billId,
+    const json = {
+      billId: this.billId,
       period: this.period,
-      jsBillDueDate: this.jsBillDueDate,
+      billDueDate: this.billDueDate.toDate(),
       allocatedPrincipal: this.allocatedPrincipal.toNumber(),
       allocatedInterest: this.allocatedInterest.toNumber(),
       allocatedFees: this.allocatedFees.toNumber(),
-      jsDate: this.jsDate,
+      date: this.date.toDate(),
       daysLate: this.daysLate,
       daysEarly: this.daysEarly,
-      jsBillFullySatisfiedDate: this.jsBillFullySatisfiedDate,
+      billFullySatisfiedDate: this.billFullySatisfiedDate?.toDate(),
     };
+
+    return json;
   }
 }

@@ -152,21 +152,13 @@ export class DepositRecord implements Deposit {
   }
 
   clone(): DepositRecord {
+    // console.log("json", this.json);
+    // console.log("usage details", this.usageDetails);
     return new DepositRecord(this.json);
   }
 
   static rehydrateFromJSON(json: any): DepositRecord {
-    // when object is saved it will have js keys and keys prefixed with _ and with js
-    const rehydrated: any = Object.keys(json).reduce((acc, key) => {
-      const newKey = key.startsWith("js") ? key.charAt(2).toLowerCase() + key.slice(3) : key;
-      acc[newKey] = (json as any)[key];
-      return acc;
-    }, {} as any);
-    rehydrated.usageDetails = (json._usageDetails || [])
-      .filter((detail: any) => detail.allocatedInterest !== 0 || detail.allocatedPrincipal !== 0 || detail.allocatedFees !== 0)
-      .map((detail: any) => UsageDetail.rehydrateFromJSON(detail));
-    rehydrated.metadata = json._metadata;
-    return new DepositRecord(rehydrated);
+    return new DepositRecord(json);
   }
 
   set staticAllocation(value: { principal: Currency | number; interest: Currency | number; fees: Currency | number; prepayment: Currency | number }) {
@@ -313,6 +305,13 @@ export class DepositRecord implements Deposit {
   }
 
   get usageDetails(): UsageDetail[] {
+    // verify type and if incorrect, inflate the object
+    this._usageDetails = this._usageDetails.map((detail) => {
+      if (detail instanceof UsageDetail) {
+        return detail;
+      }
+      return new UsageDetail(detail);
+    });
     return this._usageDetails;
   }
 
@@ -348,6 +347,7 @@ export class DepositRecord implements Deposit {
   }
 
   set usageDetails(value: UsageDetail[]) {
+    // console.log("usage details", value);
     // verify type and if incorrect, inflate the object
     this._usageDetails = value.map((detail) => {
       if (detail instanceof UsageDetail) {
@@ -447,7 +447,11 @@ export class DepositRecord implements Deposit {
       depositLocation: this.depositLocation,
       applyExcessToPrincipal: this.applyExcessToPrincipal,
       excessAppliedDate: this.excessAppliedDate?.toDate(),
-      usageDetails: this.usageDetails.map((detail) => detail.json),
+      usageDetails: this.usageDetails.map((detail) => {
+        // console.log("Inside deposit record detail", detail);
+        // console.log('"Inside deposit record detail.json', detail.json);
+        return detail.json;
+      }),
       unusedAmount: this.unusedAmount.toNumber(),
       balanceModificationId: this.balanceModificationId,
       metadata: this.metadata,

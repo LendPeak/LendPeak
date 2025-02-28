@@ -5,6 +5,7 @@ export interface Connector {
   name: string;
   type: ConnectorType;
   credentials: ConnectorCredentials;
+  isDefault?: boolean;
 }
 
 export type ConnectorType = 'LoanPro'; // Extendable for future connectors

@@ -90,6 +90,7 @@
     <tr>
       <th>Name</th>
       <th>Type</th>
+      <th>Default</th>
       <th>Actions</th>
     </tr>
   </ng-template>
@@ -97,6 +98,12 @@
     <tr>
       <td>{{ connector.name }}</td>
       <td>{{ connector.type }}</td>
+      <td>
+        <p-inputSwitch
+          [ngModel]="connector.isDefault"
+          (ngModelChange)="onDefaultToggle($event, connector)"
+        ></p-inputSwitch>
+      </td>
       <td>
         <!-- Edit Button -->
         <button

@@ -14,6 +14,26 @@ export class ConnectorService {
     this.connectorsSubject.next(initialConnectors);
   }
 
+  setAsDefault(connectorId: string) {
+    const currentConnectors = this.connectorsSubject.getValue().map((conn) => {
+      // For each connector, set isDefault to true only if it’s the chosen one
+      return { ...conn, isDefault: conn.id === connectorId };
+    });
+    this.connectorsSubject.next(currentConnectors);
+    this.saveConnectorsToStorage(currentConnectors);
+  }
+
+  unsetDefault(connectorId: string) {
+    const currentConnectors = this.connectorsSubject.getValue().map((conn) => {
+      if (conn.id === connectorId) {
+        return { ...conn, isDefault: false };
+      }
+      return conn;
+    });
+    this.connectorsSubject.next(currentConnectors);
+    this.saveConnectorsToStorage(currentConnectors);
+  }
+
   getAllConnectors(): Connector[] {
     return this.connectorsSubject.getValue();
   }

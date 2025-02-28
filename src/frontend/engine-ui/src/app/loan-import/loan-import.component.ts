@@ -49,7 +49,7 @@ export class LoanImportComponent implements OnInit, OnDestroy {
   connectors: Connector[] = [];
   selectedConnectorId: string = '';
 
-  searchType: 'displayId' | 'systemId' | 'systemIdRange' = 'systemId';
+  searchType: 'displayId' | 'systemId' | 'systemIdRange' = 'displayId';
   searchValue: string = '';
   fromSystemId: string = '';
   toSystemId: string = '';
@@ -90,6 +90,14 @@ export class LoanImportComponent implements OnInit, OnDestroy {
     this.connectorsSubscription = this.connectorService.connectors$.subscribe(
       (connectors: Connector[]) => {
         this.connectors = connectors;
+
+        // If no connector is currently selected, auto-select the default (if any)
+        if (!this.selectedConnectorId) {
+          const defaultConnector = connectors.find((c) => c.isDefault);
+          if (defaultConnector) {
+            this.selectedConnectorId = defaultConnector.id;
+          }
+        }
       },
     );
   }

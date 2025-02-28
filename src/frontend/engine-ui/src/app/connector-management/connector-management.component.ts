@@ -198,4 +198,12 @@ export class ConnectorManagementComponent implements OnInit, OnDestroy {
 
     fileReader.readAsText(file);
   }
+
+  onDefaultToggle(isDefault: boolean, connector: Connector) {
+    if (isDefault) {
+      this.connectorService.setAsDefault(connector.id);
+    } else {
+      this.connectorService.unsetDefault(connector.id);
+    }
+  }
 }

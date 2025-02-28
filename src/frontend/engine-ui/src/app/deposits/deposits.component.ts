@@ -70,6 +70,67 @@ export class DepositsComponent {
   baselineNextDueInterest: Currency = Currency.Zero();
   baselineNextDueFees: Currency = Currency.Zero();
 
+  // ------------------------------------------
+  // BULK EDIT PROPERTIES
+  // ------------------------------------------
+  bulkEditMode: boolean = false;
+  showBulkEditDialog: boolean = false;
+
+  // Holds the “selected” rows when user checks the boxes
+  selectedDeposits: DepositRecord[] = [];
+
+  // The field we’re editing in bulk
+  bulkAllocationType: string = 'default';
+
+  // Our dropdown items. One is disabled, so user cannot pick it.
+  bulkEditAllocationTypes: DropDownOptionString[] = [
+    { label: `Loan's Default`, value: 'default', disabled: false },
+    {
+      label: 'Static Distribution',
+      value: 'staticDistribution',
+      disabled: true,
+    },
+  ];
+
+  // ------------------------------------------
+  // BULK EDIT METHODS
+  // ------------------------------------------
+  toggleBulkEdit() {
+    // Toggle on/off
+    this.bulkEditMode = !this.bulkEditMode;
+
+    // If turning off, clear any selected rows
+    if (!this.bulkEditMode) {
+      this.selectedDeposits = [];
+    }
+  }
+
+  openBulkEditDialog() {
+    if (this.selectedDeposits.length === 0) return;
+    this.bulkAllocationType = 'default';
+    this.showBulkEditDialog = true;
+  }
+
+  applyBulkEdit() {
+    // For now, we only handle changing to Loan's default
+    // so remove any static allocation from selected deposits.
+    if (this.bulkAllocationType === 'default') {
+      this.selectedDeposits.forEach((deposit) => {
+        deposit.removeStaticAllocation();
+        // If you have a deposit.allocationType property:
+        // deposit.allocationType = 'default';
+      });
+    }
+
+    // Emit changes
+    this.depositsChange.emit(this.deposits);
+    this.depositUpdated.emit();
+
+    // Close the dialog & end bulk edit mode
+    this.showBulkEditDialog = false;
+    this.toggleBulkEdit();
+  }
+
   ngAfterViewInit(): void {}
 
   allocationTypes: DropDownOptionString[] = [

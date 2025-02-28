@@ -17,7 +17,7 @@
                 version.timestamp | date: "long"
               }}</span>
             </p-card>
-            <hr />
+            <p-divider></p-divider>
             <p-card *ngIf="version.commitMessage">
               <markdown [data]="version.commitMessage"></markdown>
             </p-card>

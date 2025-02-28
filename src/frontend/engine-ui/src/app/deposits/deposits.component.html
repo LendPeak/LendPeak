@@ -16,6 +16,34 @@
           (click)="scrollToLastDeposit()"
           pTooltip="Scroll to the last deposit and highlight it"
         ></p-button>
+
+        <!-- BULK EDIT ADDITION: Button to toggle bulk-edit mode -->
+        <p-button
+          label="Enable Bulk Edit"
+          icon="pi pi-check-square"
+          class="ml-2"
+          severity="info"
+          (click)="toggleBulkEdit()"
+          [disabled]="deposits.length === 0"
+          *ngIf="!bulkEditMode"
+        ></p-button>
+
+        <!-- BULK EDIT ADDITION: When in bulkEditMode, show "Disable Bulk Edit" and "Edit All" buttons -->
+        <ng-container *ngIf="bulkEditMode">
+          <p-button
+            label="Disable Bulk Edit"
+            icon="pi pi-times"
+            class="ml-2"
+            (click)="toggleBulkEdit()"
+          ></p-button>
+          <p-button
+            label="Edit All"
+            icon="pi pi-pencil"
+            class="ml-2 p-button-warning"
+            (click)="openBulkEditDialog()"
+            [disabled]="selectedDeposits.length === 0"
+          ></p-button>
+        </ng-container>
       </div>
       <p-divider></p-divider>
       <div class="p-fluid">
@@ -29,9 +57,14 @@
           scrollHeight="600px"
           sortField="effectiveDate"
           [sortOrder]="-1"
+          [(selection)]="selectedDeposits"
+          selectionMode="multiple"
         >
           <ng-template pTemplate="header">
             <tr>
+              <th *ngIf="bulkEditMode" style="width: 3rem">
+                <p-tableHeaderCheckbox></p-tableHeaderCheckbox>
+              </th>
               <th></th>
               <th>ID</th>
               <th>Amount</th>
@@ -53,6 +86,10 @@
               #depositRow
               [class.selected-row]="isDepositHighlighted(deposit)"
             >
+              <!-- BULK EDIT ADDITION: Show row checkbox only when in bulkEditMode -->
+              <td *ngIf="bulkEditMode" style="width: 3rem">
+                <p-tableCheckbox [value]="deposit"></p-tableCheckbox>
+              </td>
               <td>
                 <p-toggleswitch
                   inputId="active-{{ deposit.id }}"
@@ -427,4 +464,48 @@
   <p *ngIf="!selectedDeposit?.unusedAmount">
     Unused Amount: {{ selectedDeposit?.jsUnusedAmount | currency }}
   </p>
+</p-dialog>
+
+<!-- BULK EDIT ADDITION: Bulk Edit Dialog -->
+<p-dialog
+  header="Bulk Edit Deposits"
+  [(visible)]="showBulkEditDialog"
+  [modal]="true"
+  [closable]="true"
+  [style]="{ width: '400px' }"
+>
+  <form (ngSubmit)="applyBulkEdit()">
+    <div class="p-grid p-nogutter">
+      <div class="field">
+        <label for="bulkAllocationType">Allocation Type</label>
+        <p-select
+          id="bulkAllocationType"
+          name="bulkAllocationType"
+          [(ngModel)]="bulkAllocationType"
+          [options]="bulkEditAllocationTypes"
+          optionLabel="label"
+          optionValue="value"
+          [showClear]="false"
+          appendTo="body"
+          inputStyleClass="w-full"
+        >
+        </p-select>
+      </div>
+    </div>
+
+    <div class="flex justify-content-end mt-3">
+      <p-button
+        label="Cancel"
+        icon="pi pi-times"
+        (click)="showBulkEditDialog = false"
+        class="p-button-text"
+      ></p-button>
+      <p-button
+        label="Save"
+        icon="pi pi-check"
+        class="pl-2 p-button-warning"
+        type="submit"
+      ></p-button>
+    </div>
+  </form>
 </p-dialog>

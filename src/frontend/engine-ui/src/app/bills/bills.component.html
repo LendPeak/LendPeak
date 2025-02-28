@@ -288,7 +288,7 @@
   [modal]="false"
   [draggable]="true"
   [resizable]="true"
-  [style]="{ width: '650px' }"
+  [style]="{ width: '750px' }"
   (onHide)="selectedPaymentDeposit = null"
 >
   <ng-template #header>
@@ -393,6 +393,7 @@
           <tr>
             <th>Period</th>
             <th>Bill ID</th>
+            <th>Bill Due Date</th>
             <th>Allocated Principal</th>
             <th>Allocated Interest</th>
             <th>Allocated Fees</th>
@@ -403,6 +404,7 @@
           <tr>
             <td>{{ usage.period }}</td>
             <td>{{ usage.billId }}</td>
+            <td>{{ bills.getBillById(usage.billId)?.jsDueDate | date }}</td>
             <td>{{ usage.allocatedPrincipal.toNumber() | currency }}</td>
             <td>{{ usage.allocatedInterest.toNumber() | currency }}</td>
             <td>{{ usage.allocatedFees.toNumber() | currency }}</td>

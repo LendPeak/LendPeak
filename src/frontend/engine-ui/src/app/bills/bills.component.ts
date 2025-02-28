@@ -98,6 +98,7 @@ export class BillsComponent implements AfterViewInit {
     }, 0);
   }
 
+ 
   isBillHighlighted(bill: Bill): boolean {
     return this.highlightedBillId === bill.id;
   }

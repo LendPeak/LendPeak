@@ -173,8 +173,8 @@
         <th>Allocated Interest</th>
         <th>Allocated Fees</th>
       </tr>
-      <!-- Original row: how much was allocated in total -->
 
+      <!-- Original row: how much was allocated in total -->
       <tr>
         <th class="bg-blue-50"></th>
         <th class="bg-blue-50"></th>
@@ -196,11 +196,20 @@
 
     <ng-template #body let-detail>
       <tr>
-        <td>{{ detail.depositId }}</td>
         <td>
-          {{
-            depositRecords.getById(detail.depositId)?.jsAmount || 0 | currency
-          }}
+          <p-button
+            (click)="viewSinglePaymentDetail(detail)"
+            icon="pi pi-search"
+            [rounded]="true"
+            [text]="true"
+            severity="success"
+            class="pr-2"
+          />
+
+          {{ detail.depositId }}
+        </td>
+        <td>
+          {{ depositRecords.getById(detail.depositId)?.jsAmount | currency }}
         </td>
         <td>{{ detail.jsDate | date: "MM/dd/yyyy" }}</td>
         <td>{{ detail.jsAllocatedTotal | currency }}</td>
@@ -209,6 +218,7 @@
         <td>{{ detail.jsAllocatedFees | currency }}</td>
       </tr>
     </ng-template>
+
     <ng-template #footer>
       <!-- Totals row: how much was allocated in total -->
       <tr>
@@ -257,4 +267,83 @@
       </tr>
     </ng-template>
   </p-table>
+</p-dialog>
+
+<!-- Single Payment/Deposit Display Dialog (Non-blocking and Draggable) -->
+<p-dialog
+  header="Payment Card"
+  [(visible)]="showSinglePaymentDialog"
+  [modal]="false"
+  [draggable]="true"
+  [resizable]="true"
+  [style]="{ width: '500px' }"
+  (onHide)="selectedPaymentDeposit = null"
+>
+  <ng-container *ngIf="selectedPaymentDeposit">
+    <p-card
+      title="Payment ID: {{ selectedPaymentDeposit.id }}"
+      class="w-full"
+      [style]="{ 'margin-bottom': '1rem' }"
+    >
+      <p class="m-0">
+        <strong>Amount:</strong>
+        <span>{{ selectedPaymentDeposit.jsAmount | currency }}</span>
+      </p>
+      <p class="m-0">
+        <strong>Effective Date:</strong>
+        <span>{{
+          selectedPaymentDeposit.jsEffectiveDate | date: "MM/dd/yyyy"
+        }}</span>
+      </p>
+      <p class="m-0">
+        <strong>Clearing Date:</strong>
+        <span>{{
+          selectedPaymentDeposit.jsClearingDate | date: "MM/dd/yyyy"
+        }}</span>
+      </p>
+      <p class="m-0">
+        <strong>Unused Amount:</strong>
+        <span>{{ selectedPaymentDeposit.jsUnusedAmount | currency }}</span>
+      </p>
+      <p class="m-0">
+        <strong>Apply Excess to Principal:</strong>
+        <span>{{
+          selectedPaymentDeposit.applyExcessToPrincipal ? "Yes" : "No"
+        }}</span>
+      </p>
+      <p class="m-0">
+        <strong>Excess Applied Date:</strong>
+        <span>{{
+          selectedPaymentDeposit.jsExcessAppliedDate | date: "MM/dd/yyyy"
+        }}</span>
+      </p>
+    </p-card>
+
+    <p class="mb-2 font-bold">Usage Details:</p>
+    <p-table
+      [value]="selectedPaymentDeposit.usageDetails || []"
+      responsiveLayout="scroll"
+    >
+      <ng-template pTemplate="header">
+        <tr>
+          <th>Period</th>
+          <th>Bill ID</th>
+          <th>Allocated Principal</th>
+          <th>Allocated Interest</th>
+          <th>Allocated Fees</th>
+          <th>Date</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-usage>
+        <tr>
+          <td>{{ usage.period }}</td>
+          <td>{{ usage.billId }}</td>
+          <td>{{ usage.allocatedPrincipal.toNumber() | currency }}</td>
+          <td>{{ usage.allocatedInterest.toNumber() | currency }}</td>
+          <td>{{ usage.allocatedFees.toNumber() | currency }}</td>
+          <td>{{ usage.date.toDate() | date: "MM/dd/yyyy" }}</td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </ng-container>
 </p-dialog>

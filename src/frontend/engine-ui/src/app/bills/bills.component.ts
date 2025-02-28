@@ -11,6 +11,8 @@ import {
 import { Bill } from 'lendpeak-engine/models/Bill';
 import { Bills } from 'lendpeak-engine/models/Bills';
 import { DepositRecords } from 'lendpeak-engine/models/DepositRecords';
+import { DepositRecord } from 'lendpeak-engine/models/DepositRecord';
+import { BillPaymentDetail } from 'lendpeak-engine/models/Bill/BillPaymentDetail';
 
 @Component({
   selector: 'app-bills',
@@ -34,6 +36,9 @@ export class BillsComponent implements AfterViewInit {
   selectedBill: Bill | null = null;
   showPaymentDetailsDialog: boolean = false;
 
+  selectedPaymentDeposit: DepositRecord | null = null;
+  showSinglePaymentDialog: boolean = false;
+
   ngAfterViewInit(): void {
     // The rows should be available after the view initializes.
     // If bills are loaded asynchronously later, consider calling scrollToLastDueBill after bills change.
@@ -47,6 +52,15 @@ export class BillsComponent implements AfterViewInit {
   onPaymentDetailsDialogHide() {
     this.showPaymentDetailsDialog = false;
     this.selectedBill = null;
+  }
+
+  viewSinglePaymentDetail(detail: BillPaymentDetail) {
+    // find the deposit in depositRecords by depositId
+    const deposit = this.depositRecords.getById(detail.depositId);
+    if (deposit) {
+      this.selectedPaymentDeposit = deposit;
+      this.showSinglePaymentDialog = true;
+    }
   }
 
   scrollToLastDueBill() {

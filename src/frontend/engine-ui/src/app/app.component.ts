@@ -75,8 +75,6 @@ import {
 import { UsageDetail } from 'lendpeak-engine/models/Bill/Deposit/UsageDetail';
 import { __await } from 'tslib';
 
-declare let gtag: Function;
-
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
@@ -515,16 +513,6 @@ export class AppComponent implements OnChanges {
   }
 
   ngOnInit(): void {
-    this.router.events.subscribe((event) => {
-      if (event instanceof NavigationEnd) {
-        const fullUrl = event.urlAfterRedirects; // This includes query parameters
-
-        // Send page view event with query parameters
-        gtag('config', 'G-1BMY92G86G', {
-          page_path: fullUrl, // Tracking full URL with query parameters
-        });
-      }
-    });
     const storedVersion = localStorage.getItem('appVersion');
     if (storedVersion !== this.currentVersion) {
       this.showCurrentReleaseNotes();

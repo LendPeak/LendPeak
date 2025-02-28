@@ -242,7 +242,7 @@ export class Amortization {
     }
 
     if (params.balanceModifications) {
-      console.trace("setting balance modification with params", params.balanceModifications);
+      //console.trace("setting balance modification with params", params.balanceModifications);
       this.balanceModifications = params.balanceModifications;
     }
 

@@ -1367,10 +1367,7 @@ export class AppComponent implements OnChanges {
     // but deposits are no longer present
     const filteredBalanceModifications: BalanceModifications =
       new BalanceModifications();
-    console.log(
-      'Cleaning up balance modifications',
-      this.loan.balanceModifications,
-    );
+
     this.loan.balanceModifications.all.forEach((balanceModification) => {
       if (balanceModification.metadata?.depositId) {
         const deposit = this.deposits.getById(
@@ -1379,10 +1376,7 @@ export class AppComponent implements OnChanges {
         if (!deposit) {
           // Deposit not found; remove this balance modification
           // console.log('Removing balance modification', balanceModification);
-          console.warn(
-            'removing balance modification because deposit is missing',
-            balanceModification,
-          );
+
           this.balanceModificationChanged = true;
           return;
         }
@@ -1391,10 +1385,7 @@ export class AppComponent implements OnChanges {
           // Deposit is not active; remove this balance modification
           // console.log('Removing balance modification', balanceModification);
           this.balanceModificationChanged = true;
-          console.warn(
-            'removing balance modification because deposit is not active',
-            balanceModification,
-          );
+
           return;
         }
 
@@ -1402,20 +1393,13 @@ export class AppComponent implements OnChanges {
           // Deposit is before snapshot date; remove this balance modification
           // console.log('Removing balance modification', balanceModification);
           this.balanceModificationChanged = true;
-          console.warn(
-            'removing balance modification because deposit is after snapshot date',
-            balanceModification,
-          );
+
           return;
         }
       }
       filteredBalanceModifications.addBalanceModification(balanceModification);
     });
 
-    console.log(
-      'replacing balance modifications with',
-      filteredBalanceModifications,
-    );
     this.loan.balanceModifications = filteredBalanceModifications;
   }
 
@@ -1454,7 +1438,7 @@ export class AppComponent implements OnChanges {
         );
 
         // Add the new BM
-        console.log('Adding balance modification!', result.balanceModification);
+        // console.log('Adding balance modification!', result.balanceModification);
         const addedNewBalanceModification =
           this.loan.balanceModifications.addBalanceModification(
             result.balanceModification,

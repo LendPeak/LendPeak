@@ -81,7 +81,7 @@ export class DepositsComponent {
   staticUnusedAmount = 0;
 
   onAllocationTypeChange(event: any) {
-    if (event.value === 'default') {
+    if (event === 'default') {
       this.depositData.removeStaticAllocation();
     } else {
       this.depositData.staticAllocation = {
@@ -91,8 +91,8 @@ export class DepositsComponent {
         prepayment: 0,
       };
       this.staticUnusedAmount = this.depositData.amount.toNumber();
-      this.depositData.updateJsValues();
     }
+    this.depositData.updateJsValues();
   }
 
   scrollToLastDeposit() {

@@ -101,4 +101,10 @@ export class BillsComponent implements AfterViewInit {
   isBillHighlighted(bill: Bill): boolean {
     return this.highlightedBillId === bill.id;
   }
+
+  isSplitPayment(depositId: string): boolean {
+    const deposit = this.depositRecords.getById(depositId);
+    if (!deposit) return false;
+    return deposit.usageDetails && deposit.usageDetails.length > 1;
+  }
 }

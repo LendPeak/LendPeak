@@ -207,6 +207,13 @@
           />
 
           {{ detail.depositId }}
+
+          <p-badge
+            *ngIf="isSplitPayment(detail.depositId)"
+            value="Split"
+            severity="info"
+            styleClass="ml-2"
+          ></p-badge>
         </td>
         <td>
           {{ depositRecords.getById(detail.depositId)?.jsAmount | currency }}

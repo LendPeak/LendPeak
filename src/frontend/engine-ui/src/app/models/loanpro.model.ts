@@ -57,7 +57,6 @@ export interface LoanData {
   InterestAdjustments: InterestAdjustment[];
   Transactions: Transaction[];
 
-  // ... Other deferred properties
   // Core properties
   id: number;
   displayId: string;

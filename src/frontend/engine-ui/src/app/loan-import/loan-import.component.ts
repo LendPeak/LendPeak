@@ -197,9 +197,6 @@ export class LoanImportComponent implements OnInit, OnDestroy {
       return;
     }
 
-    // -------------------------------------------------
-    // NEW LOGIC for systemIdRange => parallel imports
-    // -------------------------------------------------
     const start = parseInt(this.fromSystemId, 10);
     const end = parseInt(this.toSystemId, 10);
 

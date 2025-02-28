@@ -196,7 +196,7 @@
 
     <ng-template #body let-detail>
       <tr>
-        <td>
+        <td style="white-space: nowrap">
           <p-button
             (click)="viewSinglePaymentDetail(detail)"
             icon="pi pi-search"
@@ -211,6 +211,12 @@
           <p-badge
             *ngIf="isSplitPayment(detail.depositId)"
             value="Split"
+            severity="warn"
+            styleClass="ml-2"
+          ></p-badge>
+          <p-badge
+            *ngIf="depositRecords.getById(detail.depositId)?.staticAllocation"
+            value="Static"
             severity="info"
             styleClass="ml-2"
           ></p-badge>
@@ -278,79 +284,132 @@
 
 <!-- Single Payment/Deposit Display Dialog (Non-blocking and Draggable) -->
 <p-dialog
-  header="Payment Card"
   [(visible)]="showSinglePaymentDialog"
   [modal]="false"
   [draggable]="true"
   [resizable]="true"
-  [style]="{ width: '600px' }"
+  [style]="{ width: '650px' }"
   (onHide)="selectedPaymentDeposit = null"
 >
-  <ng-container *ngIf="selectedPaymentDeposit">
-    <p-card
-      title="Payment ID: {{ selectedPaymentDeposit.id }}"
-      class="w-full"
-      [style]="{ 'margin-bottom': '1rem' }"
-    >
-      <p class="m-0">
-        <strong>Amount:</strong>
-        <span>{{ selectedPaymentDeposit.jsAmount | currency }}</span>
-      </p>
-      <p class="m-0">
-        <strong>Effective Date:</strong>
-        <span>{{
-          selectedPaymentDeposit.jsEffectiveDate | date: "MM/dd/yyyy"
-        }}</span>
-      </p>
-      <p class="m-0">
-        <strong>Clearing Date:</strong>
-        <span>{{
-          selectedPaymentDeposit.jsClearingDate | date: "MM/dd/yyyy"
-        }}</span>
-      </p>
-      <p class="m-0">
-        <strong>Unused Amount:</strong>
-        <span>{{ selectedPaymentDeposit.jsUnusedAmount | currency }}</span>
-      </p>
-      <p class="m-0">
-        <strong>Apply Excess to Principal:</strong>
-        <span>{{
-          selectedPaymentDeposit.applyExcessToPrincipal ? "Yes" : "No"
-        }}</span>
-      </p>
-      <p class="m-0">
-        <strong>Excess Applied Date:</strong>
-        <span>{{
-          selectedPaymentDeposit.jsExcessAppliedDate | date: "MM/dd/yyyy"
-        }}</span>
-      </p>
+  <ng-template #header>
+    <div class="inline-flex items-center justify-center">
+      <span class="font-bold whitespace-nowrap">Payment Card</span>
+      <p-badge
+        *ngIf="(selectedPaymentDeposit?.usageDetails?.length || 0) > 1"
+        class="ml-1"
+        value="Split"
+        severity="warn"
+      ></p-badge>
+      <p-badge
+        *ngIf="selectedPaymentDeposit?.staticAllocation"
+        value="Static"
+        severity="info"
+        styleClass="ml-2"
+      ></p-badge>
+    </div>
+  </ng-template>
+  <!-- Only show content if we have a selectedPaymentDeposit -->
+  <ng-container *ngIf="selectedPaymentDeposit as deposit">
+    <p-card [title]="'Payment ID: ' + deposit.id">
+      <!-- Row 1: Amount, Unused, Currency -->
+      <div class="grid text-sm">
+        <div class="col-12 md:col-4 flex align-items-center">
+          <span class="font-semibold text-300 mr-1">Amount:</span>
+          <span>{{ deposit.jsAmount | currency }}</span>
+        </div>
+        <div class="col-12 md:col-4 flex align-items-center">
+          <span class="font-semibold text-300 mr-1">Unused:</span>
+          <span>{{ deposit.jsUnusedAmount | currency }}</span>
+        </div>
+        <div class="col-12 md:col-3 flex align-items-center">
+          <span class="font-semibold text-300 mr-1">Currency:</span>
+          <span>{{ deposit.currency }}</span>
+        </div>
+      </div>
+
+      <!-- Row 2: Effective Date, Clearing Date, Excess Applied -->
+      <div class="grid text-sm gap-2 mt-2">
+        <div class="col-12 md:col-4 flex align-items-center">
+          <span class="font-semibold text-300 mr-1">Effective Date:</span>
+          <span>{{ deposit.jsEffectiveDate | date: "MM/dd/yyyy" }}</span>
+        </div>
+        <div class="col-12 md:col-4 flex align-items-center">
+          <span class="font-semibold text-300 mr-1">Clearing Date:</span>
+          <span>{{ deposit.jsClearingDate | date: "MM/dd/yyyy" }}</span>
+        </div>
+        <div class="col-12 md:col-3 flex align-items-center">
+          <span class="font-semibold text-300 mr-1">Excess Applied:</span>
+          <span>{{ deposit.jsExcessAppliedDate | date: "MM/dd/yyyy" }}</span>
+        </div>
+      </div>
+
+      <!-- Row 3: Apply Excess to Principal, Allocation Type -->
+      <div class="grid text-sm gap-2 mt-2">
+        <div class="col-12 md:col-6 flex align-items-center">
+          <span class="font-semibold text-300 mr-1"
+            >Apply Excess to Principal:</span
+          >
+          <span>{{ deposit.applyExcessToPrincipal ? "Yes" : "No" }}</span>
+        </div>
+        <div class="col-12 md:col-5 flex align-items-center">
+          <span class="font-semibold text-300 mr-1">Allocation Type:</span>
+          <span>{{ deposit.staticAllocation ? "Static" : "Default" }}</span>
+        </div>
+      </div>
+
+      <!-- Row 4: Static Allocation (if present) -->
+      <ng-container *ngIf="deposit.staticAllocation">
+        <hr class="my-2" />
+        <div class="grid text-sm gap-2">
+          <div class="col-12 md:col-3 flex align-items-center">
+            <span class="font-semibold text-300 mr-1">Principal:</span>
+            <span>{{ deposit.jsStaticAllocation?.principal | currency }}</span>
+          </div>
+          <div class="col-12 md:col-3 flex align-items-center">
+            <span class="font-semibold text-300 mr-1">Interest:</span>
+            <span>{{ deposit.jsStaticAllocation?.interest | currency }}</span>
+          </div>
+          <div class="col-12 md:col-3 flex align-items-center">
+            <span class="font-semibold text-300 mr-1">Fees:</span>
+            <span>{{ deposit.jsStaticAllocation?.fees | currency }}</span>
+          </div>
+          <div class="col-12 md:col-2 flex align-items-center">
+            <span class="font-semibold text-300 mr-1">Prepayment:</span>
+            <span>{{ deposit.jsStaticAllocation?.prepayment | currency }}</span>
+          </div>
+        </div>
+      </ng-container>
     </p-card>
 
-    <p class="mb-2 font-bold">Usage Details:</p>
-    <p-table
-      [value]="selectedPaymentDeposit.usageDetails || []"
-      responsiveLayout="scroll"
-    >
-      <ng-template pTemplate="header">
-        <tr>
-          <th>Period</th>
-          <th>Bill ID</th>
-          <th>Allocated Principal</th>
-          <th>Allocated Interest</th>
-          <th>Allocated Fees</th>
-          <th>Date</th>
-        </tr>
-      </ng-template>
-      <ng-template pTemplate="body" let-usage>
-        <tr>
-          <td>{{ usage.period }}</td>
-          <td>{{ usage.billId }}</td>
-          <td>{{ usage.allocatedPrincipal.toNumber() | currency }}</td>
-          <td>{{ usage.allocatedInterest.toNumber() | currency }}</td>
-          <td>{{ usage.allocatedFees.toNumber() | currency }}</td>
-          <td>{{ usage.date.toDate() | date: "MM/dd/yyyy" }}</td>
-        </tr>
-      </ng-template>
-    </p-table>
+    <!-- Usage Details Table -->
+    <div class="text-sm mt-2">
+      <span class="font-semibold text-300">Usage Details:</span>
+      <p-table
+        [value]="deposit.usageDetails || []"
+        responsiveLayout="scroll"
+        styleClass="mt-2"
+      >
+        <ng-template pTemplate="header">
+          <tr>
+            <th>Period</th>
+            <th>Bill ID</th>
+            <th>Allocated Principal</th>
+            <th>Allocated Interest</th>
+            <th>Allocated Fees</th>
+            <th>Date</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-usage>
+          <tr>
+            <td>{{ usage.period }}</td>
+            <td>{{ usage.billId }}</td>
+            <td>{{ usage.allocatedPrincipal.toNumber() | currency }}</td>
+            <td>{{ usage.allocatedInterest.toNumber() | currency }}</td>
+            <td>{{ usage.allocatedFees.toNumber() | currency }}</td>
+            <td>{{ usage.date.toDate() | date: "MM/dd/yyyy" }}</td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </div>
   </ng-container>
 </p-dialog>

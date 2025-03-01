@@ -293,7 +293,9 @@
 >
   <ng-template #header>
     <div class="inline-flex items-center justify-center">
-      <span class="font-bold whitespace-nowrap">Payment Card</span>
+      <span class="font-semibold whitespace-nowrap"
+        >Payment Card {{ selectedPaymentDeposit?.id }}</span
+      >
       <p-badge
         *ngIf="(selectedPaymentDeposit?.usageDetails?.length || 0) > 1"
         class="ml-1"

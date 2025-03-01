@@ -155,13 +155,86 @@
 
 <!-- Payment Details Dialog -->
 <p-dialog
-  header="Payment Details for {{ selectedBill?.id }}"
   [(visible)]="showPaymentDetailsDialog"
   [modal]="true"
   [style]="{ width: '70%' }"
   [closable]="true"
   (onHide)="onPaymentDetailsDialogHide()"
 >
+  <ng-template #header>
+    <div *ngIf="selectedBill" class="inline-flex items-center justify-center">
+      <span class="font-semibold whitespace-nowrap pr-5"
+        >Payment Details for {{ selectedBill.id }}</span
+      >
+      <p-tag
+        *ngIf="(selectedBill.paymentDetails || []).length > 1"
+        value="{{ selectedBill.paymentDetails.length + ' Payments' }}"
+        severity="warn"
+        styleClass="ml-2 mr-2"
+        pTooltip="This bill was satisfied by multiple payments"
+        tooltipPosition="top"
+      >
+      </p-tag>
+
+      <ng-container
+        *ngIf="selectedBill.isPaid && selectedBill.dateFullySatisfied"
+      >
+        <!-- Show how many days late/early in a p-tag -->
+        <ng-container *ngIf="selectedBill.daysLate">
+          <p-tag
+            value="{{ selectedBill.daysLate + ' Days Late' }}"
+            severity="warn"
+            class="status-tag"
+          ></p-tag>
+        </ng-container>
+
+        <ng-container *ngIf="selectedBill.daysEarly">
+          <p-tag
+            value="{{ selectedBill.daysEarly + ' Days Early' }}"
+            severity="success"
+            class="status-tag"
+          ></p-tag>
+        </ng-container>
+
+        <!-- If daysLate = 0 & daysEarly = 0, then it's on-time -->
+        <ng-container *ngIf="!selectedBill.daysLate && !selectedBill.daysEarly">
+          <p-tag value="On-Time" severity="info" class="status-tag"></p-tag>
+        </ng-container>
+      </ng-container>
+
+      <!-- Existing Status Tags -->
+      <p-tag
+        *ngIf="selectedBill.isOpen && !selectedBill.isPaid"
+        value="Open Bill"
+        severity="success"
+        class="status-tag"
+      ></p-tag>
+      <p-tag
+        *ngIf="!selectedBill.isOpen && !selectedBill.isPaid"
+        value="Future"
+        severity="info"
+        class="status-tag"
+      ></p-tag>
+      <p-tag
+        *ngIf="selectedBill.jsTotalDue == 0"
+        value="Skip A Pay"
+        severity="secondary"
+        class="status-tag"
+      ></p-tag>
+      <p-tag
+        *ngIf="selectedBill.jsTotalDue > 0"
+        value="{{ selectedBill.isPaid ? 'Paid' : 'Unpaid' }}"
+        [severity]="selectedBill.isPaid ? 'success' : 'warn'"
+        class="status-tag"
+      ></p-tag>
+      <p-tag
+        *ngIf="selectedBill.isPastDue && !selectedBill.isPaid"
+        value="{{ selectedBill.daysPastDue }} Days Past Due"
+        severity="danger"
+        class="status-tag"
+      ></p-tag>
+    </div>
+  </ng-template>
   <p-table [value]="selectedBill?.paymentDetails || []">
     <ng-template #header>
       <tr>

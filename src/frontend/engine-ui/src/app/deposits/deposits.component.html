@@ -430,13 +430,58 @@
 
 <!-- Deposit Usage Details Dialog -->
 <p-dialog
-  header="Deposit Usage Details: {{ selectedDeposit?.id }}"
   [(visible)]="showDepositUsageDetailsDialog"
   [modal]="true"
   [style]="{ width: '85%' }"
   [closable]="true"
   (onHide)="selectedDeposit = null"
 >
+  <ng-template #header>
+    <div
+      *ngIf="selectedDeposit"
+      class="inline-flex items-center justify-center"
+    >
+      <span class="font-semibold whitespace-nowrap pr-5"
+        >Deposit Usage Details: {{ selectedDeposit.id }}</span
+      >
+      <!-- Display a badge if there's more than one usage detail -->
+      <p-badge
+        *ngIf="(selectedDeposit?.usageDetails || []).length > 1"
+        value="{{ selectedDeposit.usageDetails.length + ' Bills' }}"
+        severity="warn"
+        styleClass="mr-2"
+        pTooltip="This deposit covers multiple bills"
+        tooltipPosition="top"
+      ></p-badge>
+      <p-badge
+        *ngIf="selectedDeposit?.effectiveDate?.isAfter(snapshotDate)"
+        value="Future"
+        severity="warn"
+        styleClass="mr-2"
+        pTooltip="Deposit's effective date is after the snapshot date"
+        tooltipPosition="top"
+        tooltipStyleClass="wide-tooltip"
+      ></p-badge>
+      <p-badge
+        *ngIf="!selectedDeposit?.active"
+        value="Inactive"
+        severity="danger"
+        styleClass="mr-2"
+        pTooltip="Deposit is inactive"
+        tooltipPosition="top"
+        tooltipStyleClass="wide-tooltip"
+      ></p-badge>
+      <p-badge
+        *ngIf="selectedDeposit?.staticAllocation"
+        value="Static"
+        severity="info"
+        styleClass="mr-2"
+        pTooltip="Deposit is using static amounts allocation"
+        tooltipPosition="top"
+        tooltipStyleClass="wide-tooltip"
+      ></p-badge>
+    </div>
+  </ng-template>
   <p-table [value]="selectedDeposit?.usageDetails || []">
     <!-- TABLE HEADER -->
     <ng-template pTemplate="header">
@@ -466,9 +511,9 @@
           {{ selectedDeposit?.jsAmount | currency }}
         </th>
         <!-- 0 for principal, interest, fees -->
-        <th class="bg-blue-50 font-bold">0</th>
-        <th class="bg-blue-50 font-bold">0</th>
-        <th class="bg-blue-50 font-bold">0</th>
+        <th class="bg-blue-50 font-bold">{{ 0 | currency }}</th>
+        <th class="bg-blue-50 font-bold">{{ 0 | currency }}</th>
+        <th class="bg-blue-50 font-bold">{{ 0 | currency }}</th>
         <!-- Blank for Date -->
         <th class="bg-blue-50"></th>
       </tr>

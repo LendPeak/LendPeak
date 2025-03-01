@@ -16,6 +16,7 @@ import { Currency } from 'lendpeak-engine/utils/Currency';
 import dayjs from 'dayjs';
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore';
 import isBetween from 'dayjs/plugin/isBetween';
+import { UsageDetail } from 'lendpeak-engine/models/Bill/Deposit/UsageDetail';
 
 dayjs.extend(isSameOrBefore);
 dayjs.extend(isBetween);
@@ -319,5 +320,61 @@ export class DepositsComponent {
   viewDepositUsageDetails(deposit: DepositRecord) {
     this.selectedDeposit = deposit;
     this.showDepositUsageDetailsDialog = true;
+  }
+
+  /**
+   * Returns the total allocated principal across all usage details for the currently selected deposit.
+   */
+  get allocatedPrincipalSum(): number {
+    if (!this.selectedDeposit?.usageDetails) return 0;
+    return this.selectedDeposit.usageDetails.reduce(
+      (acc, u) => acc + u.allocatedPrincipal.toNumber(),
+      0,
+    );
+  }
+
+  /**
+   * Returns the total allocated interest across all usage details for the currently selected deposit.
+   */
+  get allocatedInterestSum(): number {
+    if (!this.selectedDeposit?.usageDetails) return 0;
+    return this.selectedDeposit.usageDetails.reduce(
+      (acc, u) => acc + u.allocatedInterest.toNumber(),
+      0,
+    );
+  }
+
+  /**
+   * Returns the total allocated fees across all usage details for the currently selected deposit.
+   */
+  get allocatedFeesSum(): number {
+    if (!this.selectedDeposit?.usageDetails) return 0;
+    return this.selectedDeposit.usageDetails.reduce(
+      (acc, u) => acc + u.allocatedFees.toNumber(),
+      0,
+    );
+  }
+
+  /**
+   * Returns the total allocated amount (principal + interest + fees) for the selected deposit.
+   */
+  get allocatedTotalSum(): number {
+    return (
+      this.allocatedPrincipalSum +
+      this.allocatedInterestSum +
+      this.allocatedFeesSum
+    );
+  }
+
+  /**
+   * Helper method to calculate one usage row's total allocated
+   * (principal + interest + fees).
+   */
+  getUsageRowTotal(u: UsageDetail): number {
+    return (
+      u.allocatedPrincipal.toNumber() +
+      u.allocatedInterest.toNumber() +
+      u.allocatedFees.toNumber()
+    );
   }
 }

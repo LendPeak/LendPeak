@@ -1,56 +1,99 @@
-<ng-container *ngIf="value !== null && value !== undefined; else blank">
-  <!-- 1) If value is a JS Date -->
-  <ng-container *ngIf="isDate(value); else checkDayjs">
-    <span>{{ datePipe.transform(value, "medium") }}</span>
-  </ng-container>
+<ng-container *ngIf="value !== null && value !== undefined; else blankValue">
+  <!-- 1. If it's a JavaScript Date -->
+  <span *ngIf="isDate(value)">
+    {{ value | date: "short" }}
+  </span>
 
-  <!-- 2) If value is a Dayjs instance -->
-  <ng-template #checkDayjs>
-    <ng-container *ngIf="isDayjs(value); else checkArray">
-      <span>{{ value.format("YYYY-MM-DD HH:mm:ss") }}</span>
-    </ng-container>
+  <!-- 2. If it's a dayjs Date -->
+  <span *ngIf="isDayjs(value)">
+    {{ value.format("YYYY-MM-DD HH:mm:ss") }}
+  </span>
 
-    <!-- 3) If value is an Array, show each item as a p-chip -->
-    <ng-template #checkArray>
-      <ng-container *ngIf="isArray(value); else checkObject">
-        <ng-container *ngFor="let item of value">
-          <p-chip [label]="formatSimple(item)" class="mr-2 mb-1"></p-chip>
-        </ng-container>
+  <!-- 3. If it's a plain object (and not Date/dayjs) -->
+  <p-table
+    *ngIf="isPlainObject(value)"
+    [value]="objectKeys(value)"
+    [style]="{ 'min-width': '300px' }"
+  >
+    <ng-template pTemplate="header">
+      <tr>
+        <th>Key</th>
+        <th>Value</th>
+      </tr>
+    </ng-template>
+    <ng-template pTemplate="body" let-key>
+      <tr>
+        <td>{{ key }}</td>
+        <td>
+          <!-- Recursively render nested values -->
+          <app-value-renderer [value]="value[key]"></app-value-renderer>
+        </td>
+      </tr>
+    </ng-template>
+  </p-table>
+
+  <!-- 4. If it's an array -->
+  <ng-container *ngIf="isArray(value)">
+    <!-- If empty array, just show an empty message -->
+    <div *ngIf="value.length === 0">
+      <em>Empty array</em>
+    </div>
+
+    <ng-container *ngIf="value.length > 0">
+      <!-- If the first item is an object (typical "array of objects") -->
+      <ng-container *ngIf="isPlainObject(value[0]); else simpleArray">
+        <p-table [value]="value" [style]="{ 'min-width': '300px' }">
+          <ng-template pTemplate="header">
+            <tr>
+              <th *ngFor="let col of getAllKeysInArrayOfObjects(value)">
+                {{ col }}
+              </th>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="body" let-row>
+            <tr>
+              <td *ngFor="let col of getAllKeysInArrayOfObjects(value)">
+                <!-- Recursively render each cell -->
+                <app-value-renderer [value]="row[col]"></app-value-renderer>
+              </td>
+            </tr>
+          </ng-template>
+        </p-table>
       </ng-container>
 
-      <!-- 4) If value is a Plain Object, render a nested p-table of key-value pairs -->
-      <ng-template #checkObject>
-        <ng-container *ngIf="isPlainObject(value); else simple">
-          <p-table [value]="objectKeys(value)" styleClass="nested-table">
-            <ng-template pTemplate="header">
-              <tr>
-                <th>Key</th>
-                <th>Value</th>
-              </tr>
-            </ng-template>
-            <ng-template pTemplate="body" let-keyProp>
-              <tr>
-                <td>{{ keyProp }}</td>
-                <td>
-                  <app-value-renderer
-                    [value]="value[keyProp]"
-                  ></app-value-renderer>
-                </td>
-              </tr>
-            </ng-template>
-          </p-table>
-        </ng-container>
-
-        <!-- 5) Otherwise, fallback to simple string display -->
-        <ng-template #simple>
-          <span [ngClass]="{ 'text-red-500': value === '' }">
-            {{ value === "" ? "Blank" : value }}
-          </span>
-        </ng-template>
+      <!-- Otherwise, it's an array of simpler values: just list them in a small table -->
+      <ng-template #simpleArray>
+        <p-table [value]="value" [style]="{ 'min-width': '300px' }">
+          <ng-template pTemplate="header">
+            <tr>
+              <th>Index</th>
+              <th>Value</th>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="body" let-item let-i="rowIndex">
+            <tr>
+              <td>{{ i }}</td>
+              <td>
+                <app-value-renderer [value]="item"></app-value-renderer>
+              </td>
+            </tr>
+          </ng-template>
+        </p-table>
       </ng-template>
-    </ng-template>
-  </ng-template>
+    </ng-container>
+  </ng-container>
+
+  <!-- 5. If it's none of the above, display as simple string -->
+  <span
+    *ngIf="
+      !isDate(value) &&
+      !isDayjs(value) &&
+      !isPlainObject(value) &&
+      !isArray(value)
+    "
+    >{{ value }}
+  </span>
 </ng-container>
 
-<!-- If value is null or undefined => show 'Blank' -->
-<ng-template #blank>Blank</ng-template>
+<!-- If null or undefined -->
+<ng-template #blankValue> Blank </ng-template>

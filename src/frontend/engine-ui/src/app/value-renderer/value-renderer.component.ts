@@ -2,49 +2,53 @@ import {
   Component,
   Input,
   OnChanges,
-  SimpleChange,
+  SimpleChanges,
   OnInit,
 } from '@angular/core';
 import { DatePipe } from '@angular/common';
-import dayjs from 'dayjs';
+import dayjs, { Dayjs } from 'dayjs';
 
 @Component({
   selector: 'app-value-renderer',
-  standalone: false,
   templateUrl: './value-renderer.component.html',
   styleUrls: ['./value-renderer.component.css'],
-  // Provide DatePipe if you want to inject it
   providers: [DatePipe],
+  standalone: false,
 })
-export class ValueRendererComponent implements OnChanges, OnInit {
+export class ValueRendererComponent implements OnInit, OnChanges {
   @Input() value: any;
 
   constructor(public datePipe: DatePipe) {}
-
-  ngOnChanges(changes: { [propName: string]: SimpleChange }): void {
-    if (changes['value']) {
-      this.fixValue();
-    }
-  }
 
   ngOnInit(): void {
     this.fixValue();
   }
 
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['value']) {
+      this.fixValue();
+    }
+  }
+
+  /**
+   * If the input is an ISO string that looks like a date,
+   * convert it to a dayjs object for easier display.
+   */
   fixValue(): void {
     if (
       typeof this.value === 'string' &&
-      this.value.match(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z$/)
+      this.value.match(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?Z$/)
     ) {
       this.value = dayjs(this.value);
     }
   }
 
-  isDate(val: any): boolean {
+  // --- Type checks ---
+  isDate(val: any): val is Date {
     return val instanceof Date && !isNaN(val.getTime());
   }
 
-  isDayjs(val: any): boolean {
+  isDayjs(val: any): val is Dayjs {
     return dayjs.isDayjs(val);
   }
 
@@ -52,6 +56,14 @@ export class ValueRendererComponent implements OnChanges, OnInit {
     return Array.isArray(value);
   }
 
+  /**
+   * We call it "plain object" if:
+   * - it's not null
+   * - typeof is object
+   * - not an Array
+   * - not a Date
+   * - not a dayjs object
+   */
   isPlainObject(val: any): boolean {
     return (
       val &&
@@ -63,27 +75,21 @@ export class ValueRendererComponent implements OnChanges, OnInit {
   }
 
   objectKeys(obj: any): string[] {
+    if (!obj) return [];
     return Object.keys(obj);
   }
 
   /**
-   * If the array items are themselves objects or dates, you can do further logic here.
-   * For simplicity, we treat array items as simple strings.
+   * Extract all unique keys across an array of objects
+   * so we can render them as table columns.
    */
-  formatSimple(item: any): string {
-    if (item === null || item === undefined || item === '') {
-      return 'Blank';
-    }
-
-    if (this.isDate(item)) {
-      return this.datePipe.transform(item, 'short') ?? item.toString();
-    }
-    if (dayjs.isDayjs(item)) {
-      return item.format('YYYY-MM-DD');
-    }
-    if (typeof item === 'object') {
-      return '[object]'; // or JSON.stringify(item)
-    }
-    return String(item);
+  getAllKeysInArrayOfObjects(arr: any[]): string[] {
+    const keySet = new Set<string>();
+    arr.forEach((item) => {
+      if (item && typeof item === 'object' && !Array.isArray(item)) {
+        Object.keys(item).forEach((k) => keySet.add(k));
+      }
+    });
+    return Array.from(keySet);
   }
 }

@@ -11,6 +11,7 @@ import { DropDownOptionString } from '../models/common.model';
 import { DepositRecord } from 'lendpeak-engine/models/DepositRecord';
 import { DepositRecords } from 'lendpeak-engine/models/DepositRecords';
 import { Bills } from 'lendpeak-engine/models/Bills';
+import { Bill } from 'lendpeak-engine/models/Bill';
 import { Currency } from 'lendpeak-engine/utils/Currency';
 import dayjs from 'dayjs';
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore';
@@ -69,6 +70,17 @@ export class DepositsComponent {
   baselineNextDuePrincipal: Currency = Currency.Zero();
   baselineNextDueInterest: Currency = Currency.Zero();
   baselineNextDueFees: Currency = Currency.Zero();
+
+  selectedBillForCard: Bill | null = null;
+  showBillCardDialog = false;
+
+  viewBillCard(billId: string) {
+    const found = this.bills.getBillById(billId);
+    if (found) {
+      this.selectedBillForCard = found;
+      this.showBillCardDialog = true;
+    }
+  }
 
   // ------------------------------------------
   // BULK EDIT PROPERTIES

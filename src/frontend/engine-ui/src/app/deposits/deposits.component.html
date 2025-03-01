@@ -430,7 +430,7 @@
 
 <!-- Deposit Usage Details Dialog -->
 <p-dialog
-  header="Deposit Usage Details"
+  header="Deposit Usage Details: {{ selectedDeposit?.id }}"
   [(visible)]="showDepositUsageDetailsDialog"
   [modal]="true"
   [style]="{ width: '85%' }"
@@ -443,6 +443,7 @@
         <th>Period</th>
         <th>Bill Due Date</th>
         <th>Bill ID</th>
+        <th></th>
         <th>Allocated Principal</th>
         <th>Allocated Interest</th>
         <th>Allocated Fees</th>
@@ -453,7 +454,90 @@
       <tr>
         <td>{{ detail.period }}</td>
         <td>{{ detail.billDueDate.toDate() | date: "MM/dd/yyyy" }}</td>
-        <td>{{ detail.billId }}</td>
+        <td>
+          <p-button
+            (click)="viewBillCard(detail.billId)"
+            icon="pi pi-search"
+            [rounded]="true"
+            [text]="true"
+            severity="success"
+            class="pr-2"
+          />
+          {{ detail.billId }}
+        </td>
+        <td>
+          <ng-container *ngIf="bills.getBillById(detail.billId) as bill">
+            <div class="flex align-items-center gap-2 mt-1">
+              <!-- If more than 1 payment covers this bill -->
+              <p-tag
+                *ngIf="(bill.paymentDetails?.length ?? 0) > 1"
+                value="{{ bill.paymentDetails.length + ' Payments' }}"
+                severity="warn"
+                pTooltip="This bill was satisfied by multiple payments"
+                tooltipPosition="top"
+              ></p-tag>
+
+              <!-- If bill is open and not paid -->
+              <p-tag
+                *ngIf="bill.isOpen && !bill.isPaid"
+                value="Open Bill"
+                severity="success"
+              ></p-tag>
+
+              <!-- If bill is future (not open) and not paid -->
+              <p-tag
+                *ngIf="!bill.isOpen && !bill.isPaid"
+                value="Future"
+                severity="info"
+              ></p-tag>
+
+              <!-- If total due is 0 => 'Skip A Pay' -->
+              <p-tag
+                *ngIf="bill.jsTotalDue == 0"
+                value="Skip A Pay"
+                severity="secondary"
+              ></p-tag>
+
+              <!-- If total due > 0 => 'Paid' or 'Unpaid' -->
+              <p-tag
+                *ngIf="bill.jsTotalDue > 0"
+                [value]="bill.isPaid ? 'Paid' : 'Unpaid'"
+                [severity]="bill.isPaid ? 'success' : 'warn'"
+              ></p-tag>
+
+              <!-- If past due and not paid => e.g. '3 Days Past Due' -->
+              <p-tag
+                *ngIf="bill.isPastDue && !bill.isPaid"
+                [value]="bill.daysPastDue + ' Days Past Due'"
+                severity="danger"
+              ></p-tag>
+
+              <!-- If the bill is paid and we have a satisfied date, check days late/early/on-time -->
+              <ng-container *ngIf="bill.isPaid && bill.dateFullySatisfied">
+                <!-- If daysLate > 0 => 'X Days Late' -->
+                <p-tag
+                  *ngIf="bill?.daysLate"
+                  [value]="bill.daysLate + ' Days Late'"
+                  severity="warn"
+                ></p-tag>
+
+                <!-- If daysEarly > 0 => 'X Days Early' -->
+                <p-tag
+                  *ngIf="bill.daysEarly"
+                  [value]="bill.daysEarly + ' Days Early'"
+                  severity="success"
+                ></p-tag>
+
+                <!-- If neither => 'On-Time' -->
+                <p-tag
+                  *ngIf="!bill.daysLate && !bill.daysEarly"
+                  value="On-Time"
+                  severity="info"
+                ></p-tag>
+              </ng-container>
+            </div>
+          </ng-container>
+        </td>
         <td>{{ detail.allocatedPrincipal.toNumber() | currency }}</td>
         <td>{{ detail.allocatedInterest.toNumber() | currency }}</td>
         <td>{{ detail.allocatedFees.toNumber() | currency }}</td>
@@ -508,4 +592,166 @@
       ></p-button>
     </div>
   </form>
+</p-dialog>
+
+<!-- Bill Card Dialog (Non-blocking, draggable) -->
+<p-dialog
+  [(visible)]="showBillCardDialog"
+  [modal]="false"
+  [draggable]="true"
+  [resizable]="true"
+  [style]="{ width: '750px' }"
+  [header]="'Bill Card #' + (selectedBillForCard?.id || '')"
+  (onHide)="selectedBillForCard = null"
+>
+  <!-- Only show content if we have a selectedBillForCard -->
+  <ng-container *ngIf="selectedBillForCard as bill">
+    <!-- Single row of badges, right below the dialog's header line -->
+    <div class="flex align-items-center gap-2 mt-1">
+      <!-- If more than 1 payment covers this bill -->
+      <p-tag
+        *ngIf="(bill.paymentDetails?.length ?? 0) > 1"
+        value="{{ bill.paymentDetails.length + ' Payments' }}"
+        severity="warn"
+        pTooltip="This bill was satisfied by multiple payments"
+        tooltipPosition="top"
+      ></p-tag>
+
+      <!-- If bill is open and not paid -->
+      <p-tag
+        *ngIf="bill.isOpen && !bill.isPaid"
+        value="Open Bill"
+        severity="success"
+      ></p-tag>
+
+      <!-- If bill is future (not open) and not paid -->
+      <p-tag
+        *ngIf="!bill.isOpen && !bill.isPaid"
+        value="Future"
+        severity="info"
+      ></p-tag>
+
+      <!-- If total due is 0 => 'Skip A Pay' -->
+      <p-tag
+        *ngIf="bill.jsTotalDue == 0"
+        value="Skip A Pay"
+        severity="secondary"
+      ></p-tag>
+
+      <!-- If total due > 0 => 'Paid' or 'Unpaid' -->
+      <p-tag
+        *ngIf="bill.jsTotalDue > 0"
+        [value]="bill.isPaid ? 'Paid' : 'Unpaid'"
+        [severity]="bill.isPaid ? 'success' : 'warn'"
+      ></p-tag>
+
+      <!-- If past due and not paid => e.g. '3 Days Past Due' -->
+      <p-tag
+        *ngIf="bill.isPastDue && !bill.isPaid"
+        [value]="bill.daysPastDue + ' Days Past Due'"
+        severity="danger"
+      ></p-tag>
+
+      <!-- If the bill is paid and we have a satisfied date, check days late/early/on-time -->
+      <ng-container *ngIf="bill.isPaid && bill.dateFullySatisfied">
+        <!-- If daysLate > 0 => 'X Days Late' -->
+        <p-tag
+          *ngIf="bill?.daysLate"
+          [value]="bill.daysLate + ' Days Late'"
+          severity="warn"
+        ></p-tag>
+
+        <!-- If daysEarly > 0 => 'X Days Early' -->
+        <p-tag
+          *ngIf="bill.daysEarly"
+          [value]="bill.daysEarly + ' Days Early'"
+          severity="success"
+        ></p-tag>
+
+        <!-- If neither => 'On-Time' -->
+        <p-tag
+          *ngIf="!bill.daysLate && !bill.daysEarly"
+          value="On-Time"
+          severity="info"
+        ></p-tag>
+      </ng-container>
+    </div>
+
+    <!-- Main Bill Fields in p-card -->
+    <p-card styleClass="mt-3">
+      <!-- Row 1: Period, Due Date -->
+      <div class="grid text-sm gap-2">
+        <div class="col-12 md:col-4 flex align-items-center">
+          <span class="font-semibold text-300 mr-1">Period:</span>
+          <span>{{ bill.period }}</span>
+        </div>
+        <div class="col-12 md:col-4 flex align-items-center">
+          <span class="font-semibold text-300 mr-1">Due Date:</span>
+          <span>{{ bill.jsDueDate | date: "MM/dd/yyyy" }}</span>
+        </div>
+      </div>
+
+      <!-- Row 2: Principal, Interest, Fees, Total -->
+      <div class="grid text-sm gap-2 mt-2">
+        <div class="col-12 md:col-3 flex align-items-center">
+          <span class="font-semibold text-300 mr-1">Principal:</span>
+          <span>{{ bill.jsPrincipalDue | currency }}</span>
+        </div>
+        <div class="col-12 md:col-3 flex align-items-center">
+          <span class="font-semibold text-300 mr-1">Interest:</span>
+          <span>{{ bill.jsInterestDue | currency }}</span>
+        </div>
+        <div class="col-12 md:col-3 flex align-items-center">
+          <span class="font-semibold text-300 mr-1">Fees:</span>
+          <span>{{ bill.jsFeesDue | currency }}</span>
+        </div>
+        <div class="col-12 md:col-3 flex align-items-center">
+          <span class="font-semibold text-300 mr-1">Total:</span>
+          <span>{{ bill.jsTotalDue | currency }}</span>
+        </div>
+      </div>
+
+      <!-- Row 3: Satisfied On (if paid) -->
+      <div class="grid text-sm gap-2 mt-2">
+        <div
+          class="col-12 md:col-6 flex align-items-center"
+          *ngIf="bill.isPaid && bill.dateFullySatisfied"
+        >
+          <span class="font-semibold text-300 mr-1">Satisfied On:</span>
+          <span>{{
+            bill.dateFullySatisfied.toDate() | date: "MM/dd/yyyy"
+          }}</span>
+        </div>
+      </div>
+    </p-card>
+
+    <!-- Payment (Usage) Details Table -->
+    <div class="text-sm mt-3">
+      <span class="font-semibold text-300">Payment Details:</span>
+      <p-table
+        [value]="bill.paymentDetails || []"
+        responsiveLayout="scroll"
+        styleClass="mt-2"
+      >
+        <ng-template pTemplate="header">
+          <tr>
+            <th>Deposit ID</th>
+            <th>Allocated Principal</th>
+            <th>Allocated Interest</th>
+            <th>Allocated Fees</th>
+            <th>Date</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-payment>
+          <tr>
+            <td>{{ payment.depositId }}</td>
+            <td>{{ payment.jsAllocatedPrincipal | currency }}</td>
+            <td>{{ payment.jsAllocatedInterest | currency }}</td>
+            <td>{{ payment.jsAllocatedFees | currency }}</td>
+            <td>{{ payment.jsDate | date: "MM/dd/yyyy" }}</td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </div>
+  </ng-container>
 </p-dialog>

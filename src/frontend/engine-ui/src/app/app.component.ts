@@ -1240,29 +1240,6 @@ export class AppComponent implements OnChanges {
     { label: 'At Threshold', value: 'at_threshold' },
   ];
 
-  lockedRepaymentPlan: any[] = [];
-
-  repaymentPlan: any[] = [
-    // {
-    //   period: 1,
-    //   periodStartDate: '2023-01-01',
-    //   periodEndDate: '2023-02-01',
-    //   periodInterestRate: 7,
-    //   principal: 116.48,
-    //   totalInterestForPeriod: 17.835616438356166,
-    //   interest: 17.84,
-    //   realInterest: 17.835616438356166,
-    //   interestRoundingError: -0.004383561643835616,
-    //   totalPayment: 134.32,
-    //   perDiem: 0.58,
-    //   daysInPeriod: 31,
-    //   startBalance: 3000,
-    //   endBalance: 2883.52,
-    //   unbilledInterestDueToRounding: -0.004383561643835616,
-    //   //    metadata: '{"unbilledInterestAmount":-0.004383561643835616}',
-    // }
-  ];
-  repaymentPlanEndDates: string[] = [];
   loanSummary?: any;
 
   createLoanRepaymentPlan() {
@@ -1521,51 +1498,6 @@ export class AppComponent implements OnChanges {
 
   previousChanges: Record<string, { oldValue: any; newValue: any }> = {};
 
-  rebuildRepaymentPlan() {
-    this.repaymentPlan = this.loan.repaymentSchedule.entries.map(
-      (entry, index) => {
-        return {
-          period: entry.term,
-          zeroPeriod: entry.zeroPeriod,
-          periodStartDate: entry.periodStartDate.format('YYYY-MM-DD'),
-          periodEndDate: entry.periodEndDate.format('YYYY-MM-DD'),
-          prebillDaysConfiguration: entry.prebillDaysConfiguration,
-          billDueDaysAfterPeriodEndConfiguration:
-            entry.billDueDaysAfterPeriodEndConfiguration,
-          periodBillOpenDate: entry.periodBillOpenDate.format('YYYY-MM-DD'),
-          periodBillDueDate: entry.periodBillDueDate.format('YYYY-MM-DD'),
-          periodInterestRate: entry.periodInterestRate.times(100).toNumber(),
-          principal: entry.principal.toNumber(),
-          fees: entry.fees.toNumber(),
-          // interest transactions
-          accruedInterestForPeriod: entry.accruedInterestForPeriod.toNumber(), // track accrued interest for the period
-          billedInterestForTerm: entry.billedInterestForTerm.toNumber(), // tracks total accrued interest along with any deferred interest from previous periods
-          dueInterestForTerm: entry.dueInterestForTerm.toNumber(), // tracks total interest that is due for the term
-          dueInterestForTermError: entry.dueInterestForTerm
-            .getRoundingError()
-            .toNumber(), // tracks total interest that is due for the term
-          billedDeferredInterest: entry.billedDeferredInterest.toNumber(),
-          unbilledTotalDeferredInterest:
-            entry.unbilledTotalDeferredInterest.toNumber(), // tracks deferred interest
-
-          totalInterestForPeriod: entry.billedInterestForTerm.toNumber(),
-          //  realInterest: entry.unroundedInterestForPeriod.toNumber(),
-          interestRoundingError: entry.interestRoundingError.toNumber(),
-          totalPayment: entry.totalPayment.toNumber(),
-          perDiem: entry.perDiem,
-          daysInPeriod: entry.daysInPeriod,
-          startBalance: entry.startBalance.toNumber(),
-          endBalance: entry.endBalance.toNumber(),
-          balanceModificationAmount: entry.balanceModificationAmount.toNumber(),
-          unbilledInterestDueToRounding:
-            entry.unbilledInterestDueToRounding.toNumber(),
-          totalDeferredInterest: entry.unbilledTotalDeferredInterest.toNumber(),
-          metadata: entry.metadata,
-        };
-      },
-    );
-  }
-
   submitLoan(loanModified: boolean = false): void {
     if (loanModified) {
       this.loanModified = true;
@@ -1636,7 +1568,7 @@ export class AppComponent implements OnChanges {
     //   return entry.periodEndDate.format('MM/DD/YY');
     // });
 
-    this.rebuildRepaymentPlan();
+    // this.rebuildRepaymentPlan();
 
     this.showTable = true;
     // after balance modifications are applied amortization will add usage values and
@@ -1650,7 +1582,7 @@ export class AppComponent implements OnChanges {
       this.balanceModificationChanged = false;
       //return this.submitLoan();
       this.loan.jsGenerateSchedule();
-      this.rebuildRepaymentPlan();
+      // this.rebuildRepaymentPlan();
     }
 
     // if (this.manager.hasNewInputChanges(this.previousChanges)) {
@@ -1812,14 +1744,14 @@ export class AppComponent implements OnChanges {
   }
 
   scrollToLastDueLine(): void {
-    if (!this.repaymentPlan || this.repaymentPlan.length === 0) return;
+    if (!this.loan || this.loan.repaymentSchedule.entries.length === 0) return;
 
     const snapshot = dayjs(this.snapshotDate).startOf('day');
 
     // Find the last period due on or before snapshot date
     let lastDueIndex = -1;
-    for (let i = this.repaymentPlan.length - 1; i >= 0; i--) {
-      const plan = this.repaymentPlan[i];
+    for (let i = this.loan.repaymentSchedule.entries.length - 1; i >= 0; i--) {
+      const plan = this.loan.repaymentSchedule.entries[i];
       const dueDate = dayjs(plan.periodBillDueDate);
       if (dueDate.isSameOrBefore(snapshot)) {
         lastDueIndex = i;

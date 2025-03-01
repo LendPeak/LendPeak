@@ -910,7 +910,7 @@
 
       <p-table
         #repaymentPlanTable
-        [value]="repaymentPlan"
+        [value]="loan.repaymentSchedule.entries"
         [autoLayout]="true"
         class="repayment-plan-table"
         [scrollable]="true"
@@ -953,28 +953,30 @@
             [attr.data-index]="rowIndex"
             [id]="'plan-row-' + rowIndex"
             role="row"
-            [attr.aria-selected]="selectedPeriods.includes(plan.period)"
-            [class.even-row]="plan.period % 2 === 0"
-            [class.odd-row]="plan.period % 2 !== 0"
-            [class.selected-row]="selectedPeriods.includes(plan.period)"
+            [attr.aria-selected]="selectedPeriods.includes(plan.term)"
+            [class.even-row]="plan.term % 2 === 0"
+            [class.odd-row]="plan.term % 2 !== 0"
+            [class.selected-row]="selectedPeriods.includes(plan.term)"
             (click)="onRowClick(plan, $event)"
             tabindex="0"
             (keydown)="onRowKeyDown($event, plan)"
           >
             <td>
-              {{ plan.period }}
+              {{ plan.term }}
 
               <p-badge
-                *ngIf="plan.balanceModificationAmount !== 0"
+                *ngIf="!plan.balanceModificationAmount.isZero()"
                 value="Balance Modification"
                 severity="info"
                 styleClass="mr-2"
                 pTooltip="Balance {{
-                  plan.balanceModificationAmount > 0 ? 'increased' : 'decreased'
+                  plan.balanceModificationAmount.greaterThan(0)
+                    ? 'increased'
+                    : 'decreased'
                 }} by {{
-                  (plan.balanceModificationAmount >= 0
-                    ? plan.balanceModificationAmount
-                    : plan.balanceModificationAmount * -1
+                  (plan.balanceModificationAmount.greaterThan(0)
+                    ? plan.balanceModificationAmount.toNumber()
+                    : plan.balanceModificationAmount.multiply(-1).toNumber()
                   ) | currency
                 }}"
                 tooltipPosition="top"
@@ -982,24 +984,24 @@
               ></p-badge>
             </td>
 
-            <td>{{ plan.periodStartDate | date: "MM/dd/yyyy" }}</td>
+            <td>{{ plan.periodStartDate.toDate() | date: "MM/dd/yyyy" }}</td>
             <td class="flex flex-wrap column-gap-4 row-gap-6">
               <span class="flex align-items-center justify-content-center">
-                {{ plan.periodEndDate | date: "MM/dd/yyyy" }}
+                {{ plan.periodEndDate.toDate() | date: "MM/dd/yyyy" }}
               </span>
               <span class="flex align-items-center justify-content-center">
                 <p-badge
                   *ngIf="
-                    loan.changePaymentDates.getChangePaymentDate(plan.period)
+                    loan.changePaymentDates.getChangePaymentDate(plan.term)
                   "
                   value="CPD"
                   severity="warn"
                   styleClass="mr-2"
                   pTooltip="Change Payment Date from {{
-                    loan.changePaymentDates.getChangePaymentDate(plan.period)
+                    loan.changePaymentDates.getChangePaymentDate(plan.term)
                       ?.jsOriginalEndDate | date: 'MM/dd/yyyy'
                   }} to {{
-                    loan.changePaymentDates.getChangePaymentDate(plan.period)
+                    loan.changePaymentDates.getChangePaymentDate(plan.term)
                       ?.jsNewDate | date: 'MM/dd/yyyy'
                   }}"
                   tooltipPosition="top"
@@ -1010,18 +1012,20 @@
             <td *ngIf="showAdvancedTable">
               {{ plan.prebillDaysConfiguration }}
             </td>
-            <td>{{ plan.periodBillOpenDate | date: "MM/dd/yyyy" }}</td>
+            <td>{{ plan.periodBillOpenDate.toDate() | date: "MM/dd/yyyy" }}</td>
             <td *ngIf="showAdvancedTable">
               {{ plan.billDueDaysAfterPeriodEndConfiguration }}
             </td>
             <td>
-              {{ plan.periodBillDueDate | date: "MM/dd/yyyy" }}
+              {{ plan.periodBillDueDate.toDate() | date: "MM/dd/yyyy" }}
             </td>
 
             <td class="flex flex-wrap column-gap-2 row-gap-6">
               <span
                 class="w-3rem flex align-items-center justify-content-center"
-                >{{ plan.periodInterestRate | number }}%</span
+                >{{
+                  plan.periodInterestRate.times(100).toNumber() | number
+                }}%</span
               >
               <span
                 class="w-3rem flex align-items-center justify-content-center"
@@ -1046,15 +1050,21 @@
               </span>
             </td>
 
-            <td>{{ showFullNumbers ? plan.fees : (plan.fees | currency) }}</td>
+            <td>
+              {{
+                showFullNumbers
+                  ? plan.fees.toNumber()
+                  : (plan.fees.toNumber() | currency)
+              }}
+            </td>
             <td class="flex flex-wrap column-gap-2 row-gap-6">
               <span
                 class="align-content-start w-4rem flex flex align-items-center justify-content-center"
               >
                 {{
                   showFullNumbers
-                    ? plan.dueInterestForTerm
-                    : (plan.dueInterestForTerm | currency)
+                    ? plan.dueInterestForTerm.toNumber()
+                    : (plan.dueInterestForTerm.toNumber() | currency)
                 }}
               </span>
               <span
@@ -1078,22 +1088,24 @@
             </td>
             <td>
               {{
-                showFullNumbers ? plan.principal : (plan.principal | currency)
+                showFullNumbers
+                  ? plan.principal.toNumber()
+                  : (plan.principal.toNumber() | currency)
               }}
             </td>
             <td class="flex flex-wrap column-gap-4 row-gap-6">
               <span class="flex align-items-center justify-content-center">
                 {{
                   showFullNumbers
-                    ? plan.totalPayment
-                    : (plan.totalPayment | currency)
+                    ? plan.totalPayment.toNumber()
+                    : (plan.totalPayment.toNumber() | currency)
                 }}</span
               >
               <span class="flex align-items-center justify-content-center"
                 ><p-badge
                   *ngIf="
                     loan.termPaymentAmountOverride.getPaymentAmountForTerm(
-                      plan.period
+                      plan.term
                     )
                   "
                   value="PO"
@@ -1103,7 +1115,7 @@
                     loan.jsEquitedMonthlyPayment | currency
                   }} to {{
                     loan.termPaymentAmountOverride.getPaymentAmountForTerm(
-                      plan.period
+                      plan.term
                     )?.jsPaymentAmount | currency
                   }}"
                   tooltipPosition="top"
@@ -1114,13 +1126,15 @@
             <td>
               {{
                 showFullNumbers
-                  ? plan.startBalance
-                  : (plan.startBalance | currency)
+                  ? plan.startBalance.toNumber()
+                  : (plan.startBalance.toNumber() | currency)
               }}
             </td>
             <td>
               {{
-                showFullNumbers ? plan.endBalance : (plan.endBalance | currency)
+                showFullNumbers
+                  ? plan.endBalance.toNumber()
+                  : (plan.endBalance.toNumber() | currency)
               }}
             </td>
             <!-- Advanced Columns -->
@@ -1128,8 +1142,8 @@
             <td *ngIf="showAdvancedTable">
               {{
                 showFullNumbers
-                  ? plan.balanceModificationAmount
-                  : (plan.balanceModificationAmount | currency)
+                  ? plan.balanceModificationAmount.toNumber()
+                  : (plan.balanceModificationAmount.toNumber() | currency)
               }}
             </td>
 
@@ -1137,29 +1151,29 @@
             <td *ngIf="showAdvancedTable">
               {{
                 showFullNumbers
-                  ? plan.accruedInterestForPeriod
-                  : (plan.accruedInterestForPeriod | currency)
+                  ? plan.accruedInterestForPeriod.toNumber()
+                  : (plan.accruedInterestForPeriod.toNumber() | currency)
               }}
             </td>
             <td *ngIf="showAdvancedTable">
               {{
                 showFullNumbers
-                  ? plan.billedInterestForTerm
-                  : (plan.billedInterestForTerm | currency)
+                  ? plan.billedInterestForTerm.toNumber()
+                  : (plan.billedInterestForTerm.toNumber() | currency)
               }}
             </td>
             <td *ngIf="showAdvancedTable">
               {{
                 showFullNumbers
-                  ? plan.billedDeferredInterest
-                  : (plan.billedDeferredInterest | currency)
+                  ? plan.billedDeferredInterest.toNumber()
+                  : (plan.billedDeferredInterest.toNumber() | currency)
               }}
             </td>
             <td *ngIf="showAdvancedTable">
               {{
                 showFullNumbers
-                  ? plan.unbilledTotalDeferredInterest
-                  : (plan.unbilledTotalDeferredInterest | currency)
+                  ? plan.unbilledTotalDeferredInterest.toNumber()
+                  : (plan.unbilledTotalDeferredInterest.toNumber() | currency)
               }}
             </td>
             <!-- end of interest values -->

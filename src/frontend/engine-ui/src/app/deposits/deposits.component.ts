@@ -35,7 +35,6 @@ export class DepositsComponent {
   @Input() payoffAmount: Currency = Currency.Zero();
   @Input() accruedInterestToDate: Currency = Currency.Zero();
 
-  @Output() depositsChange = new EventEmitter<DepositRecords>();
   @Output() depositUpdated = new EventEmitter<void>();
 
   @ViewChildren('depositRow', { read: ElementRef })
@@ -136,7 +135,6 @@ export class DepositsComponent {
     }
 
     // Emit changes
-    this.depositsChange.emit(this.deposits);
     this.depositUpdated.emit();
 
     // Close the dialog & end bulk edit mode
@@ -292,6 +290,8 @@ export class DepositsComponent {
       Object.assign(this.selectedDepositForEdit, this.depositData);
     } else {
       this.deposits.addRecord(this.depositData);
+      // hack to force table refresh
+      this.deposits.records = this.deposits.records;
     }
     this.depositActiveUpdated();
     this.showDepositDialog = false;
@@ -299,7 +299,6 @@ export class DepositsComponent {
   }
 
   depositActiveUpdated() {
-    this.depositsChange.emit(this.deposits);
     this.depositUpdated.emit();
   }
 
@@ -313,7 +312,6 @@ export class DepositsComponent {
 
   removeDeposit(deposit: DepositRecord) {
     this.deposits.removeRecordById(deposit.id);
-    this.depositsChange.emit(this.deposits);
     this.depositUpdated.emit();
   }
 

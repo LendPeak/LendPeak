@@ -1269,11 +1269,6 @@ export class AppComponent implements OnChanges {
     this.submitLoan();
   }
 
-  // Handle deposits change event
-  onDepositsChange(updatedDeposits: DepositRecords) {
-    this.deposits = updatedDeposits;
-  }
-
   // Handle deposit updated event (e.g., to recalculate loan details)
   onDepositUpdated() {
     this.applyPayments();

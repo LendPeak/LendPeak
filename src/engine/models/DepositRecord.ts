@@ -7,11 +7,10 @@ import utc from "dayjs/plugin/utc";
 dayjs.extend(utc);
 
 import isBetween from "dayjs/plugin/isBetween";
-import { stat } from "fs";
 dayjs.extend(isBetween);
 
 export interface DepositMetadata {
-  [key: string]: any;
+  custom?: { [key: string]: any };
 }
 
 export class DepositRecord {

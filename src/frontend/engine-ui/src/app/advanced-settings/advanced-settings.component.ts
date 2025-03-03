@@ -81,14 +81,17 @@ export class AdvancedSettingsComponent implements OnInit {
     { label: 'Day', value: 'day' },
   ];
 
-  roundingMethods: DropDownOptionString[] = [
-    { label: 'Round Up', value: 'ROUND_UP' },
-    { label: 'Round Down', value: 'ROUND_DOWN' },
-    { label: 'Round Half Up', value: 'ROUND_HALF_UP' },
-    { label: 'Round Half Down', value: 'ROUND_HALF_DOWN' },
-    { label: 'Round Half Even (Bankers Rounding)', value: 'ROUND_HALF_EVEN' },
-    { label: 'Round Half Ceiling', value: 'ROUND_HALF_CEIL' },
-    { label: 'Round Half Floor', value: 'ROUND_HALF_FLOOR' },
+  roundingMethods: DropDownOptionNumber[] = [
+    { label: 'Round Up', value: RoundingMethod.ROUND_UP },
+    { label: 'Round Down', value: RoundingMethod.ROUND_DOWN },
+    { label: 'Round Half Up', value: RoundingMethod.ROUND_HALF_UP },
+    { label: 'Round Half Down', value: RoundingMethod.ROUND_HALF_DOWN },
+    {
+      label: 'Round Half Even (Bankers Rounding)',
+      value: RoundingMethod.ROUND_HALF_EVEN,
+    },
+    { label: 'Round Half Ceiling', value: RoundingMethod.ROUND_HALF_CEIL },
+    { label: 'Round Half Floor', value: RoundingMethod.ROUND_HALF_FLOOR },
   ];
 
   flushMethods: DropDownOptionString[] = [

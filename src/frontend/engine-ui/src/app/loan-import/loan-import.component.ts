@@ -444,10 +444,13 @@ export class LoanImportComponent implements OnInit, OnDestroy {
       (tr) => tr.type === 'scheduledPayment',
     ).sort((a, b) => a.period - b.period);
     const lastScheduledPeriod = scheduledPayments[scheduledPayments.length - 1];
-    const lastScheduledPeriodEndDate = dayjs(
-      parseODataDate(lastScheduledPeriod.periodEnd, true),
-    ).add(1, 'day');
-
+    let endDate: dayjs.Dayjs | undefined = undefined;
+    if (lastScheduledPeriod) {
+      const lastScheduledPeriodEndDate = dayjs(
+        parseODataDate(lastScheduledPeriod.periodEnd, true),
+      ).add(1, 'day');
+      endDate = lastScheduledPeriodEndDate;
+    }
     const uiLoan: AmortizationParams = {
       // objectVersion: 9,
       id: loanData.d.id.toString(),
@@ -467,7 +470,7 @@ export class LoanImportComponent implements OnInit, OnDestroy {
         true,
       ),
       // endDate: parseODataDate(loanData.d.LoanSetup.origFinalPaymentDate, true),
-      endDate: lastScheduledPeriodEndDate,
+      endDate: endDate,
       calendarType: calendarType,
       roundingMethod: 'ROUND_HALF_EVEN',
       billingModel: billingModel,

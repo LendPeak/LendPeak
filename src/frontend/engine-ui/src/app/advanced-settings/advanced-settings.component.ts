@@ -180,9 +180,7 @@ export class AdvancedSettingsComponent implements OnInit {
     this.loan.roundingPrecision = 2;
 
     // Store as original settings
-    this.originalSettings = JSON.parse(
-      JSON.stringify(this.getCurrentSettings()),
-    );
+    this.originalSettings = this.getCurrentSettings();
 
     this.emitLoanChange();
   }

@@ -1154,7 +1154,7 @@ export class Amortization {
 
   set flushThreshold(value: Currency | number | Decimal) {
     this.modifiedSinceLastCalculation = true;
-
+    console.log("flush threshold", value);
     if (value instanceof Currency) {
       this._flushThreshold = value;
     } else {

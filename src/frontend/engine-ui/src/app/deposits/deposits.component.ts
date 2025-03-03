@@ -16,7 +16,7 @@ import { Currency } from 'lendpeak-engine/utils/Currency';
 import dayjs from 'dayjs';
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore';
 import isBetween from 'dayjs/plugin/isBetween';
-import { UsageDetail } from 'lendpeak-engine/models/Bill/Deposit/UsageDetail';
+import { UsageDetail } from 'lendpeak-engine/models/Bill/DepositRecord/UsageDetail';
 import { StaticAllocation } from 'lendpeak-engine/models/Bill/DepositRecord/StaticAllocation';
 
 dayjs.extend(isSameOrBefore);

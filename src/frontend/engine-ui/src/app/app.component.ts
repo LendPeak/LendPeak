@@ -48,15 +48,13 @@ import { Bill } from 'lendpeak-engine/models/Bill';
 import { Bills } from 'lendpeak-engine/models/Bills';
 import { BillPaymentDetail } from 'lendpeak-engine/models/Bill/BillPaymentDetail';
 import { BillGenerator } from 'lendpeak-engine/models/BillGenerator';
-import { Currency, RoundingMethod } from 'lendpeak-engine/utils/Currency';
+import { Currency } from 'lendpeak-engine/utils/Currency';
 import Decimal from 'decimal.js';
 import { XaiSummarizeService } from './services/xai-summarize-service';
 import { OpenAiChatService } from './services/openai-summarize-service';
 import { SystemSettingsService } from './services/system-settings.service';
 import { FinancialOpsVersionManager } from 'lendpeak-engine/models/FinancialOpsVersionManager';
 import { MarkdownService } from 'ngx-markdown';
-
-import { CalendarType } from 'lendpeak-engine/models/Calendar';
 
 import dayjs, { Dayjs } from 'dayjs';
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter';
@@ -72,8 +70,6 @@ import {
   PastDueSummary,
   ActualLoanSummary,
 } from 'lendpeak-engine/models/UIInterfaces';
-import { UsageDetail } from 'lendpeak-engine/models/Bill/Deposit/UsageDetail';
-import { __await } from 'tslib';
 
 declare let gtag: Function;
 

@@ -187,6 +187,7 @@
           dateFormat="mm/dd/yy"
           [numberOfMonths]="2"
           [showButtonBar]="true"
+          [maxDate]="loan.jsEndDate"
           [disabled]="!loan.jshasCustomFirstPaymentDate"
           [style]="{ width: '100%' }"
           appendTo="body"

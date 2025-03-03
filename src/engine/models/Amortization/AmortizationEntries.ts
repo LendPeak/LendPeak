@@ -72,7 +72,8 @@ export class AmortizationEntries {
 
   getPeriodByDate(date: Dayjs): AmortizationEntry {
     // find period where passed date is between period start and end date
-    return this._entries.find((period) => date.isBetween(period.periodStartDate, period.periodEndDate, null, "[]"))!;
+    const activePeriod = this._entries.find((period) => date.isBetween(period.periodStartDate, period.periodEndDate, null, "[]"))!;
+    return activePeriod || this.lastEntry;
   }
 
   getPerDiemForPeriodByDate(date: Dayjs | Date): Currency {

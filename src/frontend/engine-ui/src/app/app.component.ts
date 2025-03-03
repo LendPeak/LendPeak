@@ -1533,6 +1533,9 @@ export class AppComponent implements OnChanges {
 
     try {
       this.loan.jsGenerateSchedule();
+      // forcing repayment plan refresh. This is needed because we are not updating the loan object
+      this.loan.repaymentSchedule = this.loan.repaymentSchedule;
+
       // const engineParams = toAmortizationParams(uiAmortizationParams);
       // amortization = new Amortization(engineParams);
       // this.loan.firstPaymentDate = amortization.firstPaymentDate.toDate();

@@ -2393,17 +2393,19 @@ export class Amortization {
     const activePeriod = this.repaymentSchedule.getPeriodByDate(date);
 
     if (!activePeriod) {
+      console.warn("could not find active period for accrued interest");
       return Currency.zero;
     }
     // next we get amortization entries with same period number and end date is same or before active period
-    const amortizationEntries = this.repaymentSchedule.entries.filter((entry) => entry.term === activePeriod.term && entry.periodEndDate.isSameOrBefore(activePeriod.periodStartDate));
+    // const amortizationEntries = this.repaymentSchedule.entries.filter((entry) => entry.term === activePeriod.term && entry.periodEndDate.isSameOrBefore(activePeriod.periodStartDate));
     // sum up accrued interest for those entries
     let accruedInterest = Currency.zero;
-    for (let entry of amortizationEntries) {
-      accruedInterest = accruedInterest.add(entry.accruedInterestForPeriod);
-    }
+    // for (let entry of amortizationEntries) {
+    //   accruedInterest = accruedInterest.add(entry.accruedInterestForPeriod);
+    // }
     // next we calculate interest for the active period
     const daysInPeriod = this.calendar.daysBetween(activePeriod.periodStartDate, date);
+    console.log("days in period", daysInPeriod, activePeriod.periodStartDate.format("YYYY-MM-DD"), date.format("YYYY-MM-DD"));
     const interestCalculator = new InterestCalculator(activePeriod.periodInterestRate, this.calendar.calendarType, this.perDiemCalculationType, daysInPeriod);
     const interestForDays = interestCalculator.calculateInterestForDays(activePeriod.startBalance, daysInPeriod);
     accruedInterest = accruedInterest.add(interestForDays);

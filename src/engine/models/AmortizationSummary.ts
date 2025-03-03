@@ -20,6 +20,8 @@ export class AmortizationSummary {
    */
   calculateLoanSummaryAsOfDate(date?: Dayjs | Date | string) {
     if (!date) {
+      console.log("No date provided, using today's date");
+      console.trace("Stack Trace");
       date = dayjs();
     } else {
       date = dayjs(date);

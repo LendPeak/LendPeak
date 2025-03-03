@@ -815,9 +815,7 @@
               >Cumulative Interest:</span
             >
             <span>{{
-              loan.summary
-                .calculateLoanSummaryAsOfDate()
-                .accruedInterestToDate.toNumber() | currency
+              loanSummary.accruedInterestToDate.toNumber() | currency
             }}</span>
           </div>
         </div>

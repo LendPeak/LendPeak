@@ -45,7 +45,7 @@ export class BasicLoanInfoComponent {
   }
 
   submitLoan() {
-    this.loanChange.emit(this.loan);
+    //  this.loanChange.emit(this.loan);
     this.loanUpdated.emit();
   }
 

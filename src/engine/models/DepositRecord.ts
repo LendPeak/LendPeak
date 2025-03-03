@@ -280,6 +280,16 @@ export class DepositRecord {
     this.jsExcessAppliedDate = value ? value.toDate() : undefined;
   }
 
+  get excessAmountApplied(): Currency {
+    // find in the usage details the principal prepayment
+    const principalPrepayment = this.usageDetails.find((detail) => detail.billId === "Principal Prepayment");
+    if (principalPrepayment) {
+      return Currency.of(principalPrepayment.allocatedPrincipal);
+    } else {
+      return Currency.Zero();
+    }
+  }
+
   get usageDetails(): UsageDetail[] {
     // verify type and if incorrect, inflate the object
     this._usageDetails = this._usageDetails.map((detail) => {

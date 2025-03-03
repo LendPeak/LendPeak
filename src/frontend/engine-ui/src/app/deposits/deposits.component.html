@@ -142,6 +142,17 @@
                   tooltipPosition="top"
                   tooltipStyleClass="wide-tooltip"
                 ></p-badge>
+                <p-badge
+                  *ngIf="deposit.excessAmountApplied.greaterThan(0)"
+                  value="+Prepayment"
+                  severity="warn"
+                  styleClass="mr-2"
+                  pTooltip="Deposit has pre-payment of {{
+                    deposit.excessAmountApplied.toNumber() | currency
+                  }} applied"
+                  tooltipPosition="top"
+                  tooltipStyleClass="wide-tooltip"
+                ></p-badge>
               </td>
               <td>{{ deposit.jsAmount | currency }}</td>
               <td>{{ deposit.currency }}</td>

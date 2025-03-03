@@ -328,7 +328,12 @@
         class="w-full"
       ></p-select>
     </div>
-    <p-card *ngIf="selectedAllocationType === 'staticDistribution'">
+    <p-card
+      *ngIf="
+        selectedAllocationType === 'staticDistribution' &&
+        depositData.staticAllocation
+      "
+    >
       <div class="field w-full text-xl text-center">
         <span class="text-300">Remaining Amount: </span
         ><span
@@ -345,7 +350,7 @@
           <label for="staticPrincipal-{{ depositData.id }}">Principal</label>
           <p-inputNumber
             inputId="staticPrincipal-{{ depositData.id }}"
-            [(ngModel)]="depositData.jsStaticAllocation!.principal"
+            [(ngModel)]="depositData.staticAllocation.jsPrincipal"
             mode="currency"
             currency="USD"
             locale="en-US"
@@ -360,7 +365,7 @@
           <label for="staticInterest-{{ depositData.id }}">Interest</label>
           <p-inputNumber
             inputId="staticInterest-{{ depositData.id }}"
-            [(ngModel)]="depositData.jsStaticAllocation!.interest"
+            [(ngModel)]="depositData.staticAllocation.jsInterest"
             mode="currency"
             currency="USD"
             locale="en-US"
@@ -378,7 +383,7 @@
           <label for="staticFees-{{ depositData.id }}">Fees</label>
           <p-inputNumber
             inputId="staticFees-{{ depositData.id }}"
-            [(ngModel)]="depositData.jsStaticAllocation!.fees"
+            [(ngModel)]="depositData.staticAllocation.jsFees"
             mode="currency"
             currency="USD"
             locale="en-US"
@@ -395,7 +400,7 @@
           >
           <p-inputNumber
             inputId="staticPrepayment-{{ depositData.id }}"
-            [(ngModel)]="depositData.jsStaticAllocation!.prepayment"
+            [(ngModel)]="depositData.staticAllocation.jsPrepayment"
             mode="currency"
             currency="USD"
             locale="en-US"

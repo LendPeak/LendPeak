@@ -17,6 +17,7 @@ import dayjs from 'dayjs';
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore';
 import isBetween from 'dayjs/plugin/isBetween';
 import { UsageDetail } from 'lendpeak-engine/models/Bill/Deposit/UsageDetail';
+import { StaticAllocation } from 'lendpeak-engine/models/Bill/DepositRecord/StaticAllocation';
 
 dayjs.extend(isSameOrBefore);
 dayjs.extend(isBetween);
@@ -156,12 +157,12 @@ export class DepositsComponent {
     if (event === 'default') {
       this.depositData.removeStaticAllocation();
     } else {
-      this.depositData.staticAllocation = {
+      this.depositData.staticAllocation = new StaticAllocation({
         principal: 0,
         interest: 0,
         fees: 0,
         prepayment: 0,
-      };
+      });
       this.staticUnusedAmount = this.depositData.amount.toNumber();
     }
     this.depositData.updateJsValues();
@@ -243,10 +244,10 @@ export class DepositsComponent {
   onDataChange(event: any) {
     if (this.depositData.staticAllocation) {
       this.staticUnusedAmount = this.depositData.amount
-        .subtract(this.depositData?.jsStaticAllocation?.principal || 0)
-        .subtract(this.depositData?.jsStaticAllocation?.interest || 0)
-        .subtract(this.depositData?.jsStaticAllocation?.fees || 0)
-        .subtract(this.depositData?.jsStaticAllocation?.prepayment || 0)
+        .subtract(this.depositData?.staticAllocation?.jsPrincipal || 0)
+        .subtract(this.depositData?.staticAllocation?.jsInterest || 0)
+        .subtract(this.depositData?.staticAllocation?.jsFees || 0)
+        .subtract(this.depositData?.staticAllocation?.jsPrepayment || 0)
         .toNumber();
 
       if (this.staticUnusedAmount < 0) {

@@ -435,22 +435,22 @@
       <!-- Row 4: Static Allocation (if present) -->
       <ng-container *ngIf="deposit.staticAllocation">
         <hr class="my-2" />
-        <div class="grid text-sm gap-2">
+        <div *ngIf="deposit.staticAllocation" class="grid text-sm gap-2">
           <div class="col-12 md:col-3 flex align-items-center">
             <span class="font-semibold text-300 mr-1">Principal:</span>
-            <span>{{ deposit.jsStaticAllocation?.principal | currency }}</span>
+            <span>{{ deposit.staticAllocation.jsPrincipal | currency }}</span>
           </div>
           <div class="col-12 md:col-3 flex align-items-center">
             <span class="font-semibold text-300 mr-1">Interest:</span>
-            <span>{{ deposit.jsStaticAllocation?.interest | currency }}</span>
+            <span>{{ deposit.staticAllocation.jsInterest | currency }}</span>
           </div>
           <div class="col-12 md:col-3 flex align-items-center">
             <span class="font-semibold text-300 mr-1">Fees:</span>
-            <span>{{ deposit.jsStaticAllocation?.fees | currency }}</span>
+            <span>{{ deposit.staticAllocation.jsFees | currency }}</span>
           </div>
           <div class="col-12 md:col-2 flex align-items-center">
             <span class="font-semibold text-300 mr-1">Prepayment:</span>
-            <span>{{ deposit.jsStaticAllocation?.prepayment | currency }}</span>
+            <span>{{ deposit.staticAllocation.jsPrepayment | currency }}</span>
           </div>
         </div>
       </ng-container>

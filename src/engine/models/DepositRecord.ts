@@ -1,5 +1,6 @@
 import { Currency } from "../utils/Currency";
-import { UsageDetail } from "./Bill/Deposit/UsageDetail";
+import { UsageDetail } from "./Bill/DepositRecord/UsageDetail";
+import { StaticAllocation, JsStaticAllocation } from "./Bill/DepositRecord/StaticAllocation";
 
 import dayjs, { Dayjs } from "dayjs";
 import utc from "dayjs/plugin/utc";
@@ -63,19 +64,7 @@ export class DepositRecord {
   _metadata?: DepositMetadata;
   _usageDetails: UsageDetail[] = [];
 
-  _staticAllocation?: {
-    principal: Currency;
-    interest: Currency;
-    fees: Currency;
-    prepayment: Currency;
-  };
-
-  jsStaticAllocation?: {
-    principal: number;
-    interest: number;
-    fees: number;
-    prepayment: number;
-  };
+  _staticAllocation?: StaticAllocation;
 
   constructor(params: {
     id?: string;
@@ -96,12 +85,7 @@ export class DepositRecord {
     balanceModificationId?: string;
     metadata?: DepositMetadata;
     active?: boolean;
-    staticAllocation?: {
-      principal: Currency | number;
-      interest: Currency | number;
-      fees: Currency | number;
-      prepayment: Currency | number;
-    };
+    staticAllocation?: StaticAllocation | JsStaticAllocation;
   }) {
     // console.log("params in deposit record", params);
     if (params.id) {
@@ -157,36 +141,12 @@ export class DepositRecord {
   clone(): DepositRecord {
     // console.log("json", this.json);
     // console.log("usage details", this.usageDetails);
+
     return new DepositRecord(this.json);
   }
 
   static rehydrateFromJSON(json: any): DepositRecord {
     return new DepositRecord(json);
-  }
-
-  set staticAllocation(value: { principal: Currency | number; interest: Currency | number; fees: Currency | number; prepayment: Currency | number }) {
-    // validate to make sure the sum of all static allocations is not greater than the deposit amount
-    const principal = Currency.of(value.principal);
-    const interest = Currency.of(value.interest);
-    const fees = Currency.of(value.fees);
-    const prepayment = Currency.of(value.prepayment);
-    const total = principal.add(interest).add(fees).add(prepayment);
-    if (!total.equals(this.amount)) {
-      throw new Error(
-        `Sum of static allocations for principal(${principal.toNumber()}) + interest(${interest.toNumber()}) + fees(${fees.toNumber()}) + prepayment(${prepayment.toNumber()}) must be equal to deposit amount(${this.amount.toNumber()})`
-      );
-    }
-
-    this._staticAllocation = {
-      principal: principal,
-      interest: interest,
-      fees: fees,
-      prepayment: prepayment,
-    };
-  }
-
-  get staticAllocation(): { principal: Currency; interest: Currency; fees: Currency; prepayment: Currency } | undefined {
-    return this._staticAllocation;
   }
 
   addUsageDetail(detail: UsageDetail): void {
@@ -212,6 +172,20 @@ export class DepositRecord {
     this.resetUsageDetails();
     this.unusedAmount = Currency.Zero();
     this.balanceModificationId = undefined;
+  }
+
+  get staticAllocation(): StaticAllocation | undefined {
+    return this._staticAllocation;
+  }
+
+  set staticAllocation(value: StaticAllocation | JsStaticAllocation | undefined) {
+    if (value instanceof StaticAllocation) {
+      this._staticAllocation = value;
+    } else if (value) {
+      this._staticAllocation = new StaticAllocation(value);
+    } else {
+      this._staticAllocation = undefined;
+    }
   }
 
   get amount(): Currency {
@@ -372,7 +346,6 @@ export class DepositRecord {
 
   removeStaticAllocation(): void {
     this._staticAllocation = undefined;
-    this.jsStaticAllocation = undefined;
   }
 
   updateModelValues(): void {
@@ -390,13 +363,8 @@ export class DepositRecord {
     this.excessAppliedDate = this.jsExcessAppliedDate ? dayjs(this.jsExcessAppliedDate) : undefined;
     this.unusedAmount = Currency.of(this.jsUnusedAmount || 0);
     this.balanceModificationId = this.jsBalanceModificationId;
-    if (this.jsStaticAllocation) {
-      this.staticAllocation = {
-        principal: Currency.of(this.jsStaticAllocation.principal),
-        interest: Currency.of(this.jsStaticAllocation.interest),
-        fees: Currency.of(this.jsStaticAllocation.fees),
-        prepayment: Currency.of(this.jsStaticAllocation.prepayment),
-      };
+    if (this.staticAllocation) {
+      this.staticAllocation.updateModelValues();
     }
   }
 
@@ -416,12 +384,7 @@ export class DepositRecord {
     this.jsUnusedAmount = this.unusedAmount.toNumber();
     this.jsBalanceModificationId = this.balanceModificationId;
     if (this.staticAllocation) {
-      this.jsStaticAllocation = {
-        principal: this.staticAllocation.principal.toNumber(),
-        interest: this.staticAllocation.interest.toNumber(),
-        fees: this.staticAllocation.fees.toNumber(),
-        prepayment: this.staticAllocation.prepayment.toNumber(),
-      };
+      this.staticAllocation.updateJsValues();
     }
   }
 
@@ -459,14 +422,7 @@ export class DepositRecord {
       balanceModificationId: this.balanceModificationId,
       metadata: this.metadata,
       active: this.active,
-      staticAllocation: this.staticAllocation
-        ? {
-            principal: this.staticAllocation.principal.toNumber(),
-            interest: this.staticAllocation.interest.toNumber(),
-            fees: this.staticAllocation.fees.toNumber(),
-            prepayment: this.staticAllocation.prepayment.toNumber(),
-          }
-        : undefined,
+      staticAllocation: this.staticAllocation ? this.staticAllocation.json : undefined,
     };
   }
 }

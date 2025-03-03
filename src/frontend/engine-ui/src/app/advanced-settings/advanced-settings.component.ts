@@ -139,9 +139,7 @@ export class AdvancedSettingsComponent implements OnInit {
       this.selectedSettingId = defaultSetting.id;
     } else {
       // If no default, store the current settings as original
-      this.originalSettings = JSON.parse(
-        JSON.stringify(this.getCurrentSettings()),
-      );
+      this.originalSettings = this.getCurrentSettings();
     }
   }
 
@@ -292,7 +290,7 @@ export class AdvancedSettingsComponent implements OnInit {
       defaultBillDueDaysAfterPeriodEndConfiguration:
         this.loan.defaultBillDueDaysAfterPeriodEndConfiguration,
       allowRateAbove100: this.loan.allowRateAbove100,
-      flushThreshold: this.loan.flushThreshold,
+      flushThreshold: this.loan.flushThreshold.toNumber(),
       roundingPrecision: this.loan.roundingPrecision,
     };
   }

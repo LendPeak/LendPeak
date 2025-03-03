@@ -3,7 +3,7 @@ import { Bill } from "../Bill";
 import { PaymentAllocation } from "./PaymentAllocation";
 import { PaymentPriority } from "./Types";
 import { DepositRecord } from "../DepositRecord";
-import { UsageDetail } from "../Bill/Deposit/UsageDetail";
+import { UsageDetail } from "../Bill/DepositRecord/UsageDetail";
 
 /**
  * This version accumulates total principal, interest, fees

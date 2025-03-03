@@ -12,7 +12,7 @@ import { PaymentAllocation } from "./PaymentAllocation";
 import { AllocationHelper } from "./AllocationHelper";
 import { BalanceModification } from "../Amortization/BalanceModification";
 import { v4 as uuidv4 } from "uuid";
-import { UsageDetail } from "../Bill/Deposit/UsageDetail";
+import { UsageDetail } from "../Bill/DepositRecord/UsageDetail";
 
 /**
  * Helper function for static-allocations only.

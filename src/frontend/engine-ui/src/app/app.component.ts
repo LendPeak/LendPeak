@@ -61,11 +61,10 @@ import isSameOrAfter from 'dayjs/plugin/isSameOrAfter';
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore';
 import isBetween from 'dayjs/plugin/isBetween';
 dayjs.extend(isBetween);
-
 dayjs.extend(isSameOrAfter);
 dayjs.extend(isSameOrBefore);
 
-import { v4 as uuidv4 } from 'uuid'; // For generating unique IDs
+import { v4 as uuidv4 } from 'uuid';
 import {
   PastDueSummary,
   ActualLoanSummary,
@@ -1388,6 +1387,9 @@ export class AppComponent implements OnChanges {
 
     // 1) Clear usageDetails from each deposit
     this.deposits.clearHistory();
+
+    // regenerate bills
+    this.generateBills();
 
     // 2) Build PaymentApplication & process
     const allocationStrategy = PaymentApplication.getAllocationStrategyFromName(

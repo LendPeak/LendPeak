@@ -314,6 +314,49 @@
       </p-inputgroup>
     </div>
     <div class="field">
+      <div class="flex items-center gap-2">
+        <p-checkbox
+          [(ngModel)]="test"
+          inputId="paymentAtPeriodsEnd"
+          name="size"
+          value="Large"
+          size="small"
+        />
+        <label for="size_large"
+          >Apply payment at period's end date during open billing cycle
+          <i
+            class="pi pi-info-circle tooltip-icon"
+            (click)="showTooltip($event, paymentAtPeriodsEnd)"
+          ></i
+        ></label>
+        <p-popover #paymentAtPeriodsEnd>
+          <ng-template pTemplate="content">
+            <div
+              class="flex flex-column gap-2 text-sm line-height-3"
+              style="max-width: 320px"
+            >
+              <p class="m-0">
+                <strong>Apply Payment at Period’s End Date:</strong>
+              </p>
+              <p class="m-0">
+                When this setting is enabled and a bill is already open, any
+                extra or “excess” payment will be applied
+                <em>at the start of the next billing cycle</em>. This prevents
+                re-issuing or closing the current open bill, but it also means
+                you won’t see immediate interest reduction on the current
+                statement.
+              </p>
+              <p class="m-0">
+                However, if the bill is <em>not open yet</em>, any principal
+                prepayment is applied right away using its excess-applied date
+                value.
+              </p>
+            </div>
+          </ng-template>
+        </p-popover>
+      </div>
+    </div>
+    <div class="field">
       <label for="allocationType">Allocation Type</label>
       <p-select
         inputId="allocationType"

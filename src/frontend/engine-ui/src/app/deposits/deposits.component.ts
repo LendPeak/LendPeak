@@ -18,6 +18,7 @@ import isSameOrBefore from 'dayjs/plugin/isSameOrBefore';
 import isBetween from 'dayjs/plugin/isBetween';
 import { UsageDetail } from 'lendpeak-engine/models/Bill/DepositRecord/UsageDetail';
 import { StaticAllocation } from 'lendpeak-engine/models/Bill/DepositRecord/StaticAllocation';
+import { Popover } from 'primeng/popover';
 
 dayjs.extend(isSameOrBefore);
 dayjs.extend(isBetween);
@@ -41,6 +42,7 @@ export class DepositsComponent {
   @ViewChildren('depositRow', { read: ElementRef })
   depositRows!: QueryList<ElementRef>;
 
+  test: any;
   showDepositDialog: boolean = false;
   selectedDepositForEdit: DepositRecord | null = null;
   depositData: DepositRecord = this.getEmptyDepositData();
@@ -375,5 +377,9 @@ export class DepositsComponent {
       u.allocatedInterest.toNumber() +
       u.allocatedFees.toNumber()
     );
+  }
+
+  showTooltip(event: Event, tooltipRef: Popover) {
+    tooltipRef.toggle(event);
   }
 }

@@ -438,6 +438,9 @@ export class LoanImportComponent implements OnInit, OnDestroy {
     // 3. Patch them if needed
     this.patchInterestOverrideDates(interestOverrides);
 
+    const deposits = this.mapDeposits(loanData);
+    console.log('adding deposits', deposits);
+
     // find all scheduled periods by looking at Transactions and getting entries matching title that starts with "Scheduled Payment"
     // and sort it by period from 0 to n
     const scheduledPayments = loanData.d.Transactions.filter(
@@ -451,6 +454,17 @@ export class LoanImportComponent implements OnInit, OnDestroy {
       ).add(1, 'day');
       endDate = lastScheduledPeriodEndDate;
     }
+
+    // check if there is a payoff transaction, in that instance that becomes end date
+    const payoffTransaction = loanData.d.Transactions.find(
+      (tr) =>
+        tr.type === 'payment' &&
+        tr.title.toLocaleLowerCase().includes('payoff'),
+    );
+    if (payoffTransaction) {
+      endDate = dayjs(parseODataDate(payoffTransaction.date, true));
+    }
+
     const uiLoan: AmortizationParams = {
       // objectVersion: 9,
       id: loanData.d.id.toString(),
@@ -534,8 +548,6 @@ export class LoanImportComponent implements OnInit, OnDestroy {
       //   }),
     };
 
-    const deposits = this.mapDeposits(loanData);
-    console.log('adding deposits', deposits);
     return { loan: new Amortization(uiLoan), deposits: deposits };
   }
 

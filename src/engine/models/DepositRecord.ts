@@ -1,4 +1,3 @@
-import { Deposit, DepositMetadata } from "./Deposit";
 import { Currency } from "../utils/Currency";
 import { UsageDetail } from "./Bill/Deposit/UsageDetail";
 
@@ -10,7 +9,11 @@ import isBetween from "dayjs/plugin/isBetween";
 import { stat } from "fs";
 dayjs.extend(isBetween);
 
-export class DepositRecord implements Deposit {
+export interface DepositMetadata {
+  [key: string]: any;
+}
+
+export class DepositRecord {
   id: string;
 
   private _amount!: Currency;

@@ -206,33 +206,6 @@ export class FIFOStrategy implements AllocationStrategy {
     const { totalAllocatedToComponent: principalAllocated } = allocateSingleComponentFIFO(bills, "principal", principal, deposit, allocations);
     unallocatedAmount = unallocatedAmount.subtract(principalAllocated);
 
-    // STEP 2a: Optional separate "prepayment" chunk
-    let balanceModification: BalanceModification | undefined;
-    if (prepayment && prepayment.greaterThan(0)) {
-      unallocatedAmount = unallocatedAmount.subtract(prepayment);
-
-      balanceModification = new BalanceModification({
-        id: uuidv4(),
-        amount: prepayment.toNumber(),
-        date: deposit.effectiveDate,
-        isSystemModification: true,
-        type: "decrease",
-        description: `Static Prepayment from deposit ${deposit.id}`,
-        metadata: { depositId: deposit.id },
-      });
-
-      // Single usage detail for the prepayment chunk
-      deposit.addUsageDetail({
-        billId: "Principal Prepayment",
-        period: 0,
-        billDueDate: deposit.effectiveDate,
-        allocatedPrincipal: prepayment,
-        allocatedInterest: Currency.Zero(),
-        allocatedFees: Currency.Zero(),
-        date: deposit.effectiveDate,
-      } as any);
-    }
-
     // STEP 3: Merge allocations -> single usage detail per Bill
     const usageMap = new Map<string, PaymentAllocation>();
     for (const alloc of allocations) {
@@ -293,7 +266,6 @@ export class FIFOStrategy implements AllocationStrategy {
       allocations,
       unallocatedAmount,
       excessAmount: Currency.Zero(),
-      balanceModification,
     };
   }
 }

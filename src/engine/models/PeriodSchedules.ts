@@ -41,6 +41,7 @@ export class PeriodSchedules {
 
   set periods(value) {
     const periods: PeriodSchedule[] = [];
+    this.reset();
     value.forEach((period) => {
       if (!(period instanceof PeriodSchedule)) {
         periods.push(new PeriodSchedule(period));

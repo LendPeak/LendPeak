@@ -5,12 +5,13 @@ import { Bills } from "./Bills";
 import { BalanceModification } from "./Amortization/BalanceModification";
 import { UsageDetail } from "./Bill/DepositRecord/UsageDetail";
 import dayjs, { Dayjs } from "dayjs";
-import { v4 as uuidv4 } from "uuid"; // Import UUID
+import { v4 as uuidv4 } from "uuid";
 import isBetween from "dayjs/plugin/isBetween";
 dayjs.extend(isBetween);
 
 import { PaymentAllocationStrategyName, PaymentComponent, PaymentPriority } from "./PaymentApplication/Types";
 
+import { Currency } from "../utils/Currency";
 import { PaymentApplicationResult } from "./PaymentApplication/PaymentApplicationResult";
 import { AllocationStrategy } from "./PaymentApplication/AllocationStrategy";
 import { FIFOStrategy } from "./PaymentApplication/FIFOStrategy";
@@ -113,7 +114,10 @@ export class PaymentApplication {
     const result = options.allocationStrategy.apply(deposit, this.bills, options.paymentPriority);
 
     if (deposit.applyExcessToPrincipal && result.unallocatedAmount.getValue().greaterThan(0)) {
-      const excessAmount = result.unallocatedAmount;
+      const excessAmount = Currency.of(result.unallocatedAmount);
+      result.unallocatedAmount = Currency.Zero();
+
+     // console.log("deposit after unused amount is being reset", deposit);
 
       const dateToApply = this.determineBalanceModificationDate(deposit);
 

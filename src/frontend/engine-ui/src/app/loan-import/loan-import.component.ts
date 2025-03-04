@@ -485,6 +485,9 @@ export class LoanImportComponent implements OnInit, OnDestroy {
       ),
       // endDate: parseODataDate(loanData.d.LoanSetup.origFinalPaymentDate, true),
       endDate: endDate,
+      payoffDate: payoffTransaction
+        ? dayjs(parseODataDate(payoffTransaction.date, true))
+        : undefined,
       calendarType: calendarType,
       roundingMethod: 'ROUND_HALF_EVEN',
       billingModel: billingModel,

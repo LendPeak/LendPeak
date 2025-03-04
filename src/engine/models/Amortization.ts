@@ -68,6 +68,7 @@ export interface AmortizationParams {
   startDate: Dayjs | Date;
   hasCustomEndDate?: boolean;
   endDate?: Dayjs | Date;
+  payoffDate?: Dayjs | Date;
   calendarType?: CalendarType | string;
   roundingMethod?: RoundingMethod | string;
   flushUnbilledInterestRoundingErrorMethod?: FlushUnbilledInterestDueToRoundingErrorType | string;
@@ -126,6 +127,9 @@ export class Amortization {
 
   private _endDate?: Dayjs;
   jsEndDate?: Date;
+
+  private _payoffDate?: Dayjs;
+  jsPayoffDate?: Date;
 
   private _hasCustomEndDate: boolean = false;
   jsHasCustomEndDate!: boolean;
@@ -283,6 +287,10 @@ export class Amortization {
       this.endDate = params.endDate;
     }
 
+    if (params.payoffDate) {
+      this.payoffDate = params.payoffDate;
+    }
+
     if (params.termPaymentAmountOverride && params.termPaymentAmountOverride.length > 0) {
       this.termPaymentAmountOverride = params.termPaymentAmountOverride;
     }
@@ -362,6 +370,7 @@ export class Amortization {
     this.changePaymentDates.updateJsValues();
     this.termInterestAmountOverride.updateJsValues();
     this.balanceModifications.updateJsValues();
+    this.periodsSchedule.updateJsValues();
 
     this.jsId = this.id;
     this.jsName = this.name;
@@ -391,6 +400,7 @@ export class Amortization {
     this.jsEndDate = this.endDate.toDate();
     this.jsDefaultPreBillDaysConfiguration = this.defaultPreBillDaysConfiguration;
     this.jsDefaultBillDueDaysAfterPeriodEndConfiguration = this.defaultBillDueDaysAfterPeriodEndConfiguration;
+    this.jsPayoffDate = this.payoffDate?.toDate();
   }
 
   updateModelValues() {
@@ -438,9 +448,11 @@ export class Amortization {
     this.changePaymentDates.updateModelValues();
     this.termInterestAmountOverride.updateModelValues();
     this.balanceModifications.updateModelValues();
+    this.periodsSchedule.updateModelValues();
 
     this.defaultPreBillDaysConfiguration = this.jsDefaultPreBillDaysConfiguration;
     this.defaultBillDueDaysAfterPeriodEndConfiguration = this.jsDefaultBillDueDaysAfterPeriodEndConfiguration;
+    this.payoffDate = this.jsPayoffDate;
   }
 
   /**
@@ -1128,6 +1140,7 @@ export class Amortization {
       return this._periodsSchedule;
     }
     if (this._periodsSchedule.hasCustomPeriods === true) {
+      console.log("periods custom schedule", this._periodsSchedule);
       return this._periodsSchedule;
     } else {
       if (this.modifiedSinceLastCalculation === true) {
@@ -1146,6 +1159,7 @@ export class Amortization {
     } else {
       this._periodsSchedule = new PeriodSchedules(periodsSchedule);
     }
+    console.log("setting periods schedule", this._periodsSchedule);
   }
 
   get flushThreshold(): Currency {
@@ -1386,6 +1400,20 @@ export class Amortization {
     this._startDate = dayjs(startDate).startOf("day");
   }
 
+  get payoffDate(): Dayjs | undefined {
+    return this._payoffDate;
+  }
+
+  set payoffDate(value: Date | Dayjs | undefined) {
+    this.modifiedSinceLastCalculation = true;
+
+    if (value) {
+      this._payoffDate = dayjs(value).startOf("day");
+    } else {
+      this._payoffDate = undefined;
+    }
+  }
+
   get endDate(): Dayjs {
     if (!this._endDate || (this.modifiedSinceLastCalculation === true && this.hasCustomEndDate === false)) {
       const termUnit = this.termPeriodDefinition.unit === "complex" ? "day" : this.termPeriodDefinition.unit;
@@ -1591,7 +1619,9 @@ export class Amortization {
    */
   verifySchedulePeriods(): void {
     if (this.periodsSchedule.length !== this.term) {
-      throw new Error("Invalid schedule periods, number of periods must match the term");
+      if (!this.payoffDate || !this.earlyRepayment) {
+        throw new Error("Invalid schedule periods, number of periods must match the term");
+      }
     }
     // Check if the start date of the first period is the same as the loan start date
     if (!this.startDate.isSame(this.periodsSchedule.firstPeriod.startDate, "day")) {
@@ -1600,7 +1630,9 @@ export class Amortization {
 
     // Check if the end date of the last period is the same as the loan end date
     if (!this.endDate.isSame(this.periodsSchedule.lastPeriod.endDate, "day")) {
-      throw new Error("Invalid schedule periods, end date does not match the loan end date");
+      if (!this.payoffDate || (this.payoffDate && !this.payoffDate.isSame(this.periodsSchedule.lastPeriod.endDate, "day"))) {
+        throw new Error("Invalid schedule periods, end date does not match the loan end date");
+      }
     }
 
     for (let i = 0; i < this.periodsSchedule.length - 1; i++) {
@@ -1662,8 +1694,17 @@ export class Amortization {
 
         if (matchingChange) {
           matchingChange.originalEndDate = endDate;
-          endDate = matchingChange.newDate.startOf("day");
+          endDate = matchingChange.newDate;
         }
+      }
+
+      // now lets see if we have a payoffDate set and if that payoffDate is
+      // between start and end dates, if so, end date should be the payoff date
+      if (this.payoffDate && this.payoffDate.isBetween(startDate, endDate, "day", "[]")) {
+        endDate = this.payoffDate;
+        // console.log("payoff date is between start and end date", startDate.format("YYYY-MM-DD"), endDate.format("YYYY-MM-DD"));
+        // terminate the loop
+        currentTerm = this.term;
       }
 
       periodsSchedule.push(
@@ -1678,7 +1719,7 @@ export class Amortization {
     }
 
     // Ensure the final period ends on the loan's end date
-    periodsSchedule[periodsSchedule.length - 1].endDate = this.endDate;
+    periodsSchedule[periodsSchedule.length - 1].endDate = this.payoffDate || this.endDate;
     return periodsSchedule;
   }
 
@@ -2405,7 +2446,7 @@ export class Amortization {
     // }
     // next we calculate interest for the active period
     const daysInPeriod = this.calendar.daysBetween(activePeriod.periodStartDate, date);
-    console.log("days in period", daysInPeriod, activePeriod.periodStartDate.format("YYYY-MM-DD"), date.format("YYYY-MM-DD"));
+    // console.log("days in period", daysInPeriod, activePeriod.periodStartDate.format("YYYY-MM-DD"), date.format("YYYY-MM-DD"));
     const interestCalculator = new InterestCalculator(activePeriod.periodInterestRate, this.calendar.calendarType, this.perDiemCalculationType, daysInPeriod);
     const interestForDays = interestCalculator.calculateInterestForDays(activePeriod.startBalance, daysInPeriod);
     accruedInterest = accruedInterest.add(interestForDays);
@@ -2453,6 +2494,7 @@ export class Amortization {
       defaultBillDueDaysAfterPeriodEndConfiguration: this.defaultBillDueDaysAfterPeriodEndConfiguration,
       startDate: this.startDate.toDate(),
       endDate: this.endDate.toDate(),
+      payoffDate: this.payoffDate?.toDate(),
       hasCustomEndDate: this.hasCustomEndDate,
       equitedMonthlyPayment: this.equitedMonthlyPayment.toNumber(),
       hasCustomEquitedMonthlyPayment: this.hasCustomEquitedMonthlyPayment,

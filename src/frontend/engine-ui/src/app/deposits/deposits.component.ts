@@ -322,6 +322,7 @@ export class DepositsComponent {
 
   viewDepositUsageDetails(deposit: DepositRecord) {
     this.selectedDeposit = deposit;
+    console.log('deposit usage details');
     this.showDepositUsageDetailsDialog = true;
   }
 
@@ -379,6 +380,10 @@ export class DepositsComponent {
       u.allocatedInterest.toNumber() +
       u.allocatedFees.toNumber()
     );
+  }
+
+  selectedDepositUnusedAmount(): number {
+    return this.selectedDeposit?.unusedAmount?.toNumber() || 0;
   }
 
   showTooltip(event: Event, tooltipRef: Popover) {

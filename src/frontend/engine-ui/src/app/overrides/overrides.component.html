@@ -492,6 +492,48 @@
         </p-accordion-content>
       </p-accordion-panel>
 
+      <!-- Payoff Settings Section -->
+      <p-accordion-panel value="payoffConfiguration">
+        <p-accordion-header>Payoff Configuration</p-accordion-header>
+        <p-accordion-content>
+          <div class="grid">
+            <!-- Term Payment Amount -->
+            <div class="col">
+              <label for="payoffDate">
+                Payoff Date
+                <i
+                  class="pi pi-info-circle tooltip-icon"
+                  (click)="showTooltip($event, jsPayoffDate)"
+                ></i>
+              </label>
+
+              <p-datepicker
+                [(ngModel)]="loan.jsPayoffDate"
+                inputId="payoffDate"
+                dateFormat="mm/dd/yy"
+                showIcon
+                [showButtonBar]="true"
+                appendTo="body"
+                [minDate]="loan.jsStartDate"
+                [maxDate]="loan.jsEndDate"
+                [numberOfMonths]="3"
+                (ngModelChange)="onInputChange($event)"
+                appendTo="body"
+              ></p-datepicker>
+
+              <!-- Tooltip Overlay -->
+              <p-popover #jsPayoffDate>
+                <ng-template pTemplate="content">
+                  Payoff Date is the date when the loan is paid off in full.
+                  System will alter billing cycle to ensure the loan is paid off
+                  on this date.
+                </ng-template>
+              </p-popover>
+            </div>
+          </div>
+        </p-accordion-content>
+      </p-accordion-panel>
+
       <!-- Payment Settings Section -->
       <p-accordion-panel value="paymentSettings">
         <p-accordion-header

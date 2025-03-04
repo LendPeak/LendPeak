@@ -516,6 +516,7 @@
   [style]="{ width: '85%' }"
   [closable]="true"
   (onHide)="selectedDeposit = null"
+  *ngIf="selectedDeposit"
 >
   <ng-template #header>
     <div
@@ -563,7 +564,7 @@
       ></p-badge>
     </div>
   </ng-template>
-  <p-table [value]="selectedDeposit?.usageDetails || []">
+  <p-table [value]="selectedDeposit.usageDetails || []">
     <!-- TABLE HEADER -->
     <ng-template pTemplate="header">
       <tr>
@@ -589,7 +590,7 @@
         <th class="bg-blue-50"></th>
         <!-- deposit.jsAmount => goes in Allocated Total column -->
         <th class="bg-blue-50 font-bold">
-          {{ selectedDeposit?.jsAmount | currency }}
+          {{ selectedDeposit.jsAmount | currency }}
         </th>
         <!-- 0 for principal, interest, fees -->
         <th class="bg-blue-50 font-bold">{{ 0 | currency }}</th>
@@ -733,7 +734,7 @@
           Unused:
         </td>
         <td class="bg-blue-50 font-bold">
-          {{ selectedDeposit?.jsUnusedAmount | currency }}
+          {{ selectedDepositUnusedAmount() | currency }}
         </td>
         <td class="bg-blue-50 font-bold"></td>
         <td class="bg-blue-50 font-bold"></td>

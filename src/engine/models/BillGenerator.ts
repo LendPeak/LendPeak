@@ -13,26 +13,27 @@ dayjs.extend(isSameOrAfter);
 dayjs.extend(isSameOrBefore);
 
 export class BillGenerator {
-  static generateBills(amortizationSchedule: AmortizationEntries, currentDate: Dayjs | Date = dayjs()): Bills {
+  static generateBills(params: { amortizationSchedule: AmortizationEntries; currentDate?: Dayjs | Date }): Bills {
     const bills: Bills = new Bills();
-    if (currentDate instanceof Date) {
-      currentDate = dayjs(currentDate);
+    if (!params.currentDate) {
+      params.currentDate = dayjs();
+    }
+    if (params.currentDate instanceof Date) {
+      params.currentDate = dayjs(params.currentDate);
     }
 
     let billIdSequence = 1;
-    for (const entry of amortizationSchedule.entries) {
+    for (const entry of params.amortizationSchedule.entries) {
       if (!entry.billablePeriod) {
         // Skip non-billable periods
         continue;
       }
 
-      
-
       const totalDue = entry.totalPayment;
       const id = BillGenerator.generateId(billIdSequence++);
       const isPaid = totalDue.getValue().isZero() ? true : false;
-      const isDue = entry.periodBillDueDate.isSameOrBefore(currentDate);
-      const isOpen = entry.periodBillOpenDate.isSameOrBefore(currentDate);
+      const isDue = entry.periodBillDueDate.isSameOrBefore(params.currentDate);
+      const isOpen = entry.periodBillOpenDate.isSameOrBefore(params.currentDate);
       const bill: Bill = new Bill({
         id: id,
         period: entry.term,
@@ -45,8 +46,8 @@ export class BillGenerator {
         isPaid: isPaid,
         isOpen: isOpen,
         isDue: isDue,
-        isPastDue: isPaid === false && entry.periodBillDueDate.isSameOrBefore(currentDate),
-        daysPastDue: dayjs(currentDate).diff(entry.periodBillDueDate, "day"),
+        isPastDue: isPaid === false && entry.periodBillDueDate.isSameOrBefore(params.currentDate),
+        daysPastDue: dayjs(params.currentDate).diff(entry.periodBillDueDate, "day"),
         amortizationEntry: entry,
       });
 

@@ -665,11 +665,10 @@ export class AppComponent implements OnChanges {
   generateBills() {
     // console.log('generating bills');
     const repaymentSchedule = this.loan.repaymentSchedule;
-    this.bills = BillGenerator.generateBills(
-      repaymentSchedule,
-      this.snapshotDate,
-    );
-    // console.log('generated new bills', this.bills);
+    this.bills = BillGenerator.generateBills({
+      amortizationSchedule: repaymentSchedule,
+      currentDate: this.snapshotDate,
+    });
   }
 
   downloadRepaymentPlanAsCSV() {
@@ -1456,7 +1455,7 @@ export class AppComponent implements OnChanges {
             allocatedPrincipal: allocation.allocatedPrincipal,
             allocatedInterest: allocation.allocatedInterest,
             allocatedFees: allocation.allocatedFees,
-            date: deposit.effectiveDate, // <--- Now deposit is in scope
+            date: deposit.effectiveDate,
           }),
         );
       });

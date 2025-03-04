@@ -969,8 +969,8 @@
                 styleClass="mr-2"
                 pTooltip="Balance {{
                   plan.balanceModificationAmount.greaterThan(0)
-                    ? 'increased'
-                    : 'decreased'
+                    ? 'decreased'
+                    : 'increased'
                 }} by {{
                   (plan.balanceModificationAmount.greaterThan(0)
                     ? plan.balanceModificationAmount.toNumber()
@@ -1177,7 +1177,7 @@
             <!-- end of interest values -->
 
             <td *ngIf="showAdvancedTable">
-              {{ plan.interestRoundingError }}
+              {{ plan.interestRoundingError.toNumber() }}
             </td>
             <td *ngIf="showAdvancedTable">
               {{

@@ -131,7 +131,7 @@ export class DepositRecord {
       this.excessAppliedDate = dayjs.utc(params.excessAppliedDate).startOf("day");
     }
     this.usageDetails = params.usageDetails || [];
-    this.unusedAmount = params.unusedAmount ? Currency.of(params.unusedAmount) : Currency.of(0);
+    this.unusedAmount = params.unusedAmount ? params.unusedAmount : 0;
     this.balanceModificationId = params.balanceModificationId;
 
     if (params.staticAllocation) {
@@ -359,7 +359,11 @@ export class DepositRecord {
     });
   }
 
-  set unusedAmount(value: Currency) {
+  set unusedAmount(value: Currency | number) {
+    // check type and inflate if necessary
+    if (typeof value === "number") {
+      value = Currency.of(value);
+    }
     this._unusedAmount = value;
     this.jsUnusedAmount = value.toNumber();
   }

@@ -119,10 +119,13 @@ export class OverridesComponent implements OnInit {
       this.openPanels.push('interestRate');
     }
 
+    if (this.loan.payoffDate) {
+      this.openPanels.push('payoffSettings');
+    }
     // Panel: Payment Settings (EIP)
     // You might open this if a certain condition is met, e.g., loan.termPaymentAmount > 0
     if (this.loan.hasCustomEquitedMonthlyPayment) {
-      this.openPanels.push('paymentSettings');
+      this.openPanels.push('payoffConfiguration');
     }
 
     // Panel: Term Payment Amount

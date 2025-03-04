@@ -155,7 +155,9 @@ export class PaymentApplication {
     }
 
     const depositEffectiveDayjs = dayjs(deposit.effectiveDate);
-    const openBillsAtDepositDate = this.bills.all.filter((bill) => bill.isOpen && bill.dueDate.isSameOrAfter(depositEffectiveDayjs)).sort((a, b) => a.openDate.diff(b.openDate));
+    const openBillsAtDepositDate = this.bills.all
+      .filter((bill) => bill.isOpen && bill.dueDate.isSameOrAfter(depositEffectiveDayjs) && bill.openDate.isSameOrBefore(depositEffectiveDayjs))
+      .sort((a, b) => a.openDate.diff(b.openDate));
 
     let balanceModificationDate: Dayjs;
 

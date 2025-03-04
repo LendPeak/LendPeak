@@ -476,6 +476,7 @@
       <!-- Deposits Tab -->
       <p-tabpanel [value]="4">
         <app-deposits
+          [loan]="loan"
           [deposits]="deposits"
           [currencyOptions]="currencyOptions"
           (depositUpdated)="onDepositUpdated()"

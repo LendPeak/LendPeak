@@ -55,6 +55,9 @@ export class DepositRecord {
   private _applyExcessToPrincipal!: boolean;
   jsApplyExcessToPrincipal?: boolean;
 
+  private _applyExcessAtTheEndOfThePeriod: boolean = false;
+  jsApplyExcessAtTheEndOfThePeriod?: boolean = false;
+
   private _balanceModificationId?: string;
   jsBalanceModificationId?: string;
 
@@ -79,6 +82,7 @@ export class DepositRecord {
     depositLocation?: string;
     applyExcessToPrincipal?: boolean;
     excessAppliedDate?: Dayjs | Date;
+    applyExcessAtTheEndOfThePeriod?: boolean;
     usageDetails?: UsageDetail[] | any;
     unusedAmount?: Currency | number;
     balanceModificationId?: string;
@@ -134,7 +138,19 @@ export class DepositRecord {
       this.staticAllocation = params.staticAllocation;
     }
 
+    if (params.applyExcessAtTheEndOfThePeriod !== undefined) {
+      this.applyExcessAtTheEndOfThePeriod = params.applyExcessAtTheEndOfThePeriod;
+    }
+
     this.updateJsValues();
+  }
+
+  get applyExcessAtTheEndOfThePeriod(): boolean {
+    return this._applyExcessAtTheEndOfThePeriod;
+  }
+
+  set applyExcessAtTheEndOfThePeriod(value: boolean) {
+    this._applyExcessAtTheEndOfThePeriod = value;
   }
 
   clone(): DepositRecord {
@@ -375,6 +391,7 @@ export class DepositRecord {
     if (this.staticAllocation) {
       this.staticAllocation.updateModelValues();
     }
+    this.applyExcessAtTheEndOfThePeriod = this.jsApplyExcessAtTheEndOfThePeriod || false;
   }
 
   updateJsValues(): void {
@@ -395,6 +412,7 @@ export class DepositRecord {
     if (this.staticAllocation) {
       this.staticAllocation.updateJsValues();
     }
+    this.jsApplyExcessAtTheEndOfThePeriod = this.applyExcessAtTheEndOfThePeriod;
   }
 
   static generateUniqueId(sequence?: number): string {
@@ -432,6 +450,7 @@ export class DepositRecord {
       metadata: this.metadata,
       active: this.active,
       staticAllocation: this.staticAllocation ? this.staticAllocation.json : undefined,
+      applyExcessAtTheEndOfThePeriod: this.applyExcessAtTheEndOfThePeriod,
     };
   }
 }

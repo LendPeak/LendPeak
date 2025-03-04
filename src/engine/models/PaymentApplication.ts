@@ -155,15 +155,16 @@ export class PaymentApplication {
     }
 
     const depositEffectiveDayjs = dayjs(deposit.effectiveDate);
-    const openBillsAtDepositDate = this.bills.all.filter((bill) => !bill.isPaid && bill.isOpen && bill.dueDate.isSameOrAfter(depositEffectiveDayjs));
+    const openBillsAtDepositDate = this.bills.all.filter((bill) => bill.isOpen && bill.dueDate.isSameOrAfter(depositEffectiveDayjs)).sort((a, b) => a.openDate.diff(b.openDate));
 
     let balanceModificationDate: Dayjs;
 
-    if (openBillsAtDepositDate.length > 0) {
-      const latestBill = openBillsAtDepositDate.reduce((latest, bill) => (bill.dueDate.isAfter(latest.dueDate) ? bill : latest));
-      const nextTermStartDate = latestBill.amortizationEntry.periodEndDate;
+    if (deposit.applyExcessAtTheEndOfThePeriod === true && openBillsAtDepositDate.length > 0) {
+      const firstOpenBill = openBillsAtDepositDate[0];
 
-      balanceModificationDate = nextTermStartDate.isAfter(excessAppliedDate) ? nextTermStartDate : dayjs(excessAppliedDate).startOf("day");
+      const nextTermStartDate = firstOpenBill.amortizationEntry.periodEndDate;
+
+      balanceModificationDate = nextTermStartDate;
     } else {
       balanceModificationDate = depositEffectiveDayjs.isAfter(excessAppliedDate) ? depositEffectiveDayjs : dayjs(excessAppliedDate).startOf("day");
     }

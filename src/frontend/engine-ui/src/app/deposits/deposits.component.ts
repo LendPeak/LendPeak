@@ -10,6 +10,7 @@ import {
 import { DropDownOptionString } from '../models/common.model';
 import { DepositRecord } from 'lendpeak-engine/models/DepositRecord';
 import { DepositRecords } from 'lendpeak-engine/models/DepositRecords';
+import { Amortization } from 'lendpeak-engine/models/Amortization';
 import { Bills } from 'lendpeak-engine/models/Bills';
 import { Bill } from 'lendpeak-engine/models/Bill';
 import { Currency } from 'lendpeak-engine/utils/Currency';
@@ -30,10 +31,11 @@ dayjs.extend(isBetween);
   standalone: false,
 })
 export class DepositsComponent {
-  @Input() deposits: DepositRecords = new DepositRecords();
+  @Input({ required: true }) loan!: Amortization;
+  @Input({ required: true }) deposits: DepositRecords = new DepositRecords();
   @Input() currencyOptions: DropDownOptionString[] = [];
-  @Input() bills: Bills = new Bills();
-  @Input() snapshotDate: Date = new Date();
+  @Input({ required: true }) bills: Bills = new Bills();
+  @Input({ required: true }) snapshotDate: Date = new Date();
   @Input() payoffAmount: Currency = Currency.Zero();
   @Input() accruedInterestToDate: Currency = Currency.Zero();
 

@@ -567,6 +567,9 @@ export class LoanImportComponent implements OnInit, OnDestroy {
           id: `(${payment.id}) ${payment.info}`,
           // LPTs had excess applied to principal
           applyExcessToPrincipal: payment.info.includes('LPT') ? true : false,
+          applyExcessAtTheEndOfThePeriod: payment.info.includes('LPT')
+            ? true
+            : false,
           excessAppliedDate: payment.info.includes('LPT')
             ? parseODataDate(payment.date, true)
             : undefined,

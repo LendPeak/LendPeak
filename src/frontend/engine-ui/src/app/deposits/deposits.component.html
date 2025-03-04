@@ -142,17 +142,6 @@
                   tooltipPosition="top"
                   tooltipStyleClass="wide-tooltip"
                 ></p-badge>
-                <p-badge
-                  *ngIf="deposit.excessAmountApplied.greaterThan(0)"
-                  value="+Prepayment"
-                  severity="warn"
-                  styleClass="mr-2"
-                  pTooltip="Deposit has pre-payment of {{
-                    deposit.excessAmountApplied.toNumber() | currency
-                  }} applied"
-                  tooltipPosition="top"
-                  tooltipStyleClass="wide-tooltip"
-                ></p-badge>
               </td>
               <td>{{ deposit.jsAmount | currency }}</td>
               <td>{{ deposit.currency }}</td>
@@ -177,8 +166,41 @@
                     deposit.applyExcessToPrincipal ? 'green' : 'orange'
                   "
                 ></i>
+                <span *ngIf="deposit.applyExcessToPrincipal">
+                  <p-badge
+                    *ngIf="deposit.excessAmountApplied.greaterThan(0)"
+                    value="Prepayment: {{
+                      deposit.excessAmountApplied.toNumber() | currency
+                    }}"
+                    severity="success"
+                    styleClass="ml-2"
+                    pTooltip="Deposit has pre-payment of {{
+                      deposit.excessAmountApplied.toNumber() | currency
+                    }} applied"
+                    badgeSize="large"
+                    tooltipPosition="top"
+                    tooltipStyleClass="wide-tooltip"
+                  ></p-badge>
+                  <p-badge
+                    *ngIf="deposit.excessAmountApplied.isZero()"
+                    value="No Excess Available"
+                    severity="warn"
+                    styleClass="ml-2"
+                    pTooltip="Deposit has pre-payment of {{
+                      deposit.excessAmountApplied.toNumber() | currency
+                    }} applied"
+                    tooltipPosition="top"
+                    tooltipStyleClass="wide-tooltip"
+                  ></p-badge>
+                </span>
               </td>
-              <td>{{ deposit.jsExcessAppliedDate | date: "MM/dd/yyyy" }}</td>
+              <td>
+                <span *ngIf="deposit.balanceModificationId">{{
+                  loan.balanceModifications.getBalanceModificationById(
+                    deposit.balanceModificationId
+                  )?.jsDate | date: "MM/dd/yyyy"
+                }}</span>
+              </td>
               <td>
                 <div class="action-buttons">
                   <p-button
@@ -327,20 +349,20 @@
     <div class="field">
       <div class="flex items-center gap-2">
         <p-checkbox
-          [(ngModel)]="test"
-          inputId="paymentAtPeriodsEnd"
+          [(ngModel)]="depositData.jsApplyExcessAtTheEndOfThePeriod"
+          inputId="applyExcessAtTheEndOfThePeriod"
           name="size"
-          value="Large"
+          binary="true"
           size="small"
         />
         <label for="size_large"
           >Apply payment at period's end date during open billing cycle
           <i
             class="pi pi-info-circle tooltip-icon"
-            (click)="showTooltip($event, paymentAtPeriodsEnd)"
+            (click)="showTooltip($event, applyExcessAtTheEndOfThePeriod)"
           ></i
         ></label>
-        <p-popover #paymentAtPeriodsEnd>
+        <p-popover #applyExcessAtTheEndOfThePeriod>
           <ng-template pTemplate="content">
             <div
               class="flex flex-column gap-2 text-sm line-height-3"
@@ -598,7 +620,72 @@
 
         <!-- Bill Tag column -->
         <td>
-          <!-- same logic for Bill badges ... -->
+          <ng-container *ngIf="bills.getBillById(detail.billId) as bill">
+            <div class="flex align-items-center gap-2 mt-1">
+              <!-- If more than 1 payment covers this bill -->
+              <p-tag
+                *ngIf="(bill.paymentDetails?.length ?? 0) > 1"
+                value="{{ bill.paymentDetails.length + ' Payments' }}"
+                severity="warn"
+                pTooltip="This bill was satisfied by multiple payments"
+                tooltipPosition="top"
+              ></p-tag>
+
+              <!-- If bill is open and not paid -->
+              <p-tag
+                *ngIf="bill.isOpen && !bill.isPaid"
+                value="Open Bill"
+                severity="success"
+              ></p-tag>
+
+              <!-- If bill is future (not open) and not paid -->
+              <p-tag
+                *ngIf="!bill.isOpen && !bill.isPaid"
+                value="Future"
+                severity="info"
+              ></p-tag>
+
+              <!-- If total due is 0 => 'Skip A Pay' -->
+              <p-tag
+                *ngIf="bill.jsTotalDue == 0"
+                value="Skip A Pay"
+                severity="secondary"
+              ></p-tag>
+
+              <!-- If total due > 0 => 'Paid' or 'Unpaid' -->
+              <p-tag
+                *ngIf="bill.jsTotalDue > 0"
+                [value]="bill.isPaid ? 'Paid' : 'Unpaid'"
+                [severity]="bill.isPaid ? 'success' : 'warn'"
+              ></p-tag>
+
+              <!-- If past due and not paid => e.g. 'X Days Past Due' -->
+              <p-tag
+                *ngIf="bill.isPastDue && !bill.isPaid"
+                [value]="bill.daysPastDue + ' Days Past Due'"
+                severity="danger"
+              ></p-tag>
+
+              <!-- If the bill is paid and has a satisfied date, check days late/early/on-time -->
+              <ng-container *ngIf="bill.isPaid && bill.dateFullySatisfied">
+                <p-tag
+                  *ngIf="bill.daysLate"
+                  [value]="bill.daysLate + ' Days Late'"
+                  severity="warn"
+                ></p-tag>
+                <p-tag
+                  *ngIf="bill.daysEarly"
+                  [value]="bill.daysEarly + ' Days Early'"
+                  severity="success"
+                ></p-tag>
+                <p-tag
+                  *ngIf="!bill.daysLate && !bill.daysEarly"
+                  value="On-Time"
+                  severity="info"
+                ></p-tag>
+              </ng-container>
+            </div>
+          </ng-container>
         </td>
 
         <!-- Allocated Total (principal + interest + fees) => we call a TS method -->
@@ -708,7 +795,7 @@
   [draggable]="true"
   [resizable]="true"
   [style]="{ width: '650px' }"
-  [header]="'Bill Card #' + (selectedBillForCard?.id || '')"
+  [header]="'Bill Card - ' + (selectedBillForCard?.id || '')"
   (onHide)="selectedBillForCard = null"
 >
   <ng-container *ngIf="selectedBillForCard as bill">
@@ -847,19 +934,71 @@
         <ng-template pTemplate="header">
           <tr>
             <th>Deposit ID</th>
+            <th>Allocated Total</th>
             <th>Allocated Principal</th>
             <th>Allocated Interest</th>
             <th>Allocated Fees</th>
             <th>Date</th>
           </tr>
         </ng-template>
-        <ng-template pTemplate="body" let-payment>
+        <ng-template #body let-payment>
           <tr>
             <td>{{ payment.depositId }}</td>
+            <td>{{ payment.jsAllocatedTotal | currency }}</td>
             <td>{{ payment.jsAllocatedPrincipal | currency }}</td>
             <td>{{ payment.jsAllocatedInterest | currency }}</td>
             <td>{{ payment.jsAllocatedFees | currency }}</td>
             <td>{{ payment.jsDate | date: "MM/dd/yyyy" }}</td>
+          </tr>
+        </ng-template>
+
+        <ng-template #footer>
+          <!-- Totals row: how much was allocated in total -->
+          <tr>
+            <td
+              class="bg-blue-50"
+              colspan="1"
+              style="text-align: right; font-weight: bold"
+            >
+              Allocated:
+            </td>
+            <td class="bg-blue-50" style="font-weight: bold">
+              {{ bill?.jsAllocatedTotalSum | currency }}
+            </td>
+            <td class="bg-blue-50" style="font-weight: bold">
+              {{ bill?.jsAllocatedPrincipalSum | currency }}
+            </td>
+            <td class="bg-blue-50" style="font-weight: bold">
+              {{ bill?.jsAllocatedInterestSum | currency }}
+            </td>
+            <td class="bg-blue-50" style="font-weight: bold">
+              {{ bill?.jsAllocatedFeesSum | currency }}
+            </td>
+            <td class="bg-blue-50"></td>
+          </tr>
+
+          <!-- Remaining row: original minus allocated -->
+          <tr>
+            <td
+              class="bg-blue-50"
+              colspan="1"
+              style="text-align: right; font-weight: bold"
+            >
+              Remaining:
+            </td>
+            <td class="bg-blue-50" style="font-weight: bold">
+              {{ bill?.jsRemainingTotal | currency }}
+            </td>
+            <td class="bg-blue-50" style="font-weight: bold">
+              {{ bill?.jsRemainingPrincipal | currency }}
+            </td>
+            <td class="bg-blue-50" style="font-weight: bold">
+              {{ bill?.jsRemainingInterest | currency }}
+            </td>
+            <td class="bg-blue-50" style="font-weight: bold">
+              {{ bill?.jsRemainingFees | currency }}
+            </td>
+            <td class="bg-blue-50"></td>
           </tr>
         </ng-template>
       </p-table>

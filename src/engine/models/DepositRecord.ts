@@ -243,18 +243,33 @@ export class DepositRecord {
     return this._effectiveDate;
   }
 
-  set effectiveDate(value: Dayjs) {
+  set effectiveDate(value: Dayjs | Date | string) {
+    if (value instanceof Date) {
+      value = dayjs(value);
+    } else if (typeof value === "string") {
+      value = dayjs.utc(value);
+    }
     this._effectiveDate = value;
-    this.jsEffectiveDate = value.toDate();
+    this.jsEffectiveDate = new Date(this._effectiveDate.year(), this._effectiveDate.month(), this._effectiveDate.date());
   }
 
   get clearingDate(): Dayjs | undefined {
     return this._clearingDate;
   }
 
-  set clearingDate(value: Dayjs | undefined) {
+  set clearingDate(value: Dayjs | Date | undefined) {
+    if (value instanceof Date) {
+      value = dayjs(value);
+    } else if (typeof value === "string") {
+      value = dayjs.utc(value);
+    } else if (value === undefined) {
+      this._clearingDate = undefined;
+      this.jsClearingDate = undefined;
+      return;
+    }
+
     this._clearingDate = value;
-    this.jsClearingDate = value ? value.toDate() : undefined;
+    this.jsClearingDate = new Date(this._clearingDate.year(), this._clearingDate.month(), this._clearingDate.date());
   }
 
   get systemDate(): Dayjs {
@@ -292,8 +307,18 @@ export class DepositRecord {
   }
 
   set excessAppliedDate(value: Dayjs | undefined) {
+    if (value instanceof Date) {
+      value = dayjs(value);
+    } else if (typeof value === "string") {
+      value = dayjs.utc(value);
+    } else if (value === undefined) {
+      this._excessAppliedDate = undefined;
+      this.jsExcessAppliedDate = undefined;
+      return;
+    }
+
     this._excessAppliedDate = value;
-    this.jsExcessAppliedDate = value ? value.toDate() : undefined;
+    this.jsExcessAppliedDate = new Date(this._excessAppliedDate.year(), this._excessAppliedDate.month(), this._excessAppliedDate.date());
   }
 
   get excessAmountApplied(): Currency {

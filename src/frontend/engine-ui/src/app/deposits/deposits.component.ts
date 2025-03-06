@@ -8,6 +8,7 @@ import {
   ElementRef,
 } from '@angular/core';
 import { DropDownOptionString } from '../models/common.model';
+import { LendPeak } from 'lendpeak-engine/models/LendPeak';
 import { DepositRecord } from 'lendpeak-engine/models/DepositRecord';
 import { DepositRecords } from 'lendpeak-engine/models/DepositRecords';
 import { Amortization } from 'lendpeak-engine/models/Amortization';
@@ -31,10 +32,8 @@ dayjs.extend(isBetween);
   standalone: false,
 })
 export class DepositsComponent {
-  @Input({ required: true }) loan!: Amortization;
-  @Input({ required: true }) deposits: DepositRecords = new DepositRecords();
+  @Input({ required: true }) lendPeak?: LendPeak;
   @Input() currencyOptions: DropDownOptionString[] = [];
-  @Input({ required: true }) bills: Bills = new Bills();
   @Input({ required: true }) snapshotDate: Date = new Date();
   @Input() payoffAmount: Currency = Currency.Zero();
   @Input() accruedInterestToDate: Currency = Currency.Zero();
@@ -47,8 +46,8 @@ export class DepositsComponent {
   test: any;
   showDepositDialog: boolean = false;
   selectedDepositForEdit: DepositRecord | null = null;
-  depositData: DepositRecord = this.getEmptyDepositData();
-  originalDepositData: DepositRecord = this.getEmptyDepositData();
+  depositData?: DepositRecord;
+  originalDepositData?: DepositRecord;
 
   nextDuePrincipal: Currency = Currency.Zero();
   nextDueInterest: Currency = Currency.Zero();
@@ -80,7 +79,10 @@ export class DepositsComponent {
   showBillCardDialog = false;
 
   viewBillCard(billId: string) {
-    const found = this.bills.getBillById(billId);
+    if (!this.lendPeak) {
+      return;
+    }
+    const found = this.lendPeak.bills.getBillById(billId);
     if (found) {
       this.selectedBillForCard = found;
       this.showBillCardDialog = true;
@@ -158,6 +160,9 @@ export class DepositsComponent {
   staticUnusedAmount = 0;
 
   onAllocationTypeChange(event: any) {
+    if (!this.depositData) {
+      return;
+    }
     if (event === 'default') {
       this.depositData.removeStaticAllocation();
     } else {
@@ -173,11 +178,14 @@ export class DepositsComponent {
   }
 
   scrollToLastDeposit() {
-    if (this.deposits.length === 0) {
+    if (!this.lendPeak) {
+      return;
+    }
+    if (this.lendPeak.depositRecords.length === 0) {
       return;
     }
 
-    const lastDeposit = this.deposits.last;
+    const lastDeposit = this.lendPeak.depositRecords.last;
     this.highlightedDepositId = lastDeposit?.id;
 
     setTimeout(() => {
@@ -198,7 +206,7 @@ export class DepositsComponent {
   getEmptyDepositData(): DepositRecord {
     return new DepositRecord({
       amount: 0,
-      sequence: this.deposits.length + 1,
+      sequence: (this.lendPeak?.depositRecords?.length || 0) + 1,
       currency: 'USD',
       effectiveDate: new Date(),
       depositor: '',
@@ -246,6 +254,9 @@ export class DepositsComponent {
   }
 
   onDataChange(event: any) {
+    if (!this.depositData) {
+      return;
+    }
     if (this.depositData.staticAllocation) {
       this.staticUnusedAmount = this.depositData.amount
         .subtract(this.depositData?.staticAllocation?.jsPrincipal || 0)
@@ -275,11 +286,17 @@ export class DepositsComponent {
     // we want to rollback any changes made to the deposit data
     // simplest way is to sync model values back to js
     this.selectedAllocationType = 'default';
-    this.depositData = this.originalDepositData.clone();
+    //this.depositData = this.originalDepositData.clone();
     this.depositUpdated.emit();
   }
 
   saveDeposit() {
+    if (!this.lendPeak) {
+      return;
+    }
+    if (!this.depositData) {
+      return;
+    }
     if (
       this.depositData.applyExcessToPrincipal &&
       !this.depositData.jsExcessAppliedDate
@@ -294,9 +311,10 @@ export class DepositsComponent {
     if (this.selectedDepositForEdit) {
       Object.assign(this.selectedDepositForEdit, this.depositData);
     } else {
-      this.deposits.addRecord(this.depositData);
+      this.lendPeak.depositRecords.addRecord(this.depositData);
       // hack to force table refresh
-      this.deposits.records = this.deposits.records;
+      this.lendPeak.depositRecords.records =
+        this.lendPeak.depositRecords.records;
     }
     this.depositActiveUpdated();
     this.showDepositDialog = false;
@@ -308,6 +326,9 @@ export class DepositsComponent {
   }
 
   onApplyExcessToPrincipalChange(event: any) {
+    if (!this.depositData) {
+      return;
+    }
     if (event.checked === true) {
       this.depositData.excessAppliedDate = this.depositData.effectiveDate;
     } else {
@@ -316,7 +337,10 @@ export class DepositsComponent {
   }
 
   removeDeposit(deposit: DepositRecord) {
-    this.deposits.removeRecordById(deposit.id);
+    if (!this.lendPeak) {
+      return;
+    }
+    this.lendPeak.depositRecords.removeRecordById(deposit.id);
     this.depositUpdated.emit();
   }
 

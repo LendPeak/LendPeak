@@ -53,7 +53,7 @@
 </p-toolbar>
 
 <!-- Accordion with Advanced Settings - Updated for PrimeNG 19+ -->
-<p-accordion [multiple]="true">
+<p-accordion [multiple]="true" *ngIf="lendPeak">
   <!-- Term Configuration Section -->
   <p-accordion-panel value="termConfig">
     <p-accordion-header>Term Configuration</p-accordion-header>
@@ -71,7 +71,7 @@
             </label>
             <p-select
               inputId="termPeriodUnit"
-              [(ngModel)]="loan.termPeriodDefinition.unit"
+              [(ngModel)]="lendPeak.amortization.termPeriodDefinition.unit"
               [options]="termPeriodUnits"
               placeholder="Select a term period unit"
               (ngModelChange)="termPeriodDefinitionChange()"
@@ -97,7 +97,7 @@
             </label>
             <p-inputNumber
               inputId="termPeriodCount"
-              [(ngModel)]="loan.termPeriodDefinition.count[0]"
+              [(ngModel)]="lendPeak.amortization.termPeriodDefinition.count[0]"
               (ngModelChange)="termPeriodDefinitionChange()"
             ></p-inputNumber>
             <!-- Popover replacing OverlayPanel -->
@@ -120,7 +120,7 @@
             </label>
             <p-select
               inputId="calendarType"
-              [(ngModel)]="loan.calendar.calendarType"
+              [(ngModel)]="lendPeak.amortization.calendar.calendarType"
               [options]="calendarTypes"
               placeholder="Select a calendar type"
               (ngModelChange)="onInputChange()"
@@ -246,7 +246,7 @@
           </label>
           <p-select
             id="billingModel"
-            [(ngModel)]="loan.billingModel"
+            [(ngModel)]="lendPeak.amortization.billingModel"
             name="billingModel"
             [options]="billingModelOptions"
             placeholder="Select a loan type"
@@ -273,7 +273,10 @@
         </div>
 
         <!-- Conditionally display these fields only for 'amortized' loans -->
-        <div *ngIf="loan.billingModel === 'amortized'" class="field grid">
+        <div
+          *ngIf="lendPeak.amortization.billingModel === 'amortized'"
+          class="field grid"
+        >
           <!-- Default Pre Bill Days -->
           <div class="field col-6">
             <label for="defaultPreBillDaysConfiguration">
@@ -285,7 +288,9 @@
             </label>
             <p-inputNumber
               inputId="defaultPreBillDaysConfiguration"
-              [(ngModel)]="loan.jsDefaultPreBillDaysConfiguration"
+              [(ngModel)]="
+                lendPeak.amortization.jsDefaultPreBillDaysConfiguration
+              "
               (ngModelChange)="onInputChange()"
               appendTo="body"
             ></p-inputNumber>
@@ -309,7 +314,10 @@
             </label>
             <p-inputNumber
               inputId="defaultBillDueDaysAfterPeriodEndConfiguration"
-              [(ngModel)]="loan.jsDefaultBillDueDaysAfterPeriodEndConfiguration"
+              [(ngModel)]="
+                lendPeak.amortization
+                  .jsDefaultBillDueDaysAfterPeriodEndConfiguration
+              "
               (ngModelChange)="onInputChange()"
             ></p-inputNumber>
             <!-- Popover replacing OverlayPanel -->
@@ -341,7 +349,7 @@
           </label>
           <p-select
             id="perDiemCalculationType"
-            [(ngModel)]="loan.perDiemCalculationType"
+            [(ngModel)]="lendPeak.amortization.perDiemCalculationType"
             name="perDiemCalculationType"
             [options]="perDiemCalculationTypes"
             placeholder="Select a per diem calculation type"
@@ -365,7 +373,7 @@
         <!-- Allow Rates Above 100% -->
         <div class="field-checkbox">
           <p-checkbox
-            [(ngModel)]="loan.allowRateAbove100"
+            [(ngModel)]="lendPeak.amortization.allowRateAbove100"
             name="allowRateAbove100"
             binary="true"
             (ngModelChange)="onInputChange()"
@@ -397,7 +405,9 @@
           </label>
           <p-select
             id="flushMethod"
-            [(ngModel)]="loan.flushUnbilledInterestRoundingErrorMethod"
+            [(ngModel)]="
+              lendPeak.amortization.flushUnbilledInterestRoundingErrorMethod
+            "
             name="flushMethod"
             [options]="flushMethods"
             placeholder="Select a flush method"
@@ -416,7 +426,10 @@
         <!-- Flush Threshold -->
         <div
           class="field"
-          *ngIf="loan.flushUnbilledInterestRoundingErrorMethod !== 'none'"
+          *ngIf="
+            lendPeak.amortization.flushUnbilledInterestRoundingErrorMethod !==
+            'none'
+          "
         >
           <label for="flushThreshold">
             Unbilled Interest Flush Threshold
@@ -427,7 +440,7 @@
           </label>
           <p-inputNumber
             id="flushThreshold"
-            [(ngModel)]="loan.jsFlushThreshold"
+            [(ngModel)]="lendPeak.amortization.jsFlushThreshold"
             name="flushThreshold"
             mode="currency"
             currency="USD"
@@ -462,7 +475,7 @@
           </label>
           <p-select
             id="roundingMethod"
-            [(ngModel)]="loan.roundingMethod"
+            [(ngModel)]="lendPeak.amortization.roundingMethod"
             name="roundingMethod"
             [options]="roundingMethods"
             placeholder="Select a rounding method"
@@ -490,7 +503,7 @@
           </label>
           <p-inputNumber
             id="roundingPrecision"
-            [(ngModel)]="loan.roundingPrecision"
+            [(ngModel)]="lendPeak.amortization.roundingPrecision"
             name="roundingPrecision"
             (ngModelChange)="onInputChange()"
           ></p-inputNumber>

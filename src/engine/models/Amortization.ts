@@ -1159,7 +1159,7 @@ export class Amortization {
     } else {
       this._periodsSchedule = new PeriodSchedules(periodsSchedule);
     }
-    console.log("setting periods schedule", this._periodsSchedule);
+    // console.log("setting periods schedule", this._periodsSchedule);
   }
 
   get flushThreshold(): Currency {

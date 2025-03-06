@@ -6,6 +6,7 @@ import {
   SimpleChanges,
   OnChanges,
 } from '@angular/core';
+import { LendPeak } from 'lendpeak-engine/models/LendPeak';
 import { AmortizationVersionManager } from 'lendpeak-engine/models/AmortizationVersionManager';
 import { AmortizationVersion } from 'lendpeak-engine/models/AmortizationVersion';
 import { Subscription } from 'rxjs';
@@ -19,7 +20,7 @@ import { DatePipe } from '@angular/common';
   standalone: false,
 })
 export class VersionHistoryComponent implements OnChanges {
-  @Input() manager!: AmortizationVersionManager;
+  @Input({required: true}) lendPeak?: LendPeak;
   @Input() refreshEvent?: EventEmitter<AmortizationVersionManager>;
   @Output() onRollback = new EventEmitter<{
     versionId: string;
@@ -35,13 +36,13 @@ export class VersionHistoryComponent implements OnChanges {
   constructor() {}
 
   ngOnInit() {
-    this.refresh();
-    if (this.refreshEvent) {
-      this.refreshSub = this.refreshEvent.subscribe((newManager) => {
-        this.manager = newManager;
-        this.refresh();
-      });
-    }
+  //  this.refresh();
+    // if (this.refreshEvent) {
+    //   this.refreshSub = this.refreshEvent.subscribe((newManager) => {
+    //     this.manager = newManager;
+    //     this.refresh();
+    //   });
+    // }
   }
 
   // Good practice: unsubscribe in OnDestroy
@@ -50,26 +51,26 @@ export class VersionHistoryComponent implements OnChanges {
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes['manager']) {
-      this.manager = changes['manager'].currentValue;
-      // this.manager = changes['manager'].currentValue;
-      // console.log('New manager: ', this.manager);
-      this.refresh();
-    }
+    // if (changes['manager']) {
+    //   this.manager = changes['manager'].currentValue;
+    //   // this.manager = changes['manager'].currentValue;
+    //   // console.log('New manager: ', this.manager);
+    //   this.refresh();
+    // }
   }
 
   refresh(): void {
-    if (this.manager) {
-      this.versionEvents = [];
+    // if (this.manager) {
+    //   this.versionEvents = [];
 
-      const events = this.manager.versions;
+    //   const events = this.manager.versions;
 
-      this.versionEvents = [...events];
-      this.versionEvents = this.versionEvents.reverse();
-    } else {
-      console.warn('No manager provided');
-      return;
-    }
+    //   this.versionEvents = [...events];
+    //   this.versionEvents = this.versionEvents.reverse();
+    // } else {
+    //   console.warn('No manager provided');
+    //   return;
+    // }
   }
 
   formatValue(value: any): string {

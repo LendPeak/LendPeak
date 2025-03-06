@@ -174,7 +174,7 @@
   - [value]="openPanels" is an array of panel identifiers you want expanded.
   - Each <p-accordion-panel> sets a unique value="someId" to match the array entries.
 -->
-<div class="grid">
+<div class="grid" *ngIf="lendPeak">
   <div class="col-12">
     <p-accordion [multiple]="true" [value]="openPanels">
       <!-- Interest Rate -->
@@ -184,8 +184,8 @@
           <div class="p-fluid">
             <table
               *ngIf="
-                loan.rateSchedules.hasCustom &&
-                loan.rateSchedules.allCustom.length > 0
+                lendPeak.amortization.rateSchedules.hasCustom &&
+                lendPeak.amortization.rateSchedules.allCustom.length > 0
               "
               class="p-datatable p-component"
             >
@@ -200,7 +200,7 @@
               <tbody>
                 <tr
                   *ngFor="
-                    let rate of loan.rateSchedules.allCustom;
+                    let rate of lendPeak.amortization.rateSchedules.allCustom;
                     let i = index
                   "
                 >
@@ -307,8 +307,8 @@
           <div class="p-fluid">
             <table
               *ngIf="
-                loan.termInterestAmountOverride &&
-                loan.termInterestAmountOverride.length > 0
+                lendPeak.amortization.termInterestAmountOverride &&
+                lendPeak.amortization.termInterestAmountOverride.length > 0
               "
               class="p-datatable p-component"
             >
@@ -324,12 +324,12 @@
               <tbody>
                 <tr
                   *ngFor="
-                    let override of loan.termInterestAmountOverride.all;
+                    let override of lendPeak.amortization.termInterestAmountOverride.all;
                     let i = index
                   "
                   [ngClass]="{
                     'bg-red-100':
-                      loan.termInterestAmountOverride.isDuplicateTermNumber(
+                      lendPeak.amortization.termInterestAmountOverride.isDuplicateTermNumber(
                         override.jsTermNumber
                       ),
                   }"
@@ -409,8 +409,8 @@
           <div class="p-fluid">
             <table
               *ngIf="
-                loan.termInterestRateOverride &&
-                loan.termInterestRateOverride.length > 0
+                lendPeak.amortization.termInterestRateOverride &&
+                lendPeak.amortization.termInterestRateOverride.length > 0
               "
               class="p-datatable p-component"
             >
@@ -425,7 +425,7 @@
               <tbody>
                 <tr
                   *ngFor="
-                    let override of loan.termInterestRateOverride.all;
+                    let override of lendPeak.amortization.termInterestRateOverride.all;
                     let i = index
                   "
                 >
@@ -508,14 +508,14 @@
               </label>
 
               <p-datepicker
-                [(ngModel)]="loan.jsPayoffDate"
+                [(ngModel)]="lendPeak.amortization.jsPayoffDate"
                 inputId="payoffDate"
                 dateFormat="mm/dd/yy"
                 showIcon
                 [showButtonBar]="true"
                 appendTo="body"
-                [minDate]="loan.jsStartDate"
-                [maxDate]="loan.jsEndDate"
+                [minDate]="lendPeak.amortization.jsStartDate"
+                [maxDate]="lendPeak.amortization.jsEndDate"
                 [numberOfMonths]="3"
                 (ngModelChange)="onInputChange($event)"
                 appendTo="body"
@@ -553,7 +553,7 @@
               <p-inputgroup>
                 <p-inputgroup-addon>
                   <p-checkbox
-                    [(ngModel)]="loan.jsHasCustomEquitedMonthlyPayment"
+                    [(ngModel)]="lendPeak.amortization.jsHasCustomEquitedMonthlyPayment"
                     (ngModelChange)="onInputChange($event)"
                     binary="true"
                     inputId="hasCustomEquitedMonthlyPayment"
@@ -563,11 +563,11 @@
 
                 <p-inputNumber
                   inputId="jsEquitedMonthlyPayment"
-                  [(ngModel)]="loan.jsEquitedMonthlyPayment"
+                  [(ngModel)]="lendPeak.amortization.jsEquitedMonthlyPayment"
                   mode="currency"
                   currency="USD"
                   locale="en-US"
-                  [disabled]="!loan.hasCustomEquitedMonthlyPayment"
+                  [disabled]="!lendPeak.amortization.hasCustomEquitedMonthlyPayment"
                   (ngModelChange)="onInputChange($event)"
                 ></p-inputNumber>
               </p-inputgroup>
@@ -590,7 +590,7 @@
         <p-accordion-content>
           <div class="p-fluid">
             <table
-              *ngIf="loan.termPaymentAmountOverride.length > 0"
+              *ngIf="lendPeak.amortization.termPaymentAmountOverride.length > 0"
               class="p-datatable p-component"
             >
               <thead>
@@ -604,13 +604,13 @@
               <tbody>
                 <tr
                   *ngFor="
-                    let paymentConfiguration of loan.termPaymentAmountOverride
+                    let paymentConfiguration of lendPeak.amortization.termPaymentAmountOverride
                       .all;
                     let i = index
                   "
                   [ngClass]="{
                     'bg-red-100':
-                      loan.termPaymentAmountOverride.isDuplicateTermNumber(
+                      lendPeak.amortization.termPaymentAmountOverride.isDuplicateTermNumber(
                         paymentConfiguration.jsTermNumber
                       ),
                   }"
@@ -686,7 +686,7 @@
         <p-accordion-content>
           <div class="p-fluid">
             <table
-              *ngIf="loan.changePaymentDates.length > 0"
+              *ngIf="lendPeak.amortization.changePaymentDates.length > 0"
               class="p-datatable p-component"
             >
               <thead>
@@ -700,11 +700,11 @@
               <tbody>
                 <tr
                   *ngFor="
-                    let changePaymentDate of loan.changePaymentDates.all;
+                    let changePaymentDate of lendPeak.amortization.changePaymentDates.all;
                     let i = index
                   "
                   [ngClass]="{
-                    'bg-red-100': loan.changePaymentDates.isDuplicateTermNumber(
+                    'bg-red-100': lendPeak.amortization.changePaymentDates.isDuplicateTermNumber(
                       changePaymentDate.jsTermNumber
                     ),
                   }"
@@ -784,7 +784,7 @@
         <p-accordion-content>
           <div class="p-fluid">
             <table
-              *ngIf="loan.preBillDays.hasCustom"
+              *ngIf="lendPeak.amortization.preBillDays.hasCustom"
               class="p-datatable p-component"
             >
               <thead>
@@ -798,7 +798,7 @@
               <tbody>
                 <tr
                   *ngFor="
-                    let preBillDay of loan.preBillDays.allCustom;
+                    let preBillDay of lendPeak.amortization.preBillDays.allCustom;
                     let i = index
                   "
                 >
@@ -863,7 +863,7 @@
         <p-accordion-content>
           <div class="p-fluid">
             <table
-              *ngIf="loan.dueBillDays.hasCustom"
+              *ngIf="lendPeak.amortization.dueBillDays.hasCustom"
               class="p-datatable p-component"
             >
               <thead>
@@ -877,7 +877,7 @@
               <tbody>
                 <tr
                   *ngFor="
-                    let dueBillDay of loan.dueBillDays.allCustom;
+                    let dueBillDay of lendPeak.amortization.dueBillDays.allCustom;
                     let i = index
                   "
                 >
@@ -942,7 +942,7 @@
         <p-accordion-content>
           <div class="grid">
             <div class="col-12">
-              <p-table [value]="loan.balanceModifications.all">
+              <p-table [value]="lendPeak.amortization.balanceModifications.all">
                 <ng-template pTemplate="header">
                   <tr>
                     <th style="width: 10%">Date</th>
@@ -1054,7 +1054,7 @@
         <p-accordion-content>
           <div class="p-fluid">
             <table
-              *ngIf="loan.feesForAllTerms.length > 0"
+              *ngIf="lendPeak.amortization.feesForAllTerms.length > 0"
               class="p-datatable p-component p-datatable-responsive"
             >
               <thead>
@@ -1067,7 +1067,7 @@
                 </tr>
               </thead>
               <tbody>
-                <tr *ngFor="let fee of loan.feesForAllTerms.all; let i = index">
+                <tr *ngFor="let fee of lendPeak.amortization.feesForAllTerms.all; let i = index">
                   <!-- Fee Type -->
                   <td>
                     <p-select
@@ -1158,7 +1158,7 @@
           <div class="p-fluid">
             <table
               class="p-datatable p-component"
-              *ngIf="loan.feesPerTerm.length > 0"
+              *ngIf="lendPeak.amortization.feesPerTerm.length > 0"
             >
               <thead>
                 <tr>
@@ -1173,7 +1173,7 @@
               <tbody>
                 <tr
                   *ngFor="
-                    let termFee of loan.feesPerTerm.flatFeesPerTerm;
+                    let termFee of lendPeak.amortization.feesPerTerm.flatFeesPerTerm;
                     let i = index
                   "
                 >

@@ -4,14 +4,11 @@
 
 <!-- Loan Not Found Message -->
 <div *ngIf="loanNotFound" class="loan-not-found">
-  <p-message
-    severity="error"
-    text="Loan '{{ requestedLoanName }}' not found."
-  ></p-message>
+  <p-message severity="error" text="Requested loan not found."></p-message>
   <p>
     The loan you are looking for does not exist. Please go back to the
     <a (click)="goHome()" style="cursor: pointer; color: blue">home page</a>
-    or select a different loan.
+    or select a different lendPeak.amortization.
   </p>
 </div>
 
@@ -44,7 +41,7 @@
           id="loanName"
           type="text"
           pInputText
-          [(ngModel)]="loan.name"
+          [(ngModel)]="lendPeak.amortization.name"
           class="w-full"
           [disabled]="aiSummaryInProgress"
         />
@@ -54,7 +51,7 @@
         <textarea
           id="loanDescription"
           pInputTextarea
-          [(ngModel)]="loan.description"
+          [(ngModel)]="lendPeak.amortization.description"
           rows="3"
           class="w-full"
           [disabled]="aiSummaryInProgress"
@@ -164,7 +161,12 @@
     [closable]="true"
     [closeOnEscape]="true"
   >
-    <p-table [value]="savedLoans" sortField="startDate" [sortOrder]="-1">
+    <p-table
+      *ngIf="savedLoans.length > 0"
+      [value]="savedLoans"
+      sortField="startDate"
+      [sortOrder]="-1"
+    >
       <ng-template pTemplate="header">
         <tr>
           <th>#</th>
@@ -256,7 +258,7 @@
         type="text"
         class="flex-auto"
         pInputText
-        [(ngModel)]="loan.jsName"
+        [(ngModel)]="lendPeak.amortization.jsName"
       />
     </div>
     <div class="flex items-center gap-4 mb-8">
@@ -264,7 +266,7 @@
       <textarea
         id="editLoanDescription"
         pInputTextarea
-        [(ngModel)]="loan.jsDescription"
+        [(ngModel)]="lendPeak.amortization.jsDescription"
         class="flex-auto"
         rows="5"
       ></textarea>
@@ -290,23 +292,34 @@
       <!-- Left Section: Loan Details -->
       <div class="loan-details">
         <h2 class="loan-name-title">
-          <a class="sexy-link" href="?loan={{ currentLoanName }}">
+          <a
+            class="sexy-link"
+            href="?loan={{ this.lendPeak.amortization.name }}"
+          >
             <i class="pi pi-external-link" style="font-size: 1.5rem"></i>
           </a>
-          {{ currentLoanName }} (version: {{ manager.versionNumber }})
+          {{ this.lendPeak.amortization.name }} (version:
+          {{ lendPeak.amortizationVersionManager?.versionNumber || 0 }})
           <span *ngIf="loanModified" class="unsaved-indicator">
             (Modified)
           </span>
           <span
-            *ngIf="!loanModified && currentLoanName === 'New Loan'"
+            *ngIf="
+              !loanModified && this.lendPeak.amortization.name === 'New Loan'
+            "
             class="unsaved-indicator"
           >
             (Unsaved)
           </span>
         </h2>
-        <p class="loan-description" *ngIf="currentLoanDescription">
-          {{ currentLoanDescription }}
-          <span *ngIf="currentLoanId"> (ID: {{ currentLoanId }})</span>
+        <p
+          class="loan-description"
+          *ngIf="this.lendPeak.amortization.description"
+        >
+          {{ this.lendPeak.amortization.description }}
+          <span *ngIf="this.lendPeak.amortization.id">
+            (ID: {{ this.lendPeak.amortization.id }})</span
+          >
         </p>
       </div>
       <!-- Right Section: Loan Actions -->
@@ -375,7 +388,7 @@
       <!-- Basic Loan Info Tab -->
       <p-tabpanel [value]="0">
         <app-basic-loan-info
-          [loan]="loan"
+          [lendPeak]="lendPeak"
           (loanChange)="onLoanChange($event)"
           (loanUpdated)="submitLoan()"
         ></app-basic-loan-info>
@@ -384,7 +397,7 @@
       <!-- Overrides Tab -->
       <p-tabpanel [value]="1">
         <app-overrides
-          [loan]="loan"
+          [lendPeak]="lendPeak"
           [termOptions]="termOptions"
           [balanceIncreaseType]="balanceIncreaseType"
           (loanChange)="onLoanChange($event)"
@@ -395,7 +408,7 @@
       <!-- Advanced Settings Tab -->
       <p-tabpanel [value]="2">
         <app-advanced-settings
-          [loan]="loan"
+          [lendPeak]="lendPeak"
           (loanChange)="onLoanChange($event)"
           (loanUpdated)="submitLoan()"
         ></app-advanced-settings>
@@ -427,7 +440,7 @@
                 <p-divider></p-divider>
                 <div class="p-fluid">
                   <table
-                    *ngIf="loan.periodsSchedule.length > 0"
+                    *ngIf="lendPeak.amortization.periodsSchedule.length > 0"
                     class="p-datatable p-component"
                   >
                     <thead>
@@ -439,7 +452,7 @@
                     </thead>
                     <tbody>
                       <tr
-                        *ngFor="let plan of loan.periodsSchedule; let i = index"
+                        *ngFor="let plan of lendPeak.amortization.periodsSchedule; let i = index"
                       >
                         <td>{{ i + 1 }}</td>
                         <td>
@@ -476,12 +489,10 @@
       <!-- Deposits Tab -->
       <p-tabpanel [value]="4">
         <app-deposits
-          [loan]="loan"
-          [deposits]="deposits"
+          [lendPeak]="lendPeak"
           [currencyOptions]="currencyOptions"
           (depositUpdated)="onDepositUpdated()"
           [snapshotDate]="snapshotDate"
-          [bills]="bills"
           [payoffAmount]="payoffAmount"
           [accruedInterestToDate]="accruedInterestToDate"
         ></app-deposits>
@@ -490,25 +501,24 @@
       <!-- Bills -->
       <p-tabpanel [value]="5">
         <app-bills
-          [bills]="bills"
-          [depositRecords]="deposits"
+          [lendPeak]="lendPeak"
           [snapshotDate]="snapshotDate"
           (billAction)="onBillAction()"
         ></app-bills>
       </p-tabpanel>
 
-      <p-tabpanel [value]="6">
+      <p-tabpanel [value]="6" *ngIf="lendPeak.amortizationVersionManager">
         <app-version-history
-          [manager]="manager"
+          [lendPeak]="lendPeak"
           [refreshEvent]="versionHistoryRefresh"
           (onRollback)="handleRollback($event)"
         ></app-version-history>
       </p-tabpanel>
     </p-tabpanels>
 
-    <p-tabpanel [value]="7">
+    <p-tabpanel [value]="7" *ngIf="lendPeak.financialOpsVersionManager">
       <app-financial-ops-history
-        [manager]="financialOpsManager"
+        [manager]="lendPeak.financialOpsVersionManager"
         (onRollback)="handleFinancialOpsRollback($event)"
       >
       </app-financial-ops-history>
@@ -807,7 +817,9 @@
         <div class="col-12 md:col-2">
           <div class="flex flex-column">
             <span class="text-300 font-semibold mb-1">Total Loan Amount:</span>
-            <span>{{ loan.totalLoanAmount.toNumber() | currency }}</span>
+            <span>{{
+              lendPeak.amortization.totalLoanAmount.toNumber() | currency
+            }}</span>
           </div>
         </div>
         <div class="col-12 md:col-2">
@@ -823,20 +835,22 @@
         <div class="col-12 md:col-2">
           <div class="flex flex-column">
             <span class="text-300 font-semibold mb-1">Term In Months:</span>
-            <span>{{ loan.loanTermInMonths }}</span>
+            <span>{{ lendPeak.amortization.loanTermInMonths }}</span>
           </div>
         </div>
         <div class="col-12 md:col-1">
           <div class="flex flex-column">
             <span class="text-300 font-semibold mb-1">APR:</span>
-            <span>{{ loan.apr.toDecimalPlaces(4) }}%</span>
+            <span>{{ lendPeak.amortization.apr.toDecimalPlaces(4) }}%</span>
           </div>
         </div>
         <div class="col-12 md:col-2">
           <div class="flex flex-column">
             <span class="text-300 font-semibold mb-1">Days Left in Term:</span>
             <span>{{
-              loan.repaymentSchedule.getDaysLeftInTerm(snapshotDate)
+              lendPeak.amortization.repaymentSchedule.getDaysLeftInTerm(
+                snapshotDate
+              )
             }}</span>
           </div>
         </div>
@@ -845,8 +859,9 @@
           <div class="flex flex-column">
             <span class="text-300 font-semibold mb-1">Per Diem:</span>
             <span>{{
-              loan.repaymentSchedule.getPerDiemForPeriodByDate(snapshotDate)
-                .jsValue | currency
+              lendPeak.amortization.repaymentSchedule.getPerDiemForPeriodByDate(
+                snapshotDate
+              ).jsValue | currency
             }}</span>
           </div>
         </div>
@@ -908,7 +923,7 @@
 
       <p-table
         #repaymentPlanTable
-        [value]="loan.repaymentSchedule.entries"
+        [value]="lendPeak.amortization.repaymentSchedule.entries"
         [autoLayout]="true"
         class="repayment-plan-table"
         [scrollable]="true"
@@ -990,17 +1005,21 @@
               <span class="flex align-items-center justify-content-center">
                 <p-badge
                   *ngIf="
-                    loan.changePaymentDates.getChangePaymentDate(plan.term)
+                    lendPeak.amortization.changePaymentDates.getChangePaymentDate(
+                      plan.term
+                    )
                   "
                   value="CPD"
                   severity="warn"
                   styleClass="mr-2"
                   pTooltip="Change Payment Date from {{
-                    loan.changePaymentDates.getChangePaymentDate(plan.term)
-                      ?.jsOriginalEndDate | date: 'MM/dd/yyyy'
+                    lendPeak.amortization.changePaymentDates.getChangePaymentDate(
+                      plan.term
+                    )?.jsOriginalEndDate | date: 'MM/dd/yyyy'
                   }} to {{
-                    loan.changePaymentDates.getChangePaymentDate(plan.term)
-                      ?.jsNewDate | date: 'MM/dd/yyyy'
+                    lendPeak.amortization.changePaymentDates.getChangePaymentDate(
+                      plan.term
+                    )?.jsNewDate | date: 'MM/dd/yyyy'
                   }}"
                   tooltipPosition="top"
                   tooltipStyleClass="wide-tooltip"
@@ -1040,7 +1059,8 @@
                   }}, calculated equivalent interest rate is {{
                     plan.metadata.equivalentAnnualRate * 100 | number: '1.2-6'
                   }}% while the loan's contractual rate is {{
-                    loan.jsAnnualInterestRate * 100 | number: '1.2-6'
+                    lendPeak.amortization.jsAnnualInterestRate * 100
+                      | number: '1.2-6'
                   }}%"
                   tooltipPosition="top"
                   tooltipStyleClass="wide-tooltip"
@@ -1102,7 +1122,7 @@
               <span class="flex align-items-center justify-content-center"
                 ><p-badge
                   *ngIf="
-                    loan.termPaymentAmountOverride.getPaymentAmountForTerm(
+                    lendPeak.amortization.termPaymentAmountOverride.getPaymentAmountForTerm(
                       plan.term
                     )
                   "
@@ -1110,9 +1130,9 @@
                   severity="warn"
                   styleClass="mr-2"
                   pTooltip="Payment override from standard EMI {{
-                    loan.jsEquitedMonthlyPayment | currency
+                    lendPeak.amortization.jsEquitedMonthlyPayment | currency
                   }} to {{
-                    loan.termPaymentAmountOverride.getPaymentAmountForTerm(
+                    lendPeak.amortization.termPaymentAmountOverride.getPaymentAmountForTerm(
                       plan.term
                     )?.jsPaymentAmount | currency
                   }}"

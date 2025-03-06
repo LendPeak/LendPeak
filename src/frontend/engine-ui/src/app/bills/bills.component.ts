@@ -8,6 +8,7 @@ import {
   ElementRef,
   AfterViewInit,
 } from '@angular/core';
+import { LendPeak } from 'lendpeak-engine/models/LendPeak';
 import { Bill } from 'lendpeak-engine/models/Bill';
 import { Bills } from 'lendpeak-engine/models/Bills';
 import { DepositRecords } from 'lendpeak-engine/models/DepositRecords';
@@ -21,8 +22,7 @@ import { BillPaymentDetail } from 'lendpeak-engine/models/Bill/BillPaymentDetail
   standalone: false,
 })
 export class BillsComponent implements AfterViewInit {
-  @Input() bills: Bills = new Bills();
-  @Input() depositRecords: DepositRecords = new DepositRecords();
+  @Input({ required: true }) lendPeak?: LendPeak;
   @Input() snapshotDate: Date = new Date();
 
   @Output() billAction = new EventEmitter<void>();
@@ -55,8 +55,11 @@ export class BillsComponent implements AfterViewInit {
   }
 
   viewSinglePaymentDetail(detail: BillPaymentDetail) {
+    if (!this.lendPeak) {
+      return;
+    }
     // find the deposit in depositRecords by depositId
-    const deposit = this.depositRecords.getById(detail.depositId);
+    const deposit = this.lendPeak.depositRecords.getById(detail.depositId);
     if (deposit) {
       this.selectedPaymentDeposit = deposit;
       this.showSinglePaymentDialog = true;
@@ -64,8 +67,11 @@ export class BillsComponent implements AfterViewInit {
   }
 
   scrollToLastDueBill() {
+    if (!this.lendPeak) {
+      return;
+    }
     // Filter unpaid due bills
-    const dueBills = this.bills.all.filter((bill) =>
+    const dueBills = this.lendPeak.bills.all.filter((bill) =>
       bill.dueDate.isBefore(this.snapshotDate, 'day'),
     );
 
@@ -82,9 +88,14 @@ export class BillsComponent implements AfterViewInit {
 
     // Use setTimeout to ensure the view updates and billRows are available
     setTimeout(() => {
+      if (!this.lendPeak) {
+        return;
+      }
       if (!this.billRows || this.billRows.length === 0) return;
 
-      const index = this.bills.all.findIndex((b) => b.id === lastDueBill.id);
+      const index = this.lendPeak.bills.all.findIndex(
+        (b) => b.id === lastDueBill.id,
+      );
 
       if (index > -1 && index < this.billRows.length) {
         const row = this.billRows.toArray()[index];
@@ -98,13 +109,13 @@ export class BillsComponent implements AfterViewInit {
     }, 0);
   }
 
- 
   isBillHighlighted(bill: Bill): boolean {
     return this.highlightedBillId === bill.id;
   }
 
   isSplitPayment(depositId: string): boolean {
-    const deposit = this.depositRecords.getById(depositId);
+    if (!this.lendPeak) return false;
+    const deposit = this.lendPeak.depositRecords.getById(depositId);
     if (!deposit) return false;
     return deposit.usageDetails && deposit.usageDetails.length > 1;
   }

@@ -9,7 +9,7 @@ import {
 // Removed OverlayPanel, now import Popover from primeng/popover
 import { Popover } from 'primeng/popover';
 import dayjs from 'dayjs';
-import { Amortization } from 'lendpeak-engine/models/Amortization';
+import { LendPeak } from 'lendpeak-engine/models/LendPeak';
 import { Currency } from 'lendpeak-engine/utils/Currency';
 
 @Component({
@@ -19,7 +19,7 @@ import { Currency } from 'lendpeak-engine/utils/Currency';
   standalone: false,
 })
 export class BasicLoanInfoComponent {
-  @Input() loan!: Amortization;
+  @Input({ required: true }) lendPeak!: LendPeak;
 
   @Output() loanChange = new EventEmitter<any>();
   @Output() loanUpdated = new EventEmitter<void>();
@@ -28,15 +28,7 @@ export class BasicLoanInfoComponent {
   enableEndDate = false;
 
   ngOnChanges(changes: SimpleChanges): void {
-    // This will fire whenever an @Input changes.
-    // If 'loan' has changed, you can re-run your initialization logic or
-    // re-apply defaults etc.
-    //this.balanceModifications = this.loan.balanceModifications;
-    if (this.loan) {
-      // this.startDate = this.loan.startDate.toDate();
-      // this.endDate = this.loan.endDate.toDate();
-      // this.firstPaymentDate = this.loan.firstPaymentDate.toDate();
-    }
+
   }
 
   showTooltip(event: Event, tooltipRef: Popover) {

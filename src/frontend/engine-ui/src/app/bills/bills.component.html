@@ -1,6 +1,6 @@
-<!-- bills.component.html -->
+<!-- lendPeak.bills.component.html -->
 <!-- Bills Tab Content -->
-<div class="grid">
+<div class="grid" *ngIf="lendPeak">
   <div class="col-12">
     <p-card>
       <p-toolbar styleClass="mb-4 gap-2">
@@ -15,7 +15,7 @@
       </p-toolbar>
 
       <p-table
-        [value]="bills.all"
+        [value]="lendPeak.bills.all"
         sortField="dueDate"
         [scrollable]="true"
         scrollHeight="600px"
@@ -267,7 +267,7 @@
       </tr>
     </ng-template>
 
-    <ng-template #body let-detail>
+    <ng-template #body let-detail *ngIf="lendPeak">
       <tr>
         <td style="white-space: nowrap">
           <p-button
@@ -288,14 +288,20 @@
             styleClass="ml-2"
           ></p-badge>
           <p-badge
-            *ngIf="depositRecords.getById(detail.depositId)?.staticAllocation"
+            *ngIf="
+              lendPeak.depositRecords.getById(detail.depositId)
+                ?.staticAllocation
+            "
             value="Static"
             severity="info"
             styleClass="ml-2"
           ></p-badge>
         </td>
         <td>
-          {{ depositRecords.getById(detail.depositId)?.jsAmount | currency }}
+          {{
+            lendPeak.depositRecords.getById(detail.depositId)?.jsAmount
+              | currency
+          }}
         </td>
         <td>{{ detail.jsDate | date: "MM/dd/yyyy" }}</td>
         <td>{{ detail.jsAllocatedTotal | currency }}</td>
@@ -357,6 +363,7 @@
 
 <!-- Single Payment/Deposit Display Dialog (Non-blocking and Draggable) -->
 <p-dialog
+  *ngIf="lendPeak"
   [(visible)]="showSinglePaymentDialog"
   [modal]="false"
   [draggable]="true"
@@ -479,7 +486,9 @@
           <tr>
             <td>{{ usage.period }}</td>
             <td>{{ usage.billId }}</td>
-            <td>{{ bills.getBillById(usage.billId)?.jsDueDate | date }}</td>
+            <td>
+              {{ lendPeak.bills.getBillById(usage.billId)?.jsDueDate | date }}
+            </td>
             <td>{{ usage.allocatedPrincipal.toNumber() | currency }}</td>
             <td>{{ usage.allocatedInterest.toNumber() | currency }}</td>
             <td>{{ usage.allocatedFees.toNumber() | currency }}</td>

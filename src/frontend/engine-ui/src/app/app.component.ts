@@ -24,30 +24,19 @@ import {
 
 import { IndexedDbService } from './services/indexed-db.service';
 
-import {
-  Amortization,
-  AmortizationParams,
-} from 'lendpeak-engine/models/Amortization';
-import { Fee } from 'lendpeak-engine/models/Fee';
-import { ChangePaymentDate } from 'lendpeak-engine/models/ChangePaymentDate';
+import { Amortization } from 'lendpeak-engine/models/Amortization';
+
+import { LendPeak } from 'lendpeak-engine/models/LendPeak';
 
 import { AmortizationVersionManager } from 'lendpeak-engine/models/AmortizationVersionManager';
-import { AmortizationEntry } from 'lendpeak-engine/models/Amortization/AmortizationEntry';
-import { BalanceModification } from 'lendpeak-engine/models/Amortization/BalanceModification';
-import { BalanceModifications } from 'lendpeak-engine/models/Amortization/BalanceModifications';
 import { DepositRecord } from 'lendpeak-engine/models/DepositRecord';
 import { DepositRecords } from 'lendpeak-engine/models/DepositRecords';
-import { PaymentApplication } from 'lendpeak-engine/models/PaymentApplication';
-import { PaymentApplicationResult } from 'lendpeak-engine/models/PaymentApplication/PaymentApplicationResult';
 import {
   PaymentAllocationStrategyName,
   PaymentComponent,
 } from 'lendpeak-engine/models/PaymentApplication/Types';
 
-import { Bill } from 'lendpeak-engine/models/Bill';
 import { Bills } from 'lendpeak-engine/models/Bills';
-import { BillPaymentDetail } from 'lendpeak-engine/models/Bill/BillPaymentDetail';
-import { BillGenerator } from 'lendpeak-engine/models/BillGenerator';
 import { Currency } from 'lendpeak-engine/utils/Currency';
 import Decimal from 'decimal.js';
 import { XaiSummarizeService } from './services/xai-summarize-service';
@@ -98,6 +87,10 @@ export class AppComponent implements OnChanges {
     private markdownService: MarkdownService,
   ) {}
 
+  lendPeak: LendPeak = new LendPeak({})
+    .addAmortizationVersionManager()
+    .addFinancialOpsVersionManager();
+
   actualLoanSummary?: ActualLoanSummary;
   pastDueSummary?: PastDueSummary;
 
@@ -107,7 +100,6 @@ export class AppComponent implements OnChanges {
   currentVersion = appVersion;
 
   loanNotFound: boolean = false;
-  requestedLoanName: string = '';
 
   showExplanationDialog: boolean = false;
   loanExplanationText: string = '';
@@ -120,32 +112,13 @@ export class AppComponent implements OnChanges {
 
   snapshotDate: Date = new Date();
 
-  loanName = 'Loan 1';
-
   CURRENT_OBJECT_VERSION = 9;
 
   showFullNumbers: boolean = false;
 
   paymentAllocationStrategy: PaymentAllocationStrategyName = 'FIFO';
 
-  defaultLoanParams: AmortizationParams = {
-    loanAmount: Currency.of(1000),
-    originationFee: Currency.of(10),
-    annualInterestRate: new Decimal(0.06), // 5% annual interest rate
-    term: 24, // 24 months
-    startDate: dayjs(),
-  };
-
-  loan: Amortization = new Amortization(this.defaultLoanParams);
-  manager = new AmortizationVersionManager(this.loan);
   changesSummary: string = '';
-
-  bills: Bills = new Bills();
-  deposits: DepositRecords = new DepositRecords();
-  financialOpsManager = new FinancialOpsVersionManager(
-    this.bills,
-    this.deposits,
-  );
 
   toggleFullNumberDisplay() {
     this.showFullNumbers = !this.showFullNumbers;
@@ -206,7 +179,7 @@ export class AppComponent implements OnChanges {
     //   originationFee: { oldValue: 50, newValue: 75 },
     // };
     this.aiSummaryInProgress = true;
-    const changes = this.manager.previewChanges();
+    const changes = this.lendPeak.amortizationVersionManager!.previewChanges();
     const inputChanges = changes.inputChanges;
 
     // const aiChangeSummaryService = this.xaiService;
@@ -237,27 +210,22 @@ export class AppComponent implements OnChanges {
     deposits: DepositRecords;
   }) {
     await this.saveLoanWithoutLoading(loanData);
-    this.executeLoadLoan(this.loan.name);
+    this.executeLoadLoan(this.lendPeak.amortization.name);
   }
 
   private async saveLoanWithoutLoading(loanData: {
     loan: Amortization;
     deposits: DepositRecords;
   }) {
-    this.loan = loanData.loan;
-    this.deposits = loanData.deposits;
-    this.loanModified = true;
-    this.loanName = this.loan.name || 'Imported Loan';
-    this.currentLoanName = this.loanName;
-    this.currentLoanId = this.loan.id || '';
-    this.currentLoanDescription =
-      this.loan.description || 'Imported from LoanPro';
+    this.lendPeak = new LendPeak({
+      amortization: loanData.loan,
+      depositRecords: loanData.deposits,
+    })
+      .addAmortizationVersionManager()
+      .addFinancialOpsVersionManager();
 
-    this.manager = new AmortizationVersionManager(this.loan);
-    this.financialOpsManager = new FinancialOpsVersionManager(
-      this.bills,
-      this.deposits,
-    );
+    this.loanModified = true;
+
     await this.saveLoan();
   }
 
@@ -273,7 +241,7 @@ export class AppComponent implements OnChanges {
     let lastPaymentAmount = Currency.Zero();
 
     // Sum principal and interest actually paid from bills
-    for (const bill of this.bills.all) {
+    for (const bill of this.lendPeak.bills.all) {
       if (bill.paymentDetails && bill.paymentDetails.length > 0) {
         for (const pd of bill.paymentDetails) {
           actualPrincipalPaid = actualPrincipalPaid.add(pd.allocatedPrincipal);
@@ -290,7 +258,7 @@ export class AppComponent implements OnChanges {
     }
 
     // Determine next unpaid bill
-    const unpaidBills = this.bills.unpaid;
+    const unpaidBills = this.lendPeak.bills.unpaid;
     let nextBillDate: Date | undefined = undefined;
     if (unpaidBills.length > 0) {
       // sort by dueDate
@@ -298,14 +266,14 @@ export class AppComponent implements OnChanges {
       nextBillDate = unpaidBills[0].dueDate.toDate();
     }
 
-    const originalPrincipal = Currency.of(this.loan.loanAmount).add(
-      this.loan.originationFee,
-    );
+    const originalPrincipal = Currency.of(
+      this.lendPeak.amortization.loanAmount,
+    ).add(this.lendPeak.amortization.originationFee);
     const actualRemainingPrincipal =
       originalPrincipal.subtract(actualPrincipalPaid);
 
-    const accruedInterestNow = this.loan
-      ? this.loan.getAccruedInterestByDate(this.snapshotDate)
+    const accruedInterestNow = this.lendPeak.amortization
+      ? this.lendPeak.amortization.getAccruedInterestByDate(this.snapshotDate)
       : Currency.Zero();
     const actualCurrentPayoff =
       actualRemainingPrincipal.add(accruedInterestNow);
@@ -333,15 +301,9 @@ export class AppComponent implements OnChanges {
       }
     }
 
-    // Reset the loan to default values
-    this.loan = new Amortization(this.defaultLoanParams);
-
-    // Reset other properties
-    this.currentLoanName = 'New Loan';
-    this.loanModified = false;
-
-    // Reset bills and deposits
-    this.bills = new Bills();
+    this.lendPeak = new LendPeak({})
+      .addAmortizationVersionManager()
+      .addFinancialOpsVersionManager();
 
     // Generate the default loan data
     this.updateTermOptions();
@@ -359,15 +321,10 @@ export class AppComponent implements OnChanges {
 
   // Handle loan change event
   onLoanChange(updatedLoan: any) {
-    this.loan = updatedLoan;
+    this.lendPeak.updateModelValues();
     this.loanModified = true;
   }
 
-  paymentApplicationResults: PaymentApplicationResult[] = [];
-
-  currentLoanId: string = '';
-  currentLoanName: string = 'New Loan';
-  currentLoanDescription: string = 'New Loan';
   loanModified: boolean = false;
 
   lenderName = 'Your Bank Name';
@@ -526,13 +483,6 @@ export class AppComponent implements OnChanges {
       localStorage.setItem('appVersion', this.currentVersion);
     }
 
-    this.loan = this.makeReactive(
-      this.loan,
-      (target: any, property: string | symbol, value: any) => {
-        this.loanModified = true;
-      },
-    );
-
     try {
       const snapshotDate = localStorage.getItem('snapshotDate');
       if (snapshotDate) {
@@ -564,7 +514,7 @@ export class AppComponent implements OnChanges {
     this.route.queryParams.subscribe((params) => {
       const loanName = decodeURIComponent(params['loan'] || '');
       if (loanName) {
-        if (this.currentLoanName !== loanName) {
+        if (this.lendPeak.amortization.name !== loanName) {
           //this.loadLoanFromURL(loanName);
           this.executeLoadLoan(loanName);
         }
@@ -622,11 +572,12 @@ export class AppComponent implements OnChanges {
   loadDefaultLoan() {
     // Reset the loanNotFound flag
     this.loanNotFound = false;
-    this.requestedLoanName = '';
 
     // No loan found in localStorage, initialize with default values
-    this.loan = new Amortization(this.defaultLoanParams);
-    this.currentLoanName = 'New Loan';
+    this.lendPeak = new LendPeak({})
+      .addAmortizationVersionManager()
+      .addFinancialOpsVersionManager();
+
     this.submitLoan();
   }
 
@@ -634,7 +585,6 @@ export class AppComponent implements OnChanges {
     this.router.navigate(['/']).then(() => {
       // Reset the loanNotFound flag
       this.loanNotFound = false;
-      this.requestedLoanName = '';
 
       // Reload the default loan
       this.loadDefaultLoan();
@@ -648,7 +598,7 @@ export class AppComponent implements OnChanges {
 
   updateTermOptions() {
     this.termOptions = [];
-    for (let i = 1; i <= this.loan.term; i++) {
+    for (let i = 1; i <= this.lendPeak.amortization.term; i++) {
       this.termOptions.push({ label: `Term ${i}`, value: i });
     }
   }
@@ -662,17 +612,9 @@ export class AppComponent implements OnChanges {
     this.showAdvancedTable = !this.showAdvancedTable;
   }
 
-  generateBills() {
-    // console.log('generating bills');
-    const repaymentSchedule = this.loan.repaymentSchedule;
-    this.bills = BillGenerator.generateBills({
-      amortizationSchedule: repaymentSchedule,
-      currentDate: this.snapshotDate,
-    });
-  }
-
   downloadRepaymentPlanAsCSV() {
-    const repaymentPlanCSV = this.loan?.export.exportRepaymentScheduleToCSV();
+    const repaymentPlanCSV =
+      this.lendPeak.amortization?.export.exportRepaymentScheduleToCSV();
     if (repaymentPlanCSV) {
       const blob = new Blob([repaymentPlanCSV], {
         type: 'text/csv',
@@ -698,7 +640,8 @@ export class AppComponent implements OnChanges {
   }
 
   copyRepaymentPlanAsCSV() {
-    const repaymentPlanCSV = this.loan?.export.exportRepaymentScheduleToCSV();
+    const repaymentPlanCSV =
+      this.lendPeak.amortization?.export.exportRepaymentScheduleToCSV();
     if (repaymentPlanCSV) {
       navigator.clipboard
         .writeText(repaymentPlanCSV)
@@ -728,27 +671,6 @@ export class AppComponent implements OnChanges {
       });
     }
   }
-
-  markBillAsPaid(bill: Bill) {
-    bill.isPaid = true;
-    // Optionally, update any backend or perform additional actions
-  }
-
-  // termPeriodDefinitionChange() {
-  //   const termUnit =
-  //     this.loan.termPeriodDefinition.unit === 'complex'
-  //       ? 'day'
-  //       : this.loan.termPeriodDefinition.unit;
-  //   this.loan.endDate = dayjs(this.loan.startDate)
-  //     .add(this.loan.term * this.loan.termPeriodDefinition.count[0], termUnit)
-  //     .toDate();
-
-  //   this.loan.firstPaymentDate = dayjs(this.loan.startDate)
-  //     .add(this.loan.termPeriodDefinition.count[0], termUnit)
-  //     .toDate();
-  //   this.loanModified = true;
-  //   this.submitLoan();
-  // }
 
   ngOnChanges(changes: SimpleChanges) {
     //console.log('Changes detected:', changes);
@@ -783,8 +705,8 @@ export class AppComponent implements OnChanges {
 
   saveEditedLoanDetails() {
     this.saveAndLoadLoan({
-      loan: this.loan,
-      deposits: this.deposits,
+      loan: this.lendPeak.amortization,
+      deposits: this.lendPeak.depositRecords,
     });
 
     this.showEditLoanDialog = false;
@@ -859,7 +781,7 @@ export class AppComponent implements OnChanges {
   savedLoans: any[] = [];
 
   showLoanExplanation() {
-    if (!this.loan) {
+    if (!this.lendPeak.amortization) {
       this.messageService.add({
         severity: 'warn',
         summary: 'No Amortization Data',
@@ -867,7 +789,7 @@ export class AppComponent implements OnChanges {
       });
       return;
     }
-    const explainer = new AmortizationExplainer(this.loan);
+    const explainer = new AmortizationExplainer(this.lendPeak.amortization);
     this.loanExplanationText = explainer.getFullExplanation();
     this.showExplanationDialog = true;
   }
@@ -883,8 +805,8 @@ export class AppComponent implements OnChanges {
   }
 
   openCodeDialog() {
-    if (this.loan) {
-      this.generatedCode = this.loan.export.toCode();
+    if (this.lendPeak) {
+      this.generatedCode = this.lendPeak.amortization.export.toCode();
       this.showCodeDialogVisible = true;
     } else {
       this.messageService.add({
@@ -903,14 +825,14 @@ export class AppComponent implements OnChanges {
   }
 
   openSaveLoanDialog() {
-    // if (this.currentLoanName && this.currentLoanName !== 'New Loan') {
+    // if (this.lendPeak.amortization.name && this.lendPeak.amortization.name !== 'New Loan') {
     //   // Existing loan, save directly
     //   this.saveLoan();
     // } else {
 
     this.loanToSave = {
-      name: this.loan.name || '',
-      description: this.loan.description || '',
+      name: this.lendPeak.amortization.name || '',
+      description: this.lendPeak.amortization.description || '',
     };
     this.showSaveLoanDialog = true;
     //}
@@ -1000,16 +922,16 @@ export class AppComponent implements OnChanges {
 
   async saveFinancialOps() {
     // If changes exist
-    if (this.financialOpsManager.hasChanges()) {
-      this.financialOpsManager.commitTransaction(
+    if (this.lendPeak?.financialOpsVersionManager?.hasChanges()) {
+      this.lendPeak?.financialOpsVersionManager.commitTransaction(
         'User updated some bills/deposits',
       );
     }
 
     // Then store to IndexedDB (like your main loan data)
-    const data = this.financialOpsManager.toJSON();
+    const data = this.lendPeak?.financialOpsVersionManager?.toJSON();
     await this.indexedDbService.saveLoan(
-      'financial_ops_' + this.loan.name,
+      'financial_ops_' + this.lendPeak.amortization.name,
       data,
     );
 
@@ -1034,15 +956,17 @@ export class AppComponent implements OnChanges {
       rejectLabel: 'Cancel',
       accept: () => {
         try {
-          this.financialOpsManager.rollback(
+          this.lendPeak?.financialOpsVersionManager?.rollback(
             versionId,
             `Rollback to version ${versionId}`,
           );
           // Re-sync the domain objects
-          this.bills = this.financialOpsManager.getBills();
-          this.deposits = this.financialOpsManager.getDeposits();
-          // Possibly re-run any calculations needed
-          // ...
+          if (this.lendPeak?.financialOpsVersionManager) {
+            this.lendPeak.bills =
+              this.lendPeak?.financialOpsVersionManager?.getBills();
+            this.lendPeak.depositRecords =
+              this.lendPeak?.financialOpsVersionManager?.getDeposits();
+          }
           this.messageService.add({
             severity: 'success',
             summary: 'Rollback successful',
@@ -1080,33 +1004,13 @@ export class AppComponent implements OnChanges {
         delete loanData.loan.dueBillDays;
       }
       //this.loan = new Amortization(loanData.loan);
-      this.deposits = new DepositRecords(loanData.deposits);
-
-      this.manager = AmortizationVersionManager.fromJSON(loanData.manager);
-      this.loan = this.manager.getAmortization();
-
-      if (loanData.financialOpsManager) {
-        this.financialOpsManager = FinancialOpsVersionManager.fromJSON(
-          loanData.financialOpsManager,
-        );
-        // Extract the domain objects from it
-        this.bills = this.financialOpsManager.getBills();
-        this.deposits = this.financialOpsManager.getDeposits();
-      } else {
-        // fallback if older data didn't store financialOpsManager
-        this.bills = new Bills(loanData.bills || []);
-        this.deposits = new DepositRecords(loanData.deposits || []);
-        this.financialOpsManager = new FinancialOpsVersionManager(
-          this.bills,
-          this.deposits,
-        );
-      }
-
-      // console.log('manager', this.manager);
-      // Set the current loan name
-      this.currentLoanName = loanData.name || 'Loaded Loan';
-      this.currentLoanDescription = loanData.loan.description;
-      this.currentLoanId = loanData.loan.id;
+      console.log('loanData', loanData);
+      this.lendPeak = new LendPeak({
+        amortization: loanData.loan,
+        depositRecords: loanData.deposits,
+        amortizationVersionManager: loanData.manager,
+        financialOpsVersionManager: loanData.financialOpsManager,
+      });
 
       this.submitLoan();
       this.showManageLoansDialog = false;
@@ -1118,7 +1022,7 @@ export class AppComponent implements OnChanges {
 
       // Update the URL without navigating
       const queryParams = {
-        loan: encodeURIComponent(this.currentLoanName),
+        loan: encodeURIComponent(this.lendPeak.amortization.name),
         tab: this.tabNames[this.activeTabIndex],
       };
       const urlTree = this.router.createUrlTree([], {
@@ -1138,31 +1042,35 @@ export class AppComponent implements OnChanges {
   }
 
   async saveLoan() {
-    this.loan.updateModelValues();
+    this.lendPeak.amortization.updateModelValues();
     // Existing loan, save to the same key
-    const key = `loan_${this.loan.name}`;
+    const key = `loan_${this.lendPeak.amortization.name}`;
     // check if there are no changes, then that means
     // we did a rollback and nothing else
     // in that instance we wont commit a transaction because manager has been updated already
-    if (this.manager.hasChanges()) {
-      this.manager.commitTransaction(this.changesSummary || 'Initial Version');
+    if (this.lendPeak.amortizationVersionManager?.hasChanges()) {
+      this.lendPeak.amortizationVersionManager.commitTransaction(
+        this.changesSummary || 'Initial Version',
+      );
     }
 
     // Also commit Bills+Deposits if changed
-    if (this.financialOpsManager.hasChanges()) {
-      this.financialOpsManager.commitTransaction('Financial ops changes');
+    if (this.lendPeak?.financialOpsVersionManager?.hasChanges()) {
+      this.lendPeak?.financialOpsVersionManager.commitTransaction(
+        'Financial ops changes',
+      );
     }
 
-    this.versionHistoryRefresh.emit(this.manager);
+    this.versionHistoryRefresh.emit(this.lendPeak.amortizationVersionManager);
 
     const loanData = {
-      loan: this.loan.toJSON(),
-      bills: this.bills.toJSON(),
-      deposits: this.deposits.toJSON(),
-      description: this.loan.description || '',
-      name: this.loan.name,
-      manager: this.manager.toJSON(),
-      financialOpsManager: this.financialOpsManager.toJSON(),
+      loan: this.lendPeak.amortization.toJSON(),
+      bills: this.lendPeak.bills.toJSON(),
+      deposits: this.lendPeak.depositRecords.toJSON(),
+      description: this.lendPeak.amortization.description || '',
+      name: this.lendPeak.amortization.name,
+      manager: this.lendPeak.amortizationVersionManager?.toJSON(),
+      financialOpsManager: this.lendPeak.financialOpsVersionManager?.toJSON(),
     };
 
     //localStorage.setItem(key, JSON.stringify(loanData));
@@ -1174,7 +1082,7 @@ export class AppComponent implements OnChanges {
     this.messageService.add({
       severity: 'success',
       summary: 'Success',
-      detail: `Loan "${this.currentLoanName}" saved successfully`,
+      detail: `Loan "${this.lendPeak.amortization.name}" saved successfully`,
     });
 
     this.showSaveLoanDialog = false;
@@ -1182,8 +1090,11 @@ export class AppComponent implements OnChanges {
 
   exportData() {
     // Code to export data
-    console.log('Exporting data', this.loan.json);
-    console.log('Exporting data', JSON.stringify(this.loan.json));
+    console.log('Exporting data', this.lendPeak.amortization.json);
+    console.log(
+      'Exporting data',
+      JSON.stringify(this.lendPeak.amortization.json),
+    );
   }
 
   importData() {
@@ -1242,30 +1153,30 @@ export class AppComponent implements OnChanges {
 
   removeLoanRepaymentPlan() {
     // Logic to remove schedule override
-    this.loan.periodsSchedule.reset();
+    this.lendPeak.amortization.periodsSchedule.reset();
     // console.log('Loan repayment plan removed');
     this.submitLoan();
   }
 
   deletePlan(index: number) {
-    this.loan.periodsSchedule.periods.splice(index, 1);
+    this.lendPeak.amortization.periodsSchedule.periods.splice(index, 1);
     // console.log('Plan deleted at index:', index);
     this.submitLoan();
   }
 
   repaymentPlanEndDateChange(index: number) {
     // when end date is changed following start date should be updated
-    const selectedRow = this.loan.periodsSchedule.periods[index];
+    const selectedRow =
+      this.lendPeak.amortization.periodsSchedule.periods[index];
     const endDate = dayjs(selectedRow.endDate);
     const startDate = endDate;
-    this.loan.periodsSchedule.periods[index + 1].startDate =
+    this.lendPeak.amortization.periodsSchedule.periods[index + 1].startDate =
       selectedRow.endDate;
     this.submitLoan();
   }
 
   // Handle deposit updated event (e.g., to recalculate loan details)
   onDepositUpdated() {
-    this.applyPayments();
     this.submitLoan();
   }
 
@@ -1284,192 +1195,6 @@ export class AppComponent implements OnChanges {
   // Payment Priority Options
   paymentPriorityOptions = ['interest', 'fees', 'principal'];
   paymentPriority: PaymentComponent[] = ['interest', 'fees', 'principal'];
-
-  determineBalanceModificationDate(deposit: DepositRecord): Date {
-    const excessAppliedDate =
-      deposit.excessAppliedDate || deposit.effectiveDate;
-
-    // Ensure excessAppliedDate is not null
-    if (!excessAppliedDate) {
-      throw new Error(
-        `Deposit ${deposit.id} has no effective date or excess applied date.`,
-      );
-    }
-
-    // Find open bills at the time of the deposit's effective date
-    const depositEffectiveDayjs = dayjs(deposit.effectiveDate);
-    const openBillsAtDepositDate = this.bills.all.filter(
-      (bill) =>
-        !bill.isPaid &&
-        bill.isOpen &&
-        dayjs(bill.dueDate).isSameOrAfter(depositEffectiveDayjs),
-    );
-
-    let balanceModificationDate: Dayjs;
-
-    if (openBillsAtDepositDate.length > 0) {
-      // There are open bills; apply excess at the beginning of the next term
-      const latestBill = openBillsAtDepositDate.reduce((latest, bill) =>
-        dayjs(bill.dueDate).isAfter(dayjs(latest.dueDate)) ? bill : latest,
-      );
-      const nextTermStartDate = dayjs(
-        latestBill.amortizationEntry.periodEndDate,
-      );
-
-      // Ensure the date is after the excessAppliedDate
-      balanceModificationDate = nextTermStartDate.isAfter(
-        dayjs(excessAppliedDate),
-      )
-        ? nextTermStartDate
-        : dayjs(excessAppliedDate).startOf('day');
-    } else {
-      // No open bills; use the effective date or excessAppliedDate
-      balanceModificationDate = depositEffectiveDayjs.isAfter(
-        dayjs(excessAppliedDate),
-      )
-        ? depositEffectiveDayjs
-        : dayjs(excessAppliedDate).startOf('day');
-    }
-
-    return balanceModificationDate.toDate();
-  }
-
-  balanceModificationChanged = false;
-
-  generateUniqueId(): string {
-    return uuidv4();
-  }
-
-  cleanupBalanceModifications() {
-    // remove any existing balance modifications that were associated with deposits
-    // but deposits are no longer present
-    const filteredBalanceModifications: BalanceModifications =
-      new BalanceModifications();
-
-    this.loan.balanceModifications.all.forEach((balanceModification) => {
-      if (balanceModification.metadata?.depositId) {
-        const deposit = this.deposits.getById(
-          balanceModification.metadata.depositId,
-        );
-        if (!deposit) {
-          // Deposit not found; remove this balance modification
-          // console.log('Removing balance modification', balanceModification);
-
-          this.balanceModificationChanged = true;
-          return;
-        }
-
-        if (deposit.active !== true) {
-          // Deposit is not active; remove this balance modification
-          // console.log('Removing balance modification', balanceModification);
-          this.balanceModificationChanged = true;
-
-          return;
-        }
-
-        if (deposit.effectiveDate.isAfter(this.snapshotDate)) {
-          // Deposit is before snapshot date; remove this balance modification
-          // console.log('Removing balance modification', balanceModification);
-          this.balanceModificationChanged = true;
-
-          return;
-        }
-      }
-      filteredBalanceModifications.addBalanceModification(balanceModification);
-    });
-
-    this.loan.balanceModifications = filteredBalanceModifications;
-  }
-
-  applyPayments() {
-    console.log('running applyPayments');
-
-    // 1) Clear usageDetails from each deposit
-    this.deposits.clearHistory();
-
-    // regenerate bills
-    this.generateBills();
-
-    // 2) Build PaymentApplication & process
-    const allocationStrategy = PaymentApplication.getAllocationStrategyFromName(
-      this.paymentAllocationStrategy,
-    );
-    const paymentPriority = this.paymentPriority;
-    const paymentApp = new PaymentApplication(this.bills, this.deposits, {
-      allocationStrategy,
-      paymentPriority,
-    });
-    this.paymentApplicationResults = paymentApp.processDeposits(
-      this.snapshotDate,
-    );
-
-    // 3) Loop over results
-    this.paymentApplicationResults.forEach((result) => {
-      // Here's where we find the deposit, storing it in a local `deposit` variable
-      const deposit = this.deposits.all.find((d) => d.id === result.depositId);
-      if (!deposit) {
-        console.error('No deposit found for', result.depositId);
-        return;
-      }
-
-      // Handle balance modification etc.
-      if (result.balanceModification) {
-        this.loan.balanceModifications.removeBalanceModificationByDepositId(
-          deposit.id,
-        );
-
-        // Add the new BM
-        // console.log('Adding balance modification!', result.balanceModification);
-        const addedNewBalanceModification =
-          this.loan.balanceModifications.addBalanceModification(
-            result.balanceModification,
-          );
-        if (addedNewBalanceModification) {
-          deposit.balanceModificationId = result.balanceModification.id;
-          this.balanceModificationChanged = true;
-        }
-        // this.balanceModificationChanged = true;
-      } else {
-        // Remove old BMs for this deposit if none returned
-        this.loan.balanceModifications.removeBalanceModificationByDepositId(
-          deposit.id,
-        );
-
-        deposit.balanceModificationId = undefined;
-        // this.balanceModificationChanged = true;
-      }
-
-      // Update deposit's leftover
-      deposit.unusedAmount = result.unallocatedAmount;
-
-      // 4) Populate BillPaymentDetail on each Bill if needed
-      //    (And now `deposit.effectiveDate` is safely in scope)
-      result.allocations.forEach((allocation) => {
-        const bill = this.bills.all.find((b) => b.id === allocation.billId);
-        if (!bill) return;
-
-        bill.paymentDetails = bill.paymentDetails || [];
-        bill.paymentDetails.push(
-          new BillPaymentDetail({
-            depositId: deposit.id,
-            allocatedPrincipal: allocation.allocatedPrincipal,
-            allocatedInterest: allocation.allocatedInterest,
-            allocatedFees: allocation.allocatedFees,
-            date: deposit.effectiveDate,
-          }),
-        );
-      });
-    });
-
-    // 5) Mark bills as paid if principalDue, interestDue, feesDue are all zero
-    this.bills.bills = this.bills.all.map((bill) => {
-      bill.isPaid =
-        bill.principalDue.isZero() &&
-        bill.interestDue.isZero() &&
-        bill.feesDue.isZero();
-      return bill;
-    });
-  }
 
   onPaymentPriorityChange() {
     // Ensure that each component is selected only once
@@ -1490,55 +1215,20 @@ export class AppComponent implements OnChanges {
 
   previousChanges: Record<string, { oldValue: any; newValue: any }> = {};
 
+  // submitLoan(loanModified: boolean = false): void {
+  //   setTimeout(() => {
+  //     this.asyncSubmitLoan(loanModified);
+  //   }, 0);
+  // }
+
   submitLoan(loanModified: boolean = false): void {
     if (loanModified) {
       this.loanModified = true;
     }
-    this.cleanupBalanceModifications();
-
-    console.log('submitting a loan', this.loan);
-    // const interestRateAsDecimal = new Decimal(this.loan.annualInterestRate);
-
-    // let uiAmortizationParams: UIAmortizationParams = {
-    //   loanAmount: this.loan.principal,
-    //   originationFee: this.loan.originationFee,
-    //   annualInterestRate: this.loan.interestRate,
-    //   term: this.loan.term,
-    //   startDate: this.loan.startDate,
-    //   endDate: this.loan.endDate,
-    //   firstPaymentDate: this.loan.firstPaymentDate,
-    //   calendarType: this.loan.calendarType,
-    //   roundingMethod: this.loan.roundingMethod,
-    //   flushUnbilledInterestRoundingErrorMethod: this.loan.flushMethod,
-    //   roundingPrecision: this.loan.roundingPrecision,
-    //   flushThreshold: this.loan.flushThreshold,
-    //   termPeriodDefinition: this.loan.termPeriodDefinition,
-    //   defaultPreBillDaysConfiguration:
-    //     this.loan.defaultPreBillDaysConfiguration,
-    //   defaultBillDueDaysAfterPeriodEndConfiguration:
-    //     this.loan.defaultBillDueDaysAfterPeriodEndConfiguration,
-    //   preBillDays: this.loan.preBillDays,
-    //   dueBillDays: this.loan.dueBillDays,
-    //   perDiemCalculationType: this.loan.perDiemCalculationType,
-    //   billingModel: this.loan.billingModel,
-    // };
-
-    // if billing model is Daily Simple Interest Loan then we will remove pre bill days and due bill days
-    // configurations
-    // if (this.loan.billingModel === 'dailySimpleInterest') {
-    //   delete uiAmortizationParams.defaultPreBillDaysConfiguration;
-    //   delete uiAmortizationParams.defaultBillDueDaysAfterPeriodEndConfiguration;
-    // }
 
     try {
-      this.loan.jsGenerateSchedule();
-      // forcing repayment plan refresh. This is needed because we are not updating the loan object
-      this.loan.repaymentSchedule = this.loan.repaymentSchedule;
-
-      // const engineParams = toAmortizationParams(uiAmortizationParams);
-      // amortization = new Amortization(engineParams);
-      // this.loan.firstPaymentDate = amortization.firstPaymentDate.toDate();
-      // this.loan.endDate = amortization.endDate.toDate();
+      console.log('running calc on LendPeak', this.lendPeak);
+      this.lendPeak.calc();
     } catch (error) {
       console.error('Error creating Amortization:', error);
 
@@ -1552,58 +1242,25 @@ export class AppComponent implements OnChanges {
       return;
     }
     // this.loan = amortization;
-    this.accruedInterest = this.loan.getAccruedInterestByDate(
+    this.accruedInterest = this.lendPeak.amortization.getAccruedInterestByDate(
       this.snapshotDate,
     );
-    //this.tilaDisclosures = this.loan.tila.generateTILADisclosures();
-
-    console.log('updated loan', this.loan);
-    // this.repaymentPlanEndDates = this.loan.repaymentSchedule.map((entry) => {
-    //   // mm/dd/yy
-    //   return entry.periodEndDate.format('MM/DD/YY');
-    // });
-
-    // this.rebuildRepaymentPlan();
 
     this.showTable = true;
-    // after balance modifications are applied amortization will add usage values and
-    // it is possible that modification amount exceeds the principal amount
-    // this will show user how much was unused
-
-    this.generateBills();
-    this.applyPayments();
-
-    if (this.balanceModificationChanged === true) {
-      this.balanceModificationChanged = false;
-      //return this.submitLoan();
-      this.loan.jsGenerateSchedule();
-      // this.rebuildRepaymentPlan();
-    }
-
-    // if (this.manager.hasNewInputChanges(this.previousChanges)) {
-    //   console.log('re-running submit loan because facts were changed');
-    //   // there could be changes to a loan since generation, like adding a new
-    //   // balance modifications. This will rerun the submit loan until
-    //   // we no longer have modifications
-    //   this.previousChanges = this.manager.previewChanges().inputChanges;
-    //   return this.submitLoan();
-    // }
-
-    //console.log('change payment dates', this.loan.changePaymentDates);
 
     this.loanModified = true; // Mark as modified
 
-    this.loanSummary = this.loan.summary.calculateLoanSummaryAsOfDate(
-      dayjs(this.snapshotDate),
-    );
+    this.loanSummary =
+      this.lendPeak.amortization.summary.calculateLoanSummaryAsOfDate(
+        dayjs(this.snapshotDate),
+      );
 
     this.actualLoanSummary = this.getActualLoanSummary(); // If already implemented
     this.pastDueSummary = this.getPastDueSummary();
 
-    this.accruedInterestToDate = this.loan.getAccruedInterestByDate(
-      this.snapshotDate,
-    );
-    this.payoffAmount = this.loan.getCurrentPayoffAmount(
+    this.accruedInterestToDate =
+      this.lendPeak.amortization.getAccruedInterestByDate(this.snapshotDate);
+    this.payoffAmount = this.lendPeak.amortization.getCurrentPayoffAmount(
       dayjs(this.snapshotDate),
     );
   }
@@ -1642,7 +1299,7 @@ export class AppComponent implements OnChanges {
 
     let earliestPastDueBillDate: Dayjs | null = null;
 
-    for (const bill of this.bills.all) {
+    for (const bill of this.lendPeak.bills.all) {
       // A bill is past due if it's not fully paid and due before the snapshot date
       if (!bill.isPaid && bill.dueDate.isBefore(snapshot)) {
         // Calculate the currently unpaid amount of the bill
@@ -1710,10 +1367,16 @@ export class AppComponent implements OnChanges {
       accept: () => {
         // user clicked 'Yes' => proceed to rollback
         try {
-          this.manager.rollback(versionId, `Rollback to version ${versionId}`);
+          this.lendPeak.amortizationVersionManager?.rollback(
+            versionId,
+            `Rollback to version ${versionId}`,
+          );
           // After rollback, the manager has a new version at the top referencing the old version
           // Re-sync the loan in your UI
-          this.loan = this.manager.getAmortization();
+          if (this.lendPeak.amortizationVersionManager) {
+            this.lendPeak.amortization =
+              this.lendPeak.amortizationVersionManager?.getAmortization();
+          }
           this.loanModified = true; // or false, depending on your logic
           // Then re-run the schedule if needed
           this.submitLoan();
@@ -1722,7 +1385,9 @@ export class AppComponent implements OnChanges {
             summary: 'Rollback Successful',
             detail: `Rolled back to version ${versionId}`,
           });
-          this.versionHistoryRefresh.emit(this.manager);
+          this.versionHistoryRefresh.emit(
+            this.lendPeak.amortizationVersionManager,
+          );
         } catch (err) {
           console.error('Rollback error:', err);
           this.messageService.add({
@@ -1739,14 +1404,22 @@ export class AppComponent implements OnChanges {
   }
 
   scrollToLastDueLine(): void {
-    if (!this.loan || this.loan.repaymentSchedule.entries.length === 0) return;
+    if (
+      !this.lendPeak.amortization ||
+      this.lendPeak.amortization.repaymentSchedule.entries.length === 0
+    )
+      return;
 
     const snapshot = dayjs(this.snapshotDate).startOf('day');
 
     // Find the last period due on or before snapshot date
     let lastDueIndex = -1;
-    for (let i = this.loan.repaymentSchedule.entries.length - 1; i >= 0; i--) {
-      const plan = this.loan.repaymentSchedule.entries[i];
+    for (
+      let i = this.lendPeak.amortization.repaymentSchedule.entries.length - 1;
+      i >= 0;
+      i--
+    ) {
+      const plan = this.lendPeak.amortization.repaymentSchedule.entries[i];
       const dueDate = dayjs(plan.periodBillDueDate);
       if (dueDate.isSameOrBefore(snapshot)) {
         lastDueIndex = i;
@@ -1791,28 +1464,28 @@ export class AppComponent implements OnChanges {
   }
 
   get amortizationFeesTotal(): number {
-    return this.loan.repaymentSchedule.entries.reduce(
+    return this.lendPeak.amortization.repaymentSchedule.entries.reduce(
       (total, entry) => total + entry.fees.toNumber(),
       0,
     );
   }
 
   get amortizationInterestTotal(): number {
-    return this.loan.repaymentSchedule.entries.reduce(
+    return this.lendPeak.amortization.repaymentSchedule.entries.reduce(
       (total, entry) => total + entry.dueInterestForTerm.toNumber(),
       0,
     );
   }
 
   get amortizationPrincipalTotal(): number {
-    return this.loan.repaymentSchedule.entries.reduce(
+    return this.lendPeak.amortization.repaymentSchedule.entries.reduce(
       (total, entry) => total + entry.principal.toNumber(),
       0,
     );
   }
 
   get amortizationTotal(): number {
-    return this.loan.repaymentSchedule.entries.reduce(
+    return this.lendPeak.amortization.repaymentSchedule.entries.reduce(
       (total, entry) => total + entry.totalPayment.toNumber(),
       0,
     );

@@ -78,7 +78,7 @@ export class BalanceModification {
     this.usedAmount = this.jsUsedAmount;
   }
 
-  private set unusedAmount(amount: Currency) {
+  set unusedAmount(amount: Currency) {
     this._unusedAmount = amount;
     this.jsUnusedAmount = amount.toNumber();
   }

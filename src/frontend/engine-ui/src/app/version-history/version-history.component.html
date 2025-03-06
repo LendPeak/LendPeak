@@ -1,4 +1,4 @@
-<p-dataView #dv [value]="versionEvents" layout="list" [paginator]="false">
+<p-dataView #dv [value]="versionEvents" layout="list" [paginator]="false" *ngIf="lendPeak">
   <!-- "list" template for DataView v19+ -->
   <ng-template #list let-items>
     <!-- Container (example using Tailwind classes, you can remove them if not needed) -->
@@ -22,7 +22,7 @@
               <markdown [data]="version.commitMessage"></markdown>
             </p-card>
             <p-button
-              [disabled]="manager.isLatestVersion(version.versionId)"
+              [disabled]="lendPeak.amortizationVersionManager?.isLatestVersion(version.versionId)"
               *ngIf="!version.isRollback"
               label="Rollback"
               (click)="rollbackVersion(version.versionId, $event)"

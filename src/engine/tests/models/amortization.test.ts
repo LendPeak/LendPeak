@@ -149,8 +149,8 @@ describe("Amortization", () => {
     const changePaymentDates = new ChangePaymentDates([
       new ChangePaymentDate({
         termNumber: -1,
-        newDate: "2023-02-01",
-        originalDate: "2023-01-01",
+        newDate: "2023-03-01",
+        originalDate: "2023-02-01",
       }),
       new ChangePaymentDate({
         termNumber: -1,
@@ -165,7 +165,7 @@ describe("Amortization", () => {
     const updatedChangePaymentDates = amortization.changePaymentDates;
 
     expect(updatedChangePaymentDates.atIndex(0).termNumber).toBe(0);
-    expect(updatedChangePaymentDates.atIndex(1).termNumber).toBe(4);
+    expect(updatedChangePaymentDates.atIndex(1).termNumber).toBe(3);
   });
 
   it("should detect correct term # for Change Payment Date and handle merge with overlapping dates", () => {

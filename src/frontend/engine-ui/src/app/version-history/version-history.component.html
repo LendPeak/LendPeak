@@ -1,4 +1,9 @@
-<p-dataView #dv [value]="versionEvents" layout="list" [paginator]="false" *ngIf="lendPeak">
+<p-dataView
+  #dv
+  layout="list"
+  [paginator]="false"
+  *ngIf="lendPeak && lendPeak.amortizationVersionManager"
+>
   <!-- "list" template for DataView v19+ -->
   <ng-template #list let-items>
     <!-- Container (example using Tailwind classes, you can remove them if not needed) -->
@@ -6,7 +11,10 @@
       <!-- We iterate over 'items' (the chunk of data given to us by DataView) -->
       <div
         class="col-span-12 w-full"
-        *ngFor="let version of items; let last = last"
+        *ngFor="
+          let version of lendPeak.amortizationVersionManager.versions.reverse();
+          let last = last
+        "
       >
         <div class="p-6 flex flex-col gap-4">
           <!-- Basic Info (Version ID, timestamp, commit message, rollback button) -->
@@ -22,7 +30,11 @@
               <markdown [data]="version.commitMessage"></markdown>
             </p-card>
             <p-button
-              [disabled]="lendPeak.amortizationVersionManager?.isLatestVersion(version.versionId)"
+              [disabled]="
+                lendPeak.amortizationVersionManager?.isLatestVersion(
+                  version.versionId
+                )
+              "
               *ngIf="!version.isRollback"
               label="Rollback"
               (click)="rollbackVersion(version.versionId, $event)"

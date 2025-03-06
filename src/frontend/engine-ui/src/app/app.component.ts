@@ -432,6 +432,7 @@ export class AppComponent implements OnChanges {
   // Method to handle changes to snapshotDate
   onSnapshotDateChange(date: Date) {
     this.snapshotDate = date;
+    this.lendPeak.currentDate = this.snapshotDate;
 
     // if snapshot date is today, we don't need to store it in local storage
     // and we want to clear the stored snapshot date
@@ -499,6 +500,7 @@ export class AppComponent implements OnChanges {
       this.snapshotDate = new Date();
     }
 
+    this.lendPeak.currentDate = this.snapshotDate;
     // Retrieve loan from local storage if exists
     // try {
     //   this.loadDefaultLoan();
@@ -992,25 +994,8 @@ export class AppComponent implements OnChanges {
 
     if (loanData) {
       console.log('loading loanData', loanData);
-      if (!loanData.loan.hasCustomEndDate) {
-        delete loanData.loan.endDate;
-      }
-
-      if (!loanData.loan.hasCustomPreBillDays) {
-        delete loanData.loan.preBillDays;
-      }
-
-      if (!loanData.loan.hasCustomBillDueDays) {
-        delete loanData.loan.dueBillDays;
-      }
-      //this.loan = new Amortization(loanData.loan);
-      console.log('loanData', loanData);
-      this.lendPeak = new LendPeak({
-        amortization: loanData.loan,
-        depositRecords: loanData.deposits,
-        amortizationVersionManager: loanData.manager,
-        financialOpsVersionManager: loanData.financialOpsManager,
-      });
+      this.lendPeak = LendPeak.fromJSON(loanData);
+      this.lendPeak.currentDate = this.snapshotDate;
 
       this.submitLoan();
       this.showManageLoansDialog = false;
@@ -1061,17 +1046,9 @@ export class AppComponent implements OnChanges {
       );
     }
 
-    this.versionHistoryRefresh.emit(this.lendPeak.amortizationVersionManager);
+    // this.versionHistoryRefresh.emit(this.lendPeak.amortizationVersionManager);
 
-    const loanData = {
-      loan: this.lendPeak.amortization.toJSON(),
-      bills: this.lendPeak.bills.toJSON(),
-      deposits: this.lendPeak.depositRecords.toJSON(),
-      description: this.lendPeak.amortization.description || '',
-      name: this.lendPeak.amortization.name,
-      manager: this.lendPeak.amortizationVersionManager?.toJSON(),
-      financialOpsManager: this.lendPeak.financialOpsVersionManager?.toJSON(),
-    };
+    const loanData = this.lendPeak.toJSON();
 
     //localStorage.setItem(key, JSON.stringify(loanData));
     await this.indexedDbService.saveLoan(key, loanData);
@@ -1225,6 +1202,8 @@ export class AppComponent implements OnChanges {
     if (loanModified) {
       this.loanModified = true;
     }
+
+    this.lendPeak.currentDate = this.snapshotDate;
 
     try {
       console.log('running calc on LendPeak', this.lendPeak);

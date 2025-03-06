@@ -35,7 +35,7 @@ export class LendPeak {
   _amortizationVersionManager?: AmortizationVersionManager;
   _financialOpsVersionManager?: FinancialOpsVersionManager;
 
-  allocationStrategy: AllocationStrategy = PaymentApplication.getAllocationStrategyFromName("FIFO");
+  _allocationStrategy: AllocationStrategy = PaymentApplication.getAllocationStrategyFromName("FIFO");
   paymentPriority: PaymentComponent[] = ["interest", "fees", "principal"];
 
   balanceModificationChanged: boolean = false;
@@ -47,7 +47,7 @@ export class LendPeak {
     bills?: Bills;
     amortizationVersionManager?: AmortizationVersionManager;
     financialOpsVersionManager?: FinancialOpsVersionManager;
-    allocationStrategy?: AllocationStrategy;
+    allocationStrategy?: AllocationStrategy | PaymentAllocationStrategyName;
     paymentPriority?: PaymentComponent[];
     currentDate?: Dayjs;
   }) {
@@ -74,6 +74,18 @@ export class LendPeak {
 
     if (params.currentDate) {
       this.currentDate = params.currentDate;
+    }
+  }
+
+  get allocationStrategy(): AllocationStrategy {
+    return this._allocationStrategy;
+  }
+
+  set allocationStrategy(value: AllocationStrategy | PaymentAllocationStrategyName) {
+    if (typeof value === "string") {
+      this._allocationStrategy = PaymentApplication.getAllocationStrategyFromName(value);
+    } else {
+      this._allocationStrategy = value;
     }
   }
 
@@ -117,11 +129,17 @@ export class LendPeak {
   }
 
   get currentDate(): Dayjs {
-    return this._currentDate;
+    return this._currentDate || dayjs();
   }
 
-  set currentDate(value: Dayjs) {
-    this._currentDate = value instanceof Dayjs ? value : dayjs(value);
+  set currentDate(value: Dayjs | Date | string) {
+    if (value instanceof Date) {
+      this._currentDate = dayjs(value);
+    } else if (typeof value === "string") {
+      this._currentDate = dayjs(value);
+    } else {
+      this._currentDate = value;
+    }
   }
 
   get amortizationVersionManager(): AmortizationVersionManager | undefined {
@@ -347,5 +365,39 @@ export class LendPeak {
     this.amortization.updateJsValues();
     this.depositRecords.updateJsValues();
     this.bills.updateJsValues();
+  }
+
+  get json() {
+    return this.toJSON();
+  }
+
+  static fromJSON(params: any) {
+    if (params.amortization) {
+      if (!params.amortization.hasCustomEndDate) {
+        delete params.amortization.endDate;
+      }
+
+      if (!params.amortization.hasCustomPreBillDays) {
+        delete params.amortization.preBillDays;
+      }
+
+      if (!params.amortization.hasCustomBillDueDays) {
+        delete params.amortization.dueBillDays;
+      }
+    }
+
+    return new LendPeak(params);
+  }
+
+  toJSON() {
+    return {
+      amortization: this.amortization.json,
+      depositRecords: this.depositRecords.json,
+      bills: this.bills.json,
+      amortizationVersionManager: this.amortizationVersionManager?.toJSON(),
+      financialOpsVersionManager: this.financialOpsVersionManager?.toJSON(),
+      allocationStrategy: PaymentApplication.getAllocationStrategyFromClass(this.allocationStrategy),
+      paymentPriority: this.paymentPriority,
+    };
   }
 }

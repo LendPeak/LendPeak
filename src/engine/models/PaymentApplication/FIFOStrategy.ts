@@ -15,88 +15,6 @@ import { v4 as uuidv4 } from "uuid";
 import { UsageDetail } from "../Bill/DepositRecord/UsageDetail";
 
 /**
- * Helper function for static-allocations only.
- * Splits the deposit into interest portion, fees portion, principal portion
- * in FIFO order across open, unpaid Bills.
- */
-function allocateSingleComponentFIFO(
-  bills: Bills,
-  component: "interest" | "fees" | "principal",
-  amountToAllocate: Currency,
-  deposit: DepositRecord,
-  existingAllocations: PaymentAllocation[]
-): { totalAllocatedToComponent: Currency; leftover: Currency } {
-  let leftover = amountToAllocate.clone();
-  let totalAllocatedToComponent = Currency.Zero();
-
-  // Sort open unpaid bills by due date ascending
-  const openBills = bills.all.filter((bill) => bill.isOpen && !bill.isPaid).sort((a, b) => a.dueDate.diff(b.dueDate));
-
-  for (const bill of openBills) {
-    if (leftover.isZero()) break;
-
-    let amountDue = component === "interest" ? bill.interestDue : component === "fees" ? bill.feesDue : bill.principalDue;
-
-    if (amountDue.isZero()) continue;
-
-    // Allocate as much as possible
-    const allocated = Currency.min(leftover, amountDue);
-    leftover = leftover.subtract(allocated);
-    totalAllocatedToComponent = totalAllocatedToComponent.add(allocated);
-
-    // Deduct from Bill
-    if (component === "interest") {
-      bill.interestDue = bill.interestDue.subtract(allocated);
-    } else if (component === "fees") {
-      bill.feesDue = bill.feesDue.subtract(allocated);
-    } else {
-      bill.principalDue = bill.principalDue.subtract(allocated);
-    }
-
-    // Update the PaymentAllocation array (no usage detail here!)
-    let billAllocation = existingAllocations.find((a) => a.billId === bill.id);
-    if (!billAllocation) {
-      billAllocation = {
-        billId: bill.id,
-        allocatedPrincipal: Currency.Zero(),
-        allocatedInterest: Currency.Zero(),
-        allocatedFees: Currency.Zero(),
-      };
-      existingAllocations.push(billAllocation);
-    }
-
-    if (component === "interest") {
-      billAllocation.allocatedInterest = billAllocation.allocatedInterest.add(allocated);
-    } else if (component === "fees") {
-      billAllocation.allocatedFees = billAllocation.allocatedFees.add(allocated);
-    } else {
-      billAllocation.allocatedPrincipal = billAllocation.allocatedPrincipal.add(allocated);
-    }
-
-    // Mark paid if all due amounts are zero
-    if (bill.principalDue.isZero() && bill.interestDue.isZero() && bill.feesDue.isZero()) {
-      bill.isPaid = true;
-    }
-
-    // Ensure deposit ID is in bill’s paymentMetadata
-    if (!bill.paymentMetadata) {
-      bill.paymentMetadata = { depositIds: [] };
-    }
-    if (!bill.paymentMetadata.depositIds) {
-      bill.paymentMetadata.depositIds = [];
-    }
-    if (!bill.paymentMetadata.depositIds.includes(deposit.id)) {
-      bill.paymentMetadata.depositIds.push(deposit.id);
-    }
-  }
-
-  return {
-    totalAllocatedToComponent,
-    leftover,
-  };
-}
-
-/**
  * FIFO Strategy (First-In, First-Out).
  * We do *no* extra usage detail for final payoff.
  * We track daysLate/daysEarly on the Bill if it's newly paid.
@@ -268,4 +186,87 @@ export class FIFOStrategy implements AllocationStrategy {
       excessAmount: Currency.Zero(),
     };
   }
+}
+
+
+/**
+ * Helper function for static-allocations only.
+ * Splits the deposit into interest portion, fees portion, principal portion
+ * in FIFO order across open, unpaid Bills.
+ */
+function allocateSingleComponentFIFO(
+  bills: Bills,
+  component: "interest" | "fees" | "principal",
+  amountToAllocate: Currency,
+  deposit: DepositRecord,
+  existingAllocations: PaymentAllocation[]
+): { totalAllocatedToComponent: Currency; leftover: Currency } {
+  let leftover = amountToAllocate.clone();
+  let totalAllocatedToComponent = Currency.Zero();
+
+  // Sort open unpaid bills by due date ascending
+  const openBills = bills.all.filter((bill) => bill.isOpen && !bill.isPaid).sort((a, b) => a.dueDate.diff(b.dueDate));
+
+  for (const bill of openBills) {
+    if (leftover.isZero()) break;
+
+    let amountDue = component === "interest" ? bill.interestDue : component === "fees" ? bill.feesDue : bill.principalDue;
+
+    if (amountDue.isZero()) continue;
+
+    // Allocate as much as possible
+    const allocated = Currency.min(leftover, amountDue);
+    leftover = leftover.subtract(allocated);
+    totalAllocatedToComponent = totalAllocatedToComponent.add(allocated);
+
+    // Deduct from Bill
+    if (component === "interest") {
+      bill.interestDue = bill.interestDue.subtract(allocated);
+    } else if (component === "fees") {
+      bill.feesDue = bill.feesDue.subtract(allocated);
+    } else {
+      bill.principalDue = bill.principalDue.subtract(allocated);
+    }
+
+    // Update the PaymentAllocation array (no usage detail here!)
+    let billAllocation = existingAllocations.find((a) => a.billId === bill.id);
+    if (!billAllocation) {
+      billAllocation = {
+        billId: bill.id,
+        allocatedPrincipal: Currency.Zero(),
+        allocatedInterest: Currency.Zero(),
+        allocatedFees: Currency.Zero(),
+      };
+      existingAllocations.push(billAllocation);
+    }
+
+    if (component === "interest") {
+      billAllocation.allocatedInterest = billAllocation.allocatedInterest.add(allocated);
+    } else if (component === "fees") {
+      billAllocation.allocatedFees = billAllocation.allocatedFees.add(allocated);
+    } else {
+      billAllocation.allocatedPrincipal = billAllocation.allocatedPrincipal.add(allocated);
+    }
+
+    // Mark paid if all due amounts are zero
+    if (bill.principalDue.isZero() && bill.interestDue.isZero() && bill.feesDue.isZero()) {
+      bill.isPaid = true;
+    }
+
+    // Ensure deposit ID is in bill’s paymentMetadata
+    if (!bill.paymentMetadata) {
+      bill.paymentMetadata = { depositIds: [] };
+    }
+    if (!bill.paymentMetadata.depositIds) {
+      bill.paymentMetadata.depositIds = [];
+    }
+    if (!bill.paymentMetadata.depositIds.includes(deposit.id)) {
+      bill.paymentMetadata.depositIds.push(deposit.id);
+    }
+  }
+
+  return {
+    totalAllocatedToComponent,
+    leftover,
+  };
 }

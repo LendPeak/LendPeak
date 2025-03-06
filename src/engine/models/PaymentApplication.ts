@@ -73,6 +73,22 @@ export class PaymentApplication {
     return allocationStrategy;
   }
 
+  static getAllocationStrategyFromClass(strategy: AllocationStrategy): PaymentAllocationStrategyName {
+    let strategyName: PaymentAllocationStrategyName;
+    if (strategy instanceof FIFOStrategy) {
+      strategyName = "FIFO";
+    } else if (strategy instanceof LIFOStrategy) {
+      strategyName = "LIFO";
+    } else if (strategy instanceof EqualDistributionStrategy) {
+      strategyName = "EqualDistribution";
+    } else if (strategy instanceof CustomOrderStrategy) {
+      strategyName = "CustomOrder";
+    } else {
+      throw new Error(`Unknown allocation strategy: ${strategy}`);
+    }
+    return strategyName;
+  }
+
   processDeposits(currentDate: Dayjs | Date | string = dayjs()): PaymentApplicationResult[] {
     if (currentDate instanceof Date || typeof currentDate === "string") {
       currentDate = dayjs(currentDate);

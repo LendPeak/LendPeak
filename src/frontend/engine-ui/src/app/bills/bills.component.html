@@ -61,7 +61,31 @@
               </p-tag>
             </td>
             <td>{{ bill.period }}</td>
-            <td>{{ bill.jsDueDate | date: "MM/dd/yyyy" }}</td>
+            <td>
+              <p-tag
+                value="{{ bill.amortizationEntry.jsPrebillDaysConfiguration }}"
+                pTooltip="Days before period's end when the bill is due {{
+                  bill.jsOpenDate | date: 'MM/dd/yyyy'
+                }}"
+                tooltipPosition="top"
+                severity="secondary"
+                styleClass="ml-2"
+              ></p-tag>
+              {{ bill.jsDueDate | date: "MM/dd/yyyy" }}
+              <p-tag
+                value="{{
+                  bill.amortizationEntry
+                    .jsBillDueDaysAfterPeriodEndConfiguration
+                }}"
+                pTooltip="Days after period's end when the bill is due {{
+                  bill.jsDueDate | date: 'MM/dd/yyyy'
+                }}"
+                tooltipPosition="top"
+                severity="secondary"
+                styleClass="ml-2"
+              ></p-tag>
+            </td>
+
             <td>{{ bill.jsPrincipalDue | currency }}</td>
             <td>{{ bill.jsInterestDue | currency }}</td>
             <td>{{ bill.jsFeesDue | currency }}</td>

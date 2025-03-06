@@ -520,9 +520,15 @@ export class LoanImportComponent implements OnInit, OnDestroy {
       ),
       changePaymentDates: new ChangePaymentDates(
         loanData.d.DueDateChanges.map((change: DueDateChange) => {
+          // console.log('native change', change);
+          // console.log('CPD:', {
+          //   termNumber: -1,
+          //   originalDate: parseODataDate(change.changedDate, true),
+          //   newDate: parseODataDate(change.newDate, true),
+          // });
           return new ChangePaymentDate({
             termNumber: -1,
-            originalDate: parseODataDate(change.originalDate, true),
+            originalDate: parseODataDate(change.changedDate, true),
             newDate: parseODataDate(change.newDate, true),
           });
         }),

@@ -70,8 +70,11 @@
                 tooltipPosition="top"
                 severity="secondary"
                 styleClass="ml-2"
+                size="large"
               ></p-tag>
-              {{ bill.jsDueDate | date: "MM/dd/yyyy" }}
+
+              <i class="pi pi-arrows-h mr-2 ml-2"></i>
+
               <p-tag
                 value="{{
                   bill.amortizationEntry
@@ -82,8 +85,9 @@
                 }}"
                 tooltipPosition="top"
                 severity="secondary"
-                styleClass="ml-2"
+                styleClass="mr-2"
               ></p-tag>
+              {{ bill.jsDueDate | date: "MM/dd/yyyy" }}
             </td>
 
             <td>{{ bill.jsPrincipalDue | currency }}</td>

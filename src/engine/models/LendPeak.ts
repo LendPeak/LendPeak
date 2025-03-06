@@ -152,8 +152,12 @@ export class LendPeak {
       return;
     }
     // check type and if not amortization manager, call fromJSON static method
-    if (!(value instanceof AmortizationVersionManager)) {
-      this._amortizationVersionManager = AmortizationVersionManager.fromJSON(value);
+    if (!(value instanceof AmortizationVersionManager) && value !== undefined) {
+      this._amortizationVersionManager = new AmortizationVersionManager(this.amortization);
+      this._amortizationVersionManager.versionNumber = (value as AmortizationVersionManager).versionNumber || 0;
+      const versions = AmortizationVersionManager.versionsFromJSON(value);
+
+      this._amortizationVersionManager.replaceVersions(versions);
     } else {
       this._amortizationVersionManager = value;
     }

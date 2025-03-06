@@ -849,24 +849,30 @@ export class AppComponent implements OnChanges {
     this.savedLoans = [];
 
     try {
-      const allLoans = await this.indexedDbService.getAllLoans();
+      let allLoans = await this.indexedDbService.getAllLoans();
       console.log('loadSavedLoans:', allLoans);
-      this.savedLoans = allLoans.map((row) => {
-        // row.key => e.g. 'loan_MyLoanName'
-        // row.data => the actual object
-        // you can parse out "loanName" from row.key or row.data
-        const name = row.key.replace('loan_', '');
-        return {
-          key: row.key,
-          name,
-          id: row.data.loan.id || '',
-          description: row.data.loan.description || '',
-          loanAmount: row.data.loan.loanAmount ?? 0,
-          startDate: row.data.loan?.startDate ?? '',
-          endDate: row.data.loan?.endDate ?? '',
-          annualInterestRate: (row.data.loan?.annualInterestRate ?? 0) * 100,
-        };
-      });
+
+      this.savedLoans = allLoans
+        .filter((row) => {
+          return row.data.amortization;
+        })
+        .map((row) => {
+          // row.key => e.g. 'loan_MyLoanName'
+          // row.data => the actual object
+          // you can parse out "loanName" from row.key or row.data
+          const name = row.key.replace('loan_', '');
+          return {
+            key: row.key,
+            name,
+            id: row.data.amortization.id || '',
+            description: row.data.amortization.description || '',
+            loanAmount: row.data.amortization.loanAmount ?? 0,
+            startDate: row.data.amortization?.startDate ?? '',
+            endDate: row.data.amortization?.endDate ?? '',
+            annualInterestRate:
+              (row.data.amortization?.annualInterestRate ?? 0) * 100,
+          };
+        });
       // console.log('loadSavedLoans:', this.savedLoans);
     } catch (err) {
       console.error('loadSavedLoans error:', err);
@@ -1034,6 +1040,7 @@ export class AppComponent implements OnChanges {
     // we did a rollback and nothing else
     // in that instance we wont commit a transaction because manager has been updated already
     if (this.lendPeak.amortizationVersionManager?.hasChanges()) {
+      console.log('committing transaction');
       this.lendPeak.amortizationVersionManager.commitTransaction(
         this.changesSummary || 'Initial Version',
       );

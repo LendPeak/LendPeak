@@ -177,6 +177,10 @@ export class AmortizationVersionManager {
     this._versionNumber = value;
   }
 
+  replaceVersions(versions: AmortizationVersion[]): void {
+    this.versions = cloneDeep(versions);
+  }
+
   increaseVersionNumber() {
     this._versionNumber++;
   }
@@ -435,5 +439,29 @@ export class AmortizationVersionManager {
     }
 
     return manager;
+  }
+
+  public static versionsFromJSON(data: any): AmortizationVersion[] {
+    let versions: AmortizationVersion[] = [];
+
+    if (Array.isArray(data.versions)) {
+      versions = data.versions.map((v: any) => {
+        // If you want to ensure the shape is correct,
+        // or do any casting, do it here. Otherwise, just store as is.
+        return {
+          versionId: v.versionId,
+          timestamp: v.timestamp,
+          commitMessage: v.commitMessage,
+          snapshot: v.snapshot, // The old amortization snapshot
+          inputChanges: v.inputChanges,
+          outputChanges: v.outputChanges,
+          isDeleted: v.isDeleted,
+          isRollback: v.isRollback,
+          rolledBackFromVersionId: v.rolledBackFromVersionId,
+        } as AmortizationVersion;
+      });
+    }
+
+    return versions;
   }
 }

@@ -280,11 +280,11 @@ export class LoanImportComponent implements OnInit, OnDestroy {
    * Takes raw LoanResponse | LoanResponse[] | UILoan[] and performs the final
    * "imported" logic => i.e. filter empty, convert to UI objects, and emit.
    */
-  private handleImportedLoans(
+  private async handleImportedLoans(
     loanData: { loan: Amortization; deposits: DepositRecords }[],
   ) {
     try {
-      this.loanImported.emit(loanData);
+      await this.loanImported.emit(loanData);
       this.messageService.add({
         severity: 'success',
         summary: 'Success',

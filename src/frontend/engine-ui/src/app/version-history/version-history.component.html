@@ -29,16 +29,12 @@
             <p-card *ngIf="version.commitMessage">
               <markdown [data]="version.commitMessage"></markdown>
             </p-card>
-            <p-button
-              [disabled]="
-                lendPeak.amortizationVersionManager?.isLatestVersion(
-                  version.versionId
-                )
-              "
-              *ngIf="!version.isRollback"
-              label="Rollback"
-              (click)="rollbackVersion(version.versionId, $event)"
-            ></p-button>
+            <span *ngIf="!version.isRollback">
+              <p-button
+                label="Rollback"
+                (click)="rollbackVersion(version.versionId, $event)"
+              ></p-button>
+            </span>
           </div>
 
           <!-- Accordion for Changes -->

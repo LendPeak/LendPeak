@@ -138,7 +138,16 @@
                   value="Static"
                   severity="info"
                   styleClass="mr-2"
-                  pTooltip="Deposit is using static amounts allocation"
+                  pTooltip="Deposit is using static amounts allocation
+                  Principal: {{
+                    deposit.staticAllocation.jsPrincipal | currency
+                  }}
+                  Interest: {{ deposit.staticAllocation.jsInterest | currency }}
+                  Fees: {{ deposit.staticAllocation.jsFees | currency }}
+                  Prepayment: {{
+                    deposit.staticAllocation.jsPrepayment | currency
+                  }}
+                  "
                   tooltipPosition="top"
                   tooltipStyleClass="wide-tooltip"
                 ></p-badge>
@@ -621,7 +630,9 @@
 
         <!-- Bill Tag column -->
         <td>
-          <ng-container *ngIf="lendPeak.bills.getBillById(detail.billId) as bill">
+          <ng-container
+            *ngIf="lendPeak.bills.getBillById(detail.billId) as bill"
+          >
             <div class="flex align-items-center gap-2 mt-1">
               <!-- If more than 1 payment covers this bill -->
               <p-tag

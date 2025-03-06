@@ -1683,7 +1683,7 @@ export class Amortization {
         const matchingChange = this.changePaymentDates.all.find((changePaymentDate) => {
           if (changePaymentDate.termNumber < 0 && changePaymentDate.originalDate) {
             // i.e. if the original date is exactly the startDate
-            if (startDate.isSame(changePaymentDate.originalDate)) {
+            if (endDate.isSame(changePaymentDate.originalDate)) {
               changePaymentDate.termNumber = currentTerm;
               return true;
             }

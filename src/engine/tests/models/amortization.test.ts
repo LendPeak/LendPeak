@@ -222,7 +222,7 @@ describe("Amortization", () => {
     expect(changePaymentDates.atIndex(4).newDate.toDate()).toEqual(dayjs("2027-02-20").startOf("day").toDate());
   });
 
-  it("should detect correct term # for Change Payment Date and handle merge with overlapping dates", () => {
+  it("should detect correct term # for Change Payment Date and handle merge with overlapping dates without term assignments", () => {
     const changePaymentDates = new ChangePaymentDates([
       new ChangePaymentDate({
         termNumber: -1,
@@ -254,7 +254,7 @@ describe("Amortization", () => {
     expect(changePaymentDates.length).toBe(4);
     expect(changePaymentDates.atIndex(0)?.originalDate?.toDate()).toEqual(dayjs("2023-05-01").startOf("day").toDate());
     expect(changePaymentDates.atIndex(0).newDate.toDate()).toEqual(dayjs("2023-05-15").startOf("day").toDate());
-   // expect(changePaymentDates.atIndex(0).termNumber).toEqual(0);
+    // expect(changePaymentDates.atIndex(0).termNumber).toEqual(0);
 
     expect(changePaymentDates.atIndex(1)?.originalDate?.toDate()).toEqual(dayjs("2024-05-15").startOf("day").toDate());
     expect(changePaymentDates.atIndex(1).newDate.toDate()).toEqual(dayjs("2024-06-15").startOf("day").toDate());
@@ -264,6 +264,77 @@ describe("Amortization", () => {
 
     expect(changePaymentDates.atIndex(3)?.originalDate?.toDate()).toEqual(dayjs("2026-05-25").startOf("day").toDate());
     expect(changePaymentDates.atIndex(3).newDate.toDate()).toEqual(dayjs("2026-05-01").startOf("day").toDate());
+  });
+
+  it("should detect correct term # for Change Payment Date and handle merge with overlapping dates with term numbers", () => {
+    const changePaymentDates = new ChangePaymentDates([
+      new ChangePaymentDate({
+        termNumber: -1,
+        originalDate: "2023-05-01",
+        newDate: "2023-05-15",
+      }),
+      new ChangePaymentDate({
+        termNumber: -1,
+        originalDate: "2024-05-15",
+        newDate: "2024-06-15",
+      }),
+      new ChangePaymentDate({
+        termNumber: -1,
+        originalDate: "2024-07-15",
+        newDate: "2024-07-25",
+      }),
+      new ChangePaymentDate({
+        termNumber: -1,
+        originalDate: "2024-07-25",
+        newDate: "2024-08-25",
+      }),
+      new ChangePaymentDate({
+        termNumber: -1,
+        originalDate: "2026-05-25",
+        newDate: "2026-05-01",
+      }),
+    ]);
+
+    const amortization = new Amortization({
+      loanAmount: Currency.of(24250),
+      originationFee: Currency.of(750),
+      term: 36,
+      annualInterestRate: 0.157,
+      startDate: dayjs("2023-03-01"),
+      endDate: dayjs("2026-05-01"),
+      changePaymentDates,
+    });
+
+    // test term assignments
+    const cpds = amortization.changePaymentDates.all;
+
+    /*
+      ┌─────────┬────────────┬──────────────┬──────────────┐
+      │ (index) │ termNumber │ originalDate │ newDate      │
+      ├─────────┼────────────┼──────────────┼──────────────┤
+      │ 0       │ 1          │ '2023-05-01' │ '2023-05-15' │
+      │ 1       │ 13         │ '2024-05-15' │ '2024-06-15' │
+      │ 2       │ 14         │ '2024-07-15' │ '2024-08-25' │
+      │ 3       │ 35         │ '2026-05-25' │ '2026-05-01' │
+      └─────────┴────────────┴──────────────┴──────────────┘
+    */
+    expect(cpds.length).toBe(4);
+    expect(cpds[0].termNumber).toBe(1);
+    expect(cpds[1].termNumber).toBe(13);
+    expect(cpds[2].termNumber).toBe(14);
+    expect(cpds[3].termNumber).toBe(35);
+
+    // test original dates
+    expect(cpds[0].originalDate?.toDate()).toEqual(dayjs("2023-05-01").startOf("day").toDate());
+    expect(cpds[1].originalDate?.toDate()).toEqual(dayjs("2024-05-15").startOf("day").toDate());
+    expect(cpds[2].originalDate?.toDate()).toEqual(dayjs("2024-07-15").startOf("day").toDate());
+    expect(cpds[3].originalDate?.toDate()).toEqual(dayjs("2026-05-25").startOf("day").toDate());
+
+    // test new dates
+    expect(cpds[0].newDate.toDate()).toEqual(dayjs("2023-05-15").startOf("day").toDate());
+    expect(cpds[1].newDate.toDate()).toEqual(dayjs("2024-06-15").startOf("day").toDate());
+    expect(cpds[2].newDate.toDate()).toEqual(dayjs("2024-08-25").startOf("day").toDate());
+    expect(cpds[3].newDate.toDate()).toEqual(dayjs("2026-05-01").startOf("day").toDate());
   });
 
   it("should throw an error for a zero loan amount", () => {

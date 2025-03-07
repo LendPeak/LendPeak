@@ -231,6 +231,7 @@ export class LoanImportComponent implements OnInit, OnDestroy {
                 this.progressValue = Math.floor(
                   (this.loansLoaded / this.totalLoans) * 100,
                 );
+                // console.log('Progress:', this.progressValue, this.loansLoaded);
                 if (Array.isArray(res)) {
                   loadedLoans.push(...res);
                 } else {

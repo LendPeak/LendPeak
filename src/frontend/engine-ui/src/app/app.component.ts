@@ -145,7 +145,12 @@ export class AppComponent implements OnChanges {
       // For example, save each loan individually under its own name
 
       for (let singleLoan of loanData) {
-        await this.saveLoanWithoutLoading(singleLoan);
+        console.log('adding loan:', singleLoan.loan.name);
+        try {
+          await this.saveLoanWithoutLoading(singleLoan);
+        } catch (e) {
+          console.error('Error while saving loan:', e, singleLoan);
+        }
       }
       this.messageService.add({
         severity: 'success',
@@ -209,7 +214,7 @@ export class AppComponent implements OnChanges {
     loan: Amortization;
     deposits: DepositRecords;
   }) {
-    await this.saveLoanWithoutLoading(loanData);
+    this.lendPeak = await this.saveLoanWithoutLoading(loanData);
     this.executeLoadLoan(this.lendPeak.amortization.name);
   }
 
@@ -217,16 +222,27 @@ export class AppComponent implements OnChanges {
     loan: Amortization;
     deposits: DepositRecords;
   }) {
-    this.lendPeak = new LendPeak({
-      amortization: loanData.loan,
-      depositRecords: loanData.deposits,
-    })
-      .addAmortizationVersionManager()
-      .addFinancialOpsVersionManager();
+    try {
+      const lendPeak = new LendPeak({
+        amortization: loanData.loan,
+        depositRecords: loanData.deposits,
+      })
+        .addAmortizationVersionManager()
+        .addFinancialOpsVersionManager();
 
-    this.loanModified = true;
+      this.loanModified = true;
 
-    await this.saveLoan();
+      await this.saveLoan(lendPeak);
+      return lendPeak;
+    } catch (e) {
+      console.error('Error while saving loan:', e);
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: 'Failed to save loan to IndexedDB.',
+      });
+      throw e;
+    }
   }
 
   // Handle any actions emitted by the bills component
@@ -1032,30 +1048,30 @@ export class AppComponent implements OnChanges {
     this.loanModified = false;
   }
 
-  async saveLoan() {
-    this.lendPeak.amortization.updateModelValues();
+  async saveLoan(lendPeak: LendPeak = this.lendPeak) {
+    lendPeak.updateModelValues();
     // Existing loan, save to the same key
-    const key = `loan_${this.lendPeak.amortization.name}`;
+    const key = `loan_${lendPeak.amortization.name}`;
     // check if there are no changes, then that means
     // we did a rollback and nothing else
     // in that instance we wont commit a transaction because manager has been updated already
-    if (this.lendPeak.amortizationVersionManager?.hasChanges()) {
-      console.log('committing transaction');
-      this.lendPeak.amortizationVersionManager.commitTransaction(
+    if (lendPeak.amortizationVersionManager?.hasChanges()) {
+      //console.log('committing transaction');
+      lendPeak.amortizationVersionManager.commitTransaction(
         this.changesSummary || 'Initial Version',
       );
     }
 
     // Also commit Bills+Deposits if changed
-    if (this.lendPeak?.financialOpsVersionManager?.hasChanges()) {
-      this.lendPeak?.financialOpsVersionManager.commitTransaction(
+    if (lendPeak?.financialOpsVersionManager?.hasChanges()) {
+      lendPeak?.financialOpsVersionManager.commitTransaction(
         'Financial ops changes',
       );
     }
 
     // this.versionHistoryRefresh.emit(this.lendPeak.amortizationVersionManager);
 
-    const loanData = this.lendPeak.toJSON();
+    const loanData = lendPeak.toJSON();
 
     //localStorage.setItem(key, JSON.stringify(loanData));
     await this.indexedDbService.saveLoan(key, loanData);
@@ -1066,7 +1082,7 @@ export class AppComponent implements OnChanges {
     this.messageService.add({
       severity: 'success',
       summary: 'Success',
-      detail: `Loan "${this.lendPeak.amortization.name}" saved successfully`,
+      detail: `Loan "${lendPeak.amortization.name}" saved successfully`,
     });
 
     this.showSaveLoanDialog = false;

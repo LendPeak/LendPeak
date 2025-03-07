@@ -84,12 +84,12 @@
   <!-- Progress bar & tracker: only relevant for systemIdRange while loading -->
 
   <div class="field" *ngIf="isLoading && searchType === 'systemIdRange'">
-    <p-progressbar [value]="loansLoaded" [showValue]="true">
+    <p-progressbar [value]="progressValue" [showValue]="true">
       <ng-template #content let-value>
         <span>
-          {{ ((value / totalLoans) * 100).toFixed(1) }}% ({{ value }}/{{
+          {{ progressValue }}% ({{ loansLoaded }} /{{
             totalLoans
-          }})
+          }}) 
         </span>
       </ng-template>
     </p-progressbar>

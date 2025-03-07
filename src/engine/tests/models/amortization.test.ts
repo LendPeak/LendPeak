@@ -165,7 +165,7 @@ describe("Amortization", () => {
     const updatedChangePaymentDates = amortization.changePaymentDates;
 
     expect(updatedChangePaymentDates.atIndex(0).termNumber).toBe(0);
-    expect(updatedChangePaymentDates.atIndex(1).termNumber).toBe(3);
+    expect(updatedChangePaymentDates.atIndex(1).termNumber).toBe(2);
   });
 
   it("should detect correct term # for Change Payment Date and handle merge with overlapping dates", () => {

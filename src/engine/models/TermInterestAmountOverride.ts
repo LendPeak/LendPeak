@@ -13,13 +13,16 @@ export interface TermInterestAmountOverrideParams {
   termNumber: number;
   interestAmount: Currency | number;
   date?: Dayjs | Date;
+  active?: boolean;
 }
 
 export class TermInterestAmountOverride {
   private _termNumber!: number;
   private _interestAmount!: Currency;
+  private _active = true;
   jsTermNumber!: number;
   jsInterestAmount!: number;
+  jsActive!: boolean;
   _date?: Dayjs;
   jsDate?: Date;
 
@@ -27,8 +30,19 @@ export class TermInterestAmountOverride {
     this.termNumber = params.termNumber;
     this.interestAmount = params.interestAmount;
     this.date = params.date;
+    if (params.active !== undefined) {
+      this.active = params.active;
+    }
   }
 
+  get active(): boolean {
+    return this._active;
+  }
+
+  set active(value: boolean) {
+    this._active = value;
+    this.jsActive = value;
+  }
   get termNumber(): number {
     return this._termNumber;
   }
@@ -65,12 +79,14 @@ export class TermInterestAmountOverride {
     this.termNumber = this.jsTermNumber;
     this.interestAmount = this.jsInterestAmount;
     this.date = this.jsDate;
+    this.active = this.jsActive;
   }
 
   updateJsValues(): void {
     this.jsTermNumber = this.termNumber;
     this.jsInterestAmount = this.interestAmount.toNumber();
     this.jsDate = this.date?.toDate();
+    this.jsActive = this.active;
   }
 
   get json(): TermInterestAmountOverrideParams {
@@ -78,6 +94,7 @@ export class TermInterestAmountOverride {
       termNumber: this.termNumber,
       interestAmount: this.interestAmount.toNumber(),
       date: this.date?.toDate(),
+      active: this.active,
     };
   }
 }

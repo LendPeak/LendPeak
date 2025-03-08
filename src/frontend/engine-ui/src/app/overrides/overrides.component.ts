@@ -968,6 +968,13 @@ export class OverridesComponent implements OnInit {
     }
   }
 
+  removeAllTermInterestOverride() {
+    if (!this.lendPeak) {
+      return;
+    }
+    this.lendPeak.amortization.termInterestAmountOverride.removeAllOverrides();
+    this.onInputChange(true);
+  }
   // Remove a specific termInterestOverride row
   removeTermInterestOverride(index: number) {
     if (!this.lendPeak) {

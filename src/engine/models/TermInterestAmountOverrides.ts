@@ -43,12 +43,20 @@ export class TermInterestAmountOverrides {
     return this._overrides;
   }
 
+  get active(): TermInterestAmountOverride[] {
+    return this._overrides.filter((bm) => bm.active);
+  }
+
   addOverride(override: TermInterestAmountOverride) {
     this._overrides.push(override);
   }
 
   removeOverrideAtIndex(index: number) {
     this._overrides.splice(index, 1);
+  }
+
+  removeAllOverrides() {
+    this._overrides = [];
   }
 
   get length(): number {

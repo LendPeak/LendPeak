@@ -305,28 +305,29 @@
         <p-accordion-header>Term Interest Amount Override</p-accordion-header>
         <p-accordion-content>
           <div class="p-fluid">
-            <table
+            <p-table
               *ngIf="
                 lendPeak.amortization.termInterestAmountOverride &&
                 lendPeak.amortization.termInterestAmountOverride.length > 0
               "
+              [value]="lendPeak.amortization.termInterestAmountOverride.all"
               class="p-datatable p-component"
             >
-              <thead>
+              <ng-template pTemplate="header">
                 <tr>
                   <th></th>
-                  <th>Dates</th>
+                  <th>Term Dates</th>
                   <th>Term Number</th>
                   <th>Interest Amount</th>
                   <th>Actions</th>
                 </tr>
-              </thead>
-              <tbody>
+              </ng-template>
+              <ng-template
+                pTemplate="body"
+                let-override
+                let-rowIndex="rowIndex"
+              >
                 <tr
-                  *ngFor="
-                    let override of lendPeak.amortization.termInterestAmountOverride.all;
-                    let i = index
-                  "
                   [ngClass]="{
                     'bg-red-100':
                       lendPeak.amortization.termInterestAmountOverride.isDuplicateTermNumber(
@@ -336,7 +337,7 @@
                 >
                   <!-- Term Dates -->
                   <td>
-                    <span class="font-bold">{{ i + 1 }}.</span>
+                    <span class="font-bold">{{ rowIndex }}</span>
                   </td>
                   <td>
                     <span class="font-medium text-md">
@@ -357,7 +358,7 @@
                   <td>
                     <p-inputNumber
                       [(ngModel)]="override.jsTermNumber"
-                      name="termInterestOverride-term{{ i }}"
+                      name="termInterestOverride-term{{ rowIndex }}"
                       (ngModelChange)="onInputChange($event)"
                     ></p-inputNumber>
                   </td>
@@ -365,7 +366,7 @@
                   <td>
                     <p-inputNumber
                       [(ngModel)]="override.jsInterestAmount"
-                      name="termInterestOverride-amount-{{ i }}"
+                      name="termInterestOverride-amount-{{ rowIndex }}"
                       mode="currency"
                       currency="USD"
                       locale="en-US"
@@ -378,13 +379,15 @@
                       icon="pi pi-trash"
                       class="p-button-rounded"
                       severity="danger"
-                      (click)="removeTermInterestOverride(i)"
+                      (click)="removeTermInterestOverride(rowIndex)"
                     ></p-button>
                   </td>
                 </tr>
-              </tbody>
-            </table>
+              </ng-template>
+            </p-table>
             <div class="p-mt-2">
+              <p-divider></p-divider>
+
               <p-button
                 class="pr-2"
                 label="Add Interest Override"
@@ -392,10 +395,18 @@
                 (click)="addTermInterestOverrideRow()"
               ></p-button>
               <p-button
+                class="pr-2"
                 severity="info"
                 label="Re-Sort"
                 icon="pi pi-refresh"
                 (click)="refreshSortForTermInterestOverride()"
+              ></p-button>
+
+              <p-button
+                severity="danger"
+                label="Remove All"
+                icon="pi pi-trash"
+                (click)="removeAllTermInterestOverride()"
               ></p-button>
             </div>
           </div>
@@ -425,7 +436,8 @@
               <tbody>
                 <tr
                   *ngFor="
-                    let override of lendPeak.amortization.termInterestRateOverride.all;
+                    let override of lendPeak.amortization
+                      .termInterestRateOverride.all;
                     let i = index
                   "
                 >
@@ -553,7 +565,9 @@
               <p-inputgroup>
                 <p-inputgroup-addon>
                   <p-checkbox
-                    [(ngModel)]="lendPeak.amortization.jsHasCustomEquitedMonthlyPayment"
+                    [(ngModel)]="
+                      lendPeak.amortization.jsHasCustomEquitedMonthlyPayment
+                    "
                     (ngModelChange)="onInputChange($event)"
                     binary="true"
                     inputId="hasCustomEquitedMonthlyPayment"
@@ -567,7 +581,9 @@
                   mode="currency"
                   currency="USD"
                   locale="en-US"
-                  [disabled]="!lendPeak.amortization.hasCustomEquitedMonthlyPayment"
+                  [disabled]="
+                    !lendPeak.amortization.hasCustomEquitedMonthlyPayment
+                  "
                   (ngModelChange)="onInputChange($event)"
                 ></p-inputNumber>
               </p-inputgroup>
@@ -604,8 +620,8 @@
               <tbody>
                 <tr
                   *ngFor="
-                    let paymentConfiguration of lendPeak.amortization.termPaymentAmountOverride
-                      .all;
+                    let paymentConfiguration of lendPeak.amortization
+                      .termPaymentAmountOverride.all;
                     let i = index
                   "
                   [ngClass]="{
@@ -700,13 +716,15 @@
               <tbody>
                 <tr
                   *ngFor="
-                    let changePaymentDate of lendPeak.amortization.changePaymentDates.all;
+                    let changePaymentDate of lendPeak.amortization
+                      .changePaymentDates.all;
                     let i = index
                   "
                   [ngClass]="{
-                    'bg-red-100': lendPeak.amortization.changePaymentDates.isDuplicateTermNumber(
-                      changePaymentDate.jsTermNumber
-                    ),
+                    'bg-red-100':
+                      lendPeak.amortization.changePaymentDates.isDuplicateTermNumber(
+                        changePaymentDate.jsTermNumber
+                      ),
                   }"
                   [ngClass]="{
                     'bg-red-100': changePaymentDate.jsTermNumber < 0,
@@ -798,7 +816,8 @@
               <tbody>
                 <tr
                   *ngFor="
-                    let preBillDay of lendPeak.amortization.preBillDays.allCustom;
+                    let preBillDay of lendPeak.amortization.preBillDays
+                      .allCustom;
                     let i = index
                   "
                 >
@@ -877,7 +896,8 @@
               <tbody>
                 <tr
                   *ngFor="
-                    let dueBillDay of lendPeak.amortization.dueBillDays.allCustom;
+                    let dueBillDay of lendPeak.amortization.dueBillDays
+                      .allCustom;
                     let i = index
                   "
                 >
@@ -1067,7 +1087,12 @@
                 </tr>
               </thead>
               <tbody>
-                <tr *ngFor="let fee of lendPeak.amortization.feesForAllTerms.all; let i = index">
+                <tr
+                  *ngFor="
+                    let fee of lendPeak.amortization.feesForAllTerms.all;
+                    let i = index
+                  "
+                >
                   <!-- Fee Type -->
                   <td>
                     <p-select
@@ -1173,7 +1198,8 @@
               <tbody>
                 <tr
                   *ngFor="
-                    let termFee of lendPeak.amortization.feesPerTerm.flatFeesPerTerm;
+                    let termFee of lendPeak.amortization.feesPerTerm
+                      .flatFeesPerTerm;
                     let i = index
                   "
                 >

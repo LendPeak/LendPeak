@@ -2009,7 +2009,7 @@ export class Amortization {
       let billedInterestForTerm = Currency.zero;
 
       // Check if we have a static interest override for this term
-      const staticInterestOverride = this.termInterestAmountOverride.all.find((override) => override.termNumber === termIndex)?.interestAmount;
+      const staticInterestOverride = this.termInterestAmountOverride.active.find((override) => override.termNumber === termIndex)?.interestAmount;
 
       const loanBalancesInAPeriod = this.getModifiedBalance(periodStartDate, periodEndDate, startBalance);
       const lastBalanceInPeriod = loanBalancesInAPeriod.length;

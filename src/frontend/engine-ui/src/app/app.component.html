@@ -534,13 +534,16 @@
       *ngIf="pastDueSummary"
     >
       <div class="grid">
-        <div class="col-12" *ngIf="pastDueSummary.pastDueCount === 0">
+        <div
+          class="col-12"
+          *ngIf="lendPeak.bills.summary.pastDueTotal.isZero()"
+        >
           <div class="flex flex-column">
             <span class="text-300 font-semibold mb-1">No Past Due Bills</span>
             <span>All bills are current as of the snapshot date.</span>
           </div>
         </div>
-        <div class="col-12" *ngIf="pastDueSummary.pastDueCount > 0">
+        <div class="col-12" *ngIf="lendPeak.bills.summary.billsPastDue > 0">
           <div
             class="w-full bg-red-200 p-4 text-lg align-content-center text-center font-semibold text-200 shadow-2"
           >
@@ -560,37 +563,37 @@
             <div class="grid">
               <div class="col-12 md:col-3">
                 <span class="text-300 font-semibold">Past Due Bills:</span>
-                <span>{{ pastDueSummary.pastDueCount }}</span>
+                <span>{{ lendPeak.bills.summary.billsPastDue }}</span>
               </div>
 
               <!-- Add Days Contract Is Past Due here -->
               <div class="col-12 md:col-3">
                 <span class="text-300 font-semibold">Days Past Due:</span>
-                <span>{{ pastDueSummary.daysContractIsPastDue }}</span>
+                <span>{{ lendPeak.bills.summary.daysPastDue }}</span>
               </div>
 
               <div class="col-12 md:col-3">
                 <span class="text-300 font-semibold">Past Due Principal:</span>
                 <span>{{
-                  pastDueSummary.totalPastDuePrincipal.toNumber() | currency
+                  lendPeak.bills.summary.pastDuePrincipal.toNumber() | currency
                 }}</span>
               </div>
               <div class="col-12 md:col-3">
                 <span class="text-300 font-semibold">Past Due Interest:</span>
                 <span>{{
-                  pastDueSummary.totalPastDueInterest.toNumber() | currency
+                  lendPeak.bills.summary.pastDueInterest.toNumber() | currency
                 }}</span>
               </div>
               <div class="col-12 md:col-3">
                 <span class="text-300 font-semibold">Past Due Fees:</span>
                 <span>{{
-                  pastDueSummary.totalPastDueFees.toNumber() | currency
+                  lendPeak.bills.summary.pastDueFees.toNumber() | currency
                 }}</span>
               </div>
               <div class="col-12 md:col-3">
                 <span class="text-300 font-semibold">Past Due Amount:</span>
                 <span>{{
-                  pastDueSummary.totalPastDueAmount.toNumber() | currency
+                  lendPeak.bills.summary.pastDueTotal.toNumber() | currency
                 }}</span>
               </div>
             </div>
@@ -612,7 +615,7 @@
           <div class="flex flex-column">
             <span class="text-300 font-semibold mb-1">Remaining Terms:</span>
             <span
-              >{{ loanSummary?.remainingTerms }} /
+              >{{ lendPeak.bills.summary.remainingUnpaidBills }} /
               {{ loanSummary?.totalTerms }}</span
             >
           </div>
@@ -622,8 +625,9 @@
             <span class="text-300 font-semibold mb-1">Next Bill Date:</span>
             <span>
               {{
-                loanSummary?.nextBillDate
-                  ? (loanSummary?.nextBillDate | date: "MM/dd/yyyy")
+                lendPeak.bills.nextUpcomingBill
+                  ? (lendPeak.bills.nextUpcomingBill.dueDate.toDate()
+                    | date: "MM/dd/yyyy")
                   : "No more bills left"
               }}
             </span>
@@ -635,7 +639,7 @@
               >Paid Principal To Date:</span
             >
             <span>{{
-              loanSummary?.paidPrincipalToDate?.toNumber() | currency
+              lendPeak.bills.summary.allocatedPrincipalSum.toNumber() | currency
             }}</span>
           </div>
         </div>
@@ -645,7 +649,7 @@
               >Paid Interest To Date:</span
             >
             <span>{{
-              loanSummary?.paidInterestToDate?.toNumber() | currency
+              lendPeak.bills.summary.allocatedInterestSum.toNumber() | currency
             }}</span>
           </div>
         </div>
@@ -656,8 +660,9 @@
             <span class="text-300 font-semibold mb-1">Last Payment Date:</span>
             <span>
               {{
-                loanSummary?.lastPaymentDate
-                  ? (loanSummary?.lastPaymentDate | date: "MM/dd/yyyy")
+                lendPeak.depositRecords.lastActive
+                  ? (lendPeak.depositRecords.lastActive.effectiveDate.toDate()
+                    | date: "MM/dd/yyyy")
                   : "No payment has been made yet"
               }}
             </span>
@@ -670,8 +675,9 @@
             >
             <span>
               {{
-                loanSummary?.lastPaymentAmount
-                  ? (loanSummary?.lastPaymentAmount?.toNumber() | currency)
+                lendPeak.depositRecords.lastActive
+                  ? (lendPeak.depositRecords.lastActive.amount.toNumber()
+                    | currency)
                   : "No payment has been made yet"
               }}
             </span>
@@ -683,7 +689,7 @@
               >Remaining Principal:</span
             >
             <span>{{
-              loanSummary?.remainingPrincipal?.toNumber() | currency
+              lendPeak.bills.summary.remainingPrincipal.toNumber() | currency
             }}</span>
           </div>
         </div>
@@ -693,186 +699,17 @@
               >Current Payoff (Principal + Accrued Interest):</span
             >
             <span>{{
-              loanSummary?.currentPayoffAmount?.toNumber() | currency
+              lendPeak.payoffQuote.dueTotal.toNumber() | currency
             }}</span>
           </div>
         </div>
 
-        <!-- Row 3 -->
-        <div class="col-12 md:col-3 mt-3">
-          <div class="flex flex-column">
-            <span class="text-300 font-semibold mb-1"
-              >Accrued Interest To Date:</span
-            >
-            <span>{{
-              loanSummary?.accruedInterestToDate?.toNumber() | currency
-            }}</span>
-          </div>
-        </div>
-        <div class="col-12 md:col-3 mt-3">
-          <div class="flex flex-column">
-            <span class="text-300 font-semibold mb-1"
-              >Projected Future Interest (If Held To Maturity):</span
-            >
-            <span>{{
-              loanSummary?.projectedFutureInterest?.toNumber() | currency
-            }}</span>
-          </div>
-        </div>
         <!-- Any additional fields can follow in the remaining columns of this row -->
-      </div>
-    </p-card>
-
-    <!-- Actual Payment-Based Status card -->
-    <p-card
-      header="Actual Payment-Based Status"
-      styleClass="mb-3"
-      *ngIf="actualLoanSummary"
-    >
-      <div class="grid">
-        <!-- Row 1 -->
-        <div class="col-12 md:col-3">
-          <div class="flex flex-column">
-            <span class="text-300 font-semibold mb-1"
-              >Next Unpaid Bill Due Date (Actual):</span
-            >
-            <span>
-              {{
-                actualLoanSummary.nextBillDate
-                  ? (actualLoanSummary.nextBillDate | date: "MM/dd/yyyy")
-                  : "No more bills left"
-              }}
-            </span>
-          </div>
-        </div>
-        <div class="col-12 md:col-3">
-          <div class="flex flex-column">
-            <span class="text-300 font-semibold mb-1"
-              >Cumulative Principal Paid (Actual):</span
-            >
-            <span>{{
-              actualLoanSummary.actualPrincipalPaid.toNumber() | currency
-            }}</span>
-          </div>
-        </div>
-        <div class="col-12 md:col-3">
-          <div class="flex flex-column">
-            <span class="text-300 font-semibold mb-1"
-              >Cumulative Interest Paid (Actual):</span
-            >
-            <span>{{
-              actualLoanSummary.actualInterestPaid.toNumber() | currency
-            }}</span>
-          </div>
-        </div>
-        <div class="col-12 md:col-3">
-          <div class="flex flex-column">
-            <span class="text-300 font-semibold mb-1"
-              >Last Bill Due Date with Payment Applied (Actual):</span
-            >
-            <span>{{
-              actualLoanSummary.lastPaymentDate | date: "MM/dd/yyyy"
-            }}</span>
-          </div>
-        </div>
-
-        <!-- Row 2 -->
-        <div class="col-12 md:col-3 mt-3">
-          <div class="flex flex-column">
-            <span class="text-300 font-semibold mb-1"
-              >Last Allocated Payment Amount (Actual):</span
-            >
-            <span>{{
-              actualLoanSummary.lastPaymentAmount.toNumber() | currency
-            }}</span>
-          </div>
-        </div>
-        <div class="col-12 md:col-3 mt-3">
-          <div class="flex flex-column">
-            <span class="text-300 font-semibold mb-1"
-              >Remaining Principal Balance (Actual):</span
-            >
-            <span>{{
-              actualLoanSummary.actualRemainingPrincipal.toNumber() | currency
-            }}</span>
-          </div>
-        </div>
-        <div class="col-12 md:col-3 mt-3">
-          <div class="flex flex-column">
-            <span class="text-300 font-semibold mb-1"
-              >Current Full Payoff Amount (Actual):</span
-            >
-            <span>{{
-              actualLoanSummary.actualCurrentPayoff.toNumber() | currency
-            }}</span>
-          </div>
-        </div>
       </div>
     </p-card>
 
     <!-- Repayment Plan Card -->
     <p-card header="Repayment Plan Summary" styleClass="mt-3">
-      <!-- Summary Row -->
-      <div class="grid p-2">
-        <div class="col-12 md:col-2">
-          <div class="flex flex-column">
-            <span class="text-300 font-semibold mb-1">Total Loan Amount:</span>
-            <span>{{
-              lendPeak.amortization.totalLoanAmount.toNumber() | currency
-            }}</span>
-          </div>
-        </div>
-        <div class="col-12 md:col-2">
-          <div class="flex flex-column">
-            <span class="text-300 font-semibold mb-1"
-              >Cumulative Interest:</span
-            >
-            <span>{{
-              loanSummary.accruedInterestToDate.toNumber() | currency
-            }}</span>
-          </div>
-        </div>
-        <div class="col-12 md:col-2">
-          <div class="flex flex-column">
-            <span class="text-300 font-semibold mb-1">Term In Months:</span>
-            <span>{{ lendPeak.amortization.loanTermInMonths }}</span>
-          </div>
-        </div>
-        <div class="col-12 md:col-1">
-          <div class="flex flex-column">
-            <span class="text-300 font-semibold mb-1">APR:</span>
-            <span>{{ lendPeak.amortization.apr.toDecimalPlaces(4) }}%</span>
-          </div>
-        </div>
-        <div class="col-12 md:col-2">
-          <div class="flex flex-column">
-            <span class="text-300 font-semibold mb-1">Days Left in Term:</span>
-            <span>{{
-              lendPeak.amortization.repaymentSchedule.getDaysLeftInTerm(
-                snapshotDate
-              )
-            }}</span>
-          </div>
-        </div>
-
-        <div class="col-12 md:col-1">
-          <div class="flex flex-column">
-            <span class="text-300 font-semibold mb-1">Per Diem:</span>
-            <span>{{
-              lendPeak.amortization.repaymentSchedule.getPerDiemForPeriodByDate(
-                snapshotDate
-              ).jsValue | currency
-            }}</span>
-          </div>
-        </div>
-        <div class="col-12 md:col-2">
-          <div class="flex flex-column">
-            <span class="text-300 font-semibold mb-1">Accrued Interest:</span>
-            <span>{{ accruedInterest.getRoundedNumber() | currency }}</span>
-          </div>
-        </div>
-      </div>
-
       <!-- Table Toggle Button -->
       <p-toolbar styleClass="mb-4 gap-2">
         <ng-template pTemplate="left">

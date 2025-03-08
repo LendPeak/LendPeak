@@ -49,7 +49,7 @@ For more details on our business strategy and monetization plans, please refer t
 
 - **Open-Source**: LendPeak is fully open-source, allowing anyone to use, modify, and contribute to the project.
 - **Modular Architecture**: The software is built with a modular approach, making it easy to extend and customize.
-- **Material Design**: The UI is built using Material Design by Google, offering a clean and modern interface.
+- **PrimeNG Design**: The UI is built using PrimeNG, offering a clean and modern interface.
 - **Stateless Core**: The core engine is versatile, operating independently of web services and databases, suitable for both frontend and backend use.
 - **AI-Driven Insights**: AI integration provides intelligent restructuring suggestions to both lenders and borrowers, with flexible model support through plugins.
 

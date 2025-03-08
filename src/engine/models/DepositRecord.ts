@@ -450,6 +450,28 @@ export class DepositRecord {
     return "DEPOSIT-" + sequencePrefix + Math.random().toString(36).substr(2, 9);
   }
 
+  get summary() {
+    let total = this.amount;
+    let totalUnused = this.unusedAmount;
+    let totalInterest = Currency.of(0);
+    let totalFees = Currency.of(0);
+    let totalPrincipal = Currency.of(0);
+
+    this.usageDetails.forEach((detail) => {
+      totalInterest = totalInterest.add(detail.allocatedInterest);
+      totalFees = totalFees.add(detail.allocatedFees);
+      totalPrincipal = totalPrincipal.add(detail.allocatedPrincipal);
+    });
+
+    return {
+      total: total,
+      totalInterest: totalInterest,
+      totalFees: totalFees,
+      totalPrincipal: totalPrincipal,
+      totalUnused: totalUnused,
+    };
+  }
+
   toJSON() {
     return this.json;
   }

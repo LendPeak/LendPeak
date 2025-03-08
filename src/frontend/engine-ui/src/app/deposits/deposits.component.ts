@@ -320,6 +320,7 @@ export class DepositsComponent {
     this.showDepositDialog = false;
     this.selectedDepositForEdit = null;
   }
+  
 
   depositActiveUpdated() {
     this.depositUpdated.emit();

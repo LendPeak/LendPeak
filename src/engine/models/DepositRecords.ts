@@ -5,6 +5,7 @@ dayjs.extend(utc);
 import isBetween from "dayjs/plugin/isBetween";
 dayjs.extend(isBetween);
 import { DepositRecord } from "./DepositRecord";
+import { Currency } from "../utils/Currency";
 
 export class DepositRecords {
   private _records: DepositRecord[] = [];
@@ -128,6 +129,39 @@ export class DepositRecords {
 
   get all(): DepositRecord[] {
     return this._records;
+  }
+
+  get active(): DepositRecord[] {
+    return this._records.filter((r) => r.active === true);
+  }
+
+  get lastActive(): DepositRecord | undefined {
+    let active = this.active;
+    return active[active.length - 1];
+  }
+
+  get summary() {
+    let total = Currency.of(0);
+    let totalInterest = Currency.of(0);
+    let totalFees = Currency.of(0);
+    let totalPrincipal = Currency.of(0);
+    let totalUnused = Currency.of(0);
+
+    this.active.forEach((record) => {
+      const recordSummary = record.summary;
+      total = total.add(recordSummary.total);
+      totalInterest = totalInterest.add(recordSummary.totalInterest);
+      totalFees = totalFees.add(recordSummary.totalFees);
+      totalPrincipal = totalPrincipal.add(recordSummary.totalPrincipal);
+    });
+
+    return {
+      total: total,
+      totalInterest: totalInterest,
+      totalFees: totalFees,
+      totalPrincipal: totalPrincipal,
+      totalUnused: totalUnused,
+    };
   }
 
   toJSON() {

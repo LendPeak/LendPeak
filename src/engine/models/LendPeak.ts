@@ -7,6 +7,8 @@ import { BalanceModifications } from "./Amortization/BalanceModifications";
 import { DepositRecords } from "./DepositRecords";
 import { DepositRecord } from "./DepositRecord";
 
+import { InterestCalculator, PerDiemCalculationType } from "./InterestCalculator";
+
 import { Bills } from "./Bills";
 import { BillPaymentDetail } from "./Bill/BillPaymentDetail";
 import { BillGenerator } from "./BillGenerator";
@@ -391,6 +393,60 @@ export class LendPeak {
     }
 
     return new LendPeak(params);
+  }
+
+  get payoffQuote(): {
+    duePrincipal: Currency;
+    dueInterest: Currency;
+    dueFees: Currency;
+    dueTotal: Currency;
+  } {
+    // payoff are all amounts summed up for open bills
+    // and if open bill end period is after current date
+    // then we need to add acrued interest up to the date of
+    // the quote
+    let dueTotal = Currency.zero;
+    let duePrincipal = Currency.zero;
+    let dueInterest = Currency.zero;
+    let dueFees = Currency.zero;
+
+    const billSummary = this.bills.summary;
+    dueTotal = dueTotal.add(billSummary.remainingTotal);
+    duePrincipal = duePrincipal.add(billSummary.remainingPrincipal);
+    dueInterest = dueInterest.add(billSummary.remainingInterest);
+    dueFees = dueFees.add(billSummary.remainingFees);
+
+    const lastOpenBill = this.bills.lastOpenBill;
+
+    // if lastOpenBill exists, lets check if its period end date is after current date
+    if (lastOpenBill && lastOpenBill.amortizationEntry.periodEndDate.isBefore(this.currentDate)) {
+      const firstFutureBill = this.bills.getFirstFutureBill(this.currentDate);
+      if (firstFutureBill) {
+        const extraInterest = this.amortization.getAccruedInterestByDate(this.currentDate);
+        dueInterest = dueInterest.add(extraInterest);
+        dueTotal = dueTotal.add(extraInterest);
+
+        // if future bill has satisfied amounts, we need to reduce balances by those amounts
+        if (firstFutureBill.paymentDetails.length > 0) {
+          for (let paymentDetail of firstFutureBill.paymentDetails) {
+            duePrincipal = duePrincipal.subtract(paymentDetail.allocatedPrincipal);
+            dueInterest = dueInterest.subtract(paymentDetail.allocatedInterest);
+            dueFees = dueFees.subtract(paymentDetail.allocatedFees);
+            dueTotal = dueTotal.subtract(paymentDetail.allocatedPrincipal).subtract(paymentDetail.allocatedInterest).subtract(paymentDetail.allocatedFees);
+          }
+        }
+      } else {
+        // there are models where interest will continue to accrue even after the last bill
+        // if the loan is not paid off, this is where it would be hanled
+      }
+    }
+
+    return {
+      dueTotal: dueTotal,
+      duePrincipal: duePrincipal,
+      dueInterest: dueInterest,
+      dueFees: dueFees,
+    };
   }
 
   toJSON() {

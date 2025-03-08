@@ -1,4 +1,5 @@
 import { BalanceModification } from "./BalanceModification";
+import { Currency } from "../../utils/Currency";
 
 export class BalanceModifications {
   private _balanceModifications: BalanceModification[] = [];
@@ -99,6 +100,29 @@ export class BalanceModifications {
 
   updateJsValues() {
     this._balanceModifications.forEach((bm) => bm.updateJsValues());
+  }
+
+  get summary() {
+    let total = Currency.of(0);
+    let increases = Currency.of(0);
+    let decreases = Currency.of(0);
+
+    this.all.forEach((bm) => {
+      if (bm.type === "increase") {
+        increases = increases.add(bm.amount);
+        total = total.add(bm.amount);
+      }
+      if (bm.type === "decrease") {
+        decreases = decreases.add(bm.amount);
+        total = total.subtract(bm.amount);
+      }
+    });
+
+    return {
+      total: total,
+      increases: increases,
+      decreases: decreases,
+    };
   }
 
   get json() {

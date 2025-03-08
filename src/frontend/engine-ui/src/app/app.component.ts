@@ -15,6 +15,7 @@ import {
   ViewChild,
   EventEmitter,
   SecurityContext,
+  ChangeDetectorRef,
 } from '@angular/core';
 
 import {
@@ -85,7 +86,18 @@ export class AppComponent implements OnChanges {
     private openaiService: OpenAiChatService,
     private systemSettingsService: SystemSettingsService,
     private markdownService: MarkdownService,
+    private cdr: ChangeDetectorRef,
   ) {}
+
+  needsRecalc = false;
+
+  ngAfterViewChecked() {
+    if (this.needsRecalc) {
+      this.needsRecalc = false;
+      console.log('rerunning calc');
+      this.submitLoan();
+    }
+  }
 
   lendPeak: LendPeak = new LendPeak({})
     .addAmortizationVersionManager()
@@ -215,7 +227,7 @@ export class AppComponent implements OnChanges {
     deposits: DepositRecords;
   }) {
     this.lendPeak = await this.saveLoanWithoutLoading(loanData);
-    this.executeLoadLoan(this.lendPeak.amortization.name);
+    await this.executeLoadLoan(this.lendPeak.amortization.name);
   }
 
   private async saveLoanWithoutLoading(loanData: {
@@ -721,8 +733,8 @@ export class AppComponent implements OnChanges {
     this.showEditLoanDialog = true;
   }
 
-  saveEditedLoanDetails() {
-    this.saveAndLoadLoan({
+  async saveEditedLoanDetails() {
+    await this.saveAndLoadLoan({
       loan: this.lendPeak.amortization,
       deposits: this.lendPeak.depositRecords,
     });
@@ -919,10 +931,10 @@ export class AppComponent implements OnChanges {
     }
   }
 
-  loadLoan(key: string, event: Event) {
+  async loadLoan(key: string, event: Event) {
     // If no unsaved changes, just do it directly
     if (!this.loanModified) {
-      this.executeLoadLoan(key);
+      await this.executeLoadLoan(key);
       return;
     }
 
@@ -1007,45 +1019,49 @@ export class AppComponent implements OnChanges {
     });
   }
 
-  async executeLoadLoan(key: string) {
+  executeLoadLoan(key: string) {
     // check if key starts with loan_ if not lets add it
     if (!key.startsWith('loan_')) {
       key = `loan_${key}`;
     }
-    const loanData = await this.indexedDbService.loadLoan(key);
 
-    if (loanData) {
-      console.log('loading loanData', loanData);
-      this.lendPeak = LendPeak.fromJSON(loanData);
-      this.lendPeak.currentDate = this.snapshotDate;
+    this.indexedDbService.loadLoan(key).then((loanData) => {
+      if (loanData) {
+        console.log('loading loanData', loanData);
+        this.lendPeak = LendPeak.fromJSON(loanData);
+        this.lendPeak.currentDate = this.snapshotDate;
 
-      this.submitLoan();
-      this.showManageLoansDialog = false;
-      this.messageService.add({
-        severity: 'success',
-        summary: 'Success',
-        detail: `Loan "${loanData.name}" loaded successfully`,
-      });
+        this.submitLoan();
+        //this.needsRecalc = true;
 
-      // Update the URL without navigating
-      const queryParams = {
-        loan: encodeURIComponent(this.lendPeak.amortization.name),
-        tab: this.tabNames[this.activeTabIndex],
-      };
-      const urlTree = this.router.createUrlTree([], {
-        queryParams: queryParams,
-        queryParamsHandling: 'merge',
-      });
-      const newUrl = this.router.serializeUrl(urlTree);
-      this.location.go(newUrl);
-    } else {
-      this.messageService.add({
-        severity: 'error',
-        summary: 'Error',
-        detail: `Failed to load loan.`,
-      });
-    }
-    this.loanModified = false;
+        this.showManageLoansDialog = false;
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Success',
+          detail: `Loan "${loanData.name}" loaded successfully`,
+        });
+
+        // Update the URL without navigating
+        const queryParams = {
+          loan: encodeURIComponent(this.lendPeak.amortization.name),
+          tab: this.tabNames[this.activeTabIndex],
+        };
+        const urlTree = this.router.createUrlTree([], {
+          queryParams: queryParams,
+          queryParamsHandling: 'merge',
+        });
+        const newUrl = this.router.serializeUrl(urlTree);
+        this.location.go(newUrl);
+      } else {
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: `Failed to load loan.`,
+        });
+      }
+      this.loanModified = false;
+      this.cdr.detectChanges();
+    });
   }
 
   async saveLoan(lendPeak: LendPeak = this.lendPeak) {
@@ -1177,7 +1193,9 @@ export class AppComponent implements OnChanges {
 
   // Handle deposit updated event (e.g., to recalculate loan details)
   onDepositUpdated() {
-    this.submitLoan();
+    // this.submitLoan();
+    this.needsRecalc = true;
+    this.cdr.detectChanges();
   }
 
   toggleAdvancedOptions() {
@@ -1222,6 +1240,7 @@ export class AppComponent implements OnChanges {
   // }
 
   submitLoan(loanModified: boolean = false): void {
+    // submitLoan(loanModified: boolean = false): void {
     if (loanModified) {
       this.loanModified = true;
     }
@@ -1265,6 +1284,7 @@ export class AppComponent implements OnChanges {
     this.payoffAmount = this.lendPeak.amortization.getCurrentPayoffAmount(
       dayjs(this.snapshotDate),
     );
+    this.cdr.detectChanges();
   }
 
   makeReactive(obj: any, callback: Function): any {

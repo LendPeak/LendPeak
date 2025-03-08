@@ -227,28 +227,82 @@ export class Bill {
   get jsAllocatedPrincipalSum(): number {
     return this.paymentDetails.reduce((sum, detail) => sum + detail.jsAllocatedPrincipal, 0);
   }
+
+  get allocatedPrincipalSum(): Currency {
+    return this.paymentDetails.reduce((sum, detail) => sum.add(detail.allocatedPrincipal), Currency.zero);
+  }
+
   get jsAllocatedInterestSum(): number {
     return this.paymentDetails.reduce((sum, detail) => sum + detail.jsAllocatedInterest, 0);
   }
+
+  get allocatedInterestSum(): Currency {
+    return this.paymentDetails.reduce((sum, detail) => sum.add(detail.allocatedInterest), Currency.zero);
+  }
+
   get jsAllocatedFeesSum(): number {
     return this.paymentDetails.reduce((sum, detail) => sum + detail.jsAllocatedFees, 0);
   }
+
+  get allocatedFeesSum(): Currency {
+    return this.paymentDetails.reduce((sum, detail) => sum.add(detail.allocatedFees), Currency.zero);
+  }
+
   get jsAllocatedTotalSum(): number {
     return this.paymentDetails.reduce((sum, detail) => sum + detail.jsAllocatedTotal, 0);
+  }
+
+  get allocatedTotalSum(): Currency {
+    return this.paymentDetails.reduce((sum, detail) => sum.add(detail.allocatedTotal), Currency.zero);
   }
 
   // 3) Remaining = Original - Sum(allocated)
   get jsRemainingPrincipal(): number {
     return this.jsOriginalPrincipalDue - this.jsAllocatedPrincipalSum;
   }
+
+  get remainingPrincipal(): Currency {
+    return this.originalPrincipalDue.subtract(this.allocatedPrincipalSum);
+  }
+
   get jsRemainingInterest(): number {
     return this.jsOriginalInterestDue - this.jsAllocatedInterestSum;
   }
+
+  get remainingInterest(): Currency {
+    return this.originalInterestDue.subtract(this.allocatedInterestSum);
+  }
+
   get jsRemainingFees(): number {
     return this.jsOriginalFeesDue - this.jsAllocatedFeesSum;
   }
+
+  get remainingFees(): Currency {
+    return this.originalFeesDue.subtract(this.allocatedFeesSum);
+  }
+
   get jsRemainingTotal(): number {
     return this.jsOriginalTotalDue - this.jsAllocatedTotalSum;
+  }
+  get remainingTotal(): Currency {
+    return this.originalTotalDue.subtract(this.allocatedTotalSum);
+  }
+
+  get summary() {
+    return {
+      totalDue: this.totalDue,
+      principalDue: this.principalDue,
+      interestDue: this.interestDue,
+      feesDue: this.feesDue,
+      remainingTotal: this.remainingTotal,
+      remainingFees: this.remainingFees,
+      remainintPrincipal: this.remainingPrincipal,
+      remainingInterest: this.remainingInterest,
+      allocatedTotalSum: this.allocatedTotalSum,
+      allocatedFeesSum: this.allocatedFeesSum,
+      allocatedPrincipalSum: this.allocatedPrincipalSum,
+      allocatedInterestSum: this.allocatedInterestSum,
+    };
   }
 
   toJSON() {

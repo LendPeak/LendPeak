@@ -315,10 +315,19 @@
             >
               <ng-template pTemplate="header">
                 <tr>
-                  <th></th>
-                  <th>Term Dates</th>
+                  <th>
+                    <p-toggleswitch
+                      [ngModel]="true"
+                      inputId="termInterestOverrideToggleAll"
+                      (onChange)="toggleAllTermInterestOverrides($event)"
+                    />
+                  </th>
+                  <th>Period Start Date</th>
+                  <th>Period End Date</th>
                   <th>Term Number</th>
                   <th>Interest Amount</th>
+                  <th>Acceptable Rate Variance</th>
+                  <th>Interest Rate</th>
                   <th>Actions</th>
                 </tr>
               </ng-template>
@@ -333,30 +342,34 @@
                       lendPeak.amortization.termInterestAmountOverride.isDuplicateTermNumber(
                         override.jsTermNumber
                       ),
+                    'opacity-40': !override.jsActive,
                   }"
                 >
-                  <!-- Term Dates -->
                   <td>
-                    <span class="font-bold">{{ rowIndex }}</span>
+                    <p-toggleswitch
+                      inputId="active-{{ override.id }}"
+                      [(ngModel)]="override.jsActive"
+                      (ngModelChange)="onInputChange($event)"
+                    />
+                  </td>
+                  <!-- Term Dates -->
+
+                  <td>
+                    {{
+                      getStartDateForTerm(override.jsTermNumber).toDate()
+                        | date: "MM/dd/yyyy"
+                    }}
                   </td>
                   <td>
-                    <span class="font-medium text-md">
-                      {{
-                        getStartDateForTerm(override.jsTermNumber).format(
-                          "MM/DD/YYYY"
-                        )
-                      }}
-                    </span>
-                    <span class="font-bold text-xl"> - </span>
-                    <span class="font-medium text-md">{{
-                      getEndDateForTerm(override.jsTermNumber).format(
-                        "MM/DD/YYYY"
-                      )
-                    }}</span>
+                    {{
+                      getEndDateForTerm(override.jsTermNumber).toDate()
+                        | date: "MM/dd/yyyy"
+                    }}
                   </td>
                   <!-- Term Number -->
                   <td>
                     <p-inputNumber
+                      [disabled]="!override.jsActive"
                       [(ngModel)]="override.jsTermNumber"
                       name="termInterestOverride-term{{ rowIndex }}"
                       (ngModelChange)="onInputChange($event)"
@@ -365,6 +378,7 @@
                   <!-- Interest Amount -->
                   <td>
                     <p-inputNumber
+                      [disabled]="!override.jsActive"
                       [(ngModel)]="override.jsInterestAmount"
                       name="termInterestOverride-amount-{{ rowIndex }}"
                       mode="currency"
@@ -372,6 +386,62 @@
                       locale="en-US"
                       (ngModelChange)="onInputChange($event)"
                     ></p-inputNumber>
+                  </td>
+                  <td>
+                    <p-inputgroup>
+                      <p-inputNumber
+                        [disabled]="!override.jsActive"
+                        [(ngModel)]="override.jsAcceptableRateVariance"
+                        name="termInterestOverride-rateVariance-{{ rowIndex }}"
+                        mode="decimal"
+                        minFractionDigits="2"
+                        maxFractionDigits="10"
+                        locale="en-US"
+                        (ngModelChange)="onInputChange($event)"
+                      ></p-inputNumber>
+
+                      <p-inputgroup-addon
+                        >{{
+                          (override.jsAcceptableRateVariance * 100).toFixed(4)
+                        }}
+                        %</p-inputgroup-addon
+                      >
+                    </p-inputgroup>
+                  </td>
+                  <td>
+                    <span *ngIf="override.active">
+                      <i
+                        *ngIf="
+                          lendPeak.amortization.repaymentSchedule.getEntryByTerm(
+                            override.jsTermNumber
+                          )?.metadata?.equivalentAnnualRateVarianceExceeded
+                        "
+                        style="color: red; font-size: 1.5rem"
+                        severity="danger"
+                        class="pi pi-exclamation-triangle"
+                        styleClass="mr-2 text-red-500"
+                        pTooltip="This term's equivalent annual rate variance is {{
+                          lendPeak.amortization.repaymentSchedule.getEntryByTerm(
+                            override.jsTermNumber
+                          )?.metadata?.equivalentAnnualRateVariance
+                            | percent: '1.2-6'
+                        }} which exceeded the configured threshold of {{
+                          lendPeak.amortization.repaymentSchedule.getEntryByTerm(
+                            override.jsTermNumber
+                          )?.metadata?.acceptableRateVariance | percent: '1.2-6'
+                        }}
+                    "
+                        tooltipPosition="top"
+                        tooltipStyleClass="wide-tooltip"
+                      ></i>
+
+                      {{
+                        lendPeak.amortization.repaymentSchedule.getEntryByTerm(
+                          override.jsTermNumber
+                        )?.jsPeriodInterestRate | percent: "1.2-4"
+                      }}
+                    </span>
+                    <span *ngIf="!override.active">N/A</span>
                   </td>
                   <!-- Remove Button -->
                   <td>

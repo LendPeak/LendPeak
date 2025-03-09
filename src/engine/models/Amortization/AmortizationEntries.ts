@@ -58,6 +58,10 @@ export class AmortizationEntries {
     return this.entries[0];
   }
 
+  getEntryByTerm(term: number): AmortizationEntry | undefined {
+    return this.entries.find((entry) => entry.term === term);
+  }
+
   get cumulativeInterest(): Currency {
     return this._entries.reduce((acc, entry) => {
       return acc.add(entry.dueInterestForTerm.getRoundedValue());
@@ -142,6 +146,7 @@ export class AmortizationEntries {
 
     return projectedFutureInterest;
   }
+
 
   toJSON() {
     return this.json;

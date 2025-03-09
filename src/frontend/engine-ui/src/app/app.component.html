@@ -847,7 +847,7 @@
                     )
                   "
                   value="CPD"
-                  severity="warn"
+                  severity="info"
                   styleClass="mr-2"
                   pTooltip="Change Payment Date from {{
                     lendPeak.amortization.changePaymentDates.getChangePaymentDate(
@@ -889,7 +889,7 @@
                     plan.metadata && plan.metadata.staticInterestOverrideApplied
                   "
                   value="!"
-                  severity="warn"
+                  severity="secondary"
                   styleClass="mr-2"
                   pTooltip="This term's interest was manually set to {{
                     plan.metadata.actualInterestValue | currency
@@ -902,6 +902,26 @@
                   tooltipPosition="top"
                   tooltipStyleClass="wide-tooltip"
                 ></p-badge>
+
+                <i
+                  *ngIf="
+                    plan.metadata &&
+                    plan.metadata.equivalentAnnualRateVarianceExceeded
+                  "
+                  style="color: red; font-size: 1.5rem"
+                  severity="danger"
+                  class="pi pi-exclamation-triangle"
+                  styleClass="mr-2 text-red-500"
+                  pTooltip="This term's equivalent annual rate variance is {{
+                    plan.metadata.equivalentAnnualRateVariance
+                      | percent: '1.2-6'
+                  }} which exceeded the configured threshold of {{
+                    plan.metadata.acceptableRateVariance | percent: '1.2-6'
+                  }}
+                    "
+                  tooltipPosition="top"
+                  tooltipStyleClass="wide-tooltip"
+                ></i>
               </span>
             </td>
 
@@ -929,7 +949,7 @@
                     plan.metadata && plan.metadata.staticInterestOverrideApplied
                   "
                   value="Manual"
-                  severity="warn"
+                  severity="info"
                   styleClass="mr-2"
                   pTooltip="This term's interest was manually set to {{
                     plan.metadata.actualInterestValue | currency

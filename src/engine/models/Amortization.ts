@@ -2009,7 +2009,7 @@ export class Amortization {
       let billedInterestForTerm = Currency.zero;
 
       // Check if we have a static interest override for this term
-      const staticInterestOverride = this.termInterestAmountOverride.active.find((override) => override.termNumber === termIndex)?.interestAmount;
+      const staticInterestOverride = this.termInterestAmountOverride.active.find((override) => override.termNumber === termIndex);
 
       const loanBalancesInAPeriod = this.getModifiedBalance(periodStartDate, periodEndDate, startBalance);
       const lastBalanceInPeriod = loanBalancesInAPeriod.length;
@@ -2017,6 +2017,8 @@ export class Amortization {
 
       // Handle static interest override scenario
       if (staticInterestOverride) {
+        const staticInterestOverrideAmount = staticInterestOverride.interestAmount;
+
         // Use the static interest for the entire term plus any deferred interest
         let appliedDeferredInterest = Currency.of(0);
         if (this.unbilledDeferredInterest.getValue().greaterThan(0)) {
@@ -2024,7 +2026,7 @@ export class Amortization {
           this.unbilledDeferredInterest = Currency.zero;
         }
 
-        const totalTermInterest = staticInterestOverride.add(appliedDeferredInterest);
+        const totalTermInterest = staticInterestOverrideAmount.add(appliedDeferredInterest);
         const daysInPeriodTotal = this.calendar.daysBetween(periodStartDate, periodEndDate);
         const daysInYear = this.calendar.daysInYear();
 
@@ -2105,10 +2107,16 @@ export class Amortization {
         this.totalChargedInterestRounded = this.totalChargedInterestRounded.add(dueInterestForTerm);
         this.totalChargedInterestUnrounded = this.totalChargedInterestUnrounded.add(dueInterestForTerm);
 
+        const equivalentAnnualRateVariance = annualizedEquivalentRate.minus(this.annualInterestRate);
+        const equivalentAnnualRateVarianceExceeded = equivalentAnnualRateVariance.abs().greaterThanOrEqualTo(staticInterestOverride.acceptableRateVariance);
+
         const metadata: AmortizationScheduleMetadata = {
           staticInterestOverrideApplied: true,
           actualInterestValue: accruedInterestForPeriod.toNumber(),
           equivalentAnnualRate: annualizedEquivalentRate.toNumber(),
+          equivalentAnnualRateVariance: equivalentAnnualRateVariance.toNumber(),
+          acceptableRateVariance: staticInterestOverride.acceptableRateVariance,
+          equivalentAnnualRateVarianceExceeded: equivalentAnnualRateVarianceExceeded,
         };
 
         schedule.addEntry(

@@ -476,6 +476,18 @@ export class OverridesComponent implements OnInit {
     this.lendPeak.amortization.changePaymentDates.reSort();
   }
 
+  toggleAllTermInterestOverrides(event: any) {
+    if (!this.lendPeak) {
+      return;
+    }
+    if (event.checked === true) {
+      this.lendPeak.amortization.termInterestAmountOverride.activateAll();
+    } else {
+      this.lendPeak.amortization.termInterestAmountOverride.deactivateAll();
+    }
+    this.onInputChange(true);
+  }
+
   refreshSortForTermInterestOverride() {
     if (!this.lendPeak) {
       return;
@@ -598,14 +610,13 @@ export class OverridesComponent implements OnInit {
     if (!this.lendPeak) {
       return dayjs().startOf('day');
     }
-    if (!termNumber || termNumber < 0) {
+    if (termNumber === undefined || termNumber < 0 ) {
       return dayjs().startOf('day');
     }
-    const term = this.lendPeak.amortization.repaymentSchedule.entries.filter(
-      (row) => row.term === termNumber,
-    );
-    if (term?.length > 0) {
-      return term[term.length - 1].periodEndDate;
+    const term =
+      this.lendPeak.amortization.repaymentSchedule.getEntryByTerm(termNumber);
+    if (term) {
+      return term.periodEndDate;
     }
     return dayjs().startOf('day');
   }
@@ -614,18 +625,18 @@ export class OverridesComponent implements OnInit {
     if (!this.lendPeak) {
       return dayjs().startOf('day');
     }
-    if (!termNumber || termNumber < 0) {
+    if (termNumber === undefined || termNumber < 0) {
       return dayjs().startOf('day');
     } else if (termNumber > this.lendPeak.amortization.term) {
       return dayjs().startOf('day');
     }
-    const term = this.lendPeak.amortization.repaymentSchedule.entries.filter(
-      (row) => row.term === termNumber,
-    );
-    if (term?.length > 0) {
-      return term[term.length - 1].periodStartDate;
+    const term =
+      this.lendPeak.amortization.repaymentSchedule.getEntryByTerm(termNumber);
+    if (term) {
+      return term.periodStartDate;
+    } else {
+      return dayjs().startOf('day');
     }
-    return dayjs().startOf('day');
   }
 
   removeChangePaymentDate(index: number) {

@@ -12,17 +12,24 @@ dayjs.extend(isBetween);
 export interface TermInterestAmountOverrideParams {
   termNumber: number;
   interestAmount: Currency | number;
+  acceptableRateVariance?: number;
   date?: Dayjs | Date;
   active?: boolean;
 }
 
 export class TermInterestAmountOverride {
   private _termNumber!: number;
-  private _interestAmount!: Currency;
-  private _active = true;
   jsTermNumber!: number;
+
+  private _interestAmount!: Currency;
   jsInterestAmount!: number;
-  jsActive!: boolean;
+
+  private _active = true;
+  jsActive: boolean = true;
+ 
+  private _acceptableRateVariance = 0.01; // 1%
+  jsAcceptableRateVariance = 0.01; // 1%
+
   _date?: Dayjs;
   jsDate?: Date;
 
@@ -33,6 +40,19 @@ export class TermInterestAmountOverride {
     if (params.active !== undefined) {
       this.active = params.active;
     }
+
+    if (params.acceptableRateVariance) {
+      this.acceptableRateVariance = params.acceptableRateVariance;
+    }
+  }
+
+  get acceptableRateVariance(): number {
+    return this._acceptableRateVariance;
+  }
+
+  set acceptableRateVariance(value: number) {
+    this._acceptableRateVariance = value;
+    this.jsAcceptableRateVariance = value;
   }
 
   get active(): boolean {
@@ -80,6 +100,7 @@ export class TermInterestAmountOverride {
     this.interestAmount = this.jsInterestAmount;
     this.date = this.jsDate;
     this.active = this.jsActive;
+    this.acceptableRateVariance = this.jsAcceptableRateVariance;
   }
 
   updateJsValues(): void {
@@ -87,12 +108,14 @@ export class TermInterestAmountOverride {
     this.jsInterestAmount = this.interestAmount.toNumber();
     this.jsDate = this.date?.toDate();
     this.jsActive = this.active;
+    this.jsAcceptableRateVariance = this.acceptableRateVariance;
   }
 
   get json(): TermInterestAmountOverrideParams {
     return {
       termNumber: this.termNumber,
       interestAmount: this.interestAmount.toNumber(),
+      acceptableRateVariance: this.acceptableRateVariance,
       date: this.date?.toDate(),
       active: this.active,
     };

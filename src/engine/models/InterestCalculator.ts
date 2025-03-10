@@ -263,4 +263,63 @@ export class InterestCalculator {
       return { principal: Currency.Zero(), interest: emi.round(), remainingDeferredInterest: interest.subtract(emi.getValue()).round() };
     }
   }
+
+  /**
+   * Calculates an equivalent annual interest rate given the accrued interest for some partial period.
+   * Also returns the difference (variance) from a "base" annual rate plus checks if this variance
+   * exceeds a specified allowable threshold.
+   *
+   * @param startBalance - The principal balance at the start (Currency).
+   * @param accruedInterestForPeriod - Actual interest amount accrued for this partial period (Currency).
+   * @param baseAnnualRate - The "baseline" annual rate (e.g., your nominal `this.annualInterestRate`) (Decimal).
+   * @param allowRateAbove100 - Flag indicating if rates above 100% are allowed (boolean).
+   * @param acceptableRateVariance - The threshold for deciding if the new rate is "too far" from base (Decimal).
+   * @param daysInPeriod - How many days of actual interest accrued in this partial period (number).
+   * @returns An object with details about the calculated equivalent annual rate and how it compares to the baseline.
+   */
+  public calculateEquivalentAnnualRateMetadata(
+    startBalance: Currency,
+    accruedInterestForPeriod: Currency,
+    baseAnnualRate: Decimal,
+    allowRateAbove100: boolean,
+    acceptableRateVariance: Decimal,
+    daysInPeriod: number
+  ): {
+    equivalentAnnualRate: Decimal;
+    equivalentAnnualRateVariance: Decimal;
+    equivalentAnnualRateVarianceExceeded: boolean;
+    // Additional fields from your snippet
+    actualInterestValue: number;
+    acceptableRateVariance: number;
+  } {
+    const daysInYear = this.calendar.daysInYear();
+    let annualizedEquivalentRate = new Decimal(0);
+
+    // Only compute if there is principal and at least 1 day
+    if (startBalance.getValue().greaterThan(0) && daysInPeriod > 0) {
+      const fractionOfYear = daysInPeriod / daysInYear; // e.g. (30 days) / (365 or 360)
+      const interestDecimal = accruedInterestForPeriod.getValue(); // e.g. 55.55 interest
+      const principalDecimal = startBalance.getValue(); // e.g. 5000.00
+      const rawRate = interestDecimal.div(principalDecimal.mul(fractionOfYear));
+      // Enforce <= 100% if not allowed
+      annualizedEquivalentRate = rawRate.lessThanOrEqualTo(1) || allowRateAbove100 ? rawRate : new Decimal(1);
+    }
+
+    // Compare to base rate
+    const equivalentAnnualRateVariance = annualizedEquivalentRate.minus(baseAnnualRate);
+    const equivalentAnnualRateVarianceExceeded = equivalentAnnualRateVariance.abs().greaterThanOrEqualTo(acceptableRateVariance);
+
+    return {
+      // the actual interest in "currency" terms
+      actualInterestValue: accruedInterestForPeriod.toNumber(),
+      // the new “annual rate” portion
+      equivalentAnnualRate: annualizedEquivalentRate,
+      // difference from e.g. your nominal rate
+      equivalentAnnualRateVariance,
+      // how big a difference is "too big"
+      acceptableRateVariance: acceptableRateVariance.toNumber(),
+      // boolean check
+      equivalentAnnualRateVarianceExceeded,
+    };
+  }
 }

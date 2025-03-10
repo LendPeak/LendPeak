@@ -410,6 +410,7 @@
                   </td>
                   <td>
                     <span *ngIf="override.active">
+                      <!-- Exclamation Triangle if threshold exceeded -->
                       <i
                         *ngIf="
                           lendPeak.amortization.repaymentSchedule.getEntryByTerm(
@@ -420,27 +421,52 @@
                         severity="danger"
                         class="pi pi-exclamation-triangle"
                         styleClass="mr-2 text-red-500"
-                        pTooltip="This term's equivalent annual rate variance is {{
+                        pTooltip="
+        WARNING: The equivalent annual rate variance for this term is 
+        {{
                           lendPeak.amortization.repaymentSchedule.getEntryByTerm(
                             override.jsTermNumber
                           )?.metadata?.equivalentAnnualRateVariance
                             | percent: '1.2-6'
-                        }} which exceeded the configured threshold of {{
+                        }},
+        which exceeds the acceptable threshold 
+        {{
                           lendPeak.amortization.repaymentSchedule.getEntryByTerm(
                             override.jsTermNumber
                           )?.metadata?.acceptableRateVariance | percent: '1.2-6'
-                        }}
-                    "
-                        tooltipPosition="top"
-                        tooltipStyleClass="wide-tooltip"
-                      ></i>
+                        }}.
 
+        NOTE ABOUT MANUAL INTEREST OVERRIDES:
+        Because this interest amount was manually set, LendPeak doesn't fully track
+        whether any portion was originally 'deferred' from a prior period. 
+        Thus, the rate can appear artificially low in one term and higher in another
+        if that deferred interest is effectively added to the next term's override.
+
+        EXAMPLE:
+          • Term #1 had 45 days instead of 30, so the interest outpaced the monthly
+            payment, deferring $XYZ to the next term.
+          • If Term #1's interest was overridden manually, LendPeak won't 'see' that 
+            $XYZ was deferred, so the calculated rate might appear too low.
+          • In Term #2, if you again override the interest (now including the $XYZ 
+            carry‐over), the calculated rate might look too high.
+
+        If you routinely combine manual overrides with date changes or deferrals,
+        expect the system's calculated % to be off, since it cannot parse out 
+        how much belongs to prior deferrals.
+      "
+                        tooltipPosition="left"
+                        tooltipStyleClass="wide-tooltip"
+                      >
+                      </i>
+
+                      <!-- Normal displayed rate -->
                       {{
                         lendPeak.amortization.repaymentSchedule.getEntryByTerm(
                           override.jsTermNumber
                         )?.jsPeriodInterestRate | percent: "1.2-4"
                       }}
                     </span>
+
                     <span *ngIf="!override.active">N/A</span>
                   </td>
                   <!-- Remove Button -->

@@ -330,6 +330,31 @@
                   <th>Interest Rate</th>
                   <th>Actions</th>
                 </tr>
+                <tr>
+                  <th class="bg-blue-50"></th>
+                  <th class="bg-blue-50">
+                    {{ lendPeak.amortization.jsStartDate | date: "MM/dd/yyyy" }}
+                  </th>
+                  <th class="bg-blue-50">
+                    {{ lendPeak.amortization.jsEndDate | date: "MM/dd/yyyy" }}
+                  </th>
+                  <th class="bg-blue-50">{{ lendPeak.amortization.term }}</th>
+                  <th class="bg-blue-50">-</th>
+                  <th class="bg-blue-50">
+                    {{ lendPeak.amortization.acceptableRateVariance }} (
+                    {{
+                      lendPeak.amortization.acceptableRateVariance.toNumber()
+                        | percent: "1.2-6"
+                    }})
+                  </th>
+                  <th class="bg-blue-50">
+                    {{
+                      lendPeak.amortization.jsAnnualInterestRate
+                        | percent: "1.2-6"
+                    }}
+                  </th>
+                  <th class="bg-blue-50"></th>
+                </tr>
               </ng-template>
               <ng-template
                 pTemplate="body"

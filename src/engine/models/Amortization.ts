@@ -93,6 +93,7 @@ export interface AmortizationParams {
   billingModel?: BillingModel;
   termInterestAmountOverride?: TermInterestAmountOverrides;
   termInterestRateOverride?: TermInterestRateOverrides;
+  acceptableRateVariance?: number | Decimal; // if not set  is used
 }
 
 export type BillingModel = "amortized" | "dailySimpleInterest";
@@ -103,7 +104,7 @@ export type BillingModel = "amortized" | "dailySimpleInterest";
 export class Amortization {
   private static readonly DEFAULT_PRE_BILL_DAYS_CONFIGURATION = 0;
   private static readonly DEFAULT_BILL_DUE_DAYS_AFTER_PERIO_END_CONFIGURATION = 0;
-  private static readonly DEFAULT_ACCEPTABLE_RATE_VARIANCE = new Decimal("0.02");
+  private static readonly DEFAULT_ACCEPTABLE_RATE_VARIANCE = new Decimal(0.02);
 
   private _id: string = "";
   jsId: string = "";
@@ -220,6 +221,7 @@ export class Amortization {
   private _export?: AmortizationExport;
   private _summary?: AmortizationSummary;
   private _tila?: TILA;
+  private _acceptableRateVariance: Decimal = Amortization.DEFAULT_ACCEPTABLE_RATE_VARIANCE;
 
   constructor(params: AmortizationParams) {
     this._inputParams = cloneDeep(params);
@@ -237,6 +239,10 @@ export class Amortization {
     }
 
     this.loanAmount = params.loanAmount;
+
+    if (params.acceptableRateVariance !== undefined) {
+      this.acceptableRateVariance = params.acceptableRateVariance;
+    }
 
     if (params.billingModel) {
       this.billingModel = params.billingModel;
@@ -360,6 +366,14 @@ export class Amortization {
     this.verifySchedulePeriods();
     // this.validateRatesSchedule();
     this.updateJsValues();
+  }
+
+  set acceptableRateVariance(value: number | Decimal) {
+    this._acceptableRateVariance = new Decimal(value);
+  }
+
+  get acceptableRateVariance(): Decimal {
+    return this._acceptableRateVariance;
   }
 
   /**
@@ -819,6 +833,10 @@ export class Amortization {
       this._termInterestRateOverride.addOverride(override);
     }
   }
+
+  // resetTermInterestAmountOverride(): void {
+  //   this.termInterestAmountOverride = new TermInterestAmountOverrides(this._termInterestAmountOverride.all);
+  // }
 
   get termInterestAmountOverride(): TermInterestAmountOverrides {
     return this._termInterestAmountOverride;
@@ -2036,6 +2054,30 @@ export class Amortization {
           this.unbilledInterestDueToRounding = this.unbilledInterestDueToRounding.add(interestRoundingError);
         }
 
+        const daysInYear = this.calendar.daysInYear();
+        const daysInMonthForCalc = this.calendar.daysInMonth(periodStartDate);
+        const daysInPeriodTotal = this.calendar.daysBetween(periodStartDate, periodEndDate);
+
+        const interestCalc = new InterestCalculator(this.annualInterestRate, this.calendar.calendarType, this.perDiemCalculationType, daysInMonthForCalc);
+
+        const rateMetadata = interestCalc.calculateEquivalentAnnualRateMetadata(
+          startBalance,
+          accruedInterestForPeriod,
+          this.annualInterestRate, // baseAnnualRate
+          this.allowRateAbove100,
+          new Decimal(staticInterestOverride.acceptableRateVariance),
+          daysInPeriodTotal
+        );
+
+        const metadata: AmortizationScheduleMetadata = {
+          staticInterestOverrideApplied: true,
+          actualInterestValue: rateMetadata.actualInterestValue,
+          equivalentAnnualRate: rateMetadata.equivalentAnnualRate.toNumber(),
+          equivalentAnnualRateVariance: rateMetadata.equivalentAnnualRateVariance.toNumber(),
+          acceptableRateVariance: rateMetadata.acceptableRateVariance,
+          equivalentAnnualRateVarianceExceeded: rateMetadata.equivalentAnnualRateVarianceExceeded,
+        };
+
         // Calculate fees
         const { totalFees: totalFeesBeforePrincipal, feesAfterPrincipal } = this.calculateFeesForPeriod(termIndex, null, accruedInterestForPeriod, fixedMonthlyPayment);
 
@@ -2096,9 +2138,6 @@ export class Amortization {
         this.totalChargedInterestRounded = this.totalChargedInterestRounded.add(dueInterestForTerm);
         this.totalChargedInterestUnrounded = this.totalChargedInterestUnrounded.add(dueInterestForTerm);
 
-        const daysInPeriodTotal = this.calendar.daysBetween(periodStartDate, periodEndDate);
-        const daysInYear = this.calendar.daysInYear();
-
         // Calculate equivalent annual rate for metadata
         // let annualizedEquivalentRate = new Decimal(0);
         // if (startBalance.getValue().greaterThan(0) && daysInPeriodTotal > 0) {
@@ -2120,28 +2159,6 @@ export class Amortization {
         //   acceptableRateVariance: staticInterestOverride.acceptableRateVariance,
         //   equivalentAnnualRateVarianceExceeded: equivalentAnnualRateVarianceExceeded,
         // };
-        const daysInMonthForCalc = this.calendar.daysInMonth(periodStartDate);
-
-        const interestCalc = new InterestCalculator(this.annualInterestRate, this.calendar.calendarType, this.perDiemCalculationType, daysInMonthForCalc);
-
-        const rateMetadata = interestCalc.calculateEquivalentAnnualRateMetadata(
-          startBalance,
-          accruedInterestForPeriod,
-          this.annualInterestRate, // baseAnnualRate
-          this.allowRateAbove100,
-          new Decimal(staticInterestOverride.acceptableRateVariance),
-          daysInPeriodTotal
-        );
-
-        // Then incorporate that metadata into your AmortizationEntry's metadata:
-        const metadata: AmortizationScheduleMetadata = {
-          staticInterestOverrideApplied: true, // or however you label it
-          actualInterestValue: rateMetadata.actualInterestValue,
-          equivalentAnnualRate: rateMetadata.equivalentAnnualRate.toNumber(),
-          equivalentAnnualRateVariance: rateMetadata.equivalentAnnualRateVariance.toNumber(),
-          acceptableRateVariance: rateMetadata.acceptableRateVariance,
-          equivalentAnnualRateVarianceExceeded: rateMetadata.equivalentAnnualRateVarianceExceeded,
-        };
 
         schedule.addEntry(
           new AmortizationEntry({
@@ -2233,6 +2250,22 @@ export class Amortization {
             interestForPeriod = interestCalculator.calculateInterestForDays(startBalance, daysInPeriod);
             // interestForPeriod = this.round(interestForPeriod);
           }
+          const rateMetadata = interestCalculator.calculateEquivalentAnnualRateMetadata(
+            startBalance,
+            interestForPeriod,
+            interestRateForPeriod.annualInterestRate,
+            this.allowRateAbove100,
+            this.acceptableRateVariance,
+            daysInPeriod
+          );
+
+          metadata.equivalentAnnualRate = rateMetadata.equivalentAnnualRate.toNumber();
+          metadata.equivalentAnnualRateVariance = rateMetadata.equivalentAnnualRateVariance.toNumber();
+          metadata.acceptableRateVariance = rateMetadata.acceptableRateVariance;
+          metadata.equivalentAnnualRateVarianceExceeded = rateMetadata.equivalentAnnualRateVarianceExceeded;
+          metadata.actualInterestValue = rateMetadata.actualInterestValue;
+
+          const finalPeriodInterestRate = rateMetadata.equivalentAnnualRate;
 
           const perDiem = interestForPeriod.isZero() ? Currency.zero : interestCalculator.perDiem;
 
@@ -2374,23 +2407,6 @@ export class Amortization {
           metadata.amountAddedToDeferredInterest = deferredInterestFromCurrentPeriod.toNumber();
 
           startBalance = balanceAfterPayment;
-
-          const rateMetadata = interestCalculator.calculateEquivalentAnnualRateMetadata(
-            startBalance,
-            dueInterestForTerm,
-            this.annualInterestRate, // or interestRateForPeriod.annualInterestRate
-            this.allowRateAbove100,
-            Amortization.DEFAULT_ACCEPTABLE_RATE_VARIANCE,
-            daysInPeriod
-          );
-
-          metadata.equivalentAnnualRate = rateMetadata.equivalentAnnualRate.toNumber();
-          metadata.equivalentAnnualRateVariance = rateMetadata.equivalentAnnualRateVariance.toNumber();
-          metadata.acceptableRateVariance = rateMetadata.acceptableRateVariance;
-          metadata.equivalentAnnualRateVarianceExceeded = rateMetadata.equivalentAnnualRateVarianceExceeded;
-          metadata.actualInterestValue = rateMetadata.actualInterestValue;
-
-          const finalPeriodInterestRate = rateMetadata.equivalentAnnualRate;
 
           schedule.addEntry(
             new AmortizationEntry({
@@ -2566,6 +2582,7 @@ export class Amortization {
       feesPerTerm: this.feesPerTerm.json,
       feesForAllTerms: this.feesForAllTerms.json,
       repaymentSchedule: this.repaymentSchedule.json,
+      acceptableRateVariance: this.acceptableRateVariance.toNumber(),
     };
   }
 

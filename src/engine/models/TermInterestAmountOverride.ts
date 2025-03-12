@@ -63,6 +63,7 @@ export class TermInterestAmountOverride {
     this._active = value;
     this.jsActive = value;
   }
+  
   get termNumber(): number {
     return this._termNumber;
   }

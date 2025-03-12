@@ -44,7 +44,7 @@ export class TermInterestAmountOverrides {
   }
 
   get active(): TermInterestAmountOverride[] {
-    return this._overrides.filter((bm) => bm.active);
+    return this._overrides.filter((bm) => bm.active === true);
   }
 
   deactivateAll() {

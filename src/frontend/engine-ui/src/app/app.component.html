@@ -835,11 +835,11 @@
             </td>
 
             <td>{{ plan.periodStartDate.toDate() | date: "MM/dd/yyyy" }}</td>
-            <td class="flex flex-wrap column-gap-4 row-gap-6">
-              <span class="flex align-items-center justify-content-center">
+            <td>
+              <span>
                 {{ plan.periodEndDate.toDate() | date: "MM/dd/yyyy" }}
               </span>
-              <span class="flex align-items-center justify-content-center">
+              <span>
                 <p-badge
                   *ngIf="
                     lendPeak.amortization.changePaymentDates.getChangePaymentDate(
@@ -866,31 +866,45 @@
             <td *ngIf="showAdvancedTable">
               {{ plan.prebillDaysConfiguration }}
             </td>
-            <td>{{ plan.periodBillOpenDate.toDate() | date: "MM/dd/yyyy" }}</td>
+            <!-- periodBillOpenDate -->
+            <td *ngIf="plan.billablePeriod">
+              {{ plan.periodBillOpenDate.toDate() | date: "MM/dd/yyyy" }}
+            </td>
+            <td *ngIf="!plan.billablePeriod">
+              <span class="pi pi-arrow-down"></span>
+            </td>
+
             <td *ngIf="showAdvancedTable">
               {{ plan.billDueDaysAfterPeriodEndConfiguration }}
             </td>
-            <td>
+
+            <!-- periodBillDueDate -->
+            <td *ngIf="!plan.billablePeriod">
+              <span class="pi pi-arrow-down"></span>
+            </td>
+            <td *ngIf="plan.billablePeriod">
               {{ plan.periodBillDueDate.toDate() | date: "MM/dd/yyyy" }}
             </td>
 
-            <td class="flex flex-wrap column-gap-2 row-gap-6">
-              <span
-                class="w-3rem flex align-items-center justify-content-center"
-                >{{
-                  plan.periodInterestRate.times(100).toNumber() | number
-                }}%</span
-              >
-              <span
-                class="w-3rem flex align-items-center justify-content-center"
-              >
+            <!-- periodInterestRate -->
+            <td *ngIf="!plan.billablePeriod">
+              <span class="pi pi-arrow-down"></span>
+            </td>
+            <td *ngIf="plan.billablePeriod">
+              <span class="flex flex-wrap" style="max-width: 500px">
+                <span
+                  class="w-3rem flex align-items-center justify-content-center"
+                  >{{
+                    plan.periodInterestRate.toNumber() | percent: "1.2-4"
+                  }}</span
+                >
                 <p-badge
                   *ngIf="
                     plan.metadata && plan.metadata.staticInterestOverrideApplied
                   "
                   value="!"
                   severity="secondary"
-                  styleClass="mr-2"
+                  styleClass="ml-3"
                   pTooltip="This term's interest was manually set to {{
                     plan.metadata.actualInterestValue | currency
                   }}, calculated equivalent interest rate is {{
@@ -910,8 +924,8 @@
                   "
                   style="color: red; font-size: 1.5rem"
                   severity="danger"
-                  class="pi pi-exclamation-triangle"
-                  styleClass="mr-2 text-red-500"
+                  class="pi pi-exclamation-triangle ml-2"
+                  styleClass="text-red-500"
                   pTooltip="This term's equivalent annual rate variance is {{
                     plan.metadata.equivalentAnnualRateVariance
                       | percent: '1.2-6'
@@ -925,78 +939,86 @@
               </span>
             </td>
 
-            <td>
+            <!-- periodInterestRate -->
+            <td *ngIf="!plan.billablePeriod">
+              <span class="pi pi-arrow-down"></span>
+            </td>
+            <td *ngIf="plan.billablePeriod">
               {{
                 showFullNumbers
                   ? plan.fees.toNumber()
                   : (plan.fees.toNumber() | currency)
               }}
             </td>
-            <td class="flex flex-wrap column-gap-2 row-gap-6">
-              <span
-                class="align-content-start w-4rem flex flex align-items-center justify-content-center"
-              >
-                {{
-                  showFullNumbers
-                    ? plan.dueInterestForTerm.toNumber()
-                    : (plan.dueInterestForTerm.toNumber() | currency)
-                }}
-              </span>
-              <span
-                class="w-4rem flex flex align-items-center justify-content-center"
-                ><p-badge
-                  *ngIf="
-                    plan.metadata && plan.metadata.staticInterestOverrideApplied
-                  "
-                  value="Manual"
-                  severity="info"
-                  styleClass="mr-2"
-                  pTooltip="This term's interest was manually set to {{
-                    plan.metadata.actualInterestValue | currency
-                  }}, calculated equivalent interest rate is {{
-                    plan.metadata.equivalentAnnualRate * 100 | number: '1.2-6'
-                  }}%"
-                  tooltipPosition="top"
-                  tooltipStyleClass="wide-tooltip"
-                ></p-badge
-              ></span>
+
+            <!-- periodInterestRate -->
+            <td *ngIf="!plan.billablePeriod">
+              <span class="pi pi-arrow-down"></span>
             </td>
-            <td>
+            <td *ngIf="plan.billablePeriod">
+              {{
+                showFullNumbers
+                  ? plan.dueInterestForTerm.toNumber()
+                  : (plan.dueInterestForTerm.toNumber() | currency)
+              }}
+              <p-badge
+                *ngIf="
+                  plan.metadata && plan.metadata.staticInterestOverrideApplied
+                "
+                value="Manual"
+                severity="info"
+                styleClass="ml-2"
+                pTooltip="This term's interest was manually set to {{
+                  plan.metadata.actualInterestValue | currency
+                }}, calculated equivalent interest rate is {{
+                  plan.metadata.equivalentAnnualRate * 100 | number: '1.2-6'
+                }}%"
+                tooltipPosition="top"
+                tooltipStyleClass="wide-tooltip"
+              ></p-badge>
+            </td>
+
+            <!-- principal -->
+            <td *ngIf="!plan.billablePeriod">
+              <span class="pi pi-arrow-down"></span>
+            </td>
+            <td *ngIf="plan.billablePeriod">
               {{
                 showFullNumbers
                   ? plan.principal.toNumber()
                   : (plan.principal.toNumber() | currency)
               }}
             </td>
-            <td class="flex flex-wrap column-gap-4 row-gap-6">
-              <span class="flex align-items-center justify-content-center">
-                {{
-                  showFullNumbers
-                    ? plan.totalPayment.toNumber()
-                    : (plan.totalPayment.toNumber() | currency)
-                }}</span
-              >
-              <span class="flex align-items-center justify-content-center"
-                ><p-badge
-                  *ngIf="
-                    lendPeak.amortization.termPaymentAmountOverride.getPaymentAmountForTerm(
-                      plan.term
-                    )
-                  "
-                  value="PO"
-                  severity="warn"
-                  styleClass="mr-2"
-                  pTooltip="Payment override from standard EMI {{
-                    lendPeak.amortization.jsEquitedMonthlyPayment | currency
-                  }} to {{
-                    lendPeak.amortization.termPaymentAmountOverride.getPaymentAmountForTerm(
-                      plan.term
-                    )?.jsPaymentAmount | currency
-                  }}"
-                  tooltipPosition="top"
-                  tooltipStyleClass="wide-tooltip"
-                ></p-badge
-              ></span>
+
+            <!-- totalPayment -->
+            <td *ngIf="!plan.billablePeriod">
+              <span class="pi pi-arrow-down"></span>
+            </td>
+            <td *ngIf="plan.billablePeriod">
+              {{
+                showFullNumbers
+                  ? plan.totalPayment.toNumber()
+                  : (plan.totalPayment.toNumber() | currency)
+              }}
+              <p-badge
+                *ngIf="
+                  lendPeak.amortization.termPaymentAmountOverride.getPaymentAmountForTerm(
+                    plan.term
+                  )
+                "
+                value="PO"
+                severity="warn"
+                styleClass="ml-2"
+                pTooltip="Payment override from standard EMI {{
+                  lendPeak.amortization.jsEquitedMonthlyPayment | currency
+                }} to {{
+                  lendPeak.amortization.termPaymentAmountOverride.getPaymentAmountForTerm(
+                    plan.term
+                  )?.jsPaymentAmount | currency
+                }}"
+                tooltipPosition="top"
+                tooltipStyleClass="wide-tooltip"
+              ></p-badge>
             </td>
             <td>
               {{

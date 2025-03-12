@@ -302,7 +302,8 @@ export class InterestCalculator {
       const principalDecimal = startBalance.getValue(); // e.g. 5000.00
       const rawRate = interestDecimal.div(principalDecimal.mul(fractionOfYear));
       // Enforce <= 100% if not allowed
-      annualizedEquivalentRate = rawRate.lessThanOrEqualTo(1) || allowRateAbove100 ? rawRate : new Decimal(1);
+      // annualizedEquivalentRate = rawRate.lessThanOrEqualTo(1) || allowRateAbove100 ? rawRate : new Decimal(1);
+      annualizedEquivalentRate = rawRate;
     }
 
     // Compare to base rate

@@ -485,6 +485,9 @@ export class OverridesComponent implements OnInit {
     } else {
       this.lendPeak.amortization.termInterestAmountOverride.deactivateAll();
     }
+
+   // this.lendPeak.amortization.resetTermInterestAmountOverride();
+
     this.onInputChange(true);
   }
 
@@ -610,7 +613,7 @@ export class OverridesComponent implements OnInit {
     if (!this.lendPeak) {
       return dayjs().startOf('day');
     }
-    if (termNumber === undefined || termNumber < 0 ) {
+    if (termNumber === undefined || termNumber < 0) {
       return dayjs().startOf('day');
     }
     const term =
@@ -961,6 +964,8 @@ export class OverridesComponent implements OnInit {
       new TermInterestAmountOverride({
         termNumber: termNumber,
         interestAmount: interestAmount,
+        acceptableRateVariance:
+          this.lendPeak.amortization.acceptableRateVariance.toNumber(),
       }),
     );
 

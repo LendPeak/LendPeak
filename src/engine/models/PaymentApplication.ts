@@ -133,7 +133,7 @@ export class PaymentApplication {
       const excessAmount = Currency.of(result.unallocatedAmount);
       result.unallocatedAmount = Currency.Zero();
 
-     // console.log("deposit after unused amount is being reset", deposit);
+      // console.log("deposit after unused amount is being reset", deposit);
 
       const dateToApply = this.determineBalanceModificationDate(deposit);
 
@@ -191,7 +191,7 @@ export class PaymentApplication {
       balanceModificationDate = depositEffectiveDayjs.isAfter(excessAppliedDate) ? depositEffectiveDayjs : dayjs(excessAppliedDate).startOf("day");
     }
 
-    return balanceModificationDate;
+    return balanceModificationDate.utc();
   }
 
   private generateUniqueId(): string {

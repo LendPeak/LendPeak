@@ -84,7 +84,7 @@ export class BalanceModification {
   }
 
   set date(date: Dayjs | Date | string) {
-    this._date = dayjs(date).startOf("day");
+    this._date = dayjs.utc(date).startOf("day");
     this.jsDate = this._date.toDate();
   }
 
@@ -229,7 +229,7 @@ export class BalanceModification {
     const params: IBalanceModification = {
       id: json.id,
       amount: Currency.of(json.amount),
-      date: dayjs(json.date),
+      date: dayjs.utc(json.date),
       type: json.type,
       description: json.description,
       metadata: json.metadata,

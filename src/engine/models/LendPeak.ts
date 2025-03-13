@@ -40,7 +40,7 @@ export class LendPeak {
   _allocationStrategy: AllocationStrategy = PaymentApplication.getAllocationStrategyFromName("FIFO");
   paymentPriority: PaymentComponent[] = ["interest", "fees", "principal"];
 
-  balanceModificationChanged: boolean = false;
+  _balanceModificationChanged: boolean = false;
 
   paymentApplicationResults: PaymentApplicationResult[] = [];
   constructor(params: {
@@ -77,6 +77,14 @@ export class LendPeak {
     if (params.currentDate) {
       this.currentDate = params.currentDate;
     }
+  }
+
+  get balanceModificationChanged(): boolean {
+    return this._balanceModificationChanged;
+  }
+
+  set balanceModificationChanged(value: boolean) {
+    this._balanceModificationChanged = value;
   }
 
   get allocationStrategy(): AllocationStrategy {
@@ -197,8 +205,7 @@ export class LendPeak {
 
     if (this.balanceModificationChanged === true) {
       this.balanceModificationChanged = false;
-      //return this.submitLoan();
-      this.amortization.jsGenerateSchedule();
+      this.calc();
     }
   }
 
@@ -262,7 +269,7 @@ export class LendPeak {
 
       // Handle balance modification etc.
       if (result.balanceModification) {
-        this.amortization.balanceModifications.removeBalanceModificationByDepositId(deposit.id);
+        //this.amortization.balanceModifications.removeBalanceModificationByDepositId(deposit.id);
 
         // Add the new BM
         // console.log('Adding balance modification!', result.balanceModification);

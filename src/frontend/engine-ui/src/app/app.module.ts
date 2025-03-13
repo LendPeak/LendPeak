@@ -7,6 +7,7 @@ import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { DatePickerModule } from 'primeng/datepicker';
+import { PickListModule } from 'primeng/picklist';
 
 import { SelectModule } from 'primeng/select';
 import { FluidModule } from 'primeng/fluid';
@@ -120,6 +121,7 @@ import {
     SelectModule,
     TableModule,
     FieldsetModule,
+    PickListModule,
     PopoverModule,
     CardModule,
     MenuModule,

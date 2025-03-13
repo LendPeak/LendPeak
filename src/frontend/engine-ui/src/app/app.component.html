@@ -744,7 +744,6 @@
             icon="pi pi-external-link"
             label="Download"
             (onClick)="downloadRepaymentPlanAsCSV()"
-            class="mr-2 inline-block"
           />
 
           <p-button
@@ -752,381 +751,405 @@
             (onClick)="copyRepaymentPlanAsCSV()"
             label="Copy As CSV"
             icon="pi pi-copy"
+            class="ml-2 inline-block"
+          />
+
+          <p-button
+            (click)="repaymentPlanColumnsDialog()"
+            icon="pi pi-table"
+            severity="contrast"
+            class="ml-2 inline-block"
           />
         </ng-template>
       </p-toolbar>
 
+      <p-dialog
+        header="Repayment Plan Columns"
+        [modal]="true"
+        [(visible)]="showRepaymentPlanColumnsDialog"
+        [style]="{ width: '50%' }"
+      >
+        <div class="p-fluid">
+          <p-picklist
+            [source]="availableRepaymentPlanCols"
+            [target]="selectedRepaymentPlanCols"
+            [dragdrop]="true"
+            [responsive]="true"
+            [sourceStyle]="{ height: '30rem' }"
+            [targetStyle]="{ height: '30rem' }"
+            filterBy="header"
+            sourceFilterPlaceholder="Search by name"
+            targetFilterPlaceholder="Search by name"
+            breakpoint="1400px"
+            scrollHeight="30rem"
+          >
+            <ng-template let-item #item>
+              {{ item.header }} ({{ item.field }})
+            </ng-template>
+          </p-picklist>
+        </div>
+
+        <p-divider></p-divider>
+        <div class="flex justify-content-end gap-2">
+          <p-button
+            label="Cancel"
+            severity="secondary"
+            (click)="showRepaymentPlanColumnsDialog = false"
+          />
+          <p-button
+            severity="secondary"
+            label="Reset"
+            (click)="resetRepaymentPlanColumns()"
+          />
+          <p-button label="Save" (click)="saveRepaymentPlanColumns()" />
+        </div>
+      </p-dialog>
       <!-- Repayment Plan Table -->
 
       <p-table
         #repaymentPlanTable
+        [columns]="selectedRepaymentPlanCols"
         [value]="lendPeak.amortization.repaymentSchedule.entries"
         [autoLayout]="true"
         class="repayment-plan-table"
         [scrollable]="true"
         scrollHeight="600px"
       >
-        <ng-template pTemplate="header">
+        <ng-template #header let-columns>
           <tr>
-            <th>Period</th>
-            <th>Start Date</th>
-            <th>End Date</th>
-            <th *ngIf="showAdvancedTable">Pre Bill Days</th>
-            <th>Bill Open Date</th>
-            <th *ngIf="showAdvancedTable">Due Bill Days</th>
-            <th>Bill Due Date</th>
-
-            <th>Interest Rate</th>
-            <th>Fees</th>
-            <th>Due Interest</th>
-            <th>Principal</th>
-            <th>Total Payment</th>
-            <th>Start Balance</th>
-            <th>End Balance</th>
-            <!-- Advanced Columns -->
-            <th *ngIf="showAdvancedTable">Balance Modification Amount</th>
-            <!-- start of interest values -->
-            <th *ngIf="showAdvancedTable">Accrued Interest For Period</th>
-            <th *ngIf="showAdvancedTable">Billed Interest For Term</th>
-            <th *ngIf="showAdvancedTable">Billed Deferred Interest</th>
-            <th *ngIf="showAdvancedTable">Unbilled Deferred Interest</th>
-            <!-- end of interest values -->
-            <th *ngIf="showAdvancedTable">Rounding Error</th>
-
-            <th *ngIf="showAdvancedTable">Per Diem</th>
-            <th *ngIf="showAdvancedTable">Days</th>
-            <th *ngIf="showAdvancedTable">Metadata</th>
+            <ng-container *ngFor="let col of columns">
+              <th>
+                {{ col.header }}
+              </th>
+            </ng-container>
           </tr>
         </ng-template>
-        <ng-template #body let-plan let-rowIndex="rowIndex">
+        <ng-template
+          #body
+          let-rowData
+          let-columns="columns"
+          let-rowIndex="rowIndex"
+        >
           <tr
             [attr.data-index]="rowIndex"
             [id]="'plan-row-' + rowIndex"
             role="row"
-            [attr.aria-selected]="selectedPeriods.includes(plan.term)"
-            [class.even-row]="plan.term % 2 === 0"
-            [class.odd-row]="plan.term % 2 !== 0"
-            [class.selected-row]="selectedPeriods.includes(plan.term)"
-            (click)="onRowClick(plan, $event)"
+            [attr.aria-selected]="selectedPeriods.includes(rowData.term)"
+            [class.even-row]="rowData.term % 2 === 0"
+            [class.odd-row]="rowData.term % 2 !== 0"
+            [class.selected-row]="selectedPeriods.includes(rowData.term)"
+            (click)="onRowClick(rowData, $event)"
             tabindex="0"
-            (keydown)="onRowKeyDown($event, plan)"
+            (keydown)="onRowKeyDown($event, rowData)"
           >
-            <td>
-              {{ plan.term }}
+            <ng-container *ngFor="let col of columns">
+              <td style="white-space: nowrap">
+                <span [ngSwitch]="col.field">
+                  <!-- Number fields -->
+                  <ng-container *ngSwitchCase="'term'">
+                    {{ rowData.term | number }}
+                    <p-badge
+                      *ngIf="!rowData.balanceModificationAmount.isZero()"
+                      value="Balance Modification"
+                      severity="info"
+                      styleClass="mr-2"
+                      pTooltip="Balance {{
+                        rowData.balanceModificationAmount.greaterThan(0)
+                          ? 'decreased'
+                          : 'increased'
+                      }} by {{
+                        (rowData.balanceModificationAmount.greaterThan(0)
+                          ? rowData.balanceModificationAmount.toNumber()
+                          : rowData.balanceModificationAmount
+                              .multiply(-1)
+                              .toNumber()
+                        ) | currency
+                      }}"
+                      tooltipPosition="top"
+                      tooltipStyleClass="wide-tooltip"
+                    ></p-badge>
+                  </ng-container>
+                  <ng-container *ngSwitchCase="'prebillDaysConfiguration'">
+                    {{ rowData.prebillDaysConfiguration | number }}
+                  </ng-container>
+                  <ng-container
+                    *ngSwitchCase="'billDueDaysAfterPeriodEndConfiguration'"
+                  >
+                    {{
+                      rowData.billDueDaysAfterPeriodEndConfiguration | number
+                    }}
+                  </ng-container>
+                  <ng-container *ngSwitchCase="'daysInPeriod'">
+                    {{ rowData.daysInPeriod | number }}
+                  </ng-container>
 
-              <p-badge
-                *ngIf="!plan.balanceModificationAmount.isZero()"
-                value="Balance Modification"
-                severity="info"
-                styleClass="mr-2"
-                pTooltip="Balance {{
-                  plan.balanceModificationAmount.greaterThan(0)
-                    ? 'decreased'
-                    : 'increased'
-                }} by {{
-                  (plan.balanceModificationAmount.greaterThan(0)
-                    ? plan.balanceModificationAmount.toNumber()
-                    : plan.balanceModificationAmount.multiply(-1).toNumber()
-                  ) | currency
-                }}"
-                tooltipPosition="top"
-                tooltipStyleClass="wide-tooltip"
-              ></p-badge>
-            </td>
+                  <!-- Currency fields -->
+                  <ng-container *ngSwitchCase="'principal'">
+                    <span *ngIf="!rowData.billablePeriod">
+                      <span class="pi pi-arrow-down"></span>
+                    </span>
+                    <span *ngIf="rowData.billablePeriod">
+                      {{ rowData.principal.toNumber() | currency }}
+                    </span>
+                  </ng-container>
+                  <ng-container *ngSwitchCase="'dueInterestForTerm'">
+                    <span *ngIf="!rowData.billablePeriod">
+                      <span class="pi pi-arrow-down"></span>
+                    </span>
+                    <span *ngIf="rowData.billablePeriod">
+                      {{ rowData.dueInterestForTerm.toNumber() | currency }}
+                      <p-badge
+                        *ngIf="
+                          rowData.metadata &&
+                          rowData.metadata.staticInterestOverrideApplied
+                        "
+                        value="Manual"
+                        severity="info"
+                        styleClass="ml-2"
+                        pTooltip="This term's interest was manually set to {{
+                          rowData.metadata.actualInterestValue | currency
+                        }}, calculated equivalent interest rate is {{
+                          rowData.metadata.equivalentAnnualRate * 100
+                            | number: '1.2-6'
+                        }}%"
+                        tooltipPosition="top"
+                        tooltipStyleClass="wide-tooltip"
+                      ></p-badge>
+                    </span>
+                  </ng-container>
+                  <ng-container *ngSwitchCase="'fees'">
+                    <span *ngIf="!rowData.billablePeriod">
+                      <span class="pi pi-arrow-down"></span>
+                    </span>
+                    <span *ngIf="rowData.billablePeriod">
+                      {{ rowData.fees.toNumber() | currency }}
+                    </span>
+                  </ng-container>
+                  <ng-container *ngSwitchCase="'accruedInterestForPeriod'">
+                    {{ rowData.accruedInterestForPeriod.toNumber() | currency }}
+                  </ng-container>
+                  <ng-container *ngSwitchCase="'billedInterestForTerm'">
+                    {{ rowData.billedInterestForTerm.toNumber() | currency }}
+                  </ng-container>
+                  <ng-container *ngSwitchCase="'billedDeferredInterest'">
+                    {{ rowData.billedDeferredInterest.toNumber() | currency }}
+                  </ng-container>
+                  <ng-container *ngSwitchCase="'unbilledTotalDeferredInterest'">
+                    {{
+                      rowData.unbilledTotalDeferredInterest.toNumber()
+                        | currency
+                    }}
+                  </ng-container>
+                  <ng-container *ngSwitchCase="'billedDeferredFees'">
+                    <span *ngIf="!rowData.billablePeriod">
+                      <span class="pi pi-arrow-down"></span>
+                    </span>
+                    <span *ngIf="rowData.billablePeriod">
+                      {{ rowData.billedDeferredFees.toNumber() | currency }}
+                    </span>
+                  </ng-container>
+                  <ng-container *ngSwitchCase="'unbilledTotalDeferredFees'">
+                    <span *ngIf="!rowData.billablePeriod">
+                      <span class="pi pi-arrow-down"></span>
+                    </span>
+                    <span *ngIf="rowData.billablePeriod">
+                      {{
+                        rowData.unbilledTotalDeferredFees.toNumber() | currency
+                      }}
+                    </span>
+                  </ng-container>
+                  <ng-container *ngSwitchCase="'endBalance'">
+                    {{ rowData.endBalance.toNumber() | currency }}
+                  </ng-container>
+                  <ng-container *ngSwitchCase="'startBalance'">
+                    {{ rowData.startBalance.toNumber() | currency }}
+                  </ng-container>
+                  <ng-container *ngSwitchCase="'balanceModificationAmount'">
+                    {{
+                      rowData.balanceModificationAmount.toNumber() | currency
+                    }}
+                  </ng-container>
+                  <ng-container *ngSwitchCase="'perDiem'">
+                    {{ rowData.perDiem.toNumber() | currency }}
+                  </ng-container>
+                  <ng-container *ngSwitchCase="'unbilledInterestDueToRounding'">
+                    {{
+                      rowData.unbilledInterestDueToRounding.toNumber()
+                        | currency
+                    }}
+                  </ng-container>
+                  <ng-container *ngSwitchCase="'totalPayment'">
+                    <span *ngIf="!rowData.billablePeriod">
+                      <span class="pi pi-arrow-down"></span>
+                    </span>
+                    <span *ngIf="rowData.billablePeriod">
+                      {{ rowData.totalPayment.toNumber() | currency }}
+                      <p-badge
+                        *ngIf="
+                          lendPeak.amortization.termPaymentAmountOverride.getPaymentAmountForTerm(
+                            rowData.term
+                          )
+                        "
+                        value="PO"
+                        severity="warn"
+                        styleClass="ml-2"
+                        pTooltip="Payment override from standard EMI {{
+                          lendPeak.amortization.jsEquitedMonthlyPayment
+                            | currency
+                        }} to {{
+                          lendPeak.amortization.termPaymentAmountOverride.getPaymentAmountForTerm(
+                            rowData.term
+                          )?.jsPaymentAmount | currency
+                        }}"
+                        tooltipPosition="top"
+                        tooltipStyleClass="wide-tooltip"
+                      ></p-badge>
+                    </span>
+                  </ng-container>
 
-            <td>{{ plan.periodStartDate.toDate() | date: "MM/dd/yyyy" }}</td>
-            <td>
-              <span>
-                {{ plan.periodEndDate.toDate() | date: "MM/dd/yyyy" }}
-              </span>
-              <span>
-                <p-badge
-                  *ngIf="
-                    lendPeak.amortization.changePaymentDates.getChangePaymentDate(
-                      plan.term
-                    )
-                  "
-                  value="CPD"
-                  severity="info"
-                  styleClass="mr-2"
-                  pTooltip="Change Payment Date from {{
-                    lendPeak.amortization.changePaymentDates.getChangePaymentDate(
-                      plan.term
-                    )?.jsOriginalEndDate | date: 'MM/dd/yyyy'
-                  }} to {{
-                    lendPeak.amortization.changePaymentDates.getChangePaymentDate(
-                      plan.term
-                    )?.jsNewDate | date: 'MM/dd/yyyy'
-                  }}"
-                  tooltipPosition="top"
-                  tooltipStyleClass="wide-tooltip"
-                ></p-badge>
-              </span>
-            </td>
-            <td *ngIf="showAdvancedTable">
-              {{ plan.prebillDaysConfiguration }}
-            </td>
-            <!-- periodBillOpenDate -->
-            <td *ngIf="plan.billablePeriod">
-              {{ plan.periodBillOpenDate.toDate() | date: "MM/dd/yyyy" }}
-            </td>
-            <td *ngIf="!plan.billablePeriod">
-              <span class="pi pi-arrow-down"></span>
-            </td>
-
-            <td *ngIf="showAdvancedTable">
-              {{ plan.billDueDaysAfterPeriodEndConfiguration }}
-            </td>
-
-            <!-- periodBillDueDate -->
-            <td *ngIf="!plan.billablePeriod">
-              <span class="pi pi-arrow-down"></span>
-            </td>
-            <td *ngIf="plan.billablePeriod">
-              {{ plan.periodBillDueDate.toDate() | date: "MM/dd/yyyy" }}
-            </td>
-
-            <!-- periodInterestRate -->
-            <td *ngIf="!plan.billablePeriod">
-              <span class="pi pi-arrow-down"></span>
-            </td>
-            <td *ngIf="plan.billablePeriod">
-              <span class="flex flex-wrap" style="max-width: 500px">
-                <span
-                  class="w-3rem flex align-items-center justify-content-center"
-                  >{{
-                    plan.periodInterestRate.toNumber() | percent: "1.2-4"
-                  }}</span
-                >
-                <p-badge
-                  *ngIf="
-                    plan.metadata && plan.metadata.staticInterestOverrideApplied
-                  "
-                  value="!"
-                  severity="secondary"
-                  styleClass="ml-3"
-                  pTooltip="This term's interest was manually set to {{
-                    plan.metadata.actualInterestValue | currency
-                  }}, calculated equivalent interest rate is {{
-                    plan.metadata.equivalentAnnualRate * 100 | number: '1.2-6'
-                  }}% while the loan's contractual rate is {{
-                    lendPeak.amortization.jsAnnualInterestRate * 100
-                      | number: '1.2-6'
-                  }}%"
-                  tooltipPosition="top"
-                  tooltipStyleClass="wide-tooltip"
-                ></p-badge>
-
-                <i
-                  *ngIf="
-                    plan.metadata &&
-                    plan.metadata.equivalentAnnualRateVarianceExceeded
-                  "
-                  style="color: red; font-size: 1.5rem"
-                  severity="danger"
-                  class="pi pi-exclamation-triangle ml-2"
-                  styleClass="text-red-500"
-                  pTooltip="This term's equivalent annual rate variance is {{
-                    plan.metadata.equivalentAnnualRateVariance
-                      | percent: '1.2-6'
-                  }} which exceeded the configured threshold of {{
-                    plan.metadata.acceptableRateVariance | percent: '1.2-6'
-                  }}
+                  <!-- Percent fields -->
+                  <ng-container *ngSwitchCase="'periodInterestRate'">
+                    <span *ngIf="!rowData.billablePeriod">
+                      <span class="pi pi-arrow-down"></span>
+                    </span>
+                    <span *ngIf="rowData.billablePeriod">
+                      {{
+                        rowData.periodInterestRate.toNumber() | percent: "1.2-4"
+                      }}
+                      <i
+                        *ngIf="
+                          rowData.metadata &&
+                          rowData.metadata.staticInterestOverrideApplied
+                        "
+                        severity="secondary"
+                        class="pi pi-info-circle ml-2"
+                        style="font-size: 1.5rem"
+                        pTooltip="This term's interest was manually set to {{
+                          rowData.metadata.actualInterestValue | currency
+                        }}, calculated equivalent interest rate is {{
+                          rowData.metadata.equivalentAnnualRate
+                            | percent: '1.2-6'
+                        }} while the loan's contractual rate is {{
+                          lendPeak.amortization.jsAnnualInterestRate
+                            | percent: '1.2-6'
+                        }}
                     "
-                  tooltipPosition="top"
-                  tooltipStyleClass="wide-tooltip"
-                ></i>
-              </span>
-            </td>
+                        tooltipPosition="top"
+                        tooltipStyleClass="wide-tooltip"
+                      ></i>
 
-            <!-- periodInterestRate -->
-            <td *ngIf="!plan.billablePeriod">
-              <span class="pi pi-arrow-down"></span>
-            </td>
-            <td *ngIf="plan.billablePeriod">
-              {{
-                showFullNumbers
-                  ? plan.fees.toNumber()
-                  : (plan.fees.toNumber() | currency)
-              }}
-            </td>
+                      <i
+                        *ngIf="
+                          rowData.metadata &&
+                          rowData.metadata.equivalentAnnualRateVarianceExceeded
+                        "
+                        style="color: red; font-size: 1.5rem"
+                        severity="danger"
+                        class="pi pi-exclamation-triangle ml-2"
+                        styleClass="text-red-500"
+                        pTooltip="This term's equivalent annual rate variance is {{
+                          rowData.metadata.equivalentAnnualRateVariance
+                            | percent: '1.2-6'
+                        }} which exceeded the configured threshold of {{
+                          rowData.metadata.acceptableRateVariance
+                            | percent: '1.2-6'
+                        }}
+                    "
+                        tooltipPosition="top"
+                        tooltipStyleClass="wide-tooltip"
+                      ></i>
+                    </span>
+                  </ng-container>
 
-            <!-- periodInterestRate -->
-            <td *ngIf="!plan.billablePeriod">
-              <span class="pi pi-arrow-down"></span>
-            </td>
-            <td *ngIf="plan.billablePeriod">
-              {{
-                showFullNumbers
-                  ? plan.dueInterestForTerm.toNumber()
-                  : (plan.dueInterestForTerm.toNumber() | currency)
-              }}
-              <p-badge
-                *ngIf="
-                  plan.metadata && plan.metadata.staticInterestOverrideApplied
-                "
-                value="Manual"
-                severity="info"
-                styleClass="ml-2"
-                pTooltip="This term's interest was manually set to {{
-                  plan.metadata.actualInterestValue | currency
-                }}, calculated equivalent interest rate is {{
-                  plan.metadata.equivalentAnnualRate * 100 | number: '1.2-6'
-                }}%"
-                tooltipPosition="top"
-                tooltipStyleClass="wide-tooltip"
-              ></p-badge>
-            </td>
+                  <!-- Number fields requiring decimal format -->
+                  <ng-container *ngSwitchCase="'interestRoundingError'">
+                    {{
+                      rowData.interestRoundingError.toNumber() | number: "1.2-6"
+                    }}
+                  </ng-container>
 
-            <!-- principal -->
-            <td *ngIf="!plan.billablePeriod">
-              <span class="pi pi-arrow-down"></span>
-            </td>
-            <td *ngIf="plan.billablePeriod">
-              {{
-                showFullNumbers
-                  ? plan.principal.toNumber()
-                  : (plan.principal.toNumber() | currency)
-              }}
-            </td>
+                  <!-- Date fields -->
+                  <ng-container *ngSwitchCase="'periodStartDate'">
+                    {{ rowData.periodStartDate.toDate() | date: "MM/dd/yyyy" }}
+                  </ng-container>
+                  <ng-container *ngSwitchCase="'periodEndDate'">
+                    {{ rowData.periodEndDate.toDate() | date: "MM/dd/yyyy" }}
+                    <p-badge
+                      *ngIf="
+                        lendPeak.amortization.changePaymentDates.getChangePaymentDate(
+                          rowData.term
+                        )
+                      "
+                      value="CPD"
+                      severity="info"
+                      styleClass="mr-2"
+                      pTooltip="Change Payment Date from {{
+                        lendPeak.amortization.changePaymentDates.getChangePaymentDate(
+                          rowData.term
+                        )?.jsOriginalEndDate | date: 'MM/dd/yyyy'
+                      }} to {{
+                        lendPeak.amortization.changePaymentDates.getChangePaymentDate(
+                          rowData.term
+                        )?.jsNewDate | date: 'MM/dd/yyyy'
+                      }}"
+                      tooltipPosition="top"
+                      tooltipStyleClass="wide-tooltip"
+                    ></p-badge>
+                  </ng-container>
+                  <ng-container *ngSwitchCase="'periodBillOpenDate'">
+                    <span *ngIf="!rowData.billablePeriod">
+                      <span class="pi pi-arrow-down"></span>
+                    </span>
+                    <span *ngIf="rowData.billablePeriod">
+                      {{
+                        rowData.periodBillOpenDate.toDate() | date: "MM/dd/yyyy"
+                      }}
+                    </span>
+                  </ng-container>
+                  <ng-container *ngSwitchCase="'periodBillDueDate'">
+                    <span *ngIf="!rowData.billablePeriod">
+                      <span class="pi pi-arrow-down"></span>
+                    </span>
+                    <span *ngIf="rowData.billablePeriod">
+                      {{
+                        rowData.periodBillDueDate.toDate() | date: "MM/dd/yyyy"
+                      }}
+                    </span>
+                  </ng-container>
 
-            <!-- totalPayment -->
-            <td *ngIf="!plan.billablePeriod">
-              <span class="pi pi-arrow-down"></span>
-            </td>
-            <td *ngIf="plan.billablePeriod">
-              {{
-                showFullNumbers
-                  ? plan.totalPayment.toNumber()
-                  : (plan.totalPayment.toNumber() | currency)
-              }}
-              <p-badge
-                *ngIf="
-                  lendPeak.amortization.termPaymentAmountOverride.getPaymentAmountForTerm(
-                    plan.term
-                  )
-                "
-                value="PO"
-                severity="warn"
-                styleClass="ml-2"
-                pTooltip="Payment override from standard EMI {{
-                  lendPeak.amortization.jsEquitedMonthlyPayment | currency
-                }} to {{
-                  lendPeak.amortization.termPaymentAmountOverride.getPaymentAmountForTerm(
-                    plan.term
-                  )?.jsPaymentAmount | currency
-                }}"
-                tooltipPosition="top"
-                tooltipStyleClass="wide-tooltip"
-              ></p-badge>
-            </td>
-            <td>
-              {{
-                showFullNumbers
-                  ? plan.startBalance.toNumber()
-                  : (plan.startBalance.toNumber() | currency)
-              }}
-            </td>
-            <td>
-              {{
-                showFullNumbers
-                  ? plan.endBalance.toNumber()
-                  : (plan.endBalance.toNumber() | currency)
-              }}
-            </td>
-            <!-- Advanced Columns -->
+                  <!-- Boolean fields -->
+                  <ng-container *ngSwitchCase="'billablePeriod'">
+                    {{ rowData.billablePeriod === true ? "Yes" : "No" }}
+                  </ng-container>
 
-            <td *ngIf="showAdvancedTable">
-              {{
-                showFullNumbers
-                  ? plan.balanceModificationAmount.toNumber()
-                  : (plan.balanceModificationAmount.toNumber() | currency)
-              }}
-            </td>
+                  <!-- Metadata field -->
+                  <ng-container *ngSwitchCase="'metadata'">
+                    <table class="metadata-table">
+                      <thead>
+                        <tr>
+                          <th>Key</th>
+                          <th>Value</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr *ngFor="let item of rowData.metadata | keyvalue">
+                          <td>{{ item.key }}</td>
+                          <td>{{ item.value }}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </ng-container>
 
-            <!-- start of interest values -->
-            <td *ngIf="showAdvancedTable">
-              {{
-                showFullNumbers
-                  ? plan.accruedInterestForPeriod.toNumber()
-                  : (plan.accruedInterestForPeriod.toNumber() | currency)
-              }}
-            </td>
-            <td *ngIf="showAdvancedTable">
-              {{
-                showFullNumbers
-                  ? plan.billedInterestForTerm.toNumber()
-                  : (plan.billedInterestForTerm.toNumber() | currency)
-              }}
-            </td>
-            <td *ngIf="showAdvancedTable">
-              {{
-                showFullNumbers
-                  ? plan.billedDeferredInterest.toNumber()
-                  : (plan.billedDeferredInterest.toNumber() | currency)
-              }}
-            </td>
-            <td *ngIf="showAdvancedTable">
-              {{
-                showFullNumbers
-                  ? plan.unbilledTotalDeferredInterest.toNumber()
-                  : (plan.unbilledTotalDeferredInterest.toNumber() | currency)
-              }}
-            </td>
-            <!-- end of interest values -->
-
-            <td *ngIf="showAdvancedTable">
-              {{ plan.interestRoundingError.toNumber() }}
-            </td>
-            <td *ngIf="showAdvancedTable">
-              {{
-                showFullNumbers
-                  ? plan.perDiem.toNumber()
-                  : (plan.perDiem.getRoundedNumber() | currency)
-              }}
-            </td>
-            <td *ngIf="showAdvancedTable">{{ plan.daysInPeriod }}</td>
-
-            <td *ngIf="showAdvancedTable">
-              <table class="metadata-table">
-                <thead>
-                  <tr>
-                    <th>Key</th>
-                    <th>Value</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr *ngFor="let item of plan.metadata | keyvalue">
-                    <td>{{ item.key }}</td>
-                    <td>{{ item.value }}</td>
-                  </tr>
-                </tbody>
-              </table>
-            </td>
-          </tr>
-        </ng-template>
-        <ng-template #footer *ngIf="!showAdvancedTable">
-          <tr>
-            <td class="bg-blue-50 font-semibold" colspan="5"></td>
-            <td class="bg-blue-50 font-semibold">Summary:</td>
-            <td class="bg-blue-50 font-semibold">
-              {{ amortizationFeesTotal | currency }}
-            </td>
-            <td class="bg-blue-50 font-semibold">
-              {{ amortizationInterestTotal | currency }}
-            </td>
-            <td class="bg-blue-50 font-semibold">
-              {{ amortizationPrincipalTotal | currency }}
-            </td>
-            <td class="bg-blue-50 font-semibold">
-              {{ amortizationTotal | currency }}
-            </td>
-            <td></td>
-            <td></td>
+                  <!-- Default case -->
+                  <ng-container *ngSwitchDefault>
+                    DEFAULT: {{ rowData[col.field] }}
+                  </ng-container>
+                </span>
+              </td>
+            </ng-container>
           </tr>
         </ng-template>
       </p-table>
-
       <!-- Truth in Lending Disclosure Statement Button -->
       <p-divider></p-divider>
       <div class="p-mt-3 p-text-center">

@@ -1998,25 +1998,38 @@ export class Amortization {
     return newSchedule;
   }
 
+  private resetUsageDetails(): void {
+    this.unbilledInterestDueToRounding = Currency.zero;
+    this.unbilledDeferredInterest = Currency.zero;
+    this.unbilledDeferredFees = Currency.zero;
+    this.totalChargedInterestRounded = Currency.zero;
+    this.totalChargedInterestUnrounded = Currency.zero;
+    this.unbilledInterestDueToRounding = Currency.zero;
+    this.unbilledDeferredInterest = Currency.zero;
+    this.unbilledDeferredFees = Currency.zero;
+    this.earlyRepayment = false;
+  }
+
   /**
    * Generates the amortization schedule.
    * @returns An array of AmortizationSchedule entries.
    */
   public generateSchedule(): AmortizationEntries {
     this.balanceModifications.resetUsedAmounts();
+    this.resetUsageDetails();
 
-    this.earlyRepayment = false;
     const schedule: AmortizationEntries = new AmortizationEntries();
     let startBalance = this.totalLoanAmount;
     //let termIndex = 0;
 
     // for (let term of this.periodsSchedule.periods) {
+    let lastIndex = -1;
     for (let termIndex = 0; termIndex < this.periodsSchedule.length; termIndex++) {
+      lastIndex++;
       let term = this.periodsSchedule.atIndex(termIndex);
       if (this.earlyRepayment === true) {
         break;
       }
-      // termIndex++;
 
       const periodStartDate = term.startDate;
       const periodEndDate = term.endDate;

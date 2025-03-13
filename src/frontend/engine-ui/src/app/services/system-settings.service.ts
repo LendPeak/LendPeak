@@ -15,10 +15,24 @@ export type AiAssistantType = 'xAI' | 'OpenAI';
 })
 export class SystemSettingsService {
   private readonly STORAGE_KEY = 'systemSettings';
-  private settingsCache: { aiAssistant: AiAssistantType } | null = null;
+  private settingsCache: {
+    aiAssistant?: AiAssistantType;
+    repaymentPlanColumns?: {
+      selectedRepaymentPlanCols: any[];
+    };
+  } = {};
 
   constructor() {
     this.loadFromStorage();
+  }
+
+  getRepaymentPlanColumns() {
+    return this.settingsCache?.repaymentPlanColumns;
+  }
+
+  setRepaymentPlanColumns(cols: { selectedRepaymentPlanCols: any[] }) {
+    this.settingsCache.repaymentPlanColumns = cols;
+    this.saveToStorage();
   }
 
   /**
@@ -32,7 +46,7 @@ export class SystemSettingsService {
    * Sets the AI assistant and persists to local storage.
    */
   setAiAssistant(assistant: AiAssistantType) {
-    this.settingsCache = { aiAssistant: assistant };
+    this.settingsCache.aiAssistant = assistant;
     this.saveToStorage();
   }
 
@@ -43,10 +57,10 @@ export class SystemSettingsService {
         this.settingsCache = JSON.parse(stored);
       } catch (error) {
         console.warn('Failed to parse system settings from storage', error);
-        this.settingsCache = { aiAssistant: 'xAI' };
+        this.settingsCache.aiAssistant = 'xAI';
       }
     } else {
-      this.settingsCache = { aiAssistant: 'xAI' };
+      this.settingsCache.aiAssistant = 'xAI';
     }
   }
 

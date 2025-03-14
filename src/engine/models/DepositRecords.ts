@@ -13,6 +13,7 @@ export class DepositRecords {
 
   constructor(records: DepositRecord[] = []) {
     this.records = records;
+    this.sortByEffectiveDate();
     this.updateJsValues();
     this.modified = false;
   }
@@ -137,7 +138,7 @@ export class DepositRecords {
 
   get lastActive(): DepositRecord | undefined {
     let active = this.active;
-    return active[active.length - 1];
+    return active[0];
   }
 
   get summary() {

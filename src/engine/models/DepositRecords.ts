@@ -73,11 +73,11 @@ export class DepositRecords {
   }
 
   get first(): DepositRecord | undefined {
-    return this._records[0];
+    return this.allSorted[0];
   }
 
   get last(): DepositRecord | undefined {
-    return this._records[this._records.length - 1];
+    return this.allSorted[this.length - 1];
   }
 
   get length(): number {
@@ -122,6 +122,12 @@ export class DepositRecords {
     });
   }
 
+  get allActiveSorted(): DepositRecord[] {
+    return this.active.sort((a, b) => {
+      return dayjs(a.effectiveDate).isBefore(dayjs(b.effectiveDate)) ? -1 : 1;
+    });
+  }
+
   sortByEffectiveDate() {
     this._records = this._records.sort((a, b) => {
       return dayjs(a.effectiveDate).isBefore(dayjs(b.effectiveDate)) ? -1 : 1;
@@ -137,8 +143,7 @@ export class DepositRecords {
   }
 
   get lastActive(): DepositRecord | undefined {
-    let active = this.active;
-    return active[0];
+    return this.allActiveSorted[this.active.length - 1];
   }
 
   get summary() {

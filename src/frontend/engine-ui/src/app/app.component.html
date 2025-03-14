@@ -493,8 +493,6 @@
           [currencyOptions]="currencyOptions"
           (depositUpdated)="onDepositUpdated()"
           [snapshotDate]="snapshotDate"
-          [payoffAmount]="payoffAmount"
-          [accruedInterestToDate]="accruedInterestToDate"
         ></app-deposits>
       </p-tabpanel>
 
@@ -616,7 +614,7 @@
             <span class="text-300 font-semibold mb-1">Remaining Terms:</span>
             <span
               >{{ lendPeak.bills.summary.remainingUnpaidBills }} /
-              {{ loanSummary?.totalTerms }}</span
+              {{ lendPeak.bills.length }}</span
             >
           </div>
         </div>

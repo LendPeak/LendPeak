@@ -35,8 +35,6 @@ export class DepositsComponent {
   @Input({ required: true }) lendPeak?: LendPeak;
   @Input() currencyOptions: DropDownOptionString[] = [];
   @Input({ required: true }) snapshotDate: Date = new Date();
-  @Input() payoffAmount: Currency = Currency.Zero();
-  @Input() accruedInterestToDate: Currency = Currency.Zero();
 
   @Output() depositUpdated = new EventEmitter<void>();
 

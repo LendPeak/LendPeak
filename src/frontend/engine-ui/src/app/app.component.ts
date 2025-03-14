@@ -1225,7 +1225,7 @@ export class AppComponent implements OnChanges {
         this.lendPeak = LendPeak.fromJSON(loanData);
         this.lendPeak.currentDate = this.snapshotDate;
 
-        //this.submitLoan();
+        this.submitLoan();
         //this.needsRecalc = true;
 
         this.showManageLoansDialog = false;
@@ -1456,28 +1456,10 @@ export class AppComponent implements OnChanges {
       });
       return;
     }
-    // this.loan = amortization;
-    this.accruedInterest = this.lendPeak.amortization.getAccruedInterestByDate(
-      this.snapshotDate,
-    );
 
     this.showTable = true;
-
     this.loanModified = true; // Mark as modified
 
-    this.loanSummary =
-      this.lendPeak.amortization.summary.calculateLoanSummaryAsOfDate(
-        dayjs(this.snapshotDate),
-      );
-
-    this.actualLoanSummary = this.getActualLoanSummary(); // If already implemented
-    this.pastDueSummary = this.getPastDueSummary();
-
-    this.accruedInterestToDate =
-      this.lendPeak.amortization.getAccruedInterestByDate(this.snapshotDate);
-    this.payoffAmount = this.lendPeak.amortization.getCurrentPayoffAmount(
-      dayjs(this.snapshotDate),
-    );
     this.cdr.detectChanges();
   }
 

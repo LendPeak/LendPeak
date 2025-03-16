@@ -122,7 +122,7 @@ export class AmortizationExplainer {
   }
 
   getCalendarExplanation(): string {
-    const calInfo = getCalendarTypeLabelAndExplanation(this.amortization.calendar.calendarType);
+    const calInfo = getCalendarTypeLabelAndExplanation(this.amortization.calendars.primary.calendarType);
     const perDiemInfo = getPerDiemCalculationLabelAndExplanation(this.amortization.perDiemCalculationType);
 
     let explanation = `Calendar and Day Counting:\n`;

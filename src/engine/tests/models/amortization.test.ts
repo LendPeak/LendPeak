@@ -4,6 +4,7 @@ import { Amortization, FlushUnbilledInterestDueToRoundingErrorType } from "@mode
 import { ChangePaymentDate } from "@models/ChangePaymentDate";
 import { ChangePaymentDates } from "@models/ChangePaymentDates";
 import { CalendarType } from "@models/Calendar";
+import { TermCalendars } from "@models/TermCalendars";
 import Decimal from "decimal.js";
 
 describe("Amortization", () => {
@@ -52,7 +53,7 @@ describe("Amortization", () => {
         annualInterestRate: interestRate,
         term,
         startDate,
-        calendarType: CalendarType.ACTUAL_ACTUAL,
+        calendars: new TermCalendars({ primary: CalendarType.ACTUAL_ACTUAL }),
         roundingMethod,
         flushUnbilledInterestRoundingErrorMethod: FlushUnbilledInterestDueToRoundingErrorType.AT_END,
         roundingPrecision: 5,
@@ -430,7 +431,7 @@ describe("Amortization", () => {
       term,
       startDate,
       endDate,
-      calendarType: CalendarType.ACTUAL_ACTUAL,
+      calendars: new TermCalendars({ primary: CalendarType.ACTUAL_ACTUAL }),
       roundingMethod: RoundingMethod.ROUND_HALF_UP,
       flushUnbilledInterestRoundingErrorMethod: FlushUnbilledInterestDueToRoundingErrorType.AT_END,
       roundingPrecision: 5,
@@ -540,7 +541,7 @@ describe("Amortization", () => {
       annualInterestRate: interestRate,
       term,
       startDate,
-      calendarType: CalendarType.ACTUAL_ACTUAL,
+      calendars: new TermCalendars({ primary: CalendarType.ACTUAL_ACTUAL }),
       roundingMethod: RoundingMethod.ROUND_HALF_UP,
       flushUnbilledInterestRoundingErrorMethod: FlushUnbilledInterestDueToRoundingErrorType.AT_END,
       roundingPrecision: 10,

@@ -21,6 +21,7 @@ import {
   FlushUnbilledInterestDueToRoundingErrorType,
 } from 'lendpeak-engine/models/Amortization';
 import { Calendar } from 'lendpeak-engine/models/Calendar';
+import { TermCalendars } from 'lendpeak-engine/models/TermCalendars';
 import { LendPeak } from 'lendpeak-engine/models/LendPeak';
 import { RoundingMethod, Currency } from 'lendpeak-engine/utils/Currency';
 
@@ -165,16 +166,20 @@ export class AdvancedSettingsComponent implements OnInit {
   }
 
   applyDefaultSettings() {
-    if ( !this.lendPeak ) {
+    if (!this.lendPeak) {
       return;
     }
     // Reset to default values
-    this.lendPeak.amortization.calendar = new Calendar('THIRTY_360');
-    this.lendPeak.amortization.termPeriodDefinition = { unit: 'month', count: [1] };
+    this.lendPeak.amortization.calendars = new TermCalendars({primary: 'THIRTY_360'});
+    this.lendPeak.amortization.termPeriodDefinition = {
+      unit: 'month',
+      count: [1],
+    };
     this.lendPeak.amortization.roundingMethod = RoundingMethod.ROUND_HALF_EVEN;
     this.lendPeak.amortization.flushUnbilledInterestRoundingErrorMethod =
       FlushUnbilledInterestDueToRoundingErrorType.AT_THRESHOLD;
-    this.lendPeak.amortization.perDiemCalculationType = 'AnnualRateDividedByDaysInYear';
+    this.lendPeak.amortization.perDiemCalculationType =
+      'AnnualRateDividedByDaysInYear';
     this.lendPeak.amortization.billingModel = 'amortized';
     this.paymentAllocationStrategyName = 'FIFO';
     this.paymentPriority = ['interest', 'fees', 'principal'];
@@ -206,11 +211,16 @@ export class AdvancedSettingsComponent implements OnInit {
     } else {
       // Reset to stored original settings
       const settings = this.originalSettings;
-      this.lendPeak.amortization.calendar.calendarType = settings.calendarType;
-      this.lendPeak.amortization.termPeriodDefinition = settings.termPeriodDefinition;
+      this.lendPeak.amortization.calendars = new TermCalendars(
+        settings.calendarType,
+      );
+      this.lendPeak.amortization.termPeriodDefinition =
+        settings.termPeriodDefinition;
       this.lendPeak.amortization.roundingMethod = settings.roundingMethod;
-      this.lendPeak.amortization.flushUnbilledInterestRoundingErrorMethod = settings.flushMethod;
-      this.lendPeak.amortization.perDiemCalculationType = settings.perDiemCalculationType;
+      this.lendPeak.amortization.flushUnbilledInterestRoundingErrorMethod =
+        settings.flushMethod;
+      this.lendPeak.amortization.perDiemCalculationType =
+        settings.perDiemCalculationType;
       this.lendPeak.amortization.billingModel = settings.billingModel;
       this.paymentAllocationStrategyName = settings.paymentAllocationStrategy;
       this.paymentPriority = settings.paymentPriority;
@@ -290,10 +300,11 @@ export class AdvancedSettingsComponent implements OnInit {
       return;
     }
     return {
-      calendarType: this.lendPeak.amortization.calendar.calendarType,
+      calendars: this.lendPeak.amortization.calendars,
       termPeriodDefinition: this.lendPeak.amortization.termPeriodDefinition,
       roundingMethod: this.lendPeak.amortization.roundingMethod,
-      flushMethod: this.lendPeak.amortization.flushUnbilledInterestRoundingErrorMethod,
+      flushMethod:
+        this.lendPeak.amortization.flushUnbilledInterestRoundingErrorMethod,
       perDiemCalculationType: this.lendPeak.amortization.perDiemCalculationType,
       billingModel: this.lendPeak.amortization.billingModel,
       paymentAllocationStrategyName: this.paymentAllocationStrategyName,
@@ -301,7 +312,8 @@ export class AdvancedSettingsComponent implements OnInit {
       defaultPreBillDaysConfiguration:
         this.lendPeak.amortization.defaultPreBillDaysConfiguration,
       defaultBillDueDaysAfterPeriodEndConfiguration:
-        this.lendPeak.amortization.defaultBillDueDaysAfterPeriodEndConfiguration,
+        this.lendPeak.amortization
+          .defaultBillDueDaysAfterPeriodEndConfiguration,
       allowRateAbove100: this.lendPeak.amortization.allowRateAbove100,
       flushThreshold: this.lendPeak.amortization.flushThreshold.toNumber(),
       roundingPrecision: this.lendPeak.amortization.roundingPrecision,
@@ -313,18 +325,28 @@ export class AdvancedSettingsComponent implements OnInit {
     if (!this.lendPeak) {
       return;
     }
+
     const settings = setting.settings;
-    this.lendPeak.amortization.calendar.calendarType = settings.calendarType || 'THIRTY_360';
-    this.lendPeak.amortization.termPeriodDefinition = settings.termPeriodDefinition || {
-      unit: 'month',
-      count: [1],
-    };
-    this.lendPeak.amortization.roundingMethod = settings.roundingMethod || 'ROUND_HALF_EVEN';
+
+    if (settings.calendars) {
+      this.lendPeak.amortization.calendars = new TermCalendars(
+        settings.calendars.primary,
+      );
+    }
+
+    this.lendPeak.amortization.termPeriodDefinition =
+      settings.termPeriodDefinition || {
+        unit: 'month',
+        count: [1],
+      };
+    this.lendPeak.amortization.roundingMethod =
+      settings.roundingMethod || 'ROUND_HALF_EVEN';
     this.lendPeak.amortization.flushUnbilledInterestRoundingErrorMethod =
       settings.flushMethod || 'at_threshold';
     this.lendPeak.amortization.perDiemCalculationType =
       settings.perDiemCalculationType || 'AnnualRateDividedByDaysInYear';
-    this.lendPeak.amortization.billingModel = settings.billingModel || 'amortized';
+    this.lendPeak.amortization.billingModel =
+      settings.billingModel || 'amortized';
     this.paymentAllocationStrategyName =
       settings.paymentAllocationStrategy || 'FIFO';
     this.paymentPriority = settings.paymentPriority || [
@@ -336,9 +358,11 @@ export class AdvancedSettingsComponent implements OnInit {
       settings.defaultPreBillDaysConfiguration || 5;
     this.lendPeak.amortization.defaultBillDueDaysAfterPeriodEndConfiguration =
       settings.defaultBillDueDaysAfterPeriodEndConfiguration || 3;
-    this.lendPeak.amortization.allowRateAbove100 = settings.allowRateAbove100 || false;
+    this.lendPeak.amortization.allowRateAbove100 =
+      settings.allowRateAbove100 || false;
     this.lendPeak.amortization.flushThreshold = settings.flushThreshold || 0.01;
-    this.lendPeak.amortization.roundingPrecision = settings.roundingPrecision || 2;
+    this.lendPeak.amortization.roundingPrecision =
+      settings.roundingPrecision || 2;
 
     // Update loaded settings info
     this.loadedSettingName = setting.name;
@@ -356,7 +380,7 @@ export class AdvancedSettingsComponent implements OnInit {
 
   // Emit changes to the parent component
   emitLoanChange() {
-   // this.loanChange.emit(this.lendPeak.loan);
+    // this.loanChange.emit(this.lendPeak.loan);
     this.loanUpdated.emit();
   }
 

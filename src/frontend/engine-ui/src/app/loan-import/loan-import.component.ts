@@ -38,6 +38,9 @@ import { TermPaymentAmount } from 'lendpeak-engine/models/TermPaymentAmount';
 import { RateSchedules } from 'lendpeak-engine/models/RateSchedules';
 import { DepositRecords } from 'lendpeak-engine/models/DepositRecords';
 import { PeriodSchedule } from 'lendpeak-engine/models/PeriodSchedule';
+import { TermCalendars } from 'lendpeak-engine/models/TermCalendars';
+import { TermCalendar } from 'lendpeak-engine/models/TermCalendar';
+import { Calendar } from 'lendpeak-engine/models/Calendar';
 
 @Component({
   selector: 'app-loan-import',
@@ -397,14 +400,14 @@ export class LoanImportComponent implements OnInit, OnDestroy {
   } {
     let perDiemCalculationType: PerDiemCalculationType =
       'AnnualRateDividedByDaysInYear';
-    if (loanData.d.LoanSetup.calcType === 'loan.calcType.simpleInterest') {
-      perDiemCalculationType = 'MonthlyRateDividedByDaysInMonth';
-    }
+    // if (loanData.d.LoanSetup.calcType === 'loan.calcType.simpleInterest') {
+    //   perDiemCalculationType = 'MonthlyRateDividedByDaysInMonth';
+    // }
 
     let calendarType = 'THIRTY_360';
-    if (loanData.d.LoanSetup.daysInYear === 'loan.daysInYear.frequency') {
-      calendarType = 'ACTUAL_360';
-    }
+    // if (loanData.d.LoanSetup.daysInYear === 'loan.daysInYear.frequency') {
+    //   calendarType = 'ACTUAL_360';
+    // }
 
     let billingModel: BillingModel = 'amortized';
 
@@ -489,7 +492,7 @@ export class LoanImportComponent implements OnInit, OnDestroy {
       payoffDate: payoffTransaction
         ? dayjs(parseODataDate(payoffTransaction.date, true))
         : undefined,
-      calendarType: calendarType,
+      calendars: new TermCalendars({ primary: calendarType }),
       roundingMethod: 'ROUND_HALF_EVEN',
       billingModel: billingModel,
       perDiemCalculationType: perDiemCalculationType,
@@ -557,8 +560,21 @@ export class LoanImportComponent implements OnInit, OnDestroy {
       //     });
       //   }),
     };
+    const amortization = new Amortization(uiLoan);
 
-    return { loan: new Amortization(uiLoan), deposits: deposits };
+    // for this demo connector we will set 30/360 calendars for periods that
+    // have interest adjustments
+    amortization.termInterestAmountOverride.all.forEach((override) => {
+      //console.log('adding calendar for term', override.termNumber);
+      amortization.calendars.addCalendar(
+        new TermCalendar({
+          termNumber: override.termNumber,
+          calendar: new Calendar('THIRTY_360'),
+        }),
+      );
+    });
+
+    return { loan: amortization, deposits: deposits };
   }
 
   private mapDeposits(loanData: LoanResponse): DepositRecords {

@@ -27,6 +27,8 @@ import { BillDueDaysConfigurations } from "./BillDueDaysConfigurations";
 import { AmortizationExport } from "./AmortizationExport";
 import { TermPaymentAmount } from "./TermPaymentAmount";
 import { TermPaymentAmounts } from "./TermPaymentAmounts";
+import { TermCalendar } from "./TermCalendar";
+import { TermCalendars } from "./TermCalendars";
 import dayjs, { Dayjs } from "dayjs";
 import isSameOrAfter from "dayjs/plugin/isSameOrAfter";
 import isSameOrBefore from "dayjs/plugin/isSameOrBefore";
@@ -69,7 +71,7 @@ export interface AmortizationParams {
   hasCustomEndDate?: boolean;
   endDate?: Dayjs | Date;
   payoffDate?: Dayjs | Date;
-  calendarType?: CalendarType | string;
+  calendars?: TermCalendars;
   roundingMethod?: RoundingMethod | string;
   flushUnbilledInterestRoundingErrorMethod?: FlushUnbilledInterestDueToRoundingErrorType | string;
   roundingPrecision?: number;
@@ -199,7 +201,7 @@ export class Amortization {
   private _defaultBillDueDaysAfterPeriodEndConfiguration: number = Amortization.DEFAULT_BILL_DUE_DAYS_AFTER_PERIO_END_CONFIGURATION;
   jsDefaultBillDueDaysAfterPeriodEndConfiguration!: number;
 
-  private _calendar: Calendar = new Calendar(CalendarType.ACTUAL_ACTUAL);
+  private _calendars: TermCalendars = new TermCalendars({ primary: CalendarType.ACTUAL_ACTUAL });
   private _roundingMethod: RoundingMethod = RoundingMethod.ROUND_HALF_EVEN;
   private _flushUnbilledInterestRoundingErrorMethod: FlushUnbilledInterestDueToRoundingErrorType = FlushUnbilledInterestDueToRoundingErrorType.NONE;
   private _rateSchedules: RateSchedules = new RateSchedules();
@@ -302,8 +304,8 @@ export class Amortization {
       this.termPaymentAmountOverride = params.termPaymentAmountOverride;
     }
 
-    if (params.calendarType) {
-      this.calendar = params.calendarType;
+    if (params.calendars) {
+      this.calendars = params.calendars;
     }
 
     if (params.roundingMethod) {
@@ -1306,14 +1308,14 @@ export class Amortization {
     this._roundingMethod = typeof value === "string" ? Currency.RoundingMethodFromString(value) : value;
   }
 
-  get calendar(): Calendar {
-    return this._calendar;
+  get calendars(): TermCalendars {
+    return this._calendars;
   }
 
-  set calendar(calendarType: CalendarType | Calendar | string) {
+  set calendars(calendars: TermCalendars) {
     this.modifiedSinceLastCalculation = true;
 
-    this._calendar = calendarType instanceof Calendar ? calendarType : new Calendar(calendarType);
+    this._calendars = calendars instanceof TermCalendars ? calendars : new TermCalendars(calendars);
   }
 
   get billingModel(): BillingModel {
@@ -2031,6 +2033,7 @@ export class Amortization {
         break;
       }
 
+      const termCalendar = this.calendars.getCalendarForTerm(termIndex);
       const periodStartDate = term.startDate;
       const periodEndDate = term.endDate;
       const preBillDaysConfiguration = this.preBillDays.atIndex(termIndex).preBillDays;
@@ -2067,11 +2070,11 @@ export class Amortization {
           this.unbilledInterestDueToRounding = this.unbilledInterestDueToRounding.add(interestRoundingError);
         }
 
-        const daysInYear = this.calendar.daysInYear();
-        const daysInMonthForCalc = this.calendar.daysInMonth(periodStartDate);
-        const daysInPeriodTotal = this.calendar.daysBetween(periodStartDate, periodEndDate);
+        const daysInYear = termCalendar.daysInYear();
+        const daysInMonthForCalc = termCalendar.daysInMonth(periodStartDate);
+        const daysInPeriodTotal = termCalendar.daysBetween(periodStartDate, periodEndDate);
 
-        const interestCalc = new InterestCalculator(this.annualInterestRate, this.calendar.calendarType, this.perDiemCalculationType, daysInMonthForCalc);
+        const interestCalc = new InterestCalculator(this.annualInterestRate, termCalendar.calendarType, this.perDiemCalculationType, daysInMonthForCalc);
 
         const rateMetadata = interestCalc.calculateEquivalentAnnualRateMetadata(
           startBalance,
@@ -2085,8 +2088,8 @@ export class Amortization {
         const metadata: AmortizationScheduleMetadata = {
           staticInterestOverrideApplied: true,
           actualInterestValue: rateMetadata.actualInterestValue,
-          equivalentAnnualRate: rateMetadata.equivalentAnnualRate.toNumber(),
-          equivalentAnnualRateVariance: rateMetadata.equivalentAnnualRateVariance.toNumber(),
+          equivalentAnnualRate: rateMetadata.equivalentAnnualRate.toDecimalPlaces(8).toNumber(),
+          equivalentAnnualRateVariance: rateMetadata.equivalentAnnualRateVariance.toDecimalPlaces(8).toNumber(),
           acceptableRateVariance: rateMetadata.acceptableRateVariance,
           equivalentAnnualRateVarianceExceeded: rateMetadata.equivalentAnnualRateVarianceExceeded,
         };
@@ -2202,6 +2205,7 @@ export class Amortization {
             unbilledTotalDeferredInterest: this.unbilledDeferredInterest,
             interestRoundingError: interestRoundingError,
             unbilledInterestDueToRounding: this.unbilledInterestDueToRounding,
+            calendar: termCalendar,
             metadata,
           })
         );
@@ -2251,10 +2255,10 @@ export class Amortization {
             metadata.splitBalancePeriod = true;
           }
 
-          const daysInPeriod = this.calendar.daysBetween(interestRateForPeriod.startDate, interestRateForPeriod.endDate);
-          const daysInMonthForCalc = this.calendar.daysInMonth(interestRateForPeriod.startDate);
+          const daysInPeriod = termCalendar.daysBetween(interestRateForPeriod.startDate, interestRateForPeriod.endDate);
+          const daysInMonthForCalc = termCalendar.daysInMonth(interestRateForPeriod.startDate);
 
-          const interestCalculator = new InterestCalculator(interestRateForPeriod.annualInterestRate, this.calendar.calendarType, this.perDiemCalculationType, daysInMonthForCalc);
+          const interestCalculator = new InterestCalculator(interestRateForPeriod.annualInterestRate, termCalendar.calendarType, this.perDiemCalculationType, daysInMonthForCalc);
 
           let interestForPeriod: Currency;
           if (interestRateForPeriod.annualInterestRate.isZero()) {
@@ -2272,8 +2276,8 @@ export class Amortization {
             daysInPeriod
           );
 
-          metadata.equivalentAnnualRate = rateMetadata.equivalentAnnualRate.toNumber();
-          metadata.equivalentAnnualRateVariance = rateMetadata.equivalentAnnualRateVariance.toNumber();
+          metadata.equivalentAnnualRate = rateMetadata.equivalentAnnualRate.toDecimalPlaces(8).toNumber();
+          metadata.equivalentAnnualRateVariance = rateMetadata.equivalentAnnualRateVariance.toDecimalPlaces(8).toNumber();
           metadata.acceptableRateVariance = rateMetadata.acceptableRateVariance;
           metadata.equivalentAnnualRateVarianceExceeded = rateMetadata.equivalentAnnualRateVarianceExceeded;
           metadata.actualInterestValue = rateMetadata.actualInterestValue;
@@ -2345,6 +2349,7 @@ export class Amortization {
                 totalPayment: Currency.zero,
                 perDiem: perDiem,
                 daysInPeriod: daysInPeriod,
+                calendar: termCalendar,
                 metadata,
               })
             );
@@ -2450,6 +2455,7 @@ export class Amortization {
               unbilledTotalDeferredInterest: this.unbilledDeferredInterest,
               interestRoundingError: roundedInterest.getRoundingErrorAsCurrency(),
               unbilledInterestDueToRounding: this.unbilledInterestDueToRounding,
+              calendar: termCalendar,
               metadata,
             })
           );
@@ -2465,6 +2471,7 @@ export class Amortization {
     // Adjust the last payment if needed
     if (startBalance.toNumber() !== 0) {
       const lastPayment = schedule.lastEntry;
+      const termCalendar = lastPayment.calendar;
       if (!lastPayment) {
         console.error(`Last payment is not defined`, schedule);
         throw new Error("Last payment is not defined");
@@ -2475,7 +2482,7 @@ export class Amortization {
         lastPayment.totalPayment = lastPayment.totalPayment.add(lastPayment.dueInterestForTerm);
       }
       lastPayment.endBalance = Currency.of(0);
-      const daysInMonthForCalc = this.calendar.daysInMonth(this.calendar.addMonths(this.startDate, this.term));
+      const daysInMonthForCalc = termCalendar.daysInMonth(termCalendar.addMonths(this.startDate, this.term));
       lastPayment.perDiem = daysInMonthForCalc > 0 ? lastPayment.accruedInterestForPeriod.divide(daysInMonthForCalc) : Currency.zero;
       lastPayment.metadata.finalAdjustment = true;
     }
@@ -2524,9 +2531,9 @@ export class Amortization {
     //   accruedInterest = accruedInterest.add(entry.accruedInterestForPeriod);
     // }
     // next we calculate interest for the active period
-    const daysInPeriod = this.calendar.daysBetween(activePeriod.periodStartDate, date);
+    const daysInPeriod = activePeriod.calendar.daysBetween(activePeriod.periodStartDate, date);
     // console.log("days in period", daysInPeriod, activePeriod.periodStartDate.format("YYYY-MM-DD"), date.format("YYYY-MM-DD"));
-    const interestCalculator = new InterestCalculator(activePeriod.periodInterestRate, this.calendar.calendarType, this.perDiemCalculationType, daysInPeriod);
+    const interestCalculator = new InterestCalculator(activePeriod.periodInterestRate, activePeriod.calendar.calendarType, this.perDiemCalculationType, daysInPeriod);
     const interestForDays = interestCalculator.calculateInterestForDays(activePeriod.startBalance, daysInPeriod);
     accruedInterest = accruedInterest.add(interestForDays);
     return accruedInterest;
@@ -2577,7 +2584,6 @@ export class Amortization {
       hasCustomEndDate: this.hasCustomEndDate,
       equitedMonthlyPayment: this.equitedMonthlyPayment.toNumber(),
       hasCustomEquitedMonthlyPayment: this.hasCustomEquitedMonthlyPayment,
-      calendarType: this.calendar.calendarType,
       roundingMethod: this.roundingMethod,
       flushUnbilledInterestRoundingErrorMethod: this.flushUnbilledInterestRoundingErrorMethod,
       roundingPrecision: this.roundingPrecision,
@@ -2595,6 +2601,7 @@ export class Amortization {
       feesPerTerm: this.feesPerTerm.json,
       feesForAllTerms: this.feesForAllTerms.json,
       repaymentSchedule: this.repaymentSchedule.json,
+      calendars: this.calendars.json,
       acceptableRateVariance: this.acceptableRateVariance.toNumber(),
     };
   }

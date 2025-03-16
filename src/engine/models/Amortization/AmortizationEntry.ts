@@ -2,7 +2,7 @@ import Decimal from "decimal.js";
 import dayjs, { Dayjs } from "dayjs";
 import { BalanceModification } from "./BalanceModification";
 import { Currency } from "../../utils/Currency";
-
+import { Calendar, CalendarType } from "../Calendar";
 /**
  * Optional metadata interface for the schedule entry
  */
@@ -75,6 +75,8 @@ export interface AmortizationEntryParams {
   perDiem: number | Currency;
   daysInPeriod: number;
 
+  calendar: Calendar;
+
   interestRoundingError: number | Currency;
   unbilledInterestDueToRounding: number | Currency;
 
@@ -127,6 +129,8 @@ export class AmortizationEntry {
 
   private _interestRoundingError!: Currency;
   private _unbilledInterestDueToRounding!: Currency;
+
+  private _calendar!: Calendar;
 
   private _metadata!: AmortizationScheduleMetadata;
 
@@ -226,6 +230,8 @@ export class AmortizationEntry {
     this.interestRoundingError = params.interestRoundingError;
     this.unbilledInterestDueToRounding = params.unbilledInterestDueToRounding;
 
+    this.calendar = params.calendar;
+
     this.metadata = params.metadata ?? {};
 
     // Finally, push model data → jsX for the UI
@@ -235,6 +241,18 @@ export class AmortizationEntry {
   //
   // ===================== GETTERS & SETTERS =====================
   //
+
+  public get calendar(): Calendar {
+    return this._calendar;
+  }
+
+  public set calendar(value: Calendar | CalendarType) {
+    if (!(value instanceof Calendar)) {
+      value = new Calendar(value);
+    }
+    this._calendar = value;
+  }
+
   public get term(): number {
     return this._term;
   }
@@ -632,6 +650,8 @@ export class AmortizationEntry {
       interestRoundingError: this.interestRoundingError.toNumber(),
       unbilledInterestDueToRounding: this.unbilledInterestDueToRounding.toNumber(),
 
+      calendar: this.calendar.calendarType,
+
       metadata: this.metadata,
     };
   }
@@ -656,6 +676,7 @@ export class AmortizationEntry {
 
       periodInterestRate: json.periodInterestRate,
       principal: json.principal,
+      calendar: json.calendar,
 
       dueInterestForTerm: json.dueInterestForTerm,
       accruedInterestForPeriod: json.accruedInterestForPeriod,

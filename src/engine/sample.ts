@@ -11,6 +11,7 @@ import { Currency, RoundingMethod } from "./utils/Currency";
 import { CalendarType } from "./models/Calendar";
 import Decimal from "decimal.js";
 import { TermPaymentAmounts } from "./models/TermPaymentAmounts";
+import { TermCalendars } from "./models/TermCalendars";
 
 // const loanAmount = Currency.of(1); // 1 unit of currency
 // const interestRate = 0.05; // 5% annual interest rate
@@ -38,7 +39,7 @@ const amortization = new Amortization({
   term: term,
   startDate: startDate,
   //calendarType: CalendarType.ACTUAL_ACTUAL,
-  calendarType: CalendarType.THIRTY_360,
+  calendars: new TermCalendars({ primary: CalendarType.THIRTY_360 }),
   //roundingMethod: RoundingMethod.ROUND_HALF_EVEN,
   flushUnbilledInterestRoundingErrorMethod: FlushUnbilledInterestDueToRoundingErrorType.NONE,
   termPaymentAmountOverride: new TermPaymentAmounts([

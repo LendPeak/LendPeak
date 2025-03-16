@@ -526,11 +526,7 @@
   <!-- Repayment Plan at the Bottom -->
   <div *ngIf="showTable">
     <!-- Past Due Bills Status card -->
-    <p-card
-      header="Past Due Bills Status"
-      styleClass="mb-3"
-      *ngIf="pastDueSummary"
-    >
+    <p-card header="Past Due Bills Status" styleClass="mb-3">
       <div class="grid">
         <div
           class="col-12"
@@ -879,6 +875,26 @@
                   </ng-container>
                   <ng-container *ngSwitchCase="'daysInPeriod'">
                     {{ rowData.daysInPeriod | number }}
+
+                    <i
+                      *ngIf="
+                        lendPeak.amortization.calendars.hasCalendarForTerm(
+                          rowData.term
+                        )
+                      "
+                      severity="secondary"
+                      class="pi pi-info-circle ml-2"
+                      style="font-size: 1.5rem"
+                      pTooltip="Custom calendar is being used for this term {{
+                        lendPeak.amortization.calendars.getCalendarForTerm(
+                          rowData.term
+                        ).userFriendlyName
+                      }} instead of the default {{
+                        lendPeak.amortization.calendars.primary.userFriendlyName
+                      }}."
+                      tooltipPosition="top"
+                      tooltipStyleClass="wide-tooltip"
+                    ></i>
                   </ng-container>
 
                   <!-- Currency fields -->
@@ -895,24 +911,28 @@
                       <span class="pi pi-arrow-down"></span>
                     </span>
                     <span *ngIf="rowData.billablePeriod">
-                      {{ rowData.dueInterestForTerm.toNumber() | currency }}
-                      <p-badge
-                        *ngIf="
-                          rowData.metadata &&
-                          rowData.metadata.staticInterestOverrideApplied
-                        "
-                        value="Manual"
-                        severity="info"
-                        styleClass="ml-2"
-                        pTooltip="This term's interest was manually set to {{
-                          rowData.metadata.actualInterestValue | currency
-                        }}, calculated equivalent interest rate is {{
-                          rowData.metadata.equivalentAnnualRate * 100
-                            | number: '1.2-6'
-                        }}%"
-                        tooltipPosition="top"
-                        tooltipStyleClass="wide-tooltip"
-                      ></p-badge>
+                      <span>
+                        {{ rowData.dueInterestForTerm.toNumber() | currency }}
+                      </span>
+                      <span>
+                        <p-badge
+                          *ngIf="
+                            rowData.metadata &&
+                            rowData.metadata.staticInterestOverrideApplied
+                          "
+                          value="Manual"
+                          severity="info"
+                          styleClass="ml-2"
+                          pTooltip="This term's interest was manually set to {{
+                            rowData.metadata.actualInterestValue | currency
+                          }}, calculated equivalent interest rate is {{
+                            rowData.metadata.equivalentAnnualRate * 100
+                              | number: '1.2-6'
+                          }}%"
+                          tooltipPosition="top"
+                          tooltipStyleClass="wide-tooltip"
+                        ></p-badge>
+                      </span>
                     </span>
                   </ng-container>
                   <ng-container *ngSwitchCase="'fees'">

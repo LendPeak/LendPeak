@@ -63,6 +63,23 @@ export class Calendar {
     this.calendarType = calendarType;
   }
 
+  get userFriendlyName(): string {
+    switch (this.calendarType) {
+      case CalendarType.ACTUAL_ACTUAL:
+        return "Actual/Actual";
+      case CalendarType.ACTUAL_360:
+        return "Actual/360";
+      case CalendarType.ACTUAL_365:
+        return "Actual/365";
+      case CalendarType.THIRTY_360:
+        return "30/360";
+      case CalendarType.THIRTY_ACTUAL:
+        return "30/Actual";
+      default:
+        return "Unknown";
+    }
+  }
+
   /**
    * Sets the calendar type for the instance.
    *

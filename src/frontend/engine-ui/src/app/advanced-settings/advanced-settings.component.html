@@ -120,7 +120,7 @@
             </label>
             <p-select
               inputId="calendarType"
-              [(ngModel)]="lendPeak.amortization.calendar.calendarType"
+              [(ngModel)]="lendPeak.amortization.calendars.primary.calendarType"
               [options]="calendarTypes"
               placeholder="Select a calendar type"
               (ngModelChange)="onInputChange()"

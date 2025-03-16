@@ -38,6 +38,12 @@ import { TermPaymentAmounts } from 'lendpeak-engine/models/TermPaymentAmounts';
 import { RateSchedules } from 'lendpeak-engine/models/RateSchedules';
 import { LendPeak } from 'lendpeak-engine/models/LendPeak';
 import { TermInterestAmountOverrides } from 'lendpeak-engine/models/TermInterestAmountOverrides';
+import { TermCalendar } from 'lendpeak-engine/models/TermCalendar';
+import { Calendar, CalendarType } from 'lendpeak-engine/models/Calendar';
+import {
+  DropDownOptionNumber,
+  DropDownOptionString,
+} from '../models/common.model';
 
 @Component({
   selector: 'app-overrides',
@@ -77,6 +83,14 @@ export class OverridesComponent implements OnInit {
   originalSettings: any = {};
 
   selectedSetting: OverrideSettings | null = null;
+
+  calendarTypes: DropDownOptionNumber[] = [
+    { label: 'Actual/Actual', value: CalendarType.ACTUAL_ACTUAL },
+    { label: 'Actual/360', value: CalendarType.ACTUAL_360 },
+    { label: 'Actual/365', value: CalendarType.ACTUAL_365 },
+    { label: '30/360', value: CalendarType.THIRTY_360 },
+    { label: '30/Actual', value: CalendarType.THIRTY_ACTUAL },
+  ];
 
   constructor(private overrideSettingsService: OverrideSettingsService) {}
 
@@ -143,6 +157,14 @@ export class OverridesComponent implements OnInit {
       this.lendPeak.amortization.termInterestAmountOverride?.length > 0
     ) {
       this.openPanels.push('termInterestOverride');
+    }
+
+    // Panel: Term Calendar Override
+    if (
+      this.lendPeak.amortization.calendars &&
+      this.lendPeak.amortization.calendars.length > 0
+    ) {
+      this.openPanels.push('termCalendarOverride');
     }
 
     // Panel: Change Payment Date
@@ -407,9 +429,6 @@ export class OverridesComponent implements OnInit {
   }
 
   onInputChange(event: any = null) {
-    // if (event === null || event === undefined) {
-    //   return;
-    // }
     this.isModified = true;
 
     this.emitLoanChange();
@@ -462,6 +481,13 @@ export class OverridesComponent implements OnInit {
     this.onInputChange(true);
   }
 
+  refreshSortForTermCalendarOverride() {
+    if (!this.lendPeak) {
+      return;
+    }
+    this.lendPeak.amortization.calendars.reSort();
+  }
+
   refreshSortForTermPaymentAmountOverride() {
     if (!this.lendPeak) {
       return;
@@ -486,7 +512,22 @@ export class OverridesComponent implements OnInit {
       this.lendPeak.amortization.termInterestAmountOverride.deactivateAll();
     }
 
-   // this.lendPeak.amortization.resetTermInterestAmountOverride();
+    // this.lendPeak.amortization.resetTermInterestAmountOverride();
+
+    this.onInputChange(true);
+  }
+
+  toggleAllTermCalendarOverrides(event: any) {
+    if (!this.lendPeak) {
+      return;
+    }
+    if (event.checked === true) {
+      this.lendPeak.amortization.calendars.activateAll();
+    } else {
+      this.lendPeak.amortization.calendars.deactivateAll();
+    }
+
+    // this.lendPeak.amortization.resetTermInterestAmountOverride();
 
     this.onInputChange(true);
   }
@@ -945,27 +986,25 @@ export class OverridesComponent implements OnInit {
     this.onInputChange(true);
   }
   // Add row for termInterestOverride
-  addTermInterestOverrideRow() {
+  addTermCalendarOverrideRow() {
     if (!this.lendPeak) {
       return;
     }
     // Default values for a new row
-    const lastEntry =
-      this.lendPeak.amortization.termInterestAmountOverride.last;
-    let termNumber = 1;
-    let interestAmount = Currency.of(0);
+    const lastEntry = this.lendPeak.amortization.calendars.last;
+    let termNumber = 0;
+    let calendarType =
+      this.lendPeak.amortization.calendars.primary.calendarType;
 
     if (lastEntry) {
       termNumber = lastEntry.termNumber + 1;
-      interestAmount = lastEntry.interestAmount;
+      calendarType = lastEntry.calendar.calendarType;
     }
 
-    this.lendPeak.amortization.termInterestAmountOverride.addOverride(
-      new TermInterestAmountOverride({
+    this.lendPeak.amortization.calendars.addCalendar(
+      new TermCalendar({
         termNumber: termNumber,
-        interestAmount: interestAmount,
-        acceptableRateVariance:
-          this.lendPeak.amortization.acceptableRateVariance.toNumber(),
+        calendar: new Calendar(calendarType),
       }),
     );
 
@@ -1000,6 +1039,52 @@ export class OverridesComponent implements OnInit {
       this.lendPeak.amortization.termInterestAmountOverride.removeOverrideAtIndex(
         index,
       );
+      this.onInputChange(true);
+    }
+  }
+
+  // Add row for termInterestOverride
+  addTermInterestOverrideRow() {
+    if (!this.lendPeak) {
+      return;
+    }
+    // Default values for a new row
+    const lastEntry =
+      this.lendPeak.amortization.termInterestAmountOverride.last;
+    let termNumber = 1;
+    let interestAmount = Currency.of(0);
+
+    if (lastEntry) {
+      termNumber = lastEntry.termNumber + 1;
+      interestAmount = lastEntry.interestAmount;
+    }
+
+    this.lendPeak.amortization.termInterestAmountOverride.addOverride(
+      new TermInterestAmountOverride({
+        termNumber: termNumber,
+        interestAmount: interestAmount,
+        acceptableRateVariance:
+          this.lendPeak.amortization.acceptableRateVariance.toNumber(),
+      }),
+    );
+
+    this.onInputChange(true);
+  }
+
+  removeAllTermCalendarOverride() {
+    if (!this.lendPeak) {
+      return;
+    }
+    this.lendPeak.amortization.calendars.removeAllCalendars();
+    this.onInputChange(true);
+  }
+  // Remove a specific termInterestOverride row
+  removeTermCalendarOverride(index: number) {
+    if (!this.lendPeak) {
+      return;
+    }
+    if (this.lendPeak.amortization.calendars.length > 0) {
+      this.lendPeak.amortization.calendars.removeCalendarAtIndex(index);
       this.onInputChange(true);
     }
   }

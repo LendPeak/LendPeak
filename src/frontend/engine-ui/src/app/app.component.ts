@@ -162,6 +162,11 @@ export class AppComponent implements OnChanges {
       default: true,
     },
     {
+      header: 'Term Calendar',
+      field: 'calendar',
+      default: false,
+    },
+    {
       header: 'Due Fees',
       field: 'fees',
       default: false,

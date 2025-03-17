@@ -308,15 +308,9 @@ export class AppComponent implements OnChanges {
 
   CURRENT_OBJECT_VERSION = 9;
 
-  showFullNumbers: boolean = false;
-
   paymentAllocationStrategy: PaymentAllocationStrategyName = 'FIFO';
 
   changesSummary: string = '';
-
-  toggleFullNumberDisplay() {
-    this.showFullNumbers = !this.showFullNumbers;
-  }
 
   // Method to open Connector Management Dialog
   openConnectorManagement() {
@@ -821,7 +815,6 @@ export class AppComponent implements OnChanges {
   }
 
   showTable = false;
-  showAdvancedTable: boolean = false; // Default is simple view
   showTilaDialog: boolean = false;
   termOptions: DropDownOptionNumber[] = [];
 
@@ -836,10 +829,6 @@ export class AppComponent implements OnChanges {
     this.showTilaDialog = true;
   }
   showAdvancedOptions = false;
-
-  toggleAdvancedTable() {
-    this.showAdvancedTable = !this.showAdvancedTable;
-  }
 
   downloadRepaymentPlanAsCSV() {
     const repaymentPlanCSV =

@@ -24,6 +24,7 @@ export interface AmortizationScheduleMetadata {
   equivalentAnnualRateVariance?: number;
   acceptableRateVariance?: number;
   equivalentAnnualRateVarianceExceeded?: boolean;
+  isCustomCalendar?: boolean;
 }
 
 /**
@@ -39,7 +40,6 @@ export interface AmortizationEntryParams {
   term: number;
   // zeroPeriod can be derived from `term - 1`, but if you want it explicit, make it optional:
   // zeroPeriod?: number;
-
   periodStartDate: string | Date | Dayjs;
   periodEndDate: string | Date | Dayjs;
 

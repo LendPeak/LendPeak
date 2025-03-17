@@ -2034,6 +2034,7 @@ export class Amortization {
       }
 
       const termCalendar = this.calendars.getCalendarForTerm(termIndex);
+      const isCustomCalendar = this.calendars.hasCalendarForTerm(termIndex);
       const periodStartDate = term.startDate;
       const periodEndDate = term.endDate;
       const preBillDaysConfiguration = this.preBillDays.atIndex(termIndex).preBillDays;
@@ -2087,6 +2088,7 @@ export class Amortization {
 
         const metadata: AmortizationScheduleMetadata = {
           staticInterestOverrideApplied: true,
+          isCustomCalendar: isCustomCalendar,
           actualInterestValue: rateMetadata.actualInterestValue,
           equivalentAnnualRate: rateMetadata.equivalentAnnualRate.toDecimalPlaces(8).toNumber(),
           equivalentAnnualRateVariance: rateMetadata.equivalentAnnualRateVariance.toDecimalPlaces(8).toNumber(),
@@ -2250,6 +2252,8 @@ export class Amortization {
           if (periodRates.length > 1) {
             metadata.splitInterestPeriod = true;
           }
+
+          metadata.isCustomCalendar = isCustomCalendar;
 
           if (loanBalancesInAPeriod.length > 1) {
             metadata.splitBalancePeriod = true;

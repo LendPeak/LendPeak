@@ -877,18 +877,12 @@
                     {{ rowData.daysInPeriod | number }}
 
                     <i
-                      *ngIf="
-                        lendPeak.amortization.calendars.hasCalendarForTerm(
-                          rowData.term
-                        )
-                      "
+                      *ngIf="rowData.metadata.isCustomCalendar"
                       severity="secondary"
                       class="pi pi-info-circle ml-2"
                       style="font-size: 1.5rem"
                       pTooltip="Custom calendar is being used for this term {{
-                        lendPeak.amortization.calendars.getCalendarForTerm(
-                          rowData.term
-                        ).userFriendlyName
+                        rowData.calendar.userFriendlyName
                       }} instead of the default {{
                         lendPeak.amortization.calendars.primary.userFriendlyName
                       }}."

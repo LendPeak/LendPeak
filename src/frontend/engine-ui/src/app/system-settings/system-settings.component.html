@@ -18,6 +18,16 @@
     appendTo="body"
   ></p-select>
 
+  <h3>Developer Mode</h3>
+  <p-select
+    [options]="developerModeOptions"
+    [(ngModel)]="selectedDeveloperMode"
+    placeholder="Select Developer Mode"
+    optionLabel="label"
+    styleClass="w-full"
+    appendTo="body"
+  ></p-select>
+
   <div class="flex gap-2 mt-4 justify-content-end">
     <button
       pButton

@@ -42,7 +42,10 @@ import { Currency } from 'lendpeak-engine/utils/Currency';
 import Decimal from 'decimal.js';
 import { XaiSummarizeService } from './services/xai-summarize-service';
 import { OpenAiChatService } from './services/openai-summarize-service';
-import { SystemSettingsService } from './services/system-settings.service';
+import {
+  SystemSettingsService,
+  DeveloperModeType,
+} from './services/system-settings.service';
 import { FinancialOpsVersionManager } from 'lendpeak-engine/models/FinancialOpsVersionManager';
 import { MarkdownService } from 'ngx-markdown';
 
@@ -94,6 +97,8 @@ export class AppComponent implements OnChanges {
     private markdownService: MarkdownService,
     private cdr: ChangeDetectorRef,
   ) {}
+
+  developerMode: DeveloperModeType = 'Disabled';
 
   repaymentPlanTableCols: Column[] = [
     {
@@ -363,6 +368,10 @@ export class AppComponent implements OnChanges {
   getAiAssistantName(): string {
     const name: any = this.systemSettingsService.getAiAssistant();
     return name;
+  }
+
+  onSystemsSettingsChange() {
+    this.developerMode = this.systemSettingsService.getDeveloperMode();
   }
 
   summarize() {
@@ -672,6 +681,8 @@ export class AppComponent implements OnChanges {
   }
 
   ngOnInit(): void {
+    this.developerMode = this.systemSettingsService.getDeveloperMode();
+
     this.router.events.subscribe((event) => {
       if (event instanceof NavigationEnd) {
         const fullUrl = event.urlAfterRedirects; // This includes query parameters

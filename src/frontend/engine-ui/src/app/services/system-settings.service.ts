@@ -5,7 +5,7 @@ import { Injectable } from '@angular/core';
  * Available AI Assistant providers.
  */
 export type AiAssistantType = 'xAI' | 'OpenAI';
-
+export type DeveloperModeType = 'Enabled' | 'Disabled'; // keeping as string as i might want to ad later different levels of developer mode
 /**
  * Manages system-level settings (for now: AI assistant selection).
  * Persists them in local storage for simplicity.
@@ -17,6 +17,7 @@ export class SystemSettingsService {
   private readonly STORAGE_KEY = 'systemSettings';
   private settingsCache: {
     aiAssistant?: AiAssistantType;
+    developerMode?: DeveloperModeType;
     repaymentPlanColumns?: {
       selectedRepaymentPlanCols: any[];
     };
@@ -32,6 +33,15 @@ export class SystemSettingsService {
 
   setRepaymentPlanColumns(cols: { selectedRepaymentPlanCols: any[] }) {
     this.settingsCache.repaymentPlanColumns = cols;
+    this.saveToStorage();
+  }
+
+  getDeveloperMode(): DeveloperModeType {
+    return this.settingsCache?.developerMode ?? 'Disabled'; // default to disabled
+  }
+
+  setDeveloperMode(developerMode: DeveloperModeType) {
+    this.settingsCache.developerMode = developerMode;
     this.saveToStorage();
   }
 

@@ -3,6 +3,7 @@ import { Component, Input, Output, EventEmitter } from '@angular/core';
 import {
   SystemSettingsService,
   AiAssistantType,
+  DeveloperModeType,
 } from '../services/system-settings.service';
 
 @Component({
@@ -14,6 +15,7 @@ import {
 export class SystemSettingsComponent {
   @Input() showSystemSettingsDialog!: boolean;
   @Output() showSystemSettingsDialogChange = new EventEmitter<boolean>();
+  @Output() systemsSettingsChange = new EventEmitter<boolean>();
 
   aiAssistantOptions = [
     { label: 'xAI', value: 'xAI' },
@@ -25,6 +27,19 @@ export class SystemSettingsComponent {
     value: 'xAI',
   };
 
+  developerModeOptions = [
+    { label: 'Disabled', value: 'Disabled' },
+    { label: 'Enabled', value: 'Enabled' },
+  ];
+
+  selectedDeveloperMode: {
+    label: DeveloperModeType;
+    value: DeveloperModeType;
+  } = {
+    label: 'Disabled',
+    value: 'Disabled',
+  };
+
   constructor(private settingsService: SystemSettingsService) {}
 
   /**
@@ -32,30 +47,39 @@ export class SystemSettingsComponent {
    */
   onDialogShow() {
     const assistant = this.settingsService.getAiAssistant();
+    const developerMode = this.settingsService.getDeveloperMode();
+
     this.selectedAiAssistant = {
       label: assistant,
       value: assistant,
     };
 
-    // console.log('selectedAiAssistant', this.selectedAiAssistant);
+    this.selectedDeveloperMode = {
+      label: developerMode,
+      value: developerMode,
+    };
   }
 
   onDialogHide() {
     this.showSystemSettingsDialog = false;
     this.showSystemSettingsDialogChange.emit(false);
+    this.systemsSettingsChange.emit();
   }
 
   saveAndClose() {
     // persist choice
     // console.log('saving assistant', this.selectedAiAssistant);
     this.settingsService.setAiAssistant(this.selectedAiAssistant.value);
+    this.settingsService.setDeveloperMode(this.selectedDeveloperMode.value);
     this.showSystemSettingsDialog = false;
     this.showSystemSettingsDialogChange.emit(false);
+    this.systemsSettingsChange.emit();
   }
 
   closeDialog() {
     // persist choice
     this.showSystemSettingsDialog = false;
     this.showSystemSettingsDialogChange.emit(false);
+    this.systemsSettingsChange.emit();
   }
 }

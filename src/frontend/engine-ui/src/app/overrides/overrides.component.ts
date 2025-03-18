@@ -99,7 +99,7 @@ export class OverridesComponent implements OnInit {
     // If 'loan' has changed, you can re-run your initialization logic or
     // re-apply defaults etc.
     //this.balanceModifications = this.lendPeak.amortization.balanceModifications;
-    this.refreshOpenTabs();
+    // this.refreshOpenTabs();
   }
 
   ngOnInit() {
@@ -122,7 +122,15 @@ export class OverridesComponent implements OnInit {
       );
     }
 
+    //this.refreshOpenTabs();
+  }
+
+  expandAllUsedTabs() {
     this.refreshOpenTabs();
+  }
+
+  collapseAllTabs() {
+    this.openPanels = [];
   }
 
   refreshOpenTabs() {

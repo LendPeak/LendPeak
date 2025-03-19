@@ -36,6 +36,7 @@ export class RateSchedule {
     if (params.type) {
       this.type = params.type;
     }
+    this.updateJsValues();
   }
 
   set modified(value: boolean) {

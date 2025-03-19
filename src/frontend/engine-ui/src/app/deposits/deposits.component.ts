@@ -6,6 +6,7 @@ import {
   ViewChildren,
   QueryList,
   ElementRef,
+  ChangeDetectorRef,
 } from '@angular/core';
 import { DropDownOptionString } from '../models/common.model';
 import { LendPeak } from 'lendpeak-engine/models/LendPeak';
@@ -37,6 +38,8 @@ export class DepositsComponent {
   @Input({ required: true }) snapshotDate: Date = new Date();
 
   @Output() depositUpdated = new EventEmitter<void>();
+
+  constructor(private cdr: ChangeDetectorRef) {}
 
   @ViewChildren('depositRow', { read: ElementRef })
   depositRows!: QueryList<ElementRef>;
@@ -318,10 +321,10 @@ export class DepositsComponent {
     this.showDepositDialog = false;
     this.selectedDepositForEdit = null;
   }
-  
 
   depositActiveUpdated() {
     this.depositUpdated.emit();
+    this.cdr.detectChanges();
   }
 
   onApplyExcessToPrincipalChange(event: any) {

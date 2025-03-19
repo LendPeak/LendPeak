@@ -564,52 +564,23 @@ export class OverridesComponent implements OnInit {
     if (!this.lendPeak) {
       return;
     }
-    // const ratesSchedule = this.lendPeak.amortization.rateSchedules;
-    // let startDate: Dayjs;
-    // let endDate: Dayjs;
 
-    // if (ratesSchedule.length === 0) {
-    //   // First entry: use loan's start date
-    //   startDate = this.lendPeak.amortization.startDate;
-    // } else {
-    //   // Following entries: use end date from previous row as start date
-    //   startDate = ratesSchedule.last.endDate;
-    // }
-
-    // // End date is 1 month from start date
-    // endDate = startDate.add(1, 'month');
-
-    // ratesSchedule.addSchedule(
-    //   new RateSchedule({
-    //     startDate: startDate,
-    //     endDate: endDate,
-    //     annualInterestRate: 10,
-    //   }),
-    // );
+    console.log('adding rate schedule');
 
     this.lendPeak.amortization.hasCustomRateSchedule = true;
 
-    if (this.lendPeak.amortization.rateSchedules.length === 0) {
-      this.lendPeak.amortization.rateSchedules.addSchedule(
-        new RateSchedule({
-          startDate: this.lendPeak.amortization.rateSchedules.first.startDate,
-          endDate: this.lendPeak.amortization.rateSchedules.first.endDate,
-          annualInterestRate:
-            this.lendPeak.amortization.rateSchedules.first.annualInterestRate,
-        }),
-      );
-    } else {
-      this.lendPeak.amortization.rateSchedules.addSchedule(
-        new RateSchedule({
-          startDate: this.lendPeak.amortization.rateSchedules.last.endDate,
-          endDate: dayjs(
-            this.lendPeak.amortization.rateSchedules.last.endDate,
-          ).add(1, 'month'),
-          annualInterestRate:
-            this.lendPeak.amortization.rateSchedules.last.annualInterestRate,
-        }),
-      );
-    }
+    this.lendPeak.amortization.rateSchedules.addSchedule(
+      new RateSchedule({
+        startDate: this.lendPeak.amortization.rateSchedules.last.endDate,
+        endDate: dayjs(
+          this.lendPeak.amortization.rateSchedules.last.endDate,
+        ).add(1, 'month'),
+        annualInterestRate:
+          this.lendPeak.amortization.rateSchedules.last.annualInterestRate,
+      }),
+    );
+
+    console.log('added rate schedule', this.lendPeak.amortization);
     //  this.lendPeak.amortization.rateSchedules = ratesSchedule;
     this.emitLoanChange();
   }
@@ -1108,6 +1079,6 @@ export class OverridesComponent implements OnInit {
     }
     // this.loanChange.emit(this.lendPeak.amortization);
     this.loanUpdated.emit();
-    this.refreshOpenTabs();
+    // this.refreshOpenTabs();
   }
 }

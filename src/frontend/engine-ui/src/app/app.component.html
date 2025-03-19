@@ -527,184 +527,385 @@
   <!-- Repayment Plan at the Bottom -->
   <div *ngIf="showTable">
     <!-- Past Due Bills Status card -->
-    <p-card header="Past Due Bills Status" styleClass="mb-3">
-      <div class="grid">
+    <div *ngIf="lendPeak.bills.summary.billsPastDue > 0">
+      <div class="col-12">
         <div
-          class="col-12"
-          *ngIf="lendPeak.bills.summary.pastDueTotal.isZero()"
+          class="w-full p-4 text-lg align-content-center text-center shadow-2 border-top-3 border-red-400"
         >
-          <div class="flex flex-column">
-            <span class="text-300 font-semibold mb-1">No Past Due Bills</span>
-            <span>All bills are current as of the snapshot date.</span>
-          </div>
+          <span class="font-bold text-100 text-2xl">Contract is Past Due</span>
         </div>
-        <div class="col-12" *ngIf="lendPeak.bills.summary.billsPastDue > 0">
-          <div
-            class="w-full bg-red-200 p-4 text-lg align-content-center text-center font-semibold text-200 shadow-2"
+      </div>
+      <p-card styleClass="mb-3">
+        <div class="grid">
+          <!-- <div
+            class="col-12"
+            *ngIf="lendPeak.bills.summary.pastDueTotal.isZero()"
           >
-            Attention: There are past due bills!
-          </div>
-          <div
-            class="flex flex-column p-3"
-            style="background-color: #fff4e6; border-radius: 4px shadow-2"
-          >
-            <span
-              class="text-300 font-semibold mb-2 pb-4"
-              style="text-align: center"
-              >Past Due Details as of
-              {{ snapshotDate | date: "MM/dd/yyyy" }}
-              <p-divider />
-            </span>
-            <div class="grid">
-              <div class="col-12 md:col-3">
-                <span class="text-300 font-semibold">Past Due Bills:</span>
-                <span>{{ lendPeak.bills.summary.billsPastDue }}</span>
-              </div>
+            <div class="flex flex-column">
+              <span class="text-300 font-semibold mb-1"
+                >Account is Current</span
+              >
+              <span>All bills are current as of the snapshot date.</span>
+            </div>
+          </div> -->
+          <div class="col-12">
+            <div class="flex flex-column p-3">
+              <div class="grid">
+                <!-- Add Days Contract Is Past Due here -->
+                <div class="col-2">
+                  <p-card>
+                    <ng-template #header>
+                      <div class="card-header-container font-semibold text-xl">
+                        Days Past Due
+                      </div>
+                    </ng-template>
 
-              <!-- Add Days Contract Is Past Due here -->
-              <div class="col-12 md:col-3">
-                <span class="text-300 font-semibold">Days Past Due:</span>
-                <span>{{ lendPeak.bills.summary.daysPastDue }}</span>
-              </div>
+                    <p class="m-0 text-300 font-semibold text-5xl text-center">
+                      {{ lendPeak.bills.summary.daysPastDue }}
+                    </p>
+                  </p-card>
+                </div>
 
-              <div class="col-12 md:col-3">
-                <span class="text-300 font-semibold">Past Due Principal:</span>
-                <span>{{
-                  lendPeak.bills.summary.pastDuePrincipal.toNumber() | currency
-                }}</span>
-              </div>
-              <div class="col-12 md:col-3">
-                <span class="text-300 font-semibold">Past Due Interest:</span>
-                <span>{{
-                  lendPeak.bills.summary.pastDueInterest.toNumber() | currency
-                }}</span>
-              </div>
-              <div class="col-12 md:col-3">
-                <span class="text-300 font-semibold">Past Due Fees:</span>
-                <span>{{
-                  lendPeak.bills.summary.pastDueFees.toNumber() | currency
-                }}</span>
-              </div>
-              <div class="col-12 md:col-3">
-                <span class="text-300 font-semibold">Past Due Amount:</span>
-                <span>{{
-                  lendPeak.bills.summary.pastDueTotal.toNumber() | currency
-                }}</span>
+                <div class="col-2">
+                  <p-card>
+                    <ng-template #header>
+                      <div class="card-header-container font-semibold text-xl">
+                        Bills Past Due
+                      </div>
+                    </ng-template>
+
+                    <p class="m-0 text-300 font-semibold text-5xl text-center">
+                      {{ lendPeak.bills.summary.billsPastDue }}
+                    </p>
+                  </p-card>
+                </div>
+
+                <div class="col-2">
+                  <p-card>
+                    <ng-template #header>
+                      <div class="card-header-container font-semibold text-xl">
+                        Total Past Due
+                      </div>
+                    </ng-template>
+
+                    <p class="m-0 text-300 font-semibold text-5xl text-center">
+                      {{
+                        lendPeak.bills.summary.pastDueTotal.toNumber()
+                          | currency
+                      }}
+                    </p>
+                  </p-card>
+                </div>
+
+                <div class="col-2">
+                  <p-card>
+                    <ng-template #header>
+                      <div class="card-header-container font-semibold text-xl">
+                        Principal Past Due
+                      </div>
+                    </ng-template>
+
+                    <p class="m-0 text-300 font-semibold text-5xl text-center">
+                      {{
+                        lendPeak.bills.summary.pastDuePrincipal.toNumber()
+                          | currency
+                      }}
+                    </p>
+                  </p-card>
+                </div>
+
+                <div class="col-2">
+                  <p-card>
+                    <ng-template #header>
+                      <div class="card-header-container font-semibold text-xl">
+                        Fees Past Due
+                      </div>
+                    </ng-template>
+
+                    <p class="m-0 text-300 font-semibold text-5xl text-center">
+                      {{
+                        lendPeak.bills.summary.pastDueFees.toNumber() | currency
+                      }}
+                    </p>
+                  </p-card>
+                </div>
+
+                <div class="col-2">
+                  <p-card>
+                    <ng-template #header>
+                      <div class="card-header-container font-semibold text-xl">
+                        Interest Past Due
+                      </div>
+                    </ng-template>
+
+                    <p class="m-0 text-300 font-semibold text-5xl text-center">
+                      {{
+                        lendPeak.bills.summary.pastDueFees.toNumber() | currency
+                      }}
+                    </p>
+                  </p-card>
+                </div>
               </div>
             </div>
-            <p class="" style="text-align: center; font-weight: bold">
-              <p-divider />
-              Please note that these past due amounts reflect bills that should
-              have been paid before the snapshot date but remain unpaid.
-            </p>
           </div>
         </div>
-      </div>
-    </p-card>
+      </p-card>
+    </div>
 
     <!-- Current Loan Status card-->
-    <p-card header="Current Loan Status" styleClass="mb-3">
-      <div class="grid">
-        <!-- Row 1 -->
-        <div class="col-12 md:col-3">
-          <div class="flex flex-column">
-            <span class="text-300 font-semibold mb-1">Remaining Terms:</span>
-            <span
-              >{{ lendPeak.bills.summary.remainingUnpaidBills }} /
-              {{ lendPeak.bills.length }}</span
-            >
-          </div>
-        </div>
-        <div class="col-12 md:col-3">
-          <div class="flex flex-column">
-            <span class="text-300 font-semibold mb-1">Next Bill Date:</span>
-            <span>
-              {{
-                lendPeak.bills.nextUpcomingBill
-                  ? (lendPeak.bills.nextUpcomingBill.dueDate.toDate()
-                    | date: "MM/dd/yyyy")
-                  : "No more bills left"
-              }}
-            </span>
-          </div>
-        </div>
-        <div class="col-12 md:col-3">
-          <div class="flex flex-column">
-            <span class="text-300 font-semibold mb-1"
-              >Paid Principal To Date:</span
-            >
-            <span>{{
-              lendPeak.bills.summary.allocatedPrincipalSum.toNumber() | currency
-            }}</span>
-          </div>
-        </div>
-        <div class="col-12 md:col-3">
-          <div class="flex flex-column">
-            <span class="text-300 font-semibold mb-1"
-              >Paid Interest To Date:</span
-            >
-            <span>{{
-              lendPeak.bills.summary.allocatedInterestSum.toNumber() | currency
-            }}</span>
-          </div>
-        </div>
 
-        <!-- Row 2 -->
-        <div class="col-12 md:col-3 mt-3">
-          <div class="flex flex-column">
-            <span class="text-300 font-semibold mb-1">Last Payment Date:</span>
-            <span>
-              {{
-                lendPeak.depositRecords.lastActive
-                  ? (lendPeak.depositRecords.lastActive.effectiveDate.toDate()
-                    | date: "MM/dd/yyyy")
-                  : "No payment has been made yet"
-              }}
-            </span>
-          </div>
-        </div>
-        <div class="col-12 md:col-3 mt-3">
-          <div class="flex flex-column">
-            <span class="text-300 font-semibold mb-1"
-              >Last Payment Amount:</span
-            >
-            <span>
-              {{
-                lendPeak.depositRecords.lastActive
-                  ? (lendPeak.depositRecords.lastActive.amount.toNumber()
-                    | currency)
-                  : "No payment has been made yet"
-              }}
-            </span>
-          </div>
-        </div>
-        <div class="col-12 md:col-3 mt-3">
-          <div class="flex flex-column">
-            <span class="text-300 font-semibold mb-1"
-              >Remaining Principal:</span
-            >
-            <span>{{
-              lendPeak.bills.summary.remainingPrincipal.toNumber() | currency
-            }}</span>
-          </div>
-        </div>
-        <div class="col-12 md:col-3 mt-3">
-          <div class="flex flex-column">
-            <span class="text-300 font-semibold mb-1"
-              >Current Payoff (Principal + Accrued Interest):</span
-            >
-            <span>{{
-              lendPeak.payoffQuote.dueTotal.toNumber() | currency
-            }}</span>
-          </div>
-        </div>
-
-        <!-- Any additional fields can follow in the remaining columns of this row -->
+    <div class="col-12">
+      <div
+        class="w-full p-4 text-lg align-content-center text-center shadow-2 border-top-2 border-indigo-300"
+      >
+        <span class="font-bold text-100 text-2xl">Quick Details</span>
       </div>
-    </p-card>
+      <div class="flex flex-column p-3">
+        <div class="grid">
+          <div class="col-2">
+            <p-card>
+              <ng-template #header>
+                <div class="card-header-container font-semibold text-xl">
+                  Remaining Terms
+                </div>
+              </ng-template>
 
+              <p class="m-0 text-300 font-semibold text-5xl text-center">
+                {{ lendPeak.bills.summary.remainingUnpaidBills }} /
+                {{ lendPeak.bills.length }}
+              </p>
+            </p-card>
+          </div>
+          <div class="col-2">
+            <p-card>
+              <ng-template #header>
+                <div class="card-header-container font-semibold text-xl">
+                  Next Bill Date
+                </div>
+              </ng-template>
+
+              <p class="m-0 text-300 font-semibold text-5xl text-center">
+                {{
+                  lendPeak.bills.nextUpcomingBill
+                    ? (lendPeak.bills.nextUpcomingBill.dueDate.toDate()
+                      | date: "MM/dd/yyyy")
+                    : "No more bills left"
+                }}
+              </p>
+            </p-card>
+          </div>
+          <div class="col-4">
+            <p-card class="border-bottom-3 border-indigo-300">
+              <ng-template #header>
+                <div class="card-header-container font-semibold text-xl">
+                  Current Payoff
+                </div>
+              </ng-template>
+
+              <p class="m-0 text-300 font-semibold text-5xl text-center">
+                {{ lendPeak.payoffQuote.dueTotal.toNumber() | currency }}
+              </p>
+            </p-card>
+          </div>
+          <div class="col-2">
+            <p-card>
+              <ng-template #header>
+                <div class="card-header-container font-semibold text-xl">
+                  Last Payment Date
+                </div>
+              </ng-template>
+
+              <p class="m-0 text-300 font-semibold text-5xl text-center">
+                {{
+                  lendPeak.depositRecords.lastActive
+                    ? (lendPeak.depositRecords.lastActive.effectiveDate.toDate()
+                      | date: "MM/dd/yyyy")
+                    : "No payment has been made yet"
+                }}
+              </p>
+            </p-card>
+          </div>
+          <div class="col-2">
+            <p-card>
+              <ng-template #header>
+                <div class="card-header-container font-semibold text-xl">
+                  Last Payment Amount
+                </div>
+              </ng-template>
+
+              <p class="m-0 text-300 font-semibold text-5xl text-center">
+                {{
+                  lendPeak.depositRecords.lastActive
+                    ? (lendPeak.depositRecords.lastActive.amount.toNumber()
+                      | currency)
+                    : "No payment has been made yet"
+                }}
+              </p>
+            </p-card>
+          </div>
+        </div>
+        <p-accordion [multiple]="true" [value]="[]">
+          <p-accordion-panel value="interestRate">
+            <p-accordion-header>
+              <div>Paid To Date Balances</div>
+            </p-accordion-header>
+            <p-accordion-content>
+              <div class="grid">
+                <div class="col-3">
+                  <p-card>
+                    <ng-template #header>
+                      <div class="card-header-container font-semibold text-xl">
+                        Paid Total To Date
+                      </div>
+                    </ng-template>
+
+                    <p class="m-0 text-300 font-semibold text-5xl text-center">
+                      {{
+                        lendPeak.bills.summary.allocatedTotalSum.toNumber()
+                          | currency
+                      }}
+                    </p>
+                  </p-card>
+                </div>
+                <div class="col-3">
+                  <p-card>
+                    <ng-template #header>
+                      <div class="card-header-container font-semibold text-xl">
+                        Paid Principal To Date
+                      </div>
+                    </ng-template>
+
+                    <p class="m-0 text-300 font-semibold text-5xl text-center">
+                      {{
+                        lendPeak.bills.summary.allocatedPrincipalSum.toNumber()
+                          | currency
+                      }}
+                    </p>
+                  </p-card>
+                </div>
+                <div class="col-3">
+                  <p-card>
+                    <ng-template #header>
+                      <div class="card-header-container font-semibold text-xl">
+                        Paid Interest To Date
+                      </div>
+                    </ng-template>
+
+                    <p class="m-0 text-300 font-semibold text-5xl text-center">
+                      {{
+                        lendPeak.bills.summary.allocatedInterestSum.toNumber()
+                          | currency
+                      }}
+                    </p>
+                  </p-card>
+                </div>
+                <div class="col-3">
+                  <p-card>
+                    <ng-template #header>
+                      <div class="card-header-container font-semibold text-xl">
+                        Paid Fees To Date
+                      </div>
+                    </ng-template>
+
+                    <p class="m-0 text-300 font-semibold text-5xl text-center">
+                      {{
+                        lendPeak.bills.summary.allocatedFeesSum.toNumber()
+                          | currency
+                      }}
+                    </p>
+                  </p-card>
+                </div>
+              </div>
+            </p-accordion-content>
+          </p-accordion-panel>
+        </p-accordion>
+        <p-accordion [multiple]="true" [value]="[]">
+          <p-accordion-panel value="interestRate">
+            <p-accordion-header>
+              <div>Remaining Balances</div>
+            </p-accordion-header>
+            <p-accordion-content>
+              <div class="grid">
+                <div class="col-3">
+                  <p-card>
+                    <ng-template #header>
+                      <div class="card-header-container font-semibold text-xl">
+                        Remaining Total
+                      </div>
+                    </ng-template>
+
+                    <p class="m-0 text-300 font-semibold text-5xl text-center">
+                      {{
+                        lendPeak.bills.summary.remainingTotal.toNumber()
+                          | currency
+                      }}
+                    </p>
+                  </p-card>
+                </div>
+                <div class="col-3">
+                  <p-card>
+                    <ng-template #header>
+                      <div class="card-header-container font-semibold text-xl">
+                        Remaining Principal
+                      </div>
+                    </ng-template>
+
+                    <p class="m-0 text-300 font-semibold text-5xl text-center">
+                      {{
+                        lendPeak.bills.summary.remainingPrincipal.toNumber()
+                          | currency
+                      }}
+                    </p>
+                  </p-card>
+                </div>
+                <div class="col-3">
+                  <p-card>
+                    <ng-template #header>
+                      <div class="card-header-container font-semibold text-xl">
+                        Remaining Interest
+                      </div>
+                    </ng-template>
+
+                    <p class="m-0 text-300 font-semibold text-5xl text-center">
+                      {{
+                        lendPeak.bills.summary.remainingInterest.toNumber()
+                          | currency
+                      }}
+                    </p>
+                  </p-card>
+                </div>
+                <div class="col-3">
+                  <p-card>
+                    <ng-template #header>
+                      <div class="card-header-container font-semibold text-xl">
+                        Remaining Fees
+                      </div>
+                    </ng-template>
+
+                    <p class="m-0 text-300 font-semibold text-5xl text-center">
+                      {{
+                        lendPeak.bills.summary.remainingFees.toNumber()
+                          | currency
+                      }}
+                    </p>
+                  </p-card>
+                </div>
+              </div>
+            </p-accordion-content>
+          </p-accordion-panel>
+        </p-accordion>
+      </div>
+    </div>
+
+    <div class="col-12">
+      <div
+        class="w-full p-4 text-lg align-content-center text-center shadow-2 border-top-2 border-indigo-300"
+      >
+        <span class="font-bold text-100 text-2xl">Repayment Plan Summary</span>
+      </div>
+    </div>
     <!-- Repayment Plan Card -->
-    <p-card header="Repayment Plan Summary" styleClass="mt-3">
+    <p-card styleClass="mt-3">
       <!-- Table Toggle Button -->
       <p-toolbar styleClass="mb-4 gap-2">
         <ng-template pTemplate="left">
@@ -1005,6 +1206,7 @@
                       {{ rowData.totalPayment.toNumber() | currency }}
                       <p-badge
                         *ngIf="
+                          !rowData.metadata.isFinalEntry &&
                           lendPeak.amortization.termPaymentAmountOverride.getPaymentAmountForTerm(
                             rowData.term
                           )

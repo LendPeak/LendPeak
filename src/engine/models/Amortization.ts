@@ -1882,7 +1882,19 @@ export class Amortization {
   }
 
   getTermPaymentAmount(termNumber: number): Currency {
-    return this.termPaymentAmountOverride.getPaymentAmountForTerm(termNumber)?.paymentAmount || this.equitedMonthlyPayment;
+    if (termNumber >= this.periodsSchedule.length - 1) {
+      // we dont allow custom overrides on the last term
+      // because payment is always a payoff/closout payment
+      return this.equitedMonthlyPayment;
+    }
+
+    const termPaymentAmountOverride = this.termPaymentAmountOverride.getPaymentAmountForTerm(termNumber)?.paymentAmount;
+
+    if (termPaymentAmountOverride) {
+      return termPaymentAmountOverride;
+    } else {
+      return this.equitedMonthlyPayment;
+    }
   }
 
   getModifiedBalance(
@@ -2033,6 +2045,10 @@ export class Amortization {
         break;
       }
 
+      if (termIndex === this.periodsSchedule.length - 1) {
+        console.log("last term");
+      }
+
       const termCalendar = this.calendars.getCalendarForTerm(termIndex);
       const isCustomCalendar = this.calendars.hasCalendarForTerm(termIndex);
       const periodStartDate = term.startDate;
@@ -2041,7 +2057,9 @@ export class Amortization {
       const dueBillDaysConfiguration = this.dueBillDays.atIndex(termIndex).daysDueAfterPeriodEnd;
       const billOpenDate = periodEndDate.subtract(preBillDaysConfiguration, "day");
       const billDueDate = periodEndDate.add(dueBillDaysConfiguration, "day");
+
       const fixedMonthlyPayment = this.getTermPaymentAmount(termIndex);
+
       let billedInterestForTerm = Currency.zero;
 
       // Check if we have a static interest override for this term
@@ -2471,6 +2489,8 @@ export class Amortization {
         }
       }
     }
+
+    schedule.lastEntry.metadata.isFinalEntry = true;
 
     // Adjust the last payment if needed
     if (startBalance.toNumber() !== 0) {

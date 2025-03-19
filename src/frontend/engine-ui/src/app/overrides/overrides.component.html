@@ -209,10 +209,7 @@
         <p-accordion-content>
           <div class="p-fluid">
             <table
-              *ngIf="
-                lendPeak.amortization.rateSchedules.hasCustom &&
-                lendPeak.amortization.rateSchedules.allCustom.length > 0
-              "
+              *ngIf="lendPeak.amortization.rateSchedules.allCustom.length > 0"
               class="p-datatable p-component"
             >
               <thead>
@@ -386,7 +383,7 @@
               >
                 <tr
                   [ngClass]="{
-                    'bg-red-100':
+                    'bg-red-50':
                       lendPeak.amortization.calendars.isDuplicateTermNumber(
                         override.termNumber
                       ),
@@ -615,10 +612,13 @@
               >
                 <tr
                   [ngClass]="{
-                    'bg-red-100':
+                    'bg-red-50':
                       lendPeak.amortization.termInterestAmountOverride.isDuplicateTermNumber(
                         override.jsTermNumber
-                      ),
+                      ) ||
+                      lendPeak.amortization.repaymentSchedule.getEntryByTerm(
+                        override.jsTermNumber
+                      )?.metadata?.equivalentAnnualRateVarianceExceeded,
                     'opacity-40': !override.jsActive,
                   }"
                 >
@@ -654,15 +654,19 @@
                   </td>
                   <!-- Interest Amount -->
                   <td>
-                    <p-inputNumber
-                      [disabled]="!override.jsActive"
-                      [(ngModel)]="override.jsInterestAmount"
-                      name="termInterestOverride-amount-{{ rowIndex }}"
-                      mode="currency"
-                      currency="USD"
-                      locale="en-US"
-                      (ngModelChange)="onInputChange($event)"
-                    ></p-inputNumber>
+                    <p-inputgroup>
+                      <p-inputgroup-addon>$</p-inputgroup-addon>
+                      <p-inputNumber
+                        [disabled]="!override.jsActive"
+                        [(ngModel)]="override.jsInterestAmount"
+                        name="termInterestOverride-amount-{{ rowIndex }}"
+                        locale="en-US"
+                        mode="decimal"
+                        [minFractionDigits]="2"
+                        [maxFractionDigits]="2"
+                        (ngModelChange)="onInputChange($event)"
+                      ></p-inputNumber>
+                    </p-inputgroup>
                   </td>
                   <td>
                     <p-inputgroup>
@@ -906,7 +910,7 @@
         >
         <p-accordion-content>
           <div class="grid">
-            <!-- Term Payment Amount -->
+            <!-- Payoff Date-->
             <div class="col">
               <label for="payoffDate">
                 Payoff Date
@@ -982,13 +986,14 @@
                     size="small"
                   ></p-checkbox>
                 </p-inputgroup-addon>
+                <p-inputgroup-addon>$</p-inputgroup-addon>
 
                 <p-inputNumber
                   inputId="jsEquitedMonthlyPayment"
                   [(ngModel)]="lendPeak.amortization.jsEquitedMonthlyPayment"
-                  mode="currency"
-                  currency="USD"
-                  locale="en-US"
+                  mode="decimal"
+                  [minFractionDigits]="2"
+                  [maxFractionDigits]="2"
                   [disabled]="
                     !lendPeak.amortization.hasCustomEquitedMonthlyPayment
                   "
@@ -1046,7 +1051,7 @@
                     let i = index
                   "
                   [ngClass]="{
-                    'bg-red-100':
+                    'bg-red-50':
                       lendPeak.amortization.termPaymentAmountOverride.isDuplicateTermNumber(
                         paymentConfiguration.jsTermNumber
                       ),
@@ -1078,14 +1083,18 @@
                   </td>
                   <!-- Payment Amount -->
                   <td>
-                    <p-inputNumber
-                      [(ngModel)]="paymentConfiguration.jsPaymentAmount"
-                      name="overrideTermPaymentAmount-{{ i }}"
-                      mode="currency"
-                      currency="USD"
-                      locale="en-US"
-                      (ngModelChange)="onInputChange($event)"
-                    ></p-inputNumber>
+                    <p-inputgroup>
+                      <p-inputgroup-addon>$</p-inputgroup-addon>
+                      <p-inputNumber
+                        [(ngModel)]="paymentConfiguration.jsPaymentAmount"
+                        name="overrideTermPaymentAmount-{{ i }}"
+                        mode="decimal"
+                        [minFractionDigits]="2"
+                        [maxFractionDigits]="2"
+                        locale="en-US"
+                        (ngModelChange)="onInputChange($event)"
+                      ></p-inputNumber>
+                    </p-inputgroup>
                   </td>
                   <!-- Remove Button -->
                   <td>
@@ -1154,13 +1163,13 @@
                     let i = index
                   "
                   [ngClass]="{
-                    'bg-red-100':
+                    'bg-red-50':
                       lendPeak.amortization.changePaymentDates.isDuplicateTermNumber(
                         changePaymentDate.jsTermNumber
                       ),
                   }"
                   [ngClass]="{
-                    'bg-red-100': changePaymentDate.jsTermNumber < 0,
+                    'bg-red-50': changePaymentDate.jsTermNumber < 0,
                   }"
                 >
                   <!-- Term Dates -->
@@ -1473,26 +1482,34 @@
                     </td>
                     <!-- Amount -->
                     <td>
-                      <p-inputNumber
-                        [(ngModel)]="balanceModification.jsAmount"
-                        name="balanceModificationAmount-{{ i }}"
-                        mode="currency"
-                        currency="USD"
-                        locale="en-US"
-                        (ngModelChange)="balanceModificationChanged()"
-                        [disabled]="balanceModification.isSystemModification"
-                      ></p-inputNumber>
+                      <p-inputgroup>
+                        <p-inputgroup-addon>$</p-inputgroup-addon>
+                        <p-inputNumber
+                          [(ngModel)]="balanceModification.jsAmount"
+                          name="balanceModificationAmount-{{ i }}"
+                          mode="decimal"
+                          [minFractionDigits]="2"
+                          [maxFractionDigits]="2"
+                          locale="en-US"
+                          (ngModelChange)="balanceModificationChanged()"
+                          [disabled]="balanceModification.isSystemModification"
+                        ></p-inputNumber>
+                      </p-inputgroup>
                     </td>
                     <!-- Unused Amount -->
                     <td>
-                      <p-inputNumber
-                        [disabled]="true"
-                        [(ngModel)]="balanceModification.jsUnusedAmount"
-                        inputId="balanceModificationAmount-{{ i }}"
-                        mode="currency"
-                        currency="USD"
-                        locale="en-US"
-                      ></p-inputNumber>
+                      <p-inputgroup>
+                        <p-inputgroup-addon>$</p-inputgroup-addon>
+                        <p-inputNumber
+                          [disabled]="true"
+                          [(ngModel)]="balanceModification.jsUnusedAmount"
+                          inputId="balanceModificationAmount-{{ i }}"
+                          mode="decimal"
+                          [minFractionDigits]="2"
+                          [maxFractionDigits]="2"
+                          locale="en-US"
+                        ></p-inputNumber>
+                      </p-inputgroup>
                     </td>
                     <!-- System Generated -->
                     <td>

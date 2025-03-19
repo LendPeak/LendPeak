@@ -78,11 +78,11 @@ export class TermPaymentAmounts {
   }
 
   getPaymentAmountForTerm(termNumber: number): TermPaymentAmount | undefined {
-    return this._paymentAmounts.find((cpd) => cpd.termNumber === termNumber);
+    return this._paymentAmounts.find((override) => override.termNumber === termNumber);
   }
 
   get json() {
-    return this._paymentAmounts.map((bm) => bm.json);
+    return this._paymentAmounts.map((override) => override.json);
   }
 
   toJSON() {

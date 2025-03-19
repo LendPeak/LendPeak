@@ -25,6 +25,7 @@ export interface AmortizationScheduleMetadata {
   acceptableRateVariance?: number;
   equivalentAnnualRateVarianceExceeded?: boolean;
   isCustomCalendar?: boolean;
+  isFinalEntry?: boolean;
 }
 
 /**

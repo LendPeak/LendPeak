@@ -361,3 +361,14 @@ footer p {
 .repayment-plan-table {
     width: 100%;
 }
+
+.card-header-container {
+    display: flex;
+    justify-content: center;
+    /* Horizontal centering */
+    align-items: center;
+    /* Vertical centering (optional, if needed) */
+    width: 100%;
+    /* Ensure the container takes full header width */
+    margin-top: 1rem;
+}

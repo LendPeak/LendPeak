@@ -1,20 +1,4 @@
 
-/* Styling for the metadata table within the repayment plan */
-.metadata-table {
-    width: 100%;
-    border-collapse: collapse;
-}
-
-.metadata-table th,
-.metadata-table td {
-    border: 1px solid #ddd;
-    padding: 8px;
-}
-
-.metadata-table th {
-    background-color: #f2f2f2;
-    text-align: left;
-}
 
 /* Tooltip adjustments */
 .ui-tooltip {
@@ -22,7 +6,6 @@
     text-align: left;
 }
 
-/* Adjust margins for better spacing */
 
 
 /* Tooltip icon next to labels */
@@ -45,28 +28,6 @@
 
 
 
-/* Zebra striping based on period number */
-.repayment-plan-table tr.even-row {
-    background-color: #f9f9f9;
-    /* Light gray */
-}
-
-.repayment-plan-table tr.odd-row {
-    background-color: #ffffff;
-    /* White */
-}
-
-/* Row hover effect */
-.repayment-plan-table tr:hover {
-    background-color: #e0e0e0;
-    /* Slightly darker gray */
-}
-
-/* Selected row highlighting */
-.repayment-plan-table tr.selected-row {
-    background-color: #c0c0c0 !important;
-    /* Darker gray */
-}
 
 
 .tooltip-content p {

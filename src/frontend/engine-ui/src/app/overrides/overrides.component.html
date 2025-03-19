@@ -1037,6 +1037,7 @@
             >
               <thead>
                 <tr>
+                  <th></th>
                   <th>Dates</th>
                   <th>Term Number</th>
                   <th>Payment Amount</th>
@@ -1054,10 +1055,28 @@
                     'bg-red-50':
                       lendPeak.amortization.termPaymentAmountOverride.isDuplicateTermNumber(
                         paymentConfiguration.jsTermNumber
-                      ),
+                      ) ||
+                      paymentConfiguration.jsTermNumber >=
+                        lendPeak.amortization.repaymentSchedule.lastEntry.term,
                   }"
                 >
                   <!-- Term Dates -->
+                  <td>
+                    <i
+                      *ngIf="
+                        paymentConfiguration.jsTermNumber >=
+                        lendPeak.amortization.repaymentSchedule.lastEntry.term
+                      "
+                      style="color: red; font-size: 1.5rem"
+                      severity="danger"
+                      class="pi pi-exclamation-triangle"
+                      styleClass="mr-2 text-red-500"
+                      pTooltip="Last term is always a calculated term. You cannot override the payment amount."
+                      tooltipPosition="left"
+                      tooltipStyleClass="wide-tooltip"
+                    >
+                    </i>
+                  </td>
                   <td>
                     <span class="font-medium text-md">
                       {{

@@ -65,6 +65,7 @@ import { MessageService, ConfirmationService } from 'primeng/api';
 
 import { ConnectorManagementComponent } from './connector-management/connector-management.component';
 import { LoanImportComponent } from './loan-import/loan-import.component';
+import { RepaymentPlanComponent } from './repayment-plan/repayment-plan.component';
 
 import { VersionHistoryComponent } from './version-history/version-history.component';
 import { FinancialOpsHistoryComponent } from './financial-ops-history/financial-ops-history.component';
@@ -99,6 +100,7 @@ import {
     AdvancedSettingsComponent,
     ConnectorManagementComponent,
     LoanImportComponent,
+    RepaymentPlanComponent,
     VersionHistoryComponent,
     ValueRendererComponent,
     SystemSettingsComponent,

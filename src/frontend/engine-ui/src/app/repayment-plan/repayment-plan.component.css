@@ -1,0 +1,193 @@
+/* Styling for the metadata table within the repayment plan */
+.metadata-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.metadata-table th,
+.metadata-table td {
+    border: 1px solid #ddd;
+    padding: 8px;
+}
+
+.metadata-table th {
+    background-color: #f2f2f2;
+    text-align: left;
+}
+
+/* Tooltip adjustments */
+.ui-tooltip {
+    max-width: 250px;
+    text-align: left;
+}
+
+/* Adjust margins for better spacing */
+
+
+/* Tooltip icon next to labels */
+.tooltip-icon {
+    font-size: 1rem;
+    color: #007ad9;
+    margin-left: 0.5rem;
+    cursor: pointer;
+}
+
+.tooltip-icon:hover {
+    color: #005999;
+}
+
+/* Adjust field labels to align with icons */
+.field label {
+    display: flex;
+    align-items: center;
+}
+
+
+
+/* Zebra striping based on period number */
+.repayment-plan-table tr.even-row {
+    background-color: #f9f9f9;
+    /* Light gray */
+}
+
+.repayment-plan-table tr.odd-row {
+    background-color: #ffffff;
+    /* White */
+}
+
+/* Row hover effect */
+.repayment-plan-table tr:hover {
+    background-color: #e0e0e0;
+    /* Slightly darker gray */
+}
+
+/* Selected row highlighting */
+.repayment-plan-table tr.selected-row {
+    background-color: #c0c0c0 !important;
+    /* Darker gray */
+}
+
+
+.tooltip-content p {
+    margin-top: 0;
+}
+
+.tooltip-content ul {
+    padding-left: 1.2rem;
+}
+
+.tooltip-content li {
+    margin-bottom: 1rem;
+}
+
+.tooltip-content li ul {
+    margin-top: 0.5rem;
+}
+
+.tooltip-content li ul li {
+    margin-bottom: 0.5rem;
+}
+
+.tooltip-content strong {
+    color: #007ad9;
+}
+
+.tooltip-content em {
+    font-style: italic;
+    color: #555;
+}
+
+
+
+.create-schedule-buttons {
+    margin-right: 8px;
+}
+
+
+/* version modal and footer */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.modal-content {
+    padding: 20px;
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+
+.modal-icon {
+    font-size: 3em;
+    color: #007ad9;
+    margin-bottom: 10px;
+}
+
+.modal-content h2 {
+    margin-top: 0;
+    color: #333;
+}
+
+.ui-accordion .ui-accordion-header {
+    font-weight: bold;
+    color: #007ad9;
+}
+
+.ui-accordion .ui-accordion-content {
+    text-align: left;
+}
+
+.modal-content ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+.modal-content ul li {
+    text-align: left;
+    margin: 5px 0;
+    position: relative;
+    padding-left: 20px;
+}
+
+.modal-content ul li::before {
+    content: '•';
+    color: #007ad9;
+    position: absolute;
+    left: 0;
+}
+
+.view-all {
+    margin-top: 15px;
+}
+
+.view-all p {
+    margin-bottom: 5px;
+}
+
+.ui-dialog {
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+    border-radius: 8px;
+}
+
+
+
+
+
+.wide-tooltip {
+    max-width: 300px;
+    /* Adjust the width as needed */
+    white-space: normal;
+    word-wrap: break-word;
+}
+
+
+.repayment-plan-table {
+    width: 100%;
+}
+

@@ -418,10 +418,10 @@ export class LendPeak {
     let dueFees = Currency.zero;
 
     const billSummary = this.bills.summary;
-    dueTotal = dueTotal.add(billSummary.remainingTotal);
-    duePrincipal = duePrincipal.add(billSummary.remainingPrincipal);
-    dueInterest = dueInterest.add(billSummary.remainingInterest);
-    dueFees = dueFees.add(billSummary.remainingFees);
+    duePrincipal = duePrincipal.add(billSummary.pastDuePrincipal);
+    dueInterest = dueInterest.add(billSummary.dueInterest);
+    dueFees = dueFees.add(billSummary.dueFees);
+    dueTotal = dueTotal.add(dueInterest).add(dueFees).add(billSummary.remainingPrincipal);
 
     const lastOpenBill = this.bills.lastOpenBill;
 
@@ -470,7 +470,7 @@ export class LendPeak {
 
   static demoObject(): LendPeak {
     const lendPeak = new LendPeak({
-      amortization: new Amortization(LendPeak.DEFAULT_AMORTIZATION_PARAMS)
+      amortization: new Amortization(LendPeak.DEFAULT_AMORTIZATION_PARAMS),
     });
     return lendPeak;
   }

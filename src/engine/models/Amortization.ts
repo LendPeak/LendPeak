@@ -466,6 +466,7 @@ export class Amortization {
     this.termInterestAmountOverride.updateModelValues();
     this.balanceModifications.updateModelValues();
     this.periodsSchedule.updateModelValues();
+    this.rateSchedules.updateModelValues();
 
     this.defaultPreBillDaysConfiguration = this.jsDefaultPreBillDaysConfiguration;
     this.defaultBillDueDaysAfterPeriodEndConfiguration = this.jsDefaultBillDueDaysAfterPeriodEndConfiguration;
@@ -1066,10 +1067,16 @@ export class Amortization {
       this._hasCustomRateSchedule = false;
       this.modificationOptimizationTracker = "rateSchedules";
       this._rateSchedules = this.generateRatesSchedule();
+      return this._rateSchedules;
     } else {
+      if (this._rateSchedules.hasCustom) {
+        this.hasCustomRateSchedule = true;
+      }
       if (this._rateSchedules.hasModified) {
         this.modificationOptimizationTracker = "rateSchedules";
         this._rateSchedules.resetModified();
+      } else {
+        return this._rateSchedules;
       }
     }
 
@@ -1132,7 +1139,7 @@ export class Amortization {
     for (let i = 0; i < newRateSchedules.length - 1; i++) {
       if (!newRateSchedules.atIndex(i).endDate.isSame(newRateSchedules.atIndex(i + 1).startDate, "day")) {
         //   console.log(`adding rate schedule between ${newRateSchedules.atIndex(i).startDate.format("YYYY-MM-DD")} and ${newRateSchedules.atIndex(i + 1).endDate.format("YYYY-MM-DD")}`);
-        this.rateSchedules.all.splice(
+        newRateSchedules.all.splice(
           i + 1,
           0,
           new RateSchedule({
@@ -1147,12 +1154,12 @@ export class Amortization {
 
     if (!this.endDate.isSame(newRateSchedules.last.endDate, "day")) {
       //  console.log(`adding rate schedule for the end between ${newRateSchedules.last.endDate.format("YYYY-MM-DD")} and ${this.endDate.format("YYYY-MM-DD")}`);
-      this.rateSchedules.addSchedule(new RateSchedule({ annualInterestRate: this.annualInterestRate, startDate: newRateSchedules.last.endDate, endDate: this.endDate, type: "generated" }));
+      newRateSchedules.addSchedule(new RateSchedule({ annualInterestRate: this.annualInterestRate, startDate: newRateSchedules.last.endDate, endDate: this.endDate, type: "generated" }));
     }
 
     this._rateSchedules = newRateSchedules;
-
-    this.validateRatesSchedule();
+    this._rateSchedules.resetModified();
+    //  this.validateRatesSchedule();
   }
 
   get periodsSchedule(): PeriodSchedules {

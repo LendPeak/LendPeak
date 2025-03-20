@@ -467,4 +467,11 @@ export class LendPeak {
       paymentPriority: this.paymentPriority,
     };
   }
+
+  static demoObject(): LendPeak {
+    const lendPeak = new LendPeak({
+      amortization: new Amortization(LendPeak.DEFAULT_AMORTIZATION_PARAMS)
+    });
+    return lendPeak;
+  }
 }

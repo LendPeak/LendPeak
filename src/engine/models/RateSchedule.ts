@@ -12,6 +12,7 @@ dayjs.extend(isBetween);
 export type RateScheduleType = "custom" | "generated" | "default";
 
 export interface RateScheduleParams {
+  id?: string;
   annualInterestRate: Decimal | number;
   startDate: Dayjs | Date | string;
   endDate: Dayjs | Date | string;
@@ -22,7 +23,8 @@ export class RateSchedule {
   private _annualInterestRate!: Decimal;
   private _startDate!: Dayjs;
   private _endDate!: Dayjs;
-  private _modified?: boolean = false;
+  private _modified: boolean = false;
+  private _id: string = "";
 
   type: RateScheduleType = "custom";
   jsAnnualInterestRate!: number;
@@ -36,7 +38,23 @@ export class RateSchedule {
     if (params.type) {
       this.type = params.type;
     }
+
+    if (params.id) {
+      this.id = params.id;
+    } else {
+      this.id = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+    }
+
+    this._modified = false;
     this.updateJsValues();
+  }
+
+  get id(): string {
+    return this._id;
+  }
+
+  set id(value: string) {
+    this._id = value;
   }
 
   set modified(value: boolean) {
@@ -44,7 +62,7 @@ export class RateSchedule {
   }
 
   get modified(): boolean {
-    return this._modified || false;
+    return this._modified;
   }
 
   get annualInterestRate(): Decimal {
@@ -78,6 +96,7 @@ export class RateSchedule {
 
   get json() {
     return {
+      id: this.id,
       annualInterestRate: this.annualInterestRate.toNumber(),
       startDate: this.startDate.toDate(),
       endDate: this.endDate.toDate(),

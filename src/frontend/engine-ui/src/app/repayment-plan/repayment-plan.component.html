@@ -314,52 +314,47 @@
 
               <!-- Percent fields -->
               <ng-container *ngSwitchCase="'periodInterestRate'">
-                <span *ngIf="!rowData.billablePeriod">
-                  <span class="pi pi-arrow-down"></span>
-                </span>
-                <span *ngIf="rowData.billablePeriod">
-                  {{ rowData.periodInterestRate.toNumber() | percent: "1.2-4" }}
-                  <i
-                    *ngIf="
-                      rowData.metadata &&
-                      rowData.metadata.staticInterestOverrideApplied
+                {{ rowData.periodInterestRate.toNumber() | percent: "1.2-4" }}
+                <i
+                  *ngIf="
+                    rowData.metadata &&
+                    rowData.metadata.staticInterestOverrideApplied
+                  "
+                  severity="secondary"
+                  class="pi pi-info-circle ml-2"
+                  style="font-size: 1.5rem"
+                  pTooltip="This term's interest was manually set to {{
+                    rowData.metadata.actualInterestValue | currency
+                  }}, calculated equivalent interest rate is {{
+                    rowData.metadata.equivalentAnnualRate | percent: '1.2-6'
+                  }} while the loan's contractual rate is {{
+                    lendPeak.amortization.jsAnnualInterestRate
+                      | percent: '1.2-6'
+                  }}
                     "
-                    severity="secondary"
-                    class="pi pi-info-circle ml-2"
-                    style="font-size: 1.5rem"
-                    pTooltip="This term's interest was manually set to {{
-                      rowData.metadata.actualInterestValue | currency
-                    }}, calculated equivalent interest rate is {{
-                      rowData.metadata.equivalentAnnualRate | percent: '1.2-6'
-                    }} while the loan's contractual rate is {{
-                      lendPeak.amortization.jsAnnualInterestRate
-                        | percent: '1.2-6'
-                    }}
-                    "
-                    tooltipPosition="top"
-                    tooltipStyleClass="wide-tooltip"
-                  ></i>
+                  tooltipPosition="top"
+                  tooltipStyleClass="wide-tooltip"
+                ></i>
 
-                  <i
-                    *ngIf="
-                      rowData.metadata &&
-                      rowData.metadata.equivalentAnnualRateVarianceExceeded
+                <i
+                  *ngIf="
+                    rowData.metadata &&
+                    rowData.metadata.equivalentAnnualRateVarianceExceeded
+                  "
+                  style="color: red; font-size: 1.5rem"
+                  severity="danger"
+                  class="pi pi-exclamation-triangle ml-2"
+                  styleClass="text-red-500"
+                  pTooltip="This term's equivalent annual rate variance is {{
+                    rowData.metadata.equivalentAnnualRateVariance
+                      | percent: '1.2-6'
+                  }} which exceeded the configured threshold of {{
+                    rowData.metadata.acceptableRateVariance | percent: '1.2-6'
+                  }}
                     "
-                    style="color: red; font-size: 1.5rem"
-                    severity="danger"
-                    class="pi pi-exclamation-triangle ml-2"
-                    styleClass="text-red-500"
-                    pTooltip="This term's equivalent annual rate variance is {{
-                      rowData.metadata.equivalentAnnualRateVariance
-                        | percent: '1.2-6'
-                    }} which exceeded the configured threshold of {{
-                      rowData.metadata.acceptableRateVariance | percent: '1.2-6'
-                    }}
-                    "
-                    tooltipPosition="top"
-                    tooltipStyleClass="wide-tooltip"
-                  ></i>
-                </span>
+                  tooltipPosition="top"
+                  tooltipStyleClass="wide-tooltip"
+                ></i>
               </ng-container>
 
               <!-- Number fields requiring decimal format -->

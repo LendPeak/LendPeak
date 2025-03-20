@@ -567,8 +567,6 @@ export class OverridesComponent implements OnInit {
 
     console.log('adding rate schedule');
 
-    this.lendPeak.amortization.hasCustomRateSchedule = true;
-
     this.lendPeak.amortization.rateSchedules.addSchedule(
       new RateSchedule({
         startDate: this.lendPeak.amortization.rateSchedules.last.endDate,
@@ -577,22 +575,23 @@ export class OverridesComponent implements OnInit {
         ).add(1, 'month'),
         annualInterestRate:
           this.lendPeak.amortization.rateSchedules.last.annualInterestRate,
+        type: 'custom',
       }),
     );
+
+    this.lendPeak.amortization.hasCustomRateSchedule = true;
 
     console.log('added rate schedule', this.lendPeak.amortization);
     //  this.lendPeak.amortization.rateSchedules = ratesSchedule;
     this.emitLoanChange();
   }
 
-  removeRateOverride(index: number) {
+  removeRateOverride(id: string) {
     if (!this.lendPeak) {
       return;
     }
-    if (this.lendPeak.amortization.rateSchedules.length > 0) {
-      this.lendPeak.amortization.rateSchedules.removeScheduleAtIndex(index);
-      this.emitLoanChange();
-    }
+    this.lendPeak.amortization.rateSchedules.removeScheduleById(id);
+    this.emitLoanChange();
   }
 
   // Methods related to Change Payment Date

@@ -80,10 +80,20 @@ export class RateSchedules {
     this._schedules.unshift(schedule);
   }
 
+  removeScheduleById(id: string) {
+    this.modified = true;
+
+    const index = this._schedules.findIndex((c) => c.id === id);
+    if (index > -1) {
+      this._schedules.splice(index, 1);
+    }
+  }
+
   removeScheduleAtIndex(index: number) {
     this.modified = true;
 
     this._schedules.splice(index, 1);
+    console.log("removed schedule at index", index, this._schedules);
   }
 
   get length(): number {

@@ -363,15 +363,15 @@ describe("RateSchedules Class", () => {
       id: "id-1",
       type: "custom",
       annualInterestRate: 5,
-      startDate: schedule1.startDate.toDate(),
-      endDate: schedule1.endDate.toDate(),
+      startDate: schedule1.startDate.toISOString(),
+      endDate: schedule1.endDate.toISOString(),
     });
     expect(jsonResult[1]).toEqual({
       id: "id-2",
       type: "default",
       annualInterestRate: 6,
-      startDate: schedule2.startDate.toDate(),
-      endDate: schedule2.endDate.toDate(),
+      startDate: schedule2.startDate.toISOString(),
+      endDate: schedule2.endDate.toISOString(),
     });
   });
 

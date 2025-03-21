@@ -1,4 +1,6 @@
 import dayjs from "dayjs";
+import { describe, test, expect } from "@jest/globals";
+
 import { Currency, RoundingMethod } from "@utils/Currency";
 import { Amortization, FlushUnbilledInterestDueToRoundingErrorType } from "@models/Amortization";
 import { ChangePaymentDate } from "@models/ChangePaymentDate";
@@ -6,9 +8,12 @@ import { ChangePaymentDates } from "@models/ChangePaymentDates";
 import { CalendarType } from "@models/Calendar";
 import { TermCalendars } from "@models/TermCalendars";
 import Decimal from "decimal.js";
-import { RateSchedule } from "../../models/RateSchedule";
+import { RateSchedule, RateScheduleParams } from "../../models/RateSchedule";
 import { RateSchedules } from "../../models/RateSchedules";
 import { LendPeak } from "../../models/LendPeak";
+
+import utc from "dayjs/plugin/utc";
+dayjs.extend(utc);
 
 const today = dayjs().startOf("day");
 
@@ -140,5 +145,397 @@ describe("Rate Schedule", () => {
     expect(lendPeak.amortization.rateSchedules.length).toEqual(1);
     expect(lendPeak.amortization.rateSchedules.all.length).toEqual(1);
     expect(lendPeak.amortization.rateSchedules.allCustom.length).toEqual(0);
+  });
+});
+
+describe("RateSchedules Class", () => {
+  test("Constructor defaults to empty schedules", () => {
+    const rsCollection = new RateSchedules();
+    expect(rsCollection.schedules).toEqual([]);
+    expect(rsCollection.length).toBe(0);
+    expect(rsCollection.modified).toBe(false);
+    expect(rsCollection.hasModified).toBe(false);
+    expect(rsCollection.hasCustom).toBe(false);
+  });
+
+  test("Constructor accepts array of RateSchedule instances", () => {
+    const schedule1 = new RateSchedule({
+      annualInterestRate: 5,
+      startDate: "2025-01-01",
+      endDate: "2025-06-30",
+      type: "custom",
+    });
+    const schedule2 = new RateSchedule({
+      annualInterestRate: 7,
+      startDate: "2025-07-01",
+      endDate: "2025-12-31",
+      type: "default",
+    });
+
+    const rsCollection = new RateSchedules([schedule1, schedule2]);
+    expect(rsCollection.length).toBe(2);
+    expect(rsCollection.allCustom.length).toBe(1);
+    expect(rsCollection.modified).toBe(false); // constructor sets it to false after assignment
+    expect(rsCollection.hasCustom).toBe(true);
+  });
+
+  test("Setting schedules with plain objects inflates them into RateSchedule instances", () => {
+    const plainObjects = [
+      {
+        annualInterestRate: 8,
+        startDate: dayjs("2026-01-01"),
+        endDate: dayjs("2026-12-31"),
+        type: "generated",
+      },
+    ];
+
+    const rsCollection = new RateSchedules();
+    expect(rsCollection.length).toBe(0);
+
+    rsCollection.schedules = plainObjects as any; // force type for test
+    expect(rsCollection.length).toBe(1);
+    expect(rsCollection.all[0]).toBeInstanceOf(RateSchedule);
+
+    // Should have set modified to true
+    expect(rsCollection.modified).toBe(true);
+    expect(rsCollection.hasModified).toBe(true);
+  });
+
+  test("resetModified() resets the modified flags of collection and children", () => {
+    const rs = new RateSchedule({
+      annualInterestRate: 10,
+      startDate: "2025-01-01",
+      endDate: "2025-01-31",
+    });
+    rs.modified = true;
+
+    const rsCollection = new RateSchedules([rs]);
+    rsCollection.modified = true;
+    expect(rsCollection.hasModified).toBe(true);
+
+    rsCollection.resetModified();
+    expect(rsCollection.modified).toBe(false);
+    expect(rsCollection.hasModified).toBe(false);
+    expect(rsCollection.schedules[0].modified).toBe(false);
+  });
+
+  test("addSchedule() appends a new schedule, and addScheduleAtTheBeginning() unshifts a schedule", () => {
+    const rsCollection = new RateSchedules();
+
+    const scheduleA = new RateSchedule({
+      annualInterestRate: 5,
+      startDate: "2025-01-01",
+      endDate: "2025-06-30",
+    });
+
+    const scheduleB = new RateSchedule({
+      annualInterestRate: 6,
+      startDate: "2025-07-01",
+      endDate: "2025-12-31",
+    });
+
+    rsCollection.addSchedule(scheduleA);
+    expect(rsCollection.length).toBe(1);
+    expect(rsCollection.all[0].annualInterestRate.toNumber()).toBe(5);
+
+    rsCollection.addScheduleAtTheBeginning(scheduleB);
+    expect(rsCollection.length).toBe(2);
+    expect(rsCollection.all[0].annualInterestRate.toNumber()).toBe(6);
+    expect(rsCollection.all[1].annualInterestRate.toNumber()).toBe(5);
+
+    // Should be marked as modified
+    expect(rsCollection.modified).toBe(true);
+  });
+
+  test("removeScheduleById() removes the correct schedule", () => {
+    const schedule1 = new RateSchedule({
+      id: "sch-1",
+      annualInterestRate: 5,
+      startDate: "2025-01-01",
+      endDate: "2025-06-30",
+    });
+    const schedule2 = new RateSchedule({
+      id: "sch-2",
+      annualInterestRate: 6,
+      startDate: "2025-07-01",
+      endDate: "2025-12-31",
+    });
+    const rsCollection = new RateSchedules([schedule1, schedule2]);
+    expect(rsCollection.length).toBe(2);
+
+    rsCollection.removeScheduleById("sch-1");
+    expect(rsCollection.length).toBe(1);
+    expect(rsCollection.all[0].id).toBe("sch-2");
+    expect(rsCollection.modified).toBe(true);
+  });
+
+  test("removeScheduleAtIndex() removes schedule at correct index", () => {
+    const schedule1 = new RateSchedule({
+      annualInterestRate: 5,
+      startDate: "2025-01-01",
+      endDate: "2025-01-31",
+    });
+    const schedule2 = new RateSchedule({
+      annualInterestRate: 6,
+      startDate: "2025-02-01",
+      endDate: "2025-02-28",
+    });
+    const schedule3 = new RateSchedule({
+      annualInterestRate: 7,
+      startDate: "2025-03-01",
+      endDate: "2025-03-31",
+    });
+    const rsCollection = new RateSchedules([schedule1, schedule2, schedule3]);
+    expect(rsCollection.length).toBe(3);
+
+    rsCollection.removeScheduleAtIndex(1);
+    expect(rsCollection.length).toBe(2);
+    expect(rsCollection.all[0].annualInterestRate.toNumber()).toBe(5);
+    expect(rsCollection.all[1].annualInterestRate.toNumber()).toBe(7);
+    expect(rsCollection.modified).toBe(true);
+  });
+
+  test("Accessors: length, first, last, all", () => {
+    const schedule1 = new RateSchedule({
+      annualInterestRate: 2,
+      startDate: "2025-01-01",
+      endDate: "2025-01-15",
+    });
+    const schedule2 = new RateSchedule({
+      annualInterestRate: 3,
+      startDate: "2025-01-16",
+      endDate: "2025-01-31",
+    });
+
+    const rsCollection = new RateSchedules([schedule1, schedule2]);
+    expect(rsCollection.length).toBe(2);
+    expect(rsCollection.first.annualInterestRate.toNumber()).toBe(2);
+    expect(rsCollection.last.annualInterestRate.toNumber()).toBe(3);
+    expect(rsCollection.all).toHaveLength(2);
+  });
+
+  test("allCustom, hasCustom, and allCustomAsObject", () => {
+    const customSchedule = new RateSchedule({
+      type: "custom",
+      annualInterestRate: 10,
+      startDate: "2025-05-01",
+      endDate: "2025-05-31",
+    });
+    const defaultSchedule = new RateSchedule({
+      type: "default",
+      annualInterestRate: 5,
+      startDate: "2025-01-01",
+      endDate: "2025-04-30",
+    });
+    const rsCollection = new RateSchedules([defaultSchedule, customSchedule]);
+
+    expect(rsCollection.hasCustom).toBe(true);
+    expect(rsCollection.allCustom.length).toBe(1);
+    expect(rsCollection.allCustom[0]).toBe(customSchedule);
+
+    const customOnlyObj = rsCollection.allCustomAsObject;
+    expect(customOnlyObj).toBeInstanceOf(RateSchedules);
+    expect(customOnlyObj.length).toBe(1);
+    expect(customOnlyObj.all[0]).toBe(customSchedule);
+  });
+
+  test("json getter returns array of child JSON objects", () => {
+    const schedule1 = new RateSchedule({
+      id: "id-1",
+      type: "custom",
+      annualInterestRate: 5,
+      startDate: "2025-01-01",
+      endDate: "2025-01-15",
+    });
+    const schedule2 = new RateSchedule({
+      id: "id-2",
+      type: "default",
+      annualInterestRate: 6,
+      startDate: "2025-01-16",
+      endDate: "2025-01-31",
+    });
+
+    const rsCollection = new RateSchedules([schedule1, schedule2]);
+    const jsonResult = rsCollection.json;
+
+    expect(jsonResult).toHaveLength(2);
+    expect(jsonResult[0]).toEqual({
+      id: "id-1",
+      type: "custom",
+      annualInterestRate: 5,
+      startDate: schedule1.startDate.toDate(),
+      endDate: schedule1.endDate.toDate(),
+    });
+    expect(jsonResult[1]).toEqual({
+      id: "id-2",
+      type: "default",
+      annualInterestRate: 6,
+      startDate: schedule2.startDate.toDate(),
+      endDate: schedule2.endDate.toDate(),
+    });
+  });
+
+  test("updateModelValues() and updateJsValues() call these on each schedule", () => {
+    const schedule1 = new RateSchedule({
+      annualInterestRate: 3,
+      startDate: "2025-03-01",
+      endDate: "2025-03-10",
+    });
+    const schedule2 = new RateSchedule({
+      annualInterestRate: 4,
+      startDate: "2025-04-01",
+      endDate: "2025-04-10",
+    });
+
+    const rsCollection = new RateSchedules([schedule1, schedule2]);
+    // Setting a spy or verifying no errors is enough here.
+    // We'll just ensure the method is callable and doesn't throw an error.
+    expect(() => rsCollection.updateJsValues()).not.toThrow();
+    expect(() => rsCollection.updateModelValues()).not.toThrow();
+  });
+});
+
+describe("RateSchedule Class", () => {
+  test("Constructor sets default values correctly and auto-generates an ID", () => {
+    const params: RateScheduleParams = {
+      annualInterestRate: 5,
+      startDate: "2025-01-01",
+      endDate: "2025-12-31",
+    };
+    const rs = new RateSchedule(params);
+
+    // Check type
+    expect(rs.type).toBe("custom"); // default type if not provided
+
+    // Check ID is generated
+    expect(rs.id).toBeDefined();
+    expect(rs.id).not.toBe("");
+
+    // Check annual interest rate is a Decimal
+    expect(rs.annualInterestRate).toBeInstanceOf(Decimal);
+    expect(rs.annualInterestRate.toNumber()).toBe(5);
+
+    // Check Dayjs fields for startDate and endDate
+    expect(rs.startDate.format("YYYY-MM-DD")).toBe("2025-01-01");
+    expect(rs.endDate.format("YYYY-MM-DD")).toBe("2025-12-31");
+
+    // Check that modified defaults to false
+    expect(rs.modified).toBe(false);
+  });
+
+  test("Constructor sets given ID, type, and properly handles Date objects", () => {
+    const customId = "abc123";
+    const params: RateScheduleParams = {
+      id: customId,
+      type: "generated",
+      annualInterestRate: 7.25,
+      startDate: new Date("2025-02-01"),
+      endDate: new Date("2026-01-31"),
+    };
+    const rs = new RateSchedule(params);
+
+    // Provided type
+    expect(rs.type).toBe("generated");
+
+    // Provided ID
+    expect(rs.id).toBe(customId);
+
+    // Check date conversions
+    expect(rs.startDate.format("YYYY-MM-DD")).toBe("2025-02-01");
+    expect(rs.endDate.format("YYYY-MM-DD")).toBe("2026-01-31");
+
+    // Check interest rate
+    expect(rs.annualInterestRate.toNumber()).toBe(7.25);
+
+    // Modified should be false after constructor
+    expect(rs.modified).toBe(false);
+  });
+
+  test("Setting annualInterestRate updates Decimal value and flags modified", () => {
+    const rs = new RateSchedule({
+      annualInterestRate: 2,
+      startDate: dayjs("2025-01-01"),
+      endDate: dayjs("2025-01-10"),
+    });
+    expect(rs.modified).toBe(false);
+
+    rs.annualInterestRate = 3.5;
+    expect(rs.modified).toBe(true);
+    expect(rs.annualInterestRate.toNumber()).toBe(3.5);
+
+    // Setting again should keep modified = true (it won't revert to false)
+    rs.annualInterestRate = new Decimal(3.75);
+    expect(rs.annualInterestRate.toNumber()).toBe(3.75);
+    expect(rs.modified).toBe(true);
+  });
+
+  test("Setting startDate and endDate ensures day start and sets modified", () => {
+    const rs = new RateSchedule({
+      annualInterestRate: 5,
+      startDate: "2025-01-01",
+      endDate: "2025-02-01",
+    });
+    expect(rs.modified).toBe(false);
+
+    rs.startDate = "2025-03-15T14:30:00";
+    expect(rs.modified).toBe(true);
+    expect(rs.startDate.format("YYYY-MM-DD HH:mm:ss")).toBe("2025-03-15 00:00:00");
+
+    rs.endDate = new Date("2025-04-20T23:59:59Z");
+    expect(rs.endDate.format("YYYY-MM-DD HH:mm:ss")).toBe("2025-04-20 00:00:00");
+  });
+
+  test("updateJsValues and updateModelValues keep JS and model in sync", () => {
+    const rs = new RateSchedule({
+      annualInterestRate: 10,
+      startDate: "2025-01-01",
+      endDate: "2025-01-31",
+    });
+
+    // check initial JS values
+    expect(rs.jsAnnualInterestRate).toBe(10);
+    expect(dayjs(rs.jsStartDate).utc().format("YYYY-MM-DD")).toBe("2025-01-01");
+    expect(dayjs(rs.jsEndDate).utc().format("YYYY-MM-DD")).toBe("2025-01-31");
+
+    // change the model
+    rs.annualInterestRate = 12;
+    rs.startDate = "2025-03-10";
+    rs.endDate = "2025-03-15";
+
+    // update JS from model
+    rs.updateJsValues();
+    expect(rs.jsAnnualInterestRate).toBe(12);
+    expect(dayjs(rs.jsStartDate).utc().format("YYYY-MM-DD")).toBe("2025-03-10");
+    expect(dayjs(rs.jsEndDate).utc().format("YYYY-MM-DD")).toBe("2025-03-15");
+
+    // now let's change the JS values
+    rs.jsAnnualInterestRate = 15;
+    rs.jsStartDate = new Date("2025-04-01");
+    rs.jsEndDate = new Date("2025-04-05");
+
+    // and update the model from JS
+    rs.updateModelValues();
+    expect(rs.annualInterestRate.toNumber()).toBe(15);
+    expect(rs.startDate.format("YYYY-MM-DD")).toBe("2025-04-01");
+    expect(rs.endDate.format("YYYY-MM-DD")).toBe("2025-04-05");
+  });
+
+  test("json getter returns expected structure", () => {
+    const rs = new RateSchedule({
+      id: "test-id-123",
+      annualInterestRate: 6.5,
+      startDate: "2025-06-01",
+      endDate: "2025-06-15",
+      type: "custom",
+    });
+
+    const json = rs.json;
+    expect(json).toEqual({
+      id: "test-id-123",
+      annualInterestRate: 6.5,
+      startDate: rs.startDate.toISOString(),
+      endDate: rs.endDate.toISOString(),
+      type: "custom",
+    });
   });
 });

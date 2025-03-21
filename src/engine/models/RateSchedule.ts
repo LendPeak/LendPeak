@@ -1,10 +1,13 @@
 import Decimal from "decimal.js";
 
+import { DateUtil } from "../utils/DateUtil";
 import dayjs, { Dayjs } from "dayjs";
 import isSameOrAfter from "dayjs/plugin/isSameOrAfter";
 import isSameOrBefore from "dayjs/plugin/isSameOrBefore";
 import isBetween from "dayjs/plugin/isBetween";
+import utc from "dayjs/plugin/utc";
 
+dayjs.extend(utc);
 dayjs.extend(isSameOrAfter);
 dayjs.extend(isSameOrBefore);
 dayjs.extend(isBetween);
@@ -81,7 +84,7 @@ export class RateSchedule {
   set startDate(value: Dayjs | Date | string) {
     this.modified = true;
 
-    this._startDate = dayjs(value).startOf("day");
+    this._startDate = DateUtil.normalizeDate(value);
   }
 
   get endDate(): Dayjs {
@@ -91,15 +94,17 @@ export class RateSchedule {
   set endDate(value: Dayjs | Date | string) {
     this.modified = true;
 
-    this._endDate = dayjs(value).startOf("day");
+    this._endDate = DateUtil.normalizeDate(value);
   }
 
   get json() {
     return {
       id: this.id,
       annualInterestRate: this.annualInterestRate.toNumber(),
-      startDate: this.startDate.toDate(),
-      endDate: this.endDate.toDate(),
+      // startDate: this.startDate.toISOString(),
+      // endDate: this.endDate.toISOString(),
+      startDate: this.startDate.toISOString(),
+      endDate: this.endDate.toISOString(),
       type: this.type,
     };
   }

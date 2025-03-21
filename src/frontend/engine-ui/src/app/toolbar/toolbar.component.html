@@ -1,3 +1,23 @@
+<ng-container *ngIf="!isToday(snapshotDate)">
+  <div
+    style="
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      background-color: #ff9800;
+      color: #fff;
+      padding: 8px;
+      text-align: center;
+      z-index: 9999;
+    "
+  >
+    Time Travel Mode Active — {{ snapshotDate | date: "MM/dd/yyyy" }}
+  </div>
+  <!-- spacer -->
+  <div style="margin-top: 40px"></div>
+</ng-container>
+
 <p-toolbar class="custom-toolbar">
   <!-- Left Group: Logo -->
   <div class="p-toolbar-group-start">

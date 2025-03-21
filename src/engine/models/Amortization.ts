@@ -2052,9 +2052,9 @@ export class Amortization {
         break;
       }
 
-      if (termIndex === this.periodsSchedule.length - 1) {
-        console.log("last term");
-      }
+      // if (termIndex === this.periodsSchedule.length - 1) {
+      //   console.log("last term");
+      // }
 
       const termCalendar = this.calendars.getCalendarForTerm(termIndex);
       const isCustomCalendar = this.calendars.hasCalendarForTerm(termIndex);

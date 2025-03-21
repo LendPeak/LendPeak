@@ -525,7 +525,7 @@
   </p-tabs>
 
   <!-- Repayment Plan at the Bottom -->
-  <div *ngIf="showTable">
+
     <!-- Past Due Bills Status card -->
     <div *ngIf="lendPeak.bills.summary.billsPastDue > 0">
       <div class="col-12">
@@ -909,7 +909,7 @@
       [lendPeak]="lendPeak"
       [snapshotDate]="snapshotDate"
     ></app-repayment-plan>
-  </div>
+ 
 
   <!-- Version Modal -->
   <p-dialog

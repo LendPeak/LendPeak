@@ -603,7 +603,6 @@ export class AppComponent implements OnChanges {
     });
   }
 
-  showTable = false;
   termOptions: DropDownOptionNumber[] = [];
 
   updateTermOptions() {
@@ -1170,7 +1169,6 @@ export class AppComponent implements OnChanges {
       return;
     }
 
-    this.showTable = true;
     this.loanModified = true; // Mark as modified
 
     this.cdr.detectChanges();

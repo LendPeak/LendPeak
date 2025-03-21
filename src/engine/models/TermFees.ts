@@ -61,7 +61,7 @@ export class TermFees {
   }
 
   get fees(): Fee[] {
-    return this.fees;
+    return this._fees;
   }
 
   set fees(value: Fee[]) {

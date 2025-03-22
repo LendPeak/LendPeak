@@ -2,6 +2,7 @@ import dayjs, { Dayjs } from "dayjs";
 import { Currency } from "../../../utils/Currency";
 import isSameOrAfter from "dayjs/plugin/isSameOrAfter";
 import isSameOrBefore from "dayjs/plugin/isSameOrBefore";
+import { DateUtil } from "../../../utils/DateUtil";
 
 dayjs.extend(isSameOrAfter);
 dayjs.extend(isSameOrBefore);
@@ -24,7 +25,7 @@ export class UsageDetail {
   period: number;
 
   _billDueDate!: Dayjs;
-  jsBillDueDate?: Date;
+  jsBillDueDate!: Date;
 
   _allocatedPrincipal!: Currency;
   jsAllocatedPrincipal!: number;
@@ -47,11 +48,11 @@ export class UsageDetail {
   constructor(params: UsageDetailParams) {
     this.billId = params.billId;
     this.period = params.period;
-    this.billDueDate = dayjs(params.billDueDate);
+    this.billDueDate = DateUtil.normalizeDate(params.billDueDate);
     this.allocatedPrincipal = Currency.of(params.allocatedPrincipal);
     this.allocatedInterest = Currency.of(params.allocatedInterest);
     this.allocatedFees = Currency.of(params.allocatedFees);
-    this.date = dayjs(params.date);
+    this.date = DateUtil.normalizeDate(params.date);
     this.daysLate = params.daysLate;
     this.daysEarly = params.daysEarly;
 
@@ -80,8 +81,8 @@ export class UsageDetail {
     return this._billDueDate;
   }
 
-  set billDueDate(date: Dayjs | Date) {
-    this._billDueDate = dayjs(date).startOf("day");
+  set billDueDate(date: Dayjs | Date | string) {
+    this._billDueDate = DateUtil.normalizeDate(date);
     this.jsBillDueDate = this._billDueDate.toDate();
   }
 
@@ -117,7 +118,7 @@ export class UsageDetail {
   }
 
   set date(date: Dayjs | Date) {
-    this._date = dayjs(date).startOf("day");
+    this._date = DateUtil.normalizeDate(date);
     this.jsDate = this._date.toDate();
   }
 
@@ -133,13 +134,13 @@ export class UsageDetail {
   }
 
   syncValuesFromJSProperties(): void {
-    this.billDueDate = dayjs(this.jsBillDueDate);
+    this.billDueDate = this.jsBillDueDate;
     this.allocatedPrincipal = Currency.of(this.jsAllocatedPrincipal);
     this.allocatedInterest = Currency.of(this.jsAllocatedInterest);
     this.allocatedFees = Currency.of(this.jsAllocatedFees);
-    this.date = dayjs(this.jsDate);
+    this.date = this.jsDate;
     if (this.jsBillFullySatisfiedDate) {
-      this.billFullySatisfiedDate = dayjs(this.jsBillFullySatisfiedDate);
+      this.billFullySatisfiedDate = this.jsBillFullySatisfiedDate;
     }
   }
 
@@ -148,7 +149,7 @@ export class UsageDetail {
   }
   set billFullySatisfiedDate(date: Dayjs | Date | undefined) {
     if (date) {
-      this._billFullySatisfiedDate = dayjs(date).startOf("day");
+      this._billFullySatisfiedDate = DateUtil.normalizeDate(date);
       this.jsBillFullySatisfiedDate = this._billFullySatisfiedDate.toDate();
     } else {
       this._billFullySatisfiedDate = undefined;

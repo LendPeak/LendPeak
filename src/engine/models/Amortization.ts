@@ -29,6 +29,7 @@ import { TermPaymentAmount } from "./TermPaymentAmount";
 import { TermPaymentAmounts } from "./TermPaymentAmounts";
 import { TermCalendar } from "./TermCalendar";
 import { TermCalendars } from "./TermCalendars";
+import { DateUtil } from "../utils/DateUtil";
 import dayjs, { Dayjs } from "dayjs";
 import isSameOrAfter from "dayjs/plugin/isSameOrAfter";
 import isSameOrBefore from "dayjs/plugin/isSameOrBefore";
@@ -427,7 +428,7 @@ export class Amortization {
     this.loanAmount = Currency.of(this.jsLoanAmount);
     this.originationFee = Currency.of(this.jsOriginationFee);
     this.term = this.jsTerm;
-    this.startDate = dayjs(this.jsStartDate);
+    this.startDate = this.jsStartDate;
 
     this.hasCustomEndDate = this.jsHasCustomEndDate;
 
@@ -449,7 +450,7 @@ export class Amortization {
     this.allowRateAbove100 = this.jsAllowRateAbove100;
     this.hasCustomFirstPaymentDate = this.jshasCustomFirstPaymentDate;
     if (this.hasCustomFirstPaymentDate) {
-      this.firstPaymentDate = dayjs(this.jsFirstPaymentDate);
+      this.firstPaymentDate = this.jsFirstPaymentDate;
     }
     this.earlyRepayment = this.jsEarlyRepayment;
     if (this.hasCustomEquitedMonthlyPayment) {
@@ -859,7 +860,7 @@ export class Amortization {
     for (const override of value.all) {
       if (override.termNumber < 0 && override.date) {
         // this means term was not available so we will resolve term number through date
-        let date = dayjs(override.date).startOf("day");
+        let date = DateUtil.normalizeDate(override.date);
         let term = this.periodsSchedule.periods.findIndex((period) => {
           return date.isBetween(period.startDate, period.endDate, "day", "[)"); // this is start and < end date;
         });
@@ -1406,7 +1407,7 @@ export class Amortization {
 
     if (date) {
       this.hasCustomFirstPaymentDate = true;
-      this._firstPaymentDate = dayjs(date).startOf("day");
+      this._firstPaymentDate = DateUtil.normalizeDate(date);
     } else {
       this._hasCustomFirstPaymentDate = false;
       this._firstPaymentDate = undefined;
@@ -1425,7 +1426,7 @@ export class Amortization {
     if (!startDate) {
       throw new Error("Invalid start date, must be a valid date");
     }
-    this._startDate = dayjs(startDate).startOf("day");
+    this._startDate = DateUtil.normalizeDate(startDate);
   }
 
   get payoffDate(): Dayjs | undefined {
@@ -1436,7 +1437,7 @@ export class Amortization {
     this.modifiedSinceLastCalculation = true;
 
     if (value) {
-      this._payoffDate = dayjs(value).startOf("day");
+      this._payoffDate = DateUtil.normalizeDate(value);
     } else {
       this._payoffDate = undefined;
     }
@@ -1468,7 +1469,7 @@ export class Amortization {
     let newEndDate: Dayjs;
     if (endDate) {
       this.hasCustomEndDate = true;
-      newEndDate = dayjs(endDate).startOf("day");
+      newEndDate = DateUtil.normalizeDate(endDate);
     } else {
       this._endDate = undefined;
       return;
@@ -1686,14 +1687,14 @@ export class Amortization {
     // This value will control whether subsequent payments fall on the last day.
     const shouldUseEndOfMonth = this.startDate.isSame(this.startDate.endOf("month"), "day");
 
-    let startDate = dayjs(this.startDate);
+    let startDate = DateUtil.normalizeDate(this.startDate);
 
     for (let currentTerm = 0; currentTerm < this.term; currentTerm++) {
       let endDate: Dayjs;
 
       if (currentTerm === 0 && this.firstPaymentDate) {
         // If there's a custom first payment date, use that for the first period.
-        endDate = this.firstPaymentDate.startOf("day");
+        endDate = DateUtil.normalizeDate(this.firstPaymentDate);
       } else {
         // For subsequent periods, either we continue end-of-month alignment (if we began that way)
         // or we simply add the defined term count normally.
@@ -2542,10 +2543,7 @@ export class Amortization {
   }
 
   getAccruedInterestByDate(date: Dayjs | Date): Currency {
-    if (date instanceof Date) {
-      date = dayjs(date);
-    }
-    date = date.startOf("day");
+    date = DateUtil.normalizeDate(date);
 
     // first we get the period where the date is
     const activePeriod = this.repaymentSchedule.getPeriodByDate(date);

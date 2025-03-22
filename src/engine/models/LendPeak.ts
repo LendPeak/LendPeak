@@ -412,8 +412,6 @@ export class LendPeak {
     // and if open bill end period is after current date
     // then we need to add acrued interest up to the date of
     // the quote
-    
-
 
     let dueTotal = Currency.zero;
     let duePrincipal = Currency.zero;
@@ -421,9 +419,11 @@ export class LendPeak {
     let dueFees = Currency.zero;
 
     const billSummary = this.bills.summary;
+
+    console.log("billsummary", billSummary);
     // remaining principal is quite simple we can just use remaining Principal from all available bills
     duePrincipal = billSummary.remainingPrincipal;
-    // interest and fees are also simple we just need to 
+    // interest and fees are also simple we just need to
     // get all due interest and fees from all open and unpaid bills
     dueInterest = dueInterest.add(billSummary.dueInterest);
     dueFees = dueFees.add(billSummary.dueFees);

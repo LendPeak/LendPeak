@@ -1,5 +1,5 @@
 import { Currency } from "../utils/Currency";
-
+import { DateUtil } from "../utils/DateUtil";
 import dayjs, { Dayjs } from "dayjs";
 import isSameOrAfter from "dayjs/plugin/isSameOrAfter";
 import isSameOrBefore from "dayjs/plugin/isSameOrBefore";
@@ -26,7 +26,7 @@ export class TermInterestAmountOverride {
 
   private _active = true;
   jsActive: boolean = true;
- 
+
   private _acceptableRateVariance = 0.01; // 1%
   jsAcceptableRateVariance = 0.01; // 1%
 
@@ -63,7 +63,7 @@ export class TermInterestAmountOverride {
     this._active = value;
     this.jsActive = value;
   }
-  
+
   get termNumber(): number {
     return this._termNumber;
   }
@@ -79,7 +79,7 @@ export class TermInterestAmountOverride {
 
   set date(value: Dayjs | Date | string | undefined) {
     if (value) {
-      this._date = dayjs(value).startOf("day");
+      this._date = DateUtil.normalizeDate(value);
       this.jsDate = this._date.toDate();
     } else {
       this._date = undefined;

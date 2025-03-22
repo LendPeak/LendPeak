@@ -33,6 +33,7 @@ import { PeriodSchedules } from 'lendpeak-engine/models/PeriodSchedules';
 import { BalanceModifications } from 'lendpeak-engine/models/Amortization/BalanceModifications';
 import { BillDueDaysConfigurations } from 'lendpeak-engine/models/BillDueDaysConfigurations';
 import { PreBillDaysConfigurations } from 'lendpeak-engine/models/PreBillDaysConfigurations';
+import { PreBillDaysConfiguration } from 'lendpeak-engine/models/PreBillDaysConfiguration';
 import { TermPaymentAmounts } from 'lendpeak-engine/models/TermPaymentAmounts';
 import { TermPaymentAmount } from 'lendpeak-engine/models/TermPaymentAmount';
 import { RateSchedules } from 'lendpeak-engine/models/RateSchedules';
@@ -516,7 +517,7 @@ export class LoanImportComponent implements OnInit, OnDestroy {
       //  termPaymentAmount: undefined,
       equitedMonthlyPayment: parseFloat(loanData.d.LoanSetup.payment),
       defaultBillDueDaysAfterPeriodEndConfiguration: 0,
-      defaultPreBillDaysConfiguration: 28,
+      defaultPreBillDaysConfiguration: 0,
       allowRateAbove100: false,
       periodsSchedule: new PeriodSchedules(),
       termInterestAmountOverride: new TermInterestAmountOverrides(
@@ -570,6 +571,14 @@ export class LoanImportComponent implements OnInit, OnDestroy {
         new TermCalendar({
           termNumber: override.termNumber,
           calendar: new Calendar('THIRTY_360'),
+        }),
+      );
+
+      // we will also change prebill day cycle to 28 from default zero under DSI
+      amortization.preBillDays.addConfiguration(
+        new PreBillDaysConfiguration({
+          termNumber: override.termNumber,
+          preBillDays: 28,
         }),
       );
     });

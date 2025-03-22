@@ -1,6 +1,6 @@
 import { Currency } from "../../utils/Currency";
 import dayjs, { Dayjs } from "dayjs";
-
+import { DateUtil } from "../../utils/DateUtil";
 export interface IBillPaymentDetail {
   depositId: string;
   allocatedPrincipal: Currency | number;
@@ -23,7 +23,7 @@ export class BillPaymentDetail {
     this.allocatedInterest = Currency.of(params.allocatedInterest);
     this.allocatedFees = Currency.of(params.allocatedFees);
     this.allocatedTotal = this.allocatedPrincipal.add(this.allocatedInterest).add(this.allocatedFees);
-    this.date = dayjs(params.date);
+    this.date = DateUtil.normalizeDate(params.date);
   }
 
   get jsAllocatedPrincipal(): number {

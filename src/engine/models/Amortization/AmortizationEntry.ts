@@ -3,6 +3,7 @@ import dayjs, { Dayjs } from "dayjs";
 import { BalanceModification } from "./BalanceModification";
 import { Currency } from "../../utils/Currency";
 import { Calendar, CalendarType } from "../Calendar";
+import { DateUtil } from "../../utils/DateUtil";
 /**
  * Optional metadata interface for the schedule entry
  */
@@ -278,14 +279,14 @@ export class AmortizationEntry {
     return this._periodStartDate;
   }
   public set periodStartDate(raw: string | Date | Dayjs) {
-    this._periodStartDate = this.parseDayjs(raw, "periodStartDate");
+    this._periodStartDate = DateUtil.normalizeDate(raw);
   }
 
   public get periodEndDate(): Dayjs {
     return this._periodEndDate;
   }
   public set periodEndDate(raw: string | Date | Dayjs) {
-    this._periodEndDate = this.parseDayjs(raw, "periodEndDate");
+    this._periodEndDate = DateUtil.normalizeDate(raw);
   }
 
   public get prebillDaysConfiguration(): number {
@@ -316,14 +317,14 @@ export class AmortizationEntry {
     return this._periodBillOpenDate;
   }
   public set periodBillOpenDate(raw: string | Date | Dayjs) {
-    this._periodBillOpenDate = this.parseDayjs(raw, "periodBillOpenDate");
+    this._periodBillOpenDate = DateUtil.normalizeDate(raw);
   }
 
   public get periodBillDueDate(): Dayjs {
     return this._periodBillDueDate;
   }
   public set periodBillDueDate(raw: string | Date | Dayjs) {
-    this._periodBillDueDate = this.parseDayjs(raw, "periodBillDueDate");
+    this._periodBillDueDate = DateUtil.normalizeDate(raw);
   }
 
   public get periodInterestRate(): Decimal {
@@ -490,14 +491,6 @@ export class AmortizationEntry {
   //
   // ===================== HELPER PARSE METHODS =====================
   //
-  private parseDayjs(raw: string | Date | Dayjs, fieldName: string): Dayjs {
-    if (dayjs.isDayjs(raw)) {
-      return raw;
-    } else if (raw instanceof Date || typeof raw === "string") {
-      return dayjs(raw);
-    }
-    throw new Error(`${fieldName} must be a string|Date|Dayjs, got: ${typeof raw}`);
-  }
 
   private parseNumber(val: any, fieldName: string): number {
     if (typeof val === "number") return val;

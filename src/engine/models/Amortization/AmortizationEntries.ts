@@ -4,7 +4,7 @@ import dayjs, { Dayjs } from "dayjs";
 import isSameOrAfter from "dayjs/plugin/isSameOrAfter";
 import isSameOrBefore from "dayjs/plugin/isSameOrBefore";
 import isBetween from "dayjs/plugin/isBetween";
-
+import { DateUtil } from "../../utils/DateUtil";
 dayjs.extend(isSameOrAfter);
 dayjs.extend(isSameOrBefore);
 dayjs.extend(isBetween);
@@ -81,10 +81,7 @@ export class AmortizationEntries {
   }
 
   getPerDiemForPeriodByDate(date: Dayjs | Date): Currency {
-    if (date instanceof Date) {
-      date = dayjs(date);
-    }
-    date = date.startOf("day");
+    date = DateUtil.normalizeDate(date);
 
     // first we get the period where the date is
     const activePeriod = this.getPeriodByDate(date);
@@ -106,10 +103,8 @@ export class AmortizationEntries {
    * @returns The number of days until the next billable period's due date.
    */
   getDaysLeftInTerm(now: Dayjs | Date = dayjs()): number {
-    if (now instanceof Date) {
-      now = dayjs(now);
-    }
-    now = now.startOf("day");
+
+    now = DateUtil.normalizeDate(now);
 
     // Find the next upcoming billable period whose due date is after 'now'
     const upcomingEntry = this._entries.find((entry) => entry.billablePeriod && entry.periodBillDueDate.isAfter(now));
@@ -146,7 +141,6 @@ export class AmortizationEntries {
 
     return projectedFutureInterest;
   }
-
 
   toJSON() {
     return this.json;

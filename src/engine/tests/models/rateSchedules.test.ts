@@ -15,7 +15,7 @@ import { LendPeak } from "../../models/LendPeak";
 import utc from "dayjs/plugin/utc";
 dayjs.extend(utc);
 
-const today = dayjs().startOf("day");
+const today = dayjs().utc().startOf("day");
 
 describe("Rate Schedule", () => {
   it("Should have only default rate schedule", () => {

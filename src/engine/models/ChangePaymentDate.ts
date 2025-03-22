@@ -1,4 +1,5 @@
 import dayjs, { Dayjs } from "dayjs";
+import { DateUtil } from "../utils/DateUtil";
 import isSameOrAfter from "dayjs/plugin/isSameOrAfter";
 import isSameOrBefore from "dayjs/plugin/isSameOrBefore";
 import isBetween from "dayjs/plugin/isBetween";
@@ -40,8 +41,8 @@ export class ChangePaymentDate {
   }
 
   set originalEndDate(originalEndDate: Dayjs | Date | string) {
-    this._originalEndDate = dayjs(originalEndDate).startOf("day");
-    this.jsOriginalEndDate = dayjs(originalEndDate).startOf("day").toDate();
+    this._originalEndDate = DateUtil.normalizeDate(originalEndDate);
+    this.jsOriginalEndDate = this._originalEndDate.toDate();
   }
 
   get originalEndDate(): Dayjs | undefined {
@@ -68,8 +69,8 @@ export class ChangePaymentDate {
   }
 
   set newDate(newDate: Dayjs | Date | string) {
-    this._newDate = dayjs(newDate).startOf("day");
-    this.jsNewDate = dayjs(newDate).startOf("day").toDate();
+    this._newDate = DateUtil.normalizeDate(newDate);
+    this.jsNewDate = this._newDate.toDate();
   }
 
   get newDate(): Dayjs {
@@ -78,8 +79,8 @@ export class ChangePaymentDate {
 
   set originalDate(originalDate: Dayjs | Date | string) {
     // console.trace("setting original date", originalDate);
-    this._originalDate = dayjs(originalDate).startOf("day");
-    this.jsOriginalDate = dayjs(originalDate).startOf("day").toDate();
+    this._originalDate = DateUtil.normalizeDate(originalDate);
+    this.jsOriginalDate = this._originalDate.toDate();
   }
 
   get originalDate(): Dayjs | undefined {

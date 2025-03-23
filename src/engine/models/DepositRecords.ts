@@ -1,6 +1,8 @@
 import dayjs, { Dayjs } from "dayjs";
 import utc from "dayjs/plugin/utc";
 dayjs.extend(utc);
+import { v4 as uuidv4 } from "uuid";
+import { DateUtil } from "../utils/DateUtil";
 
 import isBetween from "dayjs/plugin/isBetween";
 dayjs.extend(isBetween);
@@ -10,6 +12,8 @@ import { Currency } from "../utils/Currency";
 export class DepositRecords {
   private _records: DepositRecord[] = [];
   private _modified: boolean = false;
+  private _versionId: string = uuidv4();
+  private _dateChanged: Dayjs = dayjs();
 
   constructor(records: DepositRecord[] = []) {
     this.records = records;
@@ -22,6 +26,18 @@ export class DepositRecords {
   //   this.modified = false;
   //   this._records.forEach((bm) => (bm.modified = false));
   // }
+  get versionId(): string {
+    return this._versionId;
+  }
+
+  get dateChanged(): Dayjs {
+    return this._dateChanged;
+  }
+
+  versionChanged() {
+    this._dateChanged = dayjs();
+    this._versionId = uuidv4();
+  }
 
   clearHistory() {
     this.all.forEach((deposit) => {
@@ -70,6 +86,7 @@ export class DepositRecords {
       .sort((a, b) => {
         return dayjs(a.effectiveDate).isBefore(dayjs(b.effectiveDate)) ? -1 : 1;
       });
+    this.versionChanged();
   }
 
   get first(): DepositRecord | undefined {
@@ -98,6 +115,7 @@ export class DepositRecords {
     this._records = this._records.sort((a, b) => {
       return dayjs(a.effectiveDate).isBefore(dayjs(b.effectiveDate)) ? -1 : 1;
     });
+    this.versionChanged();
   }
 
   removeRecordAtIndex(index: number) {
@@ -106,6 +124,7 @@ export class DepositRecords {
     this._records = this._records.sort((a, b) => {
       return dayjs(a.effectiveDate).isBefore(dayjs(b.effectiveDate)) ? -1 : 1;
     });
+    this.versionChanged();
   }
 
   removeRecordById(id: string) {
@@ -114,6 +133,7 @@ export class DepositRecords {
     this._records = this._records.sort((a, b) => {
       return dayjs(a.effectiveDate).isBefore(dayjs(b.effectiveDate)) ? -1 : 1;
     });
+    this.versionChanged();
   }
 
   get allSorted(): DepositRecord[] {

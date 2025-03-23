@@ -4,6 +4,7 @@ import isBetween from "dayjs/plugin/isBetween";
 dayjs.extend(isBetween);
 import { Bill } from "./Bill";
 import { Currency } from "../utils/Currency";
+import { v4 as uuidv4 } from "uuid";
 
 export interface BillsSummary {
   remainingTotal: Currency;
@@ -31,9 +32,24 @@ export class Bills {
   private _bills: Bill[] = [];
 
   private _summary?: BillsSummary;
+  private _versionId: string = uuidv4();
+  private _dateChanged: Dayjs = dayjs();
 
   constructor(bills: Bill[] = []) {
     this.bills = bills;
+  }
+
+  get versionId(): string {
+    return this._versionId;
+  }
+
+  get dateChanged(): Dayjs {
+    return this._dateChanged;
+  }
+
+  versionChanged() {
+    this._dateChanged = dayjs();
+    this._versionId = uuidv4();
   }
 
   get bills(): Bill[] {
@@ -84,6 +100,7 @@ export class Bills {
 
     // sort bills from olders to newest
     this._bills = this._bills.sort((a, b) => a.period - b.period);
+    this.versionChanged();
   }
 
   get pastDue(): Bill[] {

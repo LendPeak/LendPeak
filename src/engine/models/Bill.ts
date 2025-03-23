@@ -2,6 +2,8 @@
 import dayjs, { Dayjs } from "dayjs";
 import isBetween from "dayjs/plugin/isBetween";
 dayjs.extend(isBetween);
+import { v4 as uuidv4 } from "uuid";
+import { DateUtil } from "../utils/DateUtil";
 
 import { Currency } from "../utils/Currency";
 import { AmortizationEntry } from "./Amortization/AmortizationEntry";
@@ -58,6 +60,9 @@ export class Bill {
   isPastDue: boolean;
   daysPastDue: number;
   isDSIBill?: boolean;
+  private _versionId: string = uuidv4();
+  private _dateChanged: Dayjs = dayjs();
+  private initialized: boolean = false;
 
   amortizationEntry: AmortizationEntry;
   // New property to track deposit IDs used for payment
@@ -73,8 +78,8 @@ export class Bill {
   constructor(params: BillParams) {
     this.id = params.id;
     this.period = params.period;
-    this.dueDate = dayjs(params.dueDate).startOf("day");
-    this.openDate = dayjs(params.openDate).startOf("day");
+    this.dueDate = DateUtil.normalizeDate(params.dueDate);
+    this.openDate = DateUtil.normalizeDate(params.openDate);
 
     this.principalDue = params.principalDue;
     this.originalPrincipalDue = params.originalPrincipalDue || params.principalDue;
@@ -111,10 +116,28 @@ export class Bill {
       });
     }
     if (params.dateFullySatisfied) {
-      this.dateFullySatisfied = dayjs(params.dateFullySatisfied).startOf("day");
+      this.dateFullySatisfied = DateUtil.normalizeDate(params.dateFullySatisfied);
     }
     this.daysLate = params.daysLate ?? 0;
     this.daysEarly = params.daysEarly ?? 0;
+
+    this.initialized = true;
+    this.versionChanged();
+  }
+
+  get versionId(): string {
+    return this._versionId;
+  }
+
+  get dateChanged(): Dayjs {
+    return this._dateChanged;
+  }
+
+  versionChanged() {
+    if (this.initialized === true) {
+      this._dateChanged = dayjs();
+      this._versionId = uuidv4();
+    }
   }
 
   get originalPrincipalDue(): Currency {
@@ -135,26 +158,32 @@ export class Bill {
 
   set originalPrincipalDue(value: Currency | number) {
     this._originalPrincipalDue = Currency.of(value);
+    this.versionChanged();
   }
 
   set originalInterestDue(value: Currency | number) {
     this._originalInterestDue = Currency.of(value);
+    this.versionChanged();
   }
 
   set originalFeesDue(value: Currency | number) {
     this._originalFeesDue = Currency.of(value);
+    this.versionChanged();
   }
 
   set originalTotalDue(value: Currency | number) {
     this._originalTotalDue = Currency.of(value);
+    this.versionChanged();
   }
 
   get principalDue(): Currency {
     return this._principalDue;
+    this.versionChanged();
   }
 
   set principalDue(value: Currency | number) {
     this._principalDue = Currency.of(value);
+    this.versionChanged();
   }
 
   get interestDue(): Currency {
@@ -163,6 +192,7 @@ export class Bill {
 
   set interestDue(value: Currency | number) {
     this._interestDue = Currency.of(value);
+    this.versionChanged();
   }
 
   get feesDue(): Currency {
@@ -171,6 +201,7 @@ export class Bill {
 
   set feesDue(value: Currency | number) {
     this._feesDue = Currency.of(value);
+    this.versionChanged();
   }
 
   get totalDue(): Currency {
@@ -179,6 +210,7 @@ export class Bill {
 
   set totalDue(value: Currency | number) {
     this._totalDue = Currency.of(value);
+    this.versionChanged();
   }
 
   get jsOpenDate(): Date {

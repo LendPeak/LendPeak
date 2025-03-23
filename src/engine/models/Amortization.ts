@@ -34,6 +34,7 @@ import dayjs, { Dayjs } from "dayjs";
 import isSameOrAfter from "dayjs/plugin/isSameOrAfter";
 import isSameOrBefore from "dayjs/plugin/isSameOrBefore";
 import isBetween from "dayjs/plugin/isBetween";
+import { v4 as uuidv4 } from "uuid";
 
 dayjs.extend(isSameOrAfter);
 dayjs.extend(isSameOrBefore);
@@ -225,6 +226,8 @@ export class Amortization {
   private _summary?: AmortizationSummary;
   private _tila?: TILA;
   private _acceptableRateVariance: Decimal = Amortization.DEFAULT_ACCEPTABLE_RATE_VARIANCE;
+  private _versionId: string = uuidv4();
+  private _dateChanged: Dayjs = dayjs();
 
   constructor(params: AmortizationParams) {
     this._inputParams = cloneDeep(params);
@@ -369,6 +372,19 @@ export class Amortization {
     this.verifySchedulePeriods();
     // this.validateRatesSchedule();
     this.updateJsValues();
+  }
+
+  get versionId(): string {
+    return this._versionId;
+  }
+
+   get dateChanged(): Dayjs {
+    return this._dateChanged;
+  }
+
+  versionChanged() {
+    this._dateChanged = dayjs();
+    this._versionId = uuidv4();
   }
 
   set acceptableRateVariance(value: number | Decimal) {
@@ -2539,6 +2555,7 @@ export class Amortization {
 
     this.repaymentSchedule = schedule;
     this.modifiedSinceLastCalculation = false;
+    this.versionChanged();
     return schedule;
   }
 

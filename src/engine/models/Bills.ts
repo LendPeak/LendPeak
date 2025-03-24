@@ -32,7 +32,11 @@ export interface BillsSummary {
 export class Bills {
   private _bills: Bill[] = [];
 
-  private _summary?: BillsSummary;
+  private cacheSummary?: {
+    results: BillsSummary;
+    versionId: string;
+    dateChanged: Dayjs;
+  };
   private _versionId: string = uuidv4();
   private _dateChanged: Dayjs = dayjs();
 
@@ -87,7 +91,6 @@ export class Bills {
   }
 
   set bills(value: Bill[]) {
-    this.resetSummary();
     // check if the value is an array of Bill objects
     // if not, create a new Bill object from the value
 
@@ -117,10 +120,6 @@ export class Bills {
       return undefined;
     }
     return unpaidBills[0];
-  }
-
-  resetSummary() {
-    this._summary = undefined;
   }
 
   calculateSummary(): BillsSummary {
@@ -174,7 +173,7 @@ export class Bills {
       }
     });
 
-    return {
+    const billSummaryResults: BillsSummary = {
       remainingTotal: remainingTotal,
       remainingFees: remainingFees,
       remainingPrincipal: remainingPrincipal,
@@ -200,13 +199,29 @@ export class Bills {
       daysPastDue: daysPastDue,
       totalBillsCount: totalBillsCount,
     };
+
+    this.cacheSummary = {
+      results: billSummaryResults,
+      versionId: this.versionId,
+      dateChanged: this.dateChanged,
+    };
+
+    return billSummaryResults;
   }
 
   get summary(): BillsSummary {
-    //  if (!this._summary) {
-    this._summary = this.calculateSummary();
-    // }
-    return this._summary;
+    if (this.cacheSummary) {
+      if (this.cacheSummary.versionId !== this.versionId) {
+        return this.calculateSummary();
+      }
+      if (!this.cacheSummary.dateChanged.isSame(this.dateChanged)) {
+        return this.calculateSummary();
+      }
+
+      return this.cacheSummary.results;
+    }
+
+    return this.calculateSummary();
   }
 
   sortBills() {

@@ -11,6 +11,7 @@ import Decimal from "decimal.js";
 import { RateSchedule, RateScheduleParams } from "../../models/RateSchedule";
 import { RateSchedules } from "../../models/RateSchedules";
 import { LendPeak } from "../../models/LendPeak";
+import { Fee } from "../../models/Fee";
 import { Bill } from "../../models/Bill";
 import { Bills } from "../../models/Bills";
 import { DepositRecord } from "../../models/DepositRecord";
@@ -230,5 +231,180 @@ describe("LendPeak payoffQuote() Tests", () => {
 
     expect(payoff.dueInterest.toNumber()).toBeGreaterThanOrEqual(0);
     expect(payoff.dueFees.toNumber()).toBe(0);
+  });
+  it("Scenario #7: Scenario with fees => payoff should reflect both principal, interest, and outstanding fees", () => {
+    // Create an instance with some default fees
+    const lendPeak = createLendPeakInstance({
+      loanAmount: 1000,
+      annualInterest: 0.1,
+      term: 4,
+    });
+
+    // Suppose we add some per-term fees or a daily fee structure.
+    // For example, if your `Amortization` object supports `feesForAllTerms` or `feesPerTerm`,
+    // you'd set them here before `calc()`.
+    lendPeak.amortization.feesForAllTerms.addFee(
+      new Fee({
+        type: "fixed",
+        amount: Currency.of(50),
+        description: "Origination or Admin Fee (each term)",
+      })
+    );
+
+    // Recalc to incorporate new fees
+    lendPeak.calc();
+
+    // We haven't made any payments, so payoff includes principal + some interest + fees
+    const payoff = lendPeak.payoffQuote;
+    expect(payoff.duePrincipal.toNumber()).toBeCloseTo(1000, 2);
+    expect(payoff.dueInterest.toNumber()).toBeGreaterThan(0);
+    // The fee might appear in `dueFees` if the Bill is open
+    expect(payoff.dueFees.toNumber()).toBeGreaterThanOrEqual(50);
+    expect(payoff.dueTotal.toNumber()).toBe(payoff.duePrincipal.add(payoff.dueInterest).add(payoff.dueFees).toNumber());
+  });
+
+  it("Scenario #8: Multiple partial deposits at different times => payoff should reflect the sum of all partial paydowns", () => {
+    const lendPeak = createLendPeakInstance({
+      loanAmount: 2000,
+      annualInterest: 0.05,
+      term: 6,
+    });
+
+    // Three partial payments spaced out
+    const deposit1 = new DepositRecord({
+      id: "DEPOSIT-1",
+      amount: 300,
+      currency: "USD",
+      effectiveDate: dayjs().add(10, "day"),
+    });
+    const deposit2 = new DepositRecord({
+      id: "DEPOSIT-2",
+      amount: 200,
+      currency: "USD",
+      effectiveDate: dayjs().add(35, "day"),
+    });
+    const deposit3 = new DepositRecord({
+      id: "DEPOSIT-3",
+      amount: 500,
+      currency: "USD",
+      effectiveDate: dayjs().add(60, "day"),
+    });
+
+    lendPeak.depositRecords.addRecord(deposit1);
+    lendPeak.depositRecords.addRecord(deposit2);
+    lendPeak.depositRecords.addRecord(deposit3);
+
+    // Move currentDate after the last deposit to ensure they're recognized
+    lendPeak.currentDate = dayjs().add(80, "day");
+    lendPeak.calc();
+
+    const payoff = lendPeak.payoffQuote;
+    // We expect leftover principal < 2000
+    expect(payoff.duePrincipal.toNumber()).toBeLessThan(2000);
+    // Some leftover interest from partial accrual
+    expect(payoff.dueInterest.toNumber()).toBeGreaterThanOrEqual(0);
+    // No fees in this scenario
+    expect(payoff.dueFees.toNumber()).toBe(0);
+
+    // We could also check that leftover principal is <= 1000 if the sum of deposits is 1000,
+    // minus interest that was allocated, etc.
+  });
+
+  it("Scenario #9: Payoff quote caching => second call should return cached result unless data changed", () => {
+    const lendPeak = createLendPeakInstance({
+      loanAmount: 1000,
+      annualInterest: 0.06,
+      term: 4,
+    });
+
+    lendPeak.currentDate = dayjs().add(30, "day");
+    lendPeak.calc();
+
+    // First call
+    const firstQuote = lendPeak.payoffQuote;
+    const secondQuote = lendPeak.payoffQuote;
+
+    // Expect them to be the same object or same values if nothing changed
+    // Check a property to confirm
+    expect(secondQuote.duePrincipal.toNumber()).toBeCloseTo(firstQuote.duePrincipal.toNumber(), 6);
+
+    // Now modify something relevant (e.g. add a deposit or change currentDate)
+    const newDeposit = new DepositRecord({
+      id: "DEPOSIT-NEW",
+      amount: 200,
+      currency: "USD",
+      effectiveDate: lendPeak.currentDate.subtract(1, "day"), // ensures it's recognized
+    });
+    lendPeak.depositRecords.addRecord(newDeposit);
+    lendPeak.calc();
+
+    // Third call - should be updated
+    const thirdQuote = lendPeak.payoffQuote;
+    expect(thirdQuote.duePrincipal.toNumber()).toBeLessThan(firstQuote.duePrincipal.toNumber());
+  });
+
+  //   it("Scenario #10: Daily Simple Interest model => payoff reflects daily accrual up to current date", () => {
+  //     // If your Amortization supports "billingModel = dailySimpleInterest"
+  //     const lendPeak = createLendPeakInstance({
+  //       loanAmount: 1500,
+  //       annualInterest: 0.07,
+  //       term: 4,
+  //     });
+
+  //     // Switch to DSI
+  //     lendPeak.amortization.billingModel = "dailySimpleInterest";
+
+  //     // Move forward ~45 days
+  //     lendPeak.currentDate = dayjs().add(45, "day");
+  //     lendPeak.calc();
+
+  //     const payoff = lendPeak.payoffQuote;
+  //     // In daily simple interest, interest should definitely be > 0 after 45 days
+  //     expect(payoff.dueInterest.toNumber()).toBeGreaterThan(0);
+
+  //     // No deposits => principal is still 1500
+  //     expect(payoff.duePrincipal.toNumber()).toBeCloseTo(1500, 2);
+
+  //     // total => 1500 + daily interest for 45 days
+  //     expect(payoff.dueTotal.toNumber()).toBeGreaterThan(1500);
+  //   });
+
+  it("Scenario #11: Large deposit without applyExcessToPrincipal => only the current Bill's principal is paid, leftover principal is not pre-paid", () => {
+    // Same setup
+    const lendPeak = createLendPeakInstance({
+      loanAmount: 2000,
+      annualInterest: 0.06,
+      term: 6,
+    });
+
+    const deposit = new DepositRecord({
+      id: "DEPOSIT-LARGE-NO-EXCESS",
+      amount: 3000,
+      currency: "USD",
+      effectiveDate: dayjs().add(10, "day"),
+      applyExcessToPrincipal: false, // no auto-prepayment
+    });
+    lendPeak.depositRecords.addRecord(deposit);
+
+    // Move currentDate so deposit is recognized
+    lendPeak.currentDate = dayjs().add(20, "day");
+    lendPeak.calc();
+
+    const payoff = lendPeak.payoffQuote;
+
+    // Confirm principal is partially reduced below 2000 (we paid the current Bill’s principal),
+    // but not fully allocated to future bills.
+    expect(payoff.duePrincipal.toNumber()).toBeLessThan(2000);
+
+    // If you want a rough range, you could do:
+    expect(payoff.duePrincipal.toNumber()).toBeGreaterThan(1000);
+
+    // So we know we didn't prepay the entire future principal
+    // and leftover is  ~ $2000 - principalOfCurrentBill.
+    expect(payoff.dueInterest.toNumber()).toBeGreaterThanOrEqual(0);
+    expect(payoff.dueFees.toNumber()).toBe(0);
+
+    // Or, if you want to be more precise, you can console.log()
+    // the actual payoff.duePrincipal and do an exact toBeCloseTo(...).
   });
 });

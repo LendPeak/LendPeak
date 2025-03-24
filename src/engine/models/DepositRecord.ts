@@ -3,6 +3,7 @@ import { UsageDetail } from "./Bill/DepositRecord/UsageDetail";
 import { StaticAllocation, JsStaticAllocation } from "./Bill/DepositRecord/StaticAllocation";
 import { v4 as uuidv4 } from "uuid";
 import { DateUtil } from "../utils/DateUtil";
+import { DepositRecords } from "./DepositRecords";
 
 import dayjs, { Dayjs } from "dayjs";
 import utc from "dayjs/plugin/utc";
@@ -67,6 +68,8 @@ export class DepositRecord {
   private _dateChanged: Dayjs = dayjs();
   private initialized = false;
 
+  depositRecords?: DepositRecords;
+
   active: boolean = true;
 
   _metadata?: DepositMetadata;
@@ -95,6 +98,7 @@ export class DepositRecord {
     metadata?: DepositMetadata;
     active?: boolean;
     staticAllocation?: StaticAllocation | JsStaticAllocation;
+    depositRecords?: DepositRecords;
   }) {
     // console.log("params in deposit record", params);
     if (params.id) {
@@ -148,6 +152,10 @@ export class DepositRecord {
       this.applyExcessAtTheEndOfThePeriod = params.applyExcessAtTheEndOfThePeriod;
     }
 
+    if (params.depositRecords) {
+      this.depositRecords = params.depositRecords;
+    }
+
     this.updateJsValues();
     this.initialized = true;
   }
@@ -164,6 +172,9 @@ export class DepositRecord {
     if (this.initialized === true) {
       this._dateChanged = dayjs();
       this._versionId = uuidv4();
+      if (this.depositRecords) {
+        this.depositRecords.versionChanged();
+      }
     }
   }
 

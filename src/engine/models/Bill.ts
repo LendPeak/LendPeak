@@ -8,6 +8,9 @@ import { DateUtil } from "../utils/DateUtil";
 import { Currency } from "../utils/Currency";
 import { AmortizationEntry } from "./Amortization/AmortizationEntry";
 import { BillPaymentDetail } from "./Bill/BillPaymentDetail";
+
+import { Bills } from "./Bills";
+
 export interface BillParams {
   id: string;
   period: number;
@@ -39,6 +42,8 @@ export interface BillParams {
   dateFullySatisfied?: Dayjs | Date;
   daysLate?: number;
   daysEarly?: number;
+
+  bills?: Bills; // intentional optional circular reference to Bills so that Bill can be created with a reference to its parent Bills
 }
 
 export class Bill {
@@ -63,6 +68,7 @@ export class Bill {
   private _versionId: string = uuidv4();
   private _dateChanged: Dayjs = dayjs();
   private initialized: boolean = false;
+  bills?: Bills;
 
   amortizationEntry: AmortizationEntry;
   // New property to track deposit IDs used for payment
@@ -121,6 +127,10 @@ export class Bill {
     this.daysLate = params.daysLate ?? 0;
     this.daysEarly = params.daysEarly ?? 0;
 
+    if (params.bills) {
+      this.bills = params.bills;
+    }
+
     this.initialized = true;
     this.versionChanged();
   }
@@ -137,6 +147,9 @@ export class Bill {
     if (this.initialized === true) {
       this._dateChanged = dayjs();
       this._versionId = uuidv4();
+      if (this.bills) {
+        this.bills.versionChanged();
+      }
     }
   }
 

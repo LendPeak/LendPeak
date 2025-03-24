@@ -79,9 +79,12 @@ export class DepositRecords {
     this._records = value
       .map((c) => {
         if (c instanceof DepositRecord) {
+          c.depositRecords = this;
           return c;
         }
-        return new DepositRecord(c);
+        const record = new DepositRecord(c);
+        record.depositRecords = this;
+        return record;
       })
       .sort((a, b) => {
         return dayjs(a.effectiveDate).isBefore(dayjs(b.effectiveDate)) ? -1 : 1;
@@ -111,6 +114,7 @@ export class DepositRecords {
 
   addRecord(record: DepositRecord) {
     this.modified = true;
+    record.depositRecords = this;
     this._records.push(record);
     this._records = this._records.sort((a, b) => {
       return dayjs(a.effectiveDate).isBefore(dayjs(b.effectiveDate)) ? -1 : 1;

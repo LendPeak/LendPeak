@@ -5,6 +5,7 @@ dayjs.extend(isBetween);
 import { Bill } from "./Bill";
 import { Currency } from "../utils/Currency";
 import { v4 as uuidv4 } from "uuid";
+import { DateUtil } from "../utils/DateUtil";
 
 export interface BillsSummary {
   remainingTotal: Currency;
@@ -72,18 +73,17 @@ export class Bills {
     return this._bills.filter((bill) => bill.isOpen).sort((a, b) => b.period - a.period)[0];
   }
 
+  /**
+   * Return the earliest Bill whose amortizationEntry.periodEndDate is strictly after `currentDate`.
+   * If none exist, returns undefined.
+   */
   getFirstFutureBill(currentDate: Dayjs | Date = dayjs()): Bill | undefined {
-    if (currentDate instanceof Date) {
-      currentDate = dayjs(currentDate);
-    }
-    // we want to find bill where period end date of the amortization entry
-    // is same or before the current date, there will be several
-    // we want to find the last one
-    const futureBills = this._bills.filter((bill) => !bill.isOpen && bill.amortizationEntry.periodEndDate.isSameOrBefore(currentDate));
-    if (futureBills.length === 0) {
-      return undefined;
-    }
-    return futureBills[futureBills.length - 1];
+    const refDate = DateUtil.normalizeDate(currentDate);
+
+    // "Future" means the Bill’s periodEndDate is after currentDate.
+    const futureBills = this._bills.filter((bill) => bill.amortizationEntry.periodEndDate.isAfter(refDate)).sort((a, b) => a.amortizationEntry.periodEndDate.diff(b.amortizationEntry.periodEndDate));
+
+    return futureBills.length > 0 ? futureBills[0] : undefined;
   }
 
   set bills(value: Bill[]) {
@@ -93,9 +93,13 @@ export class Bills {
 
     this._bills = value.map((c) => {
       if (c instanceof Bill) {
+        c.bills = this;
         return c;
       }
-      return new Bill(c);
+
+      const bill = new Bill(c);
+      bill.bills = this;
+      return bill;
     });
 
     // sort bills from olders to newest
@@ -226,6 +230,7 @@ export class Bills {
   }
 
   addBill(bill: Bill): void {
+    bill.bills = this;
     this._bills.push(bill);
     this._bills = this._bills.sort((a, b) => a.period - b.period);
   }

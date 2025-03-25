@@ -20,20 +20,13 @@
   <div style="margin-top: 40px"></div>
 </ng-container>
 
-<p-toolbar class="custom-toolbar">
-  <!-- Left Group: Logo -->
-  <div class="p-toolbar-group-start">
-    <img src="horizontal-logo.png" style="width: 160px" />
-  </div>
-
-  <!-- Center Group: (If any, otherwise remove) -->
-  <div class="p-toolbar-group-center">
-    <!-- Existing or new center elements -->
-  </div>
-
-  <!-- Right Group: Remove "Save" and "Reset" Buttons -->
-  <div class="p-toolbar-group-end">
-    <!-- Snapshot Date Picker -->
+<!-- <p-menubar [model]="toolbarActions" /> -->
+<p-menubar [model]="toolbarActions">
+  <ng-template #start>
+    <img src="horizontal-logo.png" style="width: 10em" />
+    <!-- <i class="pi pi-apple px-2"></i> -->
+  </ng-template>
+  <ng-template #end>
     <div
       class="snapshot-date-container"
       [ngClass]="{ 'time-machine-active': !isToday(snapshotDate) }"
@@ -52,23 +45,5 @@
         (ngModelChange)="onSnapshotDateChange($event)"
       ></p-datepicker>
     </div>
-
-    <!-- Time Machine Indicator -->
-    <p-chip
-      *ngIf="!isToday(snapshotDate)"
-      label="Time Travel Mode"
-      icon="pi pi-clock"
-      class="p-mr-2 mr-2 time-machine-chip"
-      [style]="{ 'background-color': '#ff9800', color: '#ffffff' }"
-    ></p-chip>
-
-    <!-- Remove Save and Reset Buttons -->
-    <!-- Actions SplitButton -->
-    <p-menu #menu [model]="toolbarActions" [popup]="true" />
-    <p-button
-      (click)="menu.toggle($event)"
-      icon="pi pi-ellipsis-v"
-      severity="contrast"
-    />
-  </div>
-</p-toolbar>
+  </ng-template>
+</p-menubar>

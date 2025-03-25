@@ -654,11 +654,6 @@ export class AppComponent implements OnChanges {
 
   toolbarActions = [
     {
-      label: 'System Settings',
-      icon: 'pi pi-cog',
-      command: () => this.showSystemSettings(),
-    },
-    {
       label: 'New Loan',
       icon: 'pi pi-plus',
       command: () => this.newLoan(),
@@ -674,40 +669,60 @@ export class AppComponent implements OnChanges {
       command: () => this.openLoanImport(),
     },
     {
-      label: 'Manage Connectors',
-      icon: 'pi pi-link',
-      command: () => this.openConnectorManagement(),
-    },
-    {
-      label: 'Export Data',
-      icon: 'pi pi-file-export',
-      command: () => this.exportData(),
-    },
-    {
-      label: 'Import Data',
-      icon: 'pi pi-file-import',
-      command: () => this.importData(),
-    },
-    {
-      label: 'Help',
-      icon: 'pi pi-question',
-      command: () => this.openHelpDialog(),
-    },
-    {
-      label: 'Show Code',
-      icon: 'pi pi-code',
-      command: () => this.openCodeDialog(),
-    },
-    {
       label: 'Explain Loan',
       icon: 'pi pi-info-circle',
       command: () => this.showLoanExplanation(),
       tooltip: 'Get a detailed explanation of loan calculations',
     },
     {
-      label: 'Current Release Notes',
-      icon: 'pi pi-sparkles',
-      command: () => this.showCurrentReleaseNotes(),
+      label: 'Settings',
+      icon: 'pi pi-cog',
+      items: [
+        {
+          label: 'Manage Connectors',
+          icon: 'pi pi-link',
+          command: () => this.openConnectorManagement(),
+        },
+        {
+          label: 'System Settings',
+          icon: 'pi pi-cog',
+          command: () => this.showSystemSettings(),
+        },
+      ],
+    },
+
+    // {
+    //   label: 'Export Data',
+    //   icon: 'pi pi-file-export',
+    //   command: () => this.exportData(),
+    // },
+    // {
+    //   label: 'Import Data',
+    //   icon: 'pi pi-file-import',
+    //   command: () => this.importData(),
+    // },
+
+    {
+      label: 'Other',
+      icon: 'pi pi-ellipsis-v',
+      items: [
+        {
+          label: 'Help',
+          icon: 'pi pi-question',
+          command: () => this.openHelpDialog(),
+        },
+        {
+          label: 'Show Code',
+          icon: 'pi pi-code',
+          command: () => this.openCodeDialog(),
+        },
+
+        {
+          label: 'Current Release Notes',
+          icon: 'pi pi-sparkles',
+          command: () => this.showCurrentReleaseNotes(),
+        },
+      ],
     },
   ];
 

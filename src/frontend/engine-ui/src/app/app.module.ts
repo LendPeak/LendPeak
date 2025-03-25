@@ -13,6 +13,7 @@ import { SelectModule } from 'primeng/select';
 import { FluidModule } from 'primeng/fluid';
 import { PopoverModule } from 'primeng/popover';
 import { TabsModule } from 'primeng/tabs';
+import { MenubarModule } from 'primeng/menubar';
 
 import { TableModule } from 'primeng/table';
 import { FieldsetModule } from 'primeng/fieldset';
@@ -143,6 +144,7 @@ import {
     InputNumberModule,
     OverlayPanelModule,
     SplitButtonModule,
+    MenubarModule,
     ChipModule,
     PaginatorModule,
     TooltipModule,

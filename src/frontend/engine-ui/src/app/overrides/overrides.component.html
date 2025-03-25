@@ -196,13 +196,17 @@
       <p-accordion-panel value="interestRate">
         <p-accordion-header>
           <div>
-            <i
-              class="mr-4 pi"
-              [ngClass]="{
-                'pi-circle-on': lendPeak.amortization.rateSchedules.hasCustom,
-                'pi-circle-off': !lendPeak.amortization.rateSchedules.hasCustom,
-              }"
-            ></i>
+            <p-badge
+              class="mr-4"
+              badgeSize="xlarge"
+              [severity]="
+                lendPeak.amortization.rateSchedules.allCustom.length > 0
+                  ? 'contrast'
+                  : 'secondary'
+              "
+              [value]="lendPeak.amortization.rateSchedules.allCustom.length"
+            />
+
             Date Range Interest Rate
           </div>
         </p-accordion-header>
@@ -326,16 +330,19 @@
       <p-accordion-panel value="termCalendarOverride">
         <p-accordion-header>
           <div>
-            <i
-              class="mr-4 pi"
-              [ngClass]="{
-                'pi-circle-on': lendPeak.amortization.calendars.length,
-                'pi-circle-off': !lendPeak.amortization.calendars.length,
-              }"
-            ></i>
+            <p-badge
+              class="mr-4"
+              badgeSize="xlarge"
+              [severity]="
+                lendPeak.amortization.calendars.length > 0
+                  ? 'contrast'
+                  : 'secondary'
+              "
+              [value]="lendPeak.amortization.calendars.length"
+            />
             Term Calendar Override
-          </div></p-accordion-header
-        >
+          </div>
+        </p-accordion-header>
         <p-accordion-content>
           <div class="p-fluid">
             <p-table
@@ -540,15 +547,16 @@
       <p-accordion-panel value="termInterestOverride">
         <p-accordion-header>
           <div>
-            <i
-              class="mr-4 pi"
-              [ngClass]="{
-                'pi-circle-on':
-                  lendPeak.amortization.termInterestAmountOverride.length,
-                'pi-circle-off':
-                  !lendPeak.amortization.termInterestAmountOverride.length,
-              }"
-            ></i>
+            <p-badge
+              class="mr-4"
+              badgeSize="xlarge"
+              [severity]="
+                lendPeak.amortization.termInterestAmountOverride.length > 0
+                  ? 'contrast'
+                  : 'secondary'
+              "
+              [value]="lendPeak.amortization.termInterestAmountOverride.length"
+            />
             Term Interest Amount Override
           </div></p-accordion-header
         >
@@ -794,16 +802,17 @@
       <p-accordion-panel value="termInterestRateOverride">
         <p-accordion-header
           ><div>
-            <i
-              class="mr-4 pi"
-              [ngClass]="{
-                'pi-circle-on':
-                  lendPeak.amortization.termInterestRateOverride.length,
-                'pi-circle-off':
-                  !lendPeak.amortization.termInterestRateOverride.length,
-              }"
-            ></i
-            >Term Interest Rate Override
+            <p-badge
+              class="mr-4"
+              badgeSize="xlarge"
+              [severity]="
+                lendPeak.amortization.termInterestRateOverride.length > 0
+                  ? 'contrast'
+                  : 'secondary'
+              "
+              [value]="lendPeak.amortization.termInterestRateOverride.length"
+            />
+            Term Interest Rate Override
           </div></p-accordion-header
         >
         <p-accordion-content>
@@ -898,14 +907,15 @@
       <p-accordion-panel value="payoffConfiguration">
         <p-accordion-header
           ><div>
-            <i
-              class="mr-4 pi"
-              [ngClass]="{
-                'pi-circle-on': lendPeak.amortization.jsPayoffDate,
-                'pi-circle-off': !lendPeak.amortization.jsPayoffDate,
-              }"
-            ></i
-            >Payoff Configuration
+            <p-badge
+              class="mr-4"
+              badgeSize="xlarge"
+              [severity]="
+                lendPeak.amortization.jsPayoffDate ? 'contrast' : 'secondary'
+              "
+              [value]="lendPeak.amortization.jsPayoffDate ? 1 : 0"
+            />
+            Payoff Configuration
           </div></p-accordion-header
         >
         <p-accordion-content>
@@ -951,16 +961,19 @@
       <p-accordion-panel value="paymentSettings">
         <p-accordion-header
           ><div>
-            <i
-              class="mr-4 pi"
-              [ngClass]="{
-                'pi-circle-on':
-                  lendPeak.amortization.jsHasCustomEquitedMonthlyPayment,
-                'pi-circle-off':
-                  !lendPeak.amortization.jsHasCustomEquitedMonthlyPayment,
-              }"
-            ></i
-            >Equated Installment Payments (EIP)
+            <p-badge
+              class="mr-4"
+              badgeSize="xlarge"
+              [severity]="
+                lendPeak.amortization.jsHasCustomEquitedMonthlyPayment
+                  ? 'contrast'
+                  : 'secondary'
+              "
+              [value]="
+                lendPeak.amortization.jsHasCustomEquitedMonthlyPayment ? 1 : 0
+              "
+            />
+            Equated Installment Payments (EIP)
           </div></p-accordion-header
         >
         <p-accordion-content>
@@ -1017,16 +1030,17 @@
       <p-accordion-panel value="termPaymentAmount">
         <p-accordion-header
           ><div>
-            <i
-              class="mr-4 pi"
-              [ngClass]="{
-                'pi-circle-on':
-                  lendPeak.amortization.termPaymentAmountOverride.length,
-                'pi-circle-off':
-                  !lendPeak.amortization.termPaymentAmountOverride.length,
-              }"
-            ></i
-            >Term Payment Amount
+            <p-badge
+              class="mr-4"
+              badgeSize="xlarge"
+              [severity]="
+                lendPeak.amortization.termPaymentAmountOverride.length > 0
+                  ? 'contrast'
+                  : 'secondary'
+              "
+              [value]="lendPeak.amortization.termPaymentAmountOverride.length"
+            />
+            Term Payment Amount
           </div></p-accordion-header
         >
         <p-accordion-content>
@@ -1149,15 +1163,17 @@
       <p-accordion-panel value="changePaymentDates">
         <p-accordion-header
           ><div>
-            <i
-              class="mr-4 pi"
-              [ngClass]="{
-                'pi-circle-on': lendPeak.amortization.changePaymentDates.length,
-                'pi-circle-off':
-                  !lendPeak.amortization.changePaymentDates.length,
-              }"
-            ></i
-            >Change Payment Date
+            <p-badge
+              class="mr-4"
+              badgeSize="xlarge"
+              [severity]="
+                lendPeak.amortization.changePaymentDates.length > 0
+                  ? 'contrast'
+                  : 'secondary'
+              "
+              [value]="lendPeak.amortization.changePaymentDates.length"
+            />
+            Change Payment Date
           </div></p-accordion-header
         >
         <p-accordion-content>
@@ -1261,14 +1277,17 @@
       <p-accordion-panel value="preBillDayTerm">
         <p-accordion-header
           ><div>
-            <i
-              class="mr-4 pi"
-              [ngClass]="{
-                'pi-circle-on': lendPeak.amortization.preBillDays.hasCustom,
-                'pi-circle-off': !lendPeak.amortization.preBillDays.hasCustom,
-              }"
-            ></i
-            >Pre Bill Day Term
+            <p-badge
+              class="mr-4"
+              badgeSize="xlarge"
+              [severity]="
+                lendPeak.amortization.preBillDays.hasCustom
+                  ? 'contrast'
+                  : 'secondary'
+              "
+              [value]="lendPeak.amortization.preBillDays.hasCustom ? 1 : 0"
+            />
+            Pre Bill Day Term
           </div></p-accordion-header
         >
         <p-accordion-content>
@@ -1352,14 +1371,17 @@
       <p-accordion-panel value="dueBillDayTerm">
         <p-accordion-header
           ><div>
-            <i
-              class="mr-4 pi"
-              [ngClass]="{
-                'pi-circle-on': lendPeak.amortization.dueBillDays.hasCustom,
-                'pi-circle-off': !lendPeak.amortization.dueBillDays.hasCustom,
-              }"
-            ></i
-            >Due Bill Day Term
+            <p-badge
+              class="mr-4"
+              badgeSize="xlarge"
+              [severity]="
+                lendPeak.amortization.dueBillDays.hasCustom
+                  ? 'contrast'
+                  : 'secondary'
+              "
+              [value]="lendPeak.amortization.dueBillDays.hasCustom ? 1 : 0"
+            />
+            Due Bill Day Term
           </div></p-accordion-header
         >
         <p-accordion-content>
@@ -1443,16 +1465,17 @@
       <p-accordion-panel value="balanceModifications">
         <p-accordion-header
           ><div>
-            <i
-              class="mr-4 pi"
-              [ngClass]="{
-                'pi-circle-on':
-                  lendPeak.amortization.balanceModifications.all.length,
-                'pi-circle-off':
-                  !lendPeak.amortization.balanceModifications.all.length,
-              }"
-            ></i
-            >Balance Modifications
+            <p-badge
+              class="mr-4"
+              badgeSize="xlarge"
+              [severity]="
+                lendPeak.amortization.balanceModifications.all.length > 0
+                  ? 'contrast'
+                  : 'secondary'
+              "
+              [value]="lendPeak.amortization.balanceModifications.all.length"
+            />
+            Balance Modifications
           </div></p-accordion-header
         >
         <p-accordion-content>
@@ -1576,14 +1599,17 @@
       <p-accordion-panel value="feesForAllTerms">
         <p-accordion-header
           ><div>
-            <i
-              class="mr-4 pi"
-              [ngClass]="{
-                'pi-circle-on': lendPeak.amortization.feesForAllTerms.length,
-                'pi-circle-off': !lendPeak.amortization.feesForAllTerms.length,
-              }"
-            ></i
-            >Fees That Apply to All Terms
+            <p-badge
+              class="mr-4"
+              badgeSize="xlarge"
+              [severity]="
+                lendPeak.amortization.feesForAllTerms.length > 0
+                  ? 'contrast'
+                  : 'secondary'
+              "
+              [value]="lendPeak.amortization.feesForAllTerms.length"
+            />
+            Fees That Apply to All Terms
           </div></p-accordion-header
         >
         <p-accordion-content>
@@ -1695,14 +1721,17 @@
       <p-accordion-panel value="feesPerTerm">
         <p-accordion-header
           ><div>
-            <i
-              class="mr-4 pi"
-              [ngClass]="{
-                'pi-circle-on': lendPeak.amortization.feesPerTerm.length,
-                'pi-circle-off': !lendPeak.amortization.feesPerTerm.length,
-              }"
-            ></i
-            >Fees Per Term
+            <p-badge
+              class="mr-4"
+              badgeSize="xlarge"
+              [severity]="
+                lendPeak.amortization.feesPerTerm.length > 0
+                  ? 'contrast'
+                  : 'secondary'
+              "
+              [value]="lendPeak.amortization.feesPerTerm.length"
+            />
+            Fees Per Term
           </div></p-accordion-header
         >
         <p-accordion-content>

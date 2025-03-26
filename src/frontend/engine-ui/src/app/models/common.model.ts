@@ -9,3 +9,9 @@ export interface DropDownOptionNumber {
   value: number;
   disabled?: boolean;
 }
+
+export interface DropDownOptionBoolean {
+  label: string;
+  value: boolean;
+  disabled?: boolean;
+}

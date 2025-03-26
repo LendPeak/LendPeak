@@ -693,7 +693,7 @@
           </p-card>
         </div>
         <div class="col-4">
-          <p-card class="border-bottom-3 border-indigo-300">
+          <p-card class="">
             <ng-template #header>
               <div class="card-header-container font-semibold text-xl">
                 Current Payoff
@@ -703,6 +703,37 @@
             <p class="m-0 text-300 font-semibold text-5xl text-center">
               {{ lendPeak.payoffQuote.dueTotal.toNumber() | currency }}
             </p>
+            <div class="w-full pt-4 align-content-center text-center">
+              <p-tag
+                class="ml-4"
+                severity="secondary"
+                value="Principal: {{
+                  lendPeak.payoffQuote.duePrincipal.toNumber() | currency
+                }}"
+              />
+              <p-tag
+                class="ml-4"
+                severity="secondary"
+                value="Interest: {{
+                  lendPeak.payoffQuote.dueInterest.toNumber() | currency
+                }}"
+              />
+              <p-tag
+                class="ml-4"
+                severity="secondary"
+                value="Fees: {{
+                  lendPeak.payoffQuote.dueFees.toNumber() | currency
+                }}"
+              />
+              <p-tag
+                class="ml-4"
+                severity="secondary"
+                value="Unused Amount: {{
+                  lendPeak.payoffQuote.unusedAmountFromDeposis.toNumber()
+                    | currency
+                }}"
+              />
+            </div>
           </p-card>
         </div>
         <div class="col-2">
@@ -856,6 +887,7 @@
                   </p>
                 </p-card>
               </div>
+
               <div class="col-3">
                 <p-card>
                   <ng-template #header>

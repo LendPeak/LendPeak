@@ -140,6 +140,14 @@ export class DepositRecords {
     this.versionChanged();
   }
 
+  get unusedAmount(): Currency {
+    let total = Currency.of(0);
+    this.active.forEach((record) => {
+      total = total.add(record.unusedAmount);
+    });
+    return total;
+  }
+
   get allSorted(): DepositRecord[] {
     return this._records.sort((a, b) => {
       return dayjs(a.effectiveDate).isBefore(dayjs(b.effectiveDate)) ? -1 : 1;

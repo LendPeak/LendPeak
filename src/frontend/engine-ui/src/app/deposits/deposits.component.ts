@@ -78,6 +78,8 @@ export class DepositsComponent {
 
   selectedBillForCard: Bill | null = null;
   showBillCardDialog = false;
+  bulkDepositEditAllocationType = false;
+  bulkDepositEditApplyExccessToPrincipal = false;
 
   viewBillCard(billId: string) {
     if (!this.lendPeak) {
@@ -112,6 +114,14 @@ export class DepositsComponent {
     },
   ];
 
+  bulkApplyExccessToPrincipal: 'true' | 'false' = 'false';
+  bulkApplyExccessToPrincipalTypes: DropDownOptionString[] = [
+    { label: `True`, value: 'true' },
+    {
+      label: 'False',
+      value: 'false',
+    },
+  ];
   // ------------------------------------------
   // BULK EDIT METHODS
   // ------------------------------------------
@@ -134,14 +144,29 @@ export class DepositsComponent {
   applyBulkEdit() {
     // For now, we only handle changing to Loan's default
     // so remove any static allocation from selected deposits.
-    if (this.bulkAllocationType === 'default') {
-      this.selectedDeposits.forEach((deposit) => {
-        deposit.removeStaticAllocation();
-        // If you have a deposit.allocationType property:
-        // deposit.allocationType = 'default';
-      });
+    if (this.bulkDepositEditAllocationType === true) {
+      if (this.bulkAllocationType === 'default') {
+        this.selectedDeposits.forEach((deposit) => {
+          deposit.removeStaticAllocation();
+          // If you have a deposit.allocationType property:
+          // deposit.allocationType = 'default';
+        });
+      }
     }
 
+    if (this.bulkDepositEditApplyExccessToPrincipal === true) {
+      if (this.bulkApplyExccessToPrincipal === 'true') {
+        this.selectedDeposits.forEach((deposit) => {
+          deposit.excessAppliedDate = deposit.effectiveDate;
+          deposit.applyExcessToPrincipal = true;
+        });
+      } else {
+        this.selectedDeposits.forEach((deposit) => {
+          deposit.excessAppliedDate = undefined;
+          deposit.applyExcessToPrincipal = false;
+        });
+      }
+    }
     // Emit changes
     this.depositUpdated.emit();
 

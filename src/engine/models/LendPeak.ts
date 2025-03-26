@@ -28,6 +28,14 @@ dayjs.extend(isBetween);
 dayjs.extend(isSameOrAfter);
 dayjs.extend(isSameOrBefore);
 
+export interface PayoffQuoteResult {
+  duePrincipal: Currency;
+  dueInterest: Currency;
+  dueFees: Currency;
+  dueTotal: Currency;
+  unusedAmountFromDeposis: Currency;
+}
+
 export class LendPeak {
   _amortization!: Amortization;
   _depositRecords!: DepositRecords;
@@ -43,12 +51,7 @@ export class LendPeak {
   _balanceModificationChanged: boolean = false;
 
   private payoffQuoteCache?: {
-    results: {
-      duePrincipal: Currency;
-      dueInterest: Currency;
-      dueFees: Currency;
-      dueTotal: Currency;
-    };
+    results: PayoffQuoteResult;
     amortizationVersionId: string;
     amortizationDate: Dayjs;
     billsVersionId: string;
@@ -421,12 +424,7 @@ export class LendPeak {
    * Calculate a payoff quote (principal, interest, fees) as of currentDate.
    * Caches results to avoid recalculating if nothing has changed.
    */
-  get payoffQuote(): {
-    duePrincipal: Currency;
-    dueInterest: Currency;
-    dueFees: Currency;
-    dueTotal: Currency;
-  } {
+  get payoffQuote(): PayoffQuoteResult {
     // 1) Check if we have a cache and if everything is still up to date
     if (this.payoffQuoteCache) {
       // Compare versionId first
@@ -458,12 +456,7 @@ export class LendPeak {
   /**
    * Internal helper that actually does the payoff logic and updates cache.
    */
-  private recomputePayoffQuote(): {
-    duePrincipal: Currency;
-    dueInterest: Currency;
-    dueFees: Currency;
-    dueTotal: Currency;
-  } {
+  private recomputePayoffQuote(): PayoffQuoteResult {
     // -- 2) Gather Bill summary
     const billSummary = this.bills.summary;
     // The summary typically reflects all amounts not yet fully paid:
@@ -508,12 +501,16 @@ export class LendPeak {
       }
     }
 
+    const unusedAmountFromDeposis = this.depositRecords.unusedAmount;
+    dueTotal = dueTotal.subtract(unusedAmountFromDeposis);
+
     // -- 4) Build final results
-    const payoffResult = {
+    const payoffResult: PayoffQuoteResult = {
       duePrincipal,
       dueInterest,
       dueFees,
       dueTotal,
+      unusedAmountFromDeposis,
     };
 
     // -- 5) Store payoff in cache

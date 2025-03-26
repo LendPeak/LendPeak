@@ -65,7 +65,7 @@
               <th *ngIf="bulkEditMode" style="width: 3rem">
                 <p-tableHeaderCheckbox></p-tableHeaderCheckbox>
               </th>
-              <th></th>
+              <th>Enable</th>
               <th>ID</th>
               <th>Amount</th>
               <th>Currency</th>
@@ -768,18 +768,61 @@
     <div class="p-grid p-nogutter">
       <div class="field">
         <label for="bulkAllocationType">Allocation Type</label>
-        <p-select
-          id="bulkAllocationType"
-          name="bulkAllocationType"
-          [(ngModel)]="bulkAllocationType"
-          [options]="bulkEditAllocationTypes"
-          optionLabel="label"
-          optionValue="value"
-          [showClear]="false"
-          appendTo="body"
-          inputStyleClass="w-full"
-        >
-        </p-select>
+        <p-inputgroup>
+          <p-inputgroup-addon>
+            <p-checkbox
+              id="bulkDepositEditAllocationType"
+              name="bulkDepositEditAllocationType"
+              [(ngModel)]="bulkDepositEditAllocationType"
+              binary="true"
+              inputId="bulkDepositEditAllocationType"
+              size="small"
+            ></p-checkbox>
+          </p-inputgroup-addon>
+
+          <p-select
+            id="bulkAllocationType"
+            name="bulkAllocationType"
+            [disabled]="!bulkDepositEditAllocationType"
+            [(ngModel)]="bulkAllocationType"
+            [options]="bulkEditAllocationTypes"
+            optionLabel="label"
+            optionValue="value"
+            [showClear]="false"
+            appendTo="body"
+            inputStyleClass="w-full"
+          >
+          </p-select>
+        </p-inputgroup>
+      </div>
+      <div class="field">
+        <label for="bulkAllocationType">Apply Excess to Principal</label>
+        <p-inputgroup>
+          <p-inputgroup-addon>
+            <p-checkbox
+              id="bulkDepositEditApplyExccessToPrincipal"
+              name="bulkDepositEditApplyExccessToPrincipal"
+              [(ngModel)]="bulkDepositEditApplyExccessToPrincipal"
+              binary="true"
+              inputId="bulkDepositEditApplyExccessToPrincipal"
+              size="small"
+            ></p-checkbox>
+          </p-inputgroup-addon>
+
+          <p-select
+            id="bulkApplyExcessToPrincipal"
+            name="bulkApplyExcessToPrincipal"
+            [disabled]="!bulkDepositEditApplyExccessToPrincipal"
+            [(ngModel)]="bulkApplyExccessToPrincipal"
+            [options]="bulkApplyExccessToPrincipalTypes"
+            optionLabel="label"
+            optionValue="value"
+            [showClear]="false"
+            appendTo="body"
+            inputStyleClass="w-full"
+          >
+          </p-select>
+        </p-inputgroup>
       </div>
     </div>
 

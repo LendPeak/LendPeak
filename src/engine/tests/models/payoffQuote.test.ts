@@ -407,4 +407,42 @@ describe("LendPeak payoffQuote() Tests", () => {
     // Or, if you want to be more precise, you can console.log()
     // the actual payoff.duePrincipal and do an exact toBeCloseTo(...).
   });
+
+  it("Scenario #12: Last open Bill ended in the past, no future bills => payoff includes extra daily interest from Bill-end -> currentDate (single-term)", () => {
+    // 1) Create a 1-term loan starting 30 days ago => Bill ends today (day 30)
+    const start = dayjs().subtract(30, "day"); // day 0 => 30 days ago
+    const lendPeak = new LendPeak({
+      amortization: new Amortization({
+        loanAmount: 1000,
+        annualInterestRate: 0.1, // 10% annual
+        term: 1, // single term => ends ~ day 30
+        startDate: start,
+        // Possibly set calendarType to ACTUAL_ACTUAL if you want ~2.74
+        // per 10 days, though it might still vary slightly.
+      }),
+      depositRecords: new DepositRecords(),
+      bills: new Bills(),
+      currentDate: start.add(30, "day"), // "today" => exactly the Bill end date
+    });
+
+    lendPeak.calc();
+
+    // 2) First payoff at day 30
+    const payoffAt30 = lendPeak.payoffQuote;
+    const interest30 = payoffAt30.dueInterest.toNumber();
+
+    // 3) Move currentDate 10 days further => day 40
+    lendPeak.currentDate = start.add(40, "day");
+    lendPeak.calc();
+
+    const payoffAt40 = lendPeak.payoffQuote;
+    const interest40 = payoffAt40.dueInterest.toNumber();
+
+    // 4) We expect the second payoff's interest to be bigger by ~10 days * dailyRate
+    const extraAccrued = interest40 - interest30;
+
+    // For 10% APR, principal=1000, 10 days, actual/365 => ~2.74 if code is daily
+    expect(extraAccrued).toBeGreaterThan(2); // > $2
+    expect(extraAccrued).toBeLessThan(4); // < $4
+  });
 });

@@ -21,11 +21,21 @@
 </ng-container>
 
 <!-- <p-menubar [model]="toolbarActions" /> -->
-<p-menubar [model]="toolbarActions">
+<p-menubar [model]="toolbarActions" class="w-full">
   <ng-template #start>
     <img src="horizontal-logo.png" style="width: 10em" />
     <!-- <i class="pi pi-apple px-2"></i> -->
   </ng-template>
+
+  <ng-template #item let-item>
+    <span>
+      <a [routerLink]="item.route" class="p-menubar-item-link">
+        <span [class]="item.icon"></span>
+        <span class="ml-2">{{ item.label }}</span>
+      </a>
+    </span>
+  </ng-template>
+
   <ng-template #end>
     <div
       class="snapshot-date-container"

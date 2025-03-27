@@ -92,10 +92,6 @@ export class DepositsComponent {
     }
   }
 
-  // ------------------------------------------
-  // BULK EDIT PROPERTIES
-  // ------------------------------------------
-  bulkEditMode: boolean = false;
   showBulkEditDialog: boolean = false;
 
   // Holds the “selected” rows when user checks the boxes
@@ -122,18 +118,6 @@ export class DepositsComponent {
       value: 'false',
     },
   ];
-  // ------------------------------------------
-  // BULK EDIT METHODS
-  // ------------------------------------------
-  toggleBulkEdit() {
-    // Toggle on/off
-    this.bulkEditMode = !this.bulkEditMode;
-
-    // If turning off, clear any selected rows
-    if (!this.bulkEditMode) {
-      this.selectedDeposits = [];
-    }
-  }
 
   openBulkEditDialog() {
     if (this.selectedDeposits.length === 0) return;
@@ -172,7 +156,6 @@ export class DepositsComponent {
 
     // Close the dialog & end bulk edit mode
     this.showBulkEditDialog = false;
-    this.toggleBulkEdit();
   }
 
   ngAfterViewInit(): void {}

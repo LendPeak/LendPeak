@@ -470,7 +470,7 @@ export class LendPeak {
 
     // -- 3) Check if the "last open" Bill extends beyond the currentDate
     const lastOpenBill = this.bills.lastOpenBill;
-    if (lastOpenBill && lastOpenBill.amortizationEntry.periodEndDate.isAfter(this.currentDate)) {
+    if (lastOpenBill && lastOpenBill.amortizationEntry.periodEndDate.isBefore(this.currentDate)) {
       // That means the current date is mid-way through the last open bill’s period,
       // so we likely owe partial interest from the Bill’s period start up to `currentDate`.
       // The Bill summary might only include interest up to the Bill’s “period start,”

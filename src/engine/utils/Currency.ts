@@ -141,6 +141,10 @@ export class Currency {
     return a.getValue().lessThanOrEqualTo(b.getValue()) ? a : b;
   }
 
+  isPositive(): boolean {
+    return this.value.isPositive();
+  }
+
   negated(): Currency {
     return Currency.of(this.value.negated());
   }

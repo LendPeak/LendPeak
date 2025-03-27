@@ -378,7 +378,7 @@ export class Amortization {
     return this._versionId;
   }
 
-   get dateChanged(): Dayjs {
+  get dateChanged(): Dayjs {
     return this._dateChanged;
   }
 
@@ -2579,7 +2579,7 @@ export class Amortization {
     // next we calculate interest for the active period
     const daysInPeriod = activePeriod.calendar.daysBetween(activePeriod.periodStartDate, date);
     // console.log("days in period", daysInPeriod, activePeriod.periodStartDate.format("YYYY-MM-DD"), date.format("YYYY-MM-DD"));
-    const interestCalculator = new InterestCalculator(activePeriod.periodInterestRate, activePeriod.calendar.calendarType, this.perDiemCalculationType, daysInPeriod);
+    const interestCalculator = new InterestCalculator(activePeriod.periodInterestRate, activePeriod.calendar.calendarType, this.perDiemCalculationType, activePeriod.daysInPeriod);
     const interestForDays = interestCalculator.calculateInterestForDays(activePeriod.startBalance, daysInPeriod);
     accruedInterest = accruedInterest.add(interestForDays);
     return accruedInterest;

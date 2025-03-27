@@ -287,61 +287,63 @@
     (openSaveLoanDialog)="openSaveLoanDialog()"
   ></app-toolbar>
 
-  <!-- Loan Header Section -->
-  <div class="loan-header">
-    <div class="loan-header-content">
-      <!-- Left Section: Loan Details -->
-      <div class="loan-details">
-        <h2 class="loan-name-title">
-          <a
-            class="sexy-link"
-            href="?loan={{ this.lendPeak.amortization.name }}"
+  <div class="w-full pt-3 pb-3 border-top-2 shadow-2 border-indigo-300">
+    <div class="loan-header">
+      <div class="loan-header-content">
+        <!-- Left Section: Loan Details -->
+        <div class="loan-details">
+          <h2 class="loan-name-title">
+            <a
+              class="sexy-link"
+              href="?loan={{ this.lendPeak.amortization.name }}"
+            >
+              <i class="pi pi-external-link" style="font-size: 1.5rem"></i>
+            </a>
+            {{ this.lendPeak.amortization.name }} (version:
+            {{ lendPeak.amortizationVersionManager?.versionNumber || 0 }})
+            <span *ngIf="loanModified" class="unsaved-indicator">
+              (Modified)
+            </span>
+            <span
+              *ngIf="
+                !loanModified && this.lendPeak.amortization.name === 'New Loan'
+              "
+              class="unsaved-indicator"
+            >
+              (Unsaved)
+            </span>
+          </h2>
+          <p
+            class="loan-description"
+            *ngIf="this.lendPeak.amortization.description"
           >
-            <i class="pi pi-external-link" style="font-size: 1.5rem"></i>
-          </a>
-          {{ this.lendPeak.amortization.name }} (version:
-          {{ lendPeak.amortizationVersionManager?.versionNumber || 0 }})
-          <span *ngIf="loanModified" class="unsaved-indicator">
-            (Modified)
-          </span>
-          <span
-            *ngIf="
-              !loanModified && this.lendPeak.amortization.name === 'New Loan'
-            "
-            class="unsaved-indicator"
-          >
-            (Unsaved)
-          </span>
-        </h2>
-        <p
-          class="loan-description"
-          *ngIf="this.lendPeak.amortization.description"
-        >
-          {{ this.lendPeak.amortization.description }}
-          <span *ngIf="this.lendPeak.amortization.id">
-            (ID: {{ this.lendPeak.amortization.id }})</span
-          >
-        </p>
-      </div>
-      <!-- Right Section: Loan Actions -->
-      <div class="loan-actions">
-        <button
-          pButton
-          label="Edit Loan Details"
-          icon="pi pi-pencil"
-          class="p-button-text"
-          (click)="openEditLoanDialog()"
-        ></button>
-        <button
-          *ngIf="loanModified"
-          pButton
-          label="Save Loan"
-          icon="pi pi-save"
-          (click)="openSaveLoanDialog()"
-        ></button>
+            {{ this.lendPeak.amortization.description }}
+            <span *ngIf="this.lendPeak.amortization.id">
+              (ID: {{ this.lendPeak.amortization.id }})</span
+            >
+          </p>
+        </div>
+        <!-- Right Section: Loan Actions -->
+        <div class="loan-actions">
+          <button
+            pButton
+            label="Edit Loan Details"
+            icon="pi pi-pencil"
+            class="p-button-text"
+            (click)="openEditLoanDialog()"
+          ></button>
+          <button
+            *ngIf="loanModified"
+            pButton
+            label="Save Loan"
+            icon="pi pi-save"
+            (click)="openSaveLoanDialog()"
+          ></button>
+        </div>
       </div>
     </div>
   </div>
+  <!-- Loan Header Section -->
 
   <!-- Tabsw -->
   <p-tabs

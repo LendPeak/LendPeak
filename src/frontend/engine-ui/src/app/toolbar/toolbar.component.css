@@ -65,3 +65,33 @@
     /* Orange color to indicate time travel mode */
     font-weight: bold;
 }
+
+:host ::ng-deep .p-menubar {
+    /* make the entire menubar a flex container */
+    display: flex;
+    align-items: center;
+    /* This makes it span full width */
+    width: 100%;
+}
+
+/* The left section (logo) */
+:host ::ng-deep .p-menubar-start {
+    /* push everything else away, so start is left aligned */
+    margin-right: auto;
+}
+
+/* The end section (snapshot date) */
+:host ::ng-deep .p-menubar-end {
+    /* push this to the far right */
+    margin-left: auto;
+}
+
+/* The middle nav items */
+:host ::ng-deep .p-menubar-root-list {
+    /* center them horizontally */
+    margin: 0 auto;
+
+    /* If needed, this ensures it’s horizontally aligned as a group */
+    display: flex;
+    justify-content: center;
+}

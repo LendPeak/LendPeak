@@ -48,6 +48,7 @@ export class LIFOStrategy implements AllocationStrategy {
       allocations,
       unallocatedAmount: remainingAmount,
       excessAmount: Currency.Zero(), // Handle excess according to business rules
+      effectiveDate: deposit.effectiveDate,
     };
   }
 }

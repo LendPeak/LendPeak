@@ -26,15 +26,15 @@ const manager = new AmortizationVersionManager(loan);
 
 // 3. Make some changes and commit
 loan.description = "Some test loan";
-loan.generateSchedule();
+loan.calculateAmortizationPlan();
 const v1 = manager.commitTransaction("Initial version");
 
 // 4. Make more changes
 loan.loanAmount = 6000;
-loan.generateSchedule();
+loan.calculateAmortizationPlan();
 
 loan.loanAmount = 6000;
-loan.generateSchedule();
+loan.calculateAmortizationPlan();
 
 // You want to see the changes, but NOT commit yet
 const preview = manager.previewChanges();

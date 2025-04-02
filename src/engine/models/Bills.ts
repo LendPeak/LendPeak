@@ -6,6 +6,8 @@ import { Bill } from "./Bill";
 import { Currency } from "../utils/Currency";
 import { v4 as uuidv4 } from "uuid";
 import { DateUtil } from "../utils/DateUtil";
+import { Amortization } from "./Amortization";
+import { BillGenerator } from "./BillGenerator";
 
 export interface BillsSummary {
   remainingTotal: Currency;
@@ -39,9 +41,57 @@ export class Bills {
   };
   private _versionId: string = uuidv4();
   private _dateChanged: Dayjs = dayjs();
+  amortization?: Amortization;
+  private _currentDate!: Dayjs;
 
-  constructor(bills: Bill[] = []) {
-    this.bills = bills;
+  constructor(params: { bills?: Bill[]; currentDate?: Dayjs; amortization?: Amortization } = {}) {
+    this.bills = params.bills || [];
+    this.amortization = params.amortization;
+    this.currentDate = params.currentDate || dayjs();
+
+    if (this.amortization) {
+      this.generateBills();
+    }
+  }
+
+  generateBills() {
+    if (this.amortization) {
+      const bills = BillGenerator.generateBills({
+        amortizationSchedule: this.amortization.repaymentSchedule,
+        currentDate: this.currentDate,
+      });
+      this.bills = bills.all;
+    } else {
+      throw new Error("Cannot generate bills without an amortization schedule");
+    }
+  }
+
+  regenerateBillsAfterDate(dateToRegenerateBillsAfter: Dayjs) {
+    if (this.amortization) {
+      const bills = BillGenerator.generateBills({
+        amortizationSchedule: this.amortization.repaymentSchedule,
+        currentDate: this.currentDate,
+      });
+
+      // now we have new bills generated, however
+      // we need to preserve unmodified bills that are before the dateToRegenerateBillsAfter
+      // so we will take this.bills and get all bills that were created before dateToRegenerateBillsAfter
+      // add then to array, and then everything that is after dateToRegenerateBillsAfter
+      // we will add from the new bills array
+      const billsBeforeDate = this.bills.filter((bill) => bill.dueDate.isBefore(dateToRegenerateBillsAfter));
+      const billsAfterDate = bills.all.filter((bill) => bill.dueDate.isAfter(dateToRegenerateBillsAfter));
+      this.bills = billsBeforeDate.concat(billsAfterDate);
+    } else {
+      throw new Error("Cannot regenerate bills without an amortization schedule");
+    }
+  }
+
+  get currentDate() {
+    return this._currentDate;
+  }
+
+  set currentDate(value: Dayjs) {
+    this._currentDate = DateUtil.normalizeDate(value);
   }
 
   get versionId(): string {
@@ -88,6 +138,10 @@ export class Bills {
     const futureBills = this._bills.filter((bill) => bill.amortizationEntry.periodEndDate.isAfter(refDate)).sort((a, b) => a.amortizationEntry.periodEndDate.diff(b.amortizationEntry.periodEndDate));
 
     return futureBills.length > 0 ? futureBills[0] : undefined;
+  }
+
+  updateStatus() {
+    this._bills.forEach((bill) => bill.updateStatus());
   }
 
   set bills(value: Bill[]) {
@@ -288,5 +342,25 @@ export class Bills {
 
   toJSON() {
     return this.json;
+  }
+
+  printToConsole() {
+    console.log("Bills:");
+    console.table(
+      this._bills.map((r) => {
+        return {
+          period: r.period,
+          dueDate: r.dueDate.format("YYYY-MM-DD"),
+          openDate: r.openDate.format("YYYY-MM-DD"),
+          totalDue: r.totalDue.toNumber(),
+          principalDue: r.principalDue.toNumber(),
+          interestDue: r.interestDue.toNumber(),
+          feesDue: r.feesDue.toNumber(),
+          isPaid: r.isPaid,
+          isPastDue: r.isPastDue,
+          daysPastDue: r.daysPastDue,
+        };
+      })
+    );
   }
 }

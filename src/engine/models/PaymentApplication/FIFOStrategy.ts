@@ -13,6 +13,7 @@ import { AllocationHelper } from "./AllocationHelper";
 import { BalanceModification } from "../Amortization/BalanceModification";
 import { v4 as uuidv4 } from "uuid";
 import { UsageDetail } from "../Bill/DepositRecord/UsageDetail";
+import { BillPaymentDetail } from "../Bill/BillPaymentDetail";
 
 /**
  * FIFO Strategy (First-In, First-Out).
@@ -87,6 +88,7 @@ export class FIFOStrategy implements AllocationStrategy {
       allocations,
       unallocatedAmount: remainingAmount,
       excessAmount: Currency.Zero(),
+      effectiveDate: deposit.effectiveDate,
     };
   }
 
@@ -146,15 +148,26 @@ export class FIFOStrategy implements AllocationStrategy {
       if (!totalAllocated.isZero()) {
         const bill = bills.all.find((b) => b.id === merged.billId);
         if (!bill) continue;
-        deposit.addUsageDetail({
-          billId: bill.id,
-          period: bill.period,
-          billDueDate: bill.dueDate,
-          allocatedPrincipal: merged.allocatedPrincipal,
-          allocatedInterest: merged.allocatedInterest,
-          allocatedFees: merged.allocatedFees,
-          date: deposit.effectiveDate,
-        } as any);
+        deposit.addUsageDetail(
+          new UsageDetail({
+            billId: bill.id,
+            period: bill.period,
+            billDueDate: bill.dueDate,
+            allocatedPrincipal: merged.allocatedPrincipal,
+            allocatedInterest: merged.allocatedInterest,
+            allocatedFees: merged.allocatedFees,
+            date: deposit.effectiveDate,
+          })
+        );
+        bill.paymentDetails.push(
+          new BillPaymentDetail({
+            depositId: deposit.id,
+            allocatedPrincipal: merged.allocatedPrincipal,
+            allocatedInterest: merged.allocatedInterest,
+            allocatedFees: merged.allocatedFees,
+            date: deposit.effectiveDate,
+          })
+        );
       }
     }
 
@@ -184,10 +197,10 @@ export class FIFOStrategy implements AllocationStrategy {
       allocations,
       unallocatedAmount,
       excessAmount: Currency.Zero(),
+      effectiveDate: deposit.effectiveDate,
     };
   }
 }
-
 
 /**
  * Helper function for static-allocations only.

@@ -43,7 +43,7 @@ function inflateAmortizationIfNeeded(obj: any): any {
   }
   try {
     const amort = new Amortization(obj);
-    amort.generateSchedule();
+    amort.calculateAmortizationPlan();
     return amort;
   } catch (e) {
     console.error("Error inflating Amortization", e);

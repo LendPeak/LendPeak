@@ -41,6 +41,8 @@ export class BalanceModification {
 
   private _inputParams: IBalanceModification;
 
+  private _markedForRemoval: boolean = false;
+
   constructor(params: IBalanceModification) {
     this._inputParams = JSON.parse(JSON.stringify(params));
 
@@ -55,6 +57,14 @@ export class BalanceModification {
     this.type = params.type;
     this.description = params.description;
     this.metadata = params.metadata;
+  }
+
+  get markedForRemoval(): boolean {
+    return this._markedForRemoval;
+  }
+
+  set markedForRemoval(value: boolean) {
+    this._markedForRemoval = value;
   }
 
   updateJsValues() {

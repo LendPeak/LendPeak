@@ -39,8 +39,16 @@ export class BalanceModifications {
     return this._balanceModifications[0];
   }
 
+  removeMarkedForRemoval() {
+    this._balanceModifications = this._balanceModifications.filter((bm) => !bm.markedForRemoval);
+  }
+
   removeBalanceModificationByDepositId(depositId: string) {
     this._balanceModifications = this._balanceModifications.filter((bm) => !(bm.metadata && bm.metadata.depositId === depositId));
+  }
+
+  removeSystemGeneratedBalanceModifications() {
+    this._balanceModifications = this._balanceModifications.filter((bm) => bm.metadata && bm.metadata.isSystemGenerated !== true);
   }
 
   addBalanceModification(balanceModification: BalanceModification): boolean {
@@ -131,5 +139,22 @@ export class BalanceModifications {
 
   get length() {
     return this._balanceModifications.length;
+  }
+
+  printToConsole() {
+    console.log("Balance Modifications");
+    console.table(
+      this.all.map((r) => {
+        return {
+          id: r.id,
+          amount: r.amount.toNumber(),
+          unusedAmount: r.unusedAmount.toNumber(),
+          date: r.date.format("YYYY-MM-DD"),
+          type: r.type,
+          description: r.description,
+          metadata: r.metadata,
+        };
+      })
+    );
   }
 }

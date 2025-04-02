@@ -4,6 +4,7 @@ import { PaymentAllocation } from "./PaymentAllocation";
 import { PaymentPriority } from "./Types";
 import { DepositRecord } from "../DepositRecord";
 import { UsageDetail } from "../Bill/DepositRecord/UsageDetail";
+import { BillPaymentDetail } from "../Bill/BillPaymentDetail";
 
 /**
  * This version accumulates total principal, interest, fees
@@ -30,7 +31,7 @@ export class AllocationHelper {
           if (!payInterest.isZero()) {
             allocatedInterest = allocatedInterest.add(payInterest);
             remainingAmount = remainingAmount.subtract(payInterest);
-            bill.interestDue = bill.interestDue.subtract(payInterest);
+            bill.reduceInterestDueBy(payInterest);
           }
           break;
         }
@@ -39,7 +40,7 @@ export class AllocationHelper {
           if (!payFees.isZero()) {
             allocatedFees = allocatedFees.add(payFees);
             remainingAmount = remainingAmount.subtract(payFees);
-            bill.feesDue = bill.feesDue.subtract(payFees);
+            bill.reduceFeesDueBy(payFees);
           }
           break;
         }
@@ -48,7 +49,7 @@ export class AllocationHelper {
           if (!payPrincipal.isZero()) {
             allocatedPrincipal = allocatedPrincipal.add(payPrincipal);
             remainingAmount = remainingAmount.subtract(payPrincipal);
-            bill.principalDue = bill.principalDue.subtract(payPrincipal);
+            bill.reducePrincipalDueBy(payPrincipal);
           }
           break;
         }
@@ -71,12 +72,19 @@ export class AllocationHelper {
           date: deposit.effectiveDate,
         })
       );
+
+      bill.paymentDetails.push(
+        new BillPaymentDetail({
+          depositId: deposit.id,
+          allocatedPrincipal: allocatedPrincipal.toNumber(),
+          allocatedInterest: allocatedInterest.toNumber(),
+          allocatedFees: allocatedFees.toNumber(),
+          date: deposit.effectiveDate,
+        })
+      );
     }
 
-    // Mark the Bill as fully paid if all due amounts are zero
-    if (bill.principalDue.isZero() && bill.interestDue.isZero() && bill.feesDue.isZero()) {
-      bill.isPaid = true;
-    }
+    bill.updateStatus();
 
     // Ensure deposit ID is in Bill's metadata
     if (!bill.paymentMetadata) {
@@ -96,6 +104,8 @@ export class AllocationHelper {
       allocatedInterest,
       allocatedFees,
     };
+
+    // bill.paymentDetails.push(allocation);
 
     return { allocation, remainingAmount };
   }

@@ -8,6 +8,7 @@ import isBetween from "dayjs/plugin/isBetween";
 dayjs.extend(isBetween);
 import { DepositRecord } from "./DepositRecord";
 import { Currency } from "../utils/Currency";
+import { BalanceModification } from "./Amortization/BalanceModification";
 
 export class DepositRecords {
   private _records: DepositRecord[] = [];
@@ -32,6 +33,14 @@ export class DepositRecords {
 
   get dateChanged(): Dayjs {
     return this._dateChanged;
+  }
+
+  get balanceModifications(): BalanceModification[] {
+    let balanceModifications: BalanceModification[] = [];
+    this._records.forEach((deposit) => {
+      balanceModifications = balanceModifications.concat(deposit.balanceModifications);
+    });
+    return balanceModifications;
   }
 
   versionChanged() {
@@ -176,6 +185,30 @@ export class DepositRecords {
 
   get lastActive(): DepositRecord | undefined {
     return this.allActiveSorted[this.active.length - 1];
+  }
+
+  printToConsole() {
+    console.log("Deposit Records");
+    const summary = this.summary;
+    console.table({
+      total: summary.total.toNumber(),
+      totalInterest: summary.totalInterest.toNumber(),
+      totalFees: summary.totalFees.toNumber(),
+      totalPrincipal: summary.totalPrincipal.toNumber(),
+      totalUnused: summary.totalUnused.toNumber(),
+    });
+    console.table(
+      this.all.map((r) => {
+        return {
+          id: r.id,
+          amount: r.amount.toNumber(),
+          unusedAmount: r.unusedAmount.toNumber(),
+          effectiveDate: r.effectiveDate.format("YYYY-MM-DD"),
+          excessAppliedDate: r.excessAppliedDate ? r.excessAppliedDate.format("YYYY-MM-DD") : "",
+          active: r.active,
+        };
+      })
+    );
   }
 
   get summary() {

@@ -14,6 +14,7 @@ import { PaymentAllocation } from "./PaymentAllocation";
 // Payment Application Result
 export interface PaymentApplicationResult {
   depositId: string;
+  effectiveDate: Dayjs;
   totalAllocated: Currency;
   allocations: PaymentAllocation[];
   unallocatedAmount: Currency;

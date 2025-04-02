@@ -10,6 +10,7 @@ import utc from "dayjs/plugin/utc";
 dayjs.extend(utc);
 
 import isBetween from "dayjs/plugin/isBetween";
+import { BalanceModification } from "./Amortization/BalanceModification";
 dayjs.extend(isBetween);
 
 export interface DepositMetadata {
@@ -198,6 +199,16 @@ export class DepositRecord {
     return new DepositRecord(json);
   }
 
+  get balanceModifications(): BalanceModification[] {
+    const balanceModifications: BalanceModification[] = [];
+    for (let usageDetail of this.usageDetails) {
+      if (usageDetail.balanceModification) {
+        balanceModifications.push(usageDetail.balanceModification);
+      }
+    }
+    return balanceModifications;
+  }
+
   addUsageDetail(detail: UsageDetail): void {
     // lets ignore if all amounts are zeros
     if (detail.allocatedPrincipal.isZero() && detail.allocatedInterest.isZero() && detail.allocatedFees.isZero()) {
@@ -216,7 +227,18 @@ export class DepositRecord {
   }
 
   resetUsageDetails(): void {
+    // if usage detail has a balance modification
+    // we want to mark it for removal so
+    // this will help LendPeak class do do the cleanup
+    // in amortization class and remove system generated
+    // balance modifications
+    this._usageDetails.forEach((detail) => {
+      if (detail.balanceModification) {
+        detail.balanceModification.markedForRemoval = true;
+      }
+    });
     this._usageDetails = [];
+
     this.versionChanged();
   }
 

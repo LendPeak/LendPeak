@@ -50,6 +50,7 @@ export class CustomOrderStrategy implements AllocationStrategy {
     const totalAllocated = deposit.amount.subtract(remainingAmount);
 
     return {
+      effectiveDate: deposit.effectiveDate,
       depositId: deposit.id,
       totalAllocated,
       allocations,

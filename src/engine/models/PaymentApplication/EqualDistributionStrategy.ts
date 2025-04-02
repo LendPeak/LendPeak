@@ -42,6 +42,7 @@ export class EqualDistributionStrategy implements AllocationStrategy {
         allocations: [],
         unallocatedAmount: deposit.amount,
         excessAmount: deposit.amount,
+        effectiveDate: deposit.effectiveDate,
       };
     }
 
@@ -64,6 +65,7 @@ export class EqualDistributionStrategy implements AllocationStrategy {
       allocations,
       unallocatedAmount,
       excessAmount: Currency.Zero(),
+      effectiveDate: deposit.effectiveDate,
     };
   }
 }

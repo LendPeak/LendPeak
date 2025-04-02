@@ -3,6 +3,7 @@ import { Currency } from "../../../utils/Currency";
 import isSameOrAfter from "dayjs/plugin/isSameOrAfter";
 import isSameOrBefore from "dayjs/plugin/isSameOrBefore";
 import { DateUtil } from "../../../utils/DateUtil";
+import { BalanceModification } from "../../Amortization/BalanceModification";
 
 dayjs.extend(isSameOrAfter);
 dayjs.extend(isSameOrBefore);
@@ -18,6 +19,7 @@ export interface UsageDetailParams {
   daysLate?: number;
   daysEarly?: number;
   billFullySatisfiedDate?: Dayjs | Date;
+  balanceModification?: BalanceModification;
 }
 
 export class UsageDetail {
@@ -42,6 +44,8 @@ export class UsageDetail {
   daysLate?: number;
   daysEarly?: number;
 
+  _balanceModification?: BalanceModification;
+
   private _billFullySatisfiedDate?: Dayjs;
   jsBillFullySatisfiedDate?: Date;
 
@@ -58,6 +62,33 @@ export class UsageDetail {
 
     if (params.billFullySatisfiedDate) {
       this.billFullySatisfiedDate = params.billFullySatisfiedDate;
+    }
+
+    if (params.balanceModification) {
+      this.balanceModification = params.balanceModification;
+    }
+  }
+
+  get balanceModification(): BalanceModification | undefined {
+    return this._balanceModification;
+  }
+
+  set balanceModification(value: BalanceModification | undefined) {
+    // check if the balance modification is already set
+    if (value && this._balanceModification) {
+      if (value.id !== this._balanceModification.id) {
+        throw new Error("Balance modification is already set and cannot be changed");
+      }
+    }
+    if (value) {
+      // ensure that instance is correct, otherwise send it through the constructor
+      if (value instanceof BalanceModification) {
+        this._balanceModification = value;
+      } else {
+        this._balanceModification = new BalanceModification(value);
+      }
+    } else {
+      this._balanceModification = undefined;
     }
   }
 

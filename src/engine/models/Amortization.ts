@@ -98,6 +98,7 @@ export interface AmortizationParams {
   termInterestAmountOverride?: TermInterestAmountOverrides;
   termInterestRateOverride?: TermInterestRateOverrides;
   acceptableRateVariance?: number | Decimal; // if not set  is used
+  accrueInterestAfterEndDate?: boolean;
 }
 
 export type BillingModel = "amortized" | "dailySimpleInterest";
@@ -228,6 +229,7 @@ export class Amortization {
   private _acceptableRateVariance: Decimal = Amortization.DEFAULT_ACCEPTABLE_RATE_VARIANCE;
   private _versionId: string = uuidv4();
   private _dateChanged: Dayjs = dayjs();
+  private _accrueInterestAfterEndDate: boolean = false;
 
   constructor(params: AmortizationParams) {
     this._inputParams = cloneDeep(params);
@@ -365,13 +367,25 @@ export class Amortization {
       this.dueBillDays = params.dueBillDays;
     }
 
+    if (params.accrueInterestAfterEndDate !== undefined) {
+      this.accrueInterestAfterEndDate = params.accrueInterestAfterEndDate;
+    }
+
     // validate the schedule periods and rates
 
-    this.generateSchedule();
+    this.calculateAmortizationPlan();
 
     this.verifySchedulePeriods();
     // this.validateRatesSchedule();
     this.updateJsValues();
+  }
+
+  set accrueInterestAfterEndDate(value: boolean) {
+    this._accrueInterestAfterEndDate = value;
+  }
+
+  get accrueInterestAfterEndDate(): boolean {
+    return this._accrueInterestAfterEndDate;
   }
 
   get versionId(): string {
@@ -395,6 +409,9 @@ export class Amortization {
     return this._acceptableRateVariance;
   }
 
+  runGarbageCollection() {
+    this.balanceModifications.removeMarkedForRemoval();
+  }
   /**
    * JS values are primarily to assist with Angular bindings
    * to simplify the process of updating the UI when the model changes.
@@ -1789,7 +1806,7 @@ export class Amortization {
    * Prints the amortization schedule to the console.
    */
   printShortAmortizationSchedule(): void {
-    const amortization = this.generateSchedule();
+    const amortization = this.calculateAmortizationPlan();
     console.table(
       amortization.entries.map((row) => {
         return {
@@ -1823,7 +1840,7 @@ export class Amortization {
    * Prints the amortization schedule to the console.
    */
   printAmortizationSchedule(): void {
-    const amortization = this.generateSchedule();
+    const amortization = this.calculateAmortizationPlan();
     console.table(
       amortization.entries.map((row) => {
         return {
@@ -2031,7 +2048,7 @@ export class Amortization {
 
   public jsGenerateSchedule(): AmortizationEntries {
     this.updateModelValues();
-    const newSchedule = this.generateSchedule();
+    const newSchedule = this.calculateAmortizationPlan();
     this.updateJsValues();
     return newSchedule;
   }
@@ -2052,7 +2069,7 @@ export class Amortization {
    * Generates the amortization schedule.
    * @returns An array of AmortizationSchedule entries.
    */
-  public generateSchedule(): AmortizationEntries {
+  public calculateAmortizationPlan(): AmortizationEntries {
     this.balanceModifications.resetUsedAmounts();
     this.resetUsageDetails();
 
@@ -2569,6 +2586,12 @@ export class Amortization {
       console.warn("could not find active period for accrued interest");
       return Currency.zero;
     }
+
+    // if active period end date is before passed in date
+    // we will just return the accrued interest for the active period
+    if (this.accrueInterestAfterEndDate === false && activePeriod.periodEndDate.isBefore(date)) {
+      return activePeriod.accruedInterestForPeriod;
+    }
     // next we get amortization entries with same period number and end date is same or before active period
     // const amortizationEntries = this.repaymentSchedule.entries.filter((entry) => entry.term === activePeriod.term && entry.periodEndDate.isSameOrBefore(activePeriod.periodStartDate));
     // sum up accrued interest for those entries
@@ -2649,6 +2672,7 @@ export class Amortization {
       repaymentSchedule: this.repaymentSchedule.json,
       calendars: this.calendars.json,
       acceptableRateVariance: this.acceptableRateVariance.toNumber(),
+      accrueInterestAfterEndDate: this.accrueInterestAfterEndDate,
     };
   }
 

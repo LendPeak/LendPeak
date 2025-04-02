@@ -444,6 +444,30 @@
           </p-popover>
         </div>
 
+        <!-- Allow Rates Above 100% -->
+        <div class="field-checkbox">
+          <p-checkbox
+            [(ngModel)]="lendPeak.amortization.accrueInterestAfterEndDate"
+            name="accrueInterestAfterEndDate"
+            binary="true"
+            (ngModelChange)="onInputChange()"
+          ></p-checkbox>
+          <label for="accrueInterestAfterEndDate">
+            Accrue Interest After End Date
+            <i
+              class="pi pi-info-circle tooltip-icon"
+              (click)="showTooltip($event, accrueInterestAfterEndDateTooltip)"
+            ></i>
+          </label>
+          <!-- Popover replacing OverlayPanel -->
+          <p-popover #accrueInterestAfterEndDateTooltip>
+            <ng-template pTemplate="content">
+              If Bill remains unpaid after the end date, interest will continue
+              to accrue on owed principal
+            </ng-template>
+          </p-popover>
+        </div>
+
         <!-- Unbilled Interest Flush Method -->
         <div class="field">
           <label for="flushMethod">

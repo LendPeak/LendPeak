@@ -218,13 +218,7 @@ export class LendPeak {
       throw error;
     }
 
-    this.generateBills();
     this.applyPayments();
-
-    if (this.balanceModificationChanged === true) {
-      this.balanceModificationChanged = false;
-      this.calc();
-    }
   }
 
   cleanupBalanceModifications() {
@@ -265,73 +259,55 @@ export class LendPeak {
     this.amortization.balanceModifications = filteredBalanceModifications;
   }
 
+  /*
+  NOTE FOR TOMORROW:
+
+  payment application and re-amortization needs to have a state where every balance modification must add it to amortization, 
+  reamortize the loan with that first modification, regenerate bills, apply payments, and then check if there are any new balance modifications
+  if there are, then reamortize the loan again, regenerate bills, apply payments, and repeat until there are no new balance modifications
+  */
   applyPayments() {
+    console.log("running apply payments");
     this.depositRecords.clearHistory();
+    // now we will remove system generated balance modifications, since we are clearing the history
+    this.amortization.runGarbageCollection();
     this.generateBills();
 
     const allocationStrategy = this.allocationStrategy;
     const paymentPriority = this.paymentPriority;
-    const paymentApp = new PaymentApplication(this.bills, this.depositRecords, {
-      allocationStrategy,
-      paymentPriority,
+    const paymentApp = new PaymentApplication({
+      amortization: this.amortization,
+      bills: this.bills,
+      deposits: this.depositRecords,
+      options: {
+        allocationStrategy,
+        paymentPriority,
+      },
     });
     this.paymentApplicationResults = paymentApp.processDeposits(this.currentDate);
 
-    this.paymentApplicationResults.forEach((result) => {
-      // Here's where we find the deposit, storing it in a local `deposit` variable
-      const deposit = this.depositRecords.all.find((d) => d.id === result.depositId);
-      if (!deposit) {
-        console.error("No deposit found for", result.depositId);
-        return;
-      }
+    // this.paymentApplicationResults.forEach((result) => {
+    //   result.allocations.forEach((allocation) => {
+    //     const bill = this.bills.all.find((b) => b.id === allocation.billId);
+    //     if (!bill) return;
 
-      // Handle balance modification etc.
-      if (result.balanceModification) {
-        //this.amortization.balanceModifications.removeBalanceModificationByDepositId(deposit.id);
+    //     bill.paymentDetails = bill.paymentDetails || [];
+    //     bill.paymentDetails.push(
+    //       new BillPaymentDetail({
+    //         depositId: result.depositId,
+    //         allocatedPrincipal: allocation.allocatedPrincipal,
+    //         allocatedInterest: allocation.allocatedInterest,
+    //         allocatedFees: allocation.allocatedFees,
+    //         date: result.effectiveDate,
+    //       })
+    //     );
+    //   });
+    // });
 
-        // Add the new BM
-        // console.log('Adding balance modification!', result.balanceModification);
-        const addedNewBalanceModification = this.amortization.balanceModifications.addBalanceModification(result.balanceModification);
-        if (addedNewBalanceModification) {
-          deposit.balanceModificationId = result.balanceModification.id;
-          this.balanceModificationChanged = true;
-        }
-        // this.balanceModificationChanged = true;
-      } else {
-        // Remove old BMs for this deposit if none returned
-        this.amortization.balanceModifications.removeBalanceModificationByDepositId(deposit.id);
-
-        deposit.balanceModificationId = undefined;
-        // this.balanceModificationChanged = true;
-      }
-
-      // Update deposit's leftover
-      deposit.unusedAmount = result.unallocatedAmount;
-
-      // 4) Populate BillPaymentDetail on each Bill if needed
-      //    (And now `deposit.effectiveDate` is safely in scope)
-      result.allocations.forEach((allocation) => {
-        const bill = this.bills.all.find((b) => b.id === allocation.billId);
-        if (!bill) return;
-
-        bill.paymentDetails = bill.paymentDetails || [];
-        bill.paymentDetails.push(
-          new BillPaymentDetail({
-            depositId: deposit.id,
-            allocatedPrincipal: allocation.allocatedPrincipal,
-            allocatedInterest: allocation.allocatedInterest,
-            allocatedFees: allocation.allocatedFees,
-            date: deposit.effectiveDate,
-          })
-        );
-      });
-    });
-
-    // 5) Mark bills as paid if principalDue, interestDue, feesDue are all zero
-    this.bills.bills = this.bills.all.map((bill) => {
-      bill.isPaid = bill.principalDue.isZero() && bill.interestDue.isZero() && bill.feesDue.isZero();
-      return bill;
-    });
+    this.bills.updateStatus();
+    // for (let balanceModification of this.depositRecords.balanceModifications) {
+    //   this.amortization.balanceModifications.addBalanceModification(balanceModification);
+    // }
   }
 
   addFinancialOpsVersionManager(): LendPeak {
@@ -362,7 +338,10 @@ export class LendPeak {
   }
 
   generateBills() {
-    this.bills = BillGenerator.generateBills({ amortizationSchedule: this.amortization.repaymentSchedule, currentDate: this.currentDate });
+    this.bills = new Bills({
+      amortization: this.amortization,
+      currentDate: this.currentDate,
+    });
   }
 
   setAmortization(amortization?: Amortization) {
@@ -502,7 +481,7 @@ export class LendPeak {
     }
 
     const unusedAmountFromDeposis = this.depositRecords.unusedAmount;
-    dueTotal = dueTotal.subtract(unusedAmountFromDeposis);
+    // dueTotal = dueTotal.subtract(unusedAmountFromDeposis);
 
     // -- 4) Build final results
     const payoffResult: PayoffQuoteResult = {

@@ -59,7 +59,7 @@ export class Bill {
   _originalFeesDue!: Currency;
   _totalDue!: Currency;
   _originalTotalDue!: Currency;
-  isPaid: boolean;
+  _isPaid!: boolean;
   isOpen: boolean;
   isDue: boolean;
   isPastDue: boolean;
@@ -68,6 +68,7 @@ export class Bill {
   private _versionId: string = uuidv4();
   private _dateChanged: Dayjs = dayjs();
   private initialized: boolean = false;
+
   bills?: Bills;
 
   amortizationEntry: AmortizationEntry;
@@ -141,6 +142,20 @@ export class Bill {
 
   get dateChanged(): Dayjs {
     return this._dateChanged;
+  }
+
+  get isPaid(): boolean {
+    return this._isPaid;
+  }
+
+  set isPaid(value: boolean) {
+    this._isPaid = value;
+  }
+
+  updateStatus() {
+    if (this.principalDue.isZero() && this.interestDue.isZero() && this.feesDue.isZero()) {
+      this.isPaid = true;
+    }
   }
 
   versionChanged() {
@@ -224,6 +239,44 @@ export class Bill {
   set totalDue(value: Currency | number) {
     this._totalDue = Currency.of(value);
     this.versionChanged();
+  }
+
+  reducePrincipalDueBy(amount: Currency) {
+    this.principalDue = this.principalDue.subtract(amount);
+    this.reduceTotalDueBy(amount);
+  }
+
+  reduceInterestDueBy(amount: Currency) {
+    this.interestDue = this.interestDue.subtract(amount);
+    this.reduceTotalDueBy(amount);
+  }
+
+  reduceFeesDueBy(amount: Currency) {
+    this.feesDue = this.feesDue.subtract(amount);
+    this.reduceTotalDueBy(amount);
+  }
+
+  private reduceTotalDueBy(amount: Currency) {
+    this.totalDue = this.totalDue.subtract(amount);
+  }
+
+  increasePrincipalDueBy(amount: Currency) {
+    this.principalDue = this.principalDue.add(amount);
+    this.increaseTotalDueBy(amount);
+  }
+
+  increaseInterestDueBy(amount: Currency) {
+    this.interestDue = this.interestDue.add(amount);
+    this.increaseTotalDueBy(amount);
+  }
+
+  increaseFeesDueBy(amount: Currency) {
+    this.feesDue = this.feesDue.add(amount);
+    this.increaseTotalDueBy(amount);
+  }
+
+  private increaseTotalDueBy(amount: Currency) {
+    this.totalDue = this.totalDue.add(amount);
   }
 
   get jsOpenDate(): Date {

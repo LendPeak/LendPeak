@@ -14,7 +14,7 @@ dayjs.extend(isSameOrBefore);
 
 export class BillGenerator {
   static generateBills(params: { amortizationSchedule: AmortizationEntries; currentDate?: Dayjs | Date }): Bills {
-    const bills: Bills = new Bills();
+    const bills: Bills = new Bills({});
     if (!params.currentDate) {
       params.currentDate = dayjs();
     }

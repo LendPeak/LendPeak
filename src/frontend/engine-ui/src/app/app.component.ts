@@ -224,6 +224,11 @@ export class AppComponent implements OnChanges {
     });
   }
 
+  async saveAndReloadLoan() {
+    await this.saveLoan();
+    await this.executeLoadLoan(this.lendPeak.amortization.name);
+  }
+
   // A helper function to avoid repeating code:
   private async saveAndLoadLoan(loanData: {
     loan: Amortization;
@@ -963,7 +968,7 @@ export class AppComponent implements OnChanges {
         this.messageService.add({
           severity: 'success',
           summary: 'Success',
-          detail: `Loan "${loanData.name}" loaded successfully`,
+          detail: `Loan "${loanData.name || loanData.amortization.name}" loaded successfully`,
         });
 
         // Update the URL without navigating
@@ -1118,8 +1123,7 @@ export class AppComponent implements OnChanges {
 
   // Handle deposit updated event (e.g., to recalculate loan details)
   onDepositUpdated() {
-    // this.submitLoan();
-    this.needsRecalc = true;
+    this.submitLoan();
     this.cdr.detectChanges();
   }
 
@@ -1169,8 +1173,12 @@ export class AppComponent implements OnChanges {
     this.lendPeak.currentDate = this.snapshotDate;
 
     try {
+      // console.trace('running calc');
       console.log('running calc on LendPeak', this.lendPeak);
       this.lendPeak.calc();
+
+      const currentStateJson = this.lendPeak.toJSON();
+      this.lendPeak = LendPeak.fromJSON(currentStateJson);
     } catch (error) {
       console.error('Error creating Amortization:', error);
 

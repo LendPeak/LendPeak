@@ -585,6 +585,7 @@ export class Amortization {
   set id(value: string) {
     this.modifiedSinceLastCalculation = true;
     this._id = value;
+    this.jsId = value;
   }
 
   get name(): string {
@@ -595,6 +596,7 @@ export class Amortization {
     this.modifiedSinceLastCalculation = true;
 
     this._name = value;
+    this.jsName = value;
   }
 
   get description(): string {
@@ -605,6 +607,7 @@ export class Amortization {
     this.modifiedSinceLastCalculation = true;
 
     this._description = value;
+    this.jsDescription = value;
   }
 
   get loanAmount(): Currency {

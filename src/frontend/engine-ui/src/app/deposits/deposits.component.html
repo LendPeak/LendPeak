@@ -28,10 +28,10 @@
       <p-divider></p-divider>
       <div class="p-fluid">
         <p-table
-          [hidden]="this.lendPeak.depositRecords.length === 0"
-          [value]="lendPeak.depositRecords.all"
+          *ngIf="this.lendPeak.depositRecords.all.length > 0"
+          [hidden]="this.lendPeak.depositRecords.all.length === 0"
+          [value]="lendPeak.depositRecords._records"
           editMode="cell"
-          dataKey="id"
           class="p-datatable-sm"
           [scrollable]="true"
           scrollHeight="600px"
@@ -138,10 +138,7 @@
               </td>
               <td>{{ deposit.jsClearingDate | date: "MM/dd/yyyy" : "UTC" }}</td>
               <td>
-                {{
-                  (deposit.applyExcessToPrincipal ? 0 : deposit.jsUnusedAmount)
-                    | currency
-                }}
+                {{ deposit.jsUnusedAmount | currency }}
               </td>
               <td>
                 <i

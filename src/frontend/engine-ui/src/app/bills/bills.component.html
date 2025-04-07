@@ -145,7 +145,7 @@
                 class="status-tag"
               ></p-tag>
               <p-tag
-                *ngIf="bill.jsTotalDue == 0"
+                *ngIf="bill.originalTotalDue.isZero()"
                 value="Skip A Pay"
                 severity="secondary"
                 class="status-tag"

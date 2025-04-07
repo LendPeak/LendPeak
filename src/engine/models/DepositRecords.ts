@@ -11,7 +11,7 @@ import { Currency } from "../utils/Currency";
 import { BalanceModification } from "./Amortization/BalanceModification";
 
 export class DepositRecords {
-  private _records: DepositRecord[] = [];
+  _records: DepositRecord[] = [];
   private _modified: boolean = false;
   private _versionId: string = uuidv4();
   private _dateChanged: Dayjs = dayjs();
@@ -176,6 +176,8 @@ export class DepositRecords {
   }
 
   get all(): DepositRecord[] {
+    // console.trace("returning all deposit records");
+    // this.printToConsole();
     return this._records;
   }
 
@@ -198,7 +200,7 @@ export class DepositRecords {
       totalUnused: summary.totalUnused.toNumber(),
     });
     console.table(
-      this.all.map((r) => {
+      this._records.map((r) => {
         return {
           id: r.id,
           amount: r.amount.toNumber(),

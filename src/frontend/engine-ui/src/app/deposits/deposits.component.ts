@@ -7,6 +7,7 @@ import {
   QueryList,
   ElementRef,
   ChangeDetectorRef,
+  OnChanges,
 } from '@angular/core';
 import { DropDownOptionString } from '../models/common.model';
 import { LendPeak } from 'lendpeak-engine/models/LendPeak';
@@ -32,7 +33,7 @@ dayjs.extend(isBetween);
   styleUrls: ['./deposits.component.css'],
   standalone: false,
 })
-export class DepositsComponent {
+export class DepositsComponent implements OnChanges {
   @Input({ required: true }) lendPeak?: LendPeak;
   @Input() currencyOptions: DropDownOptionString[] = [];
   @Input({ required: true }) snapshotDate: Date = new Date();
@@ -90,6 +91,32 @@ export class DepositsComponent {
       this.selectedBillForCard = found;
       this.showBillCardDialog = true;
     }
+  }
+
+  ngOnChanges(event: any) {
+    if (!this.lendPeak) {
+      return;
+    }
+
+    console.log('ngOnChange', event);
+    if (event.lendPeak) {
+      // this.lendPeak = event.lendPeak.currentValue;
+      // if (this.lendPeak) {
+      //   this.lendPeak.depositRecords._records = [
+      //     ...this.lendPeak.depositRecords._records,
+      //   ];
+      //   this.cdr.detectChanges();
+      // }
+    }
+
+    // if (this.lendPeak.depositRecords) {
+    //   this.lendPeak.depositRecords.updateModelValues();
+    //   this.lendPeak.depositRecords.updateJsValues();
+    // }
+    // if (this.lendPeak.bills) {
+    //   this.lendPeak.bills.updateModelValues();
+    //   this.lendPeak.bills.updateJsValues();
+    // }
   }
 
   showBulkEditDialog: boolean = false;
@@ -295,8 +322,6 @@ export class DepositsComponent {
     // we want to rollback any changes made to the deposit data
     // simplest way is to sync model values back to js
     this.selectedAllocationType = 'default';
-    //this.depositData = this.originalDepositData.clone();
-    this.depositUpdated.emit();
   }
 
   saveDeposit() {
@@ -321,9 +346,6 @@ export class DepositsComponent {
       Object.assign(this.selectedDepositForEdit, this.depositData);
     } else {
       this.lendPeak.depositRecords.addRecord(this.depositData);
-      // hack to force table refresh
-      this.lendPeak.depositRecords.records =
-        this.lendPeak.depositRecords.records;
     }
     this.depositActiveUpdated();
     this.showDepositDialog = false;
@@ -332,7 +354,7 @@ export class DepositsComponent {
 
   depositActiveUpdated() {
     this.depositUpdated.emit();
-    this.cdr.detectChanges();
+    //  this.cdr.detectChanges();
   }
 
   onApplyExcessToPrincipalChange(event: any) {

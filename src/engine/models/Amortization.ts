@@ -2115,6 +2115,7 @@ export class Amortization {
 
       // Handle static interest override scenario
       if (staticInterestOverride) {
+        // get last balance including modifications
         const staticInterestOverrideAmount = staticInterestOverride.interestAmount;
 
         // Use the static interest for the entire term plus any deferred interest
@@ -2213,7 +2214,9 @@ export class Amortization {
         }
 
         const balanceBeforePayment = startBalance;
-        const balanceAfterPayment = startBalance.subtract(principal);
+        const balanceAfterPayment = startBalance
+          .subtract(principal)
+          .subtract(loanBalancesInAPeriod[0].modificationAmount.isNegative() ? loanBalancesInAPeriod[0].modificationAmount.abs() : loanBalancesInAPeriod[0].modificationAmount);
 
         this.totalChargedInterestRounded = this.totalChargedInterestRounded.add(dueInterestForTerm);
         this.totalChargedInterestUnrounded = this.totalChargedInterestUnrounded.add(dueInterestForTerm);
@@ -2239,6 +2242,7 @@ export class Amortization {
         //   acceptableRateVariance: staticInterestOverride.acceptableRateVariance,
         //   equivalentAnnualRateVarianceExceeded: equivalentAnnualRateVarianceExceeded,
         // };
+        console.log("loan balance modifications", loanBalancesInAPeriod);
 
         schedule.addEntry(
           new AmortizationEntry({

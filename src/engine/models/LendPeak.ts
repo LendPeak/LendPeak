@@ -159,7 +159,7 @@ export class LendPeak {
     }
 
     if (this._bills.all.length === 0) {
-      console.trace("bills are being set to zero");
+      console.info("bills are being set to zero");
     }
   }
 

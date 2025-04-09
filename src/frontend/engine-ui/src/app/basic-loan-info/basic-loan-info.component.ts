@@ -27,9 +27,7 @@ export class BasicLoanInfoComponent {
   enableFirstPaymentDate = false;
   enableEndDate = false;
 
-  ngOnChanges(changes: SimpleChanges): void {
-
-  }
+  ngOnChanges(changes: SimpleChanges): void {}
 
   showTooltip(event: Event, tooltipRef: Popover) {
     // Same usage as OverlayPanel

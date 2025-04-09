@@ -48,7 +48,7 @@ export class BillsComponent implements OnChanges, AfterViewInit {
   ngOnChanges(event: any): void {
     if (event.lendPeak && event.lendPeak.currentValue) {
       this.lendPeak = event.lendPeak.currentValue;
-      console.log('lendPeak in bills', this.lendPeak);
+      //  console.log('lendPeak in bills', this.lendPeak);
     }
   }
 

@@ -97,26 +97,6 @@ export class DepositsComponent implements OnChanges {
     if (!this.lendPeak) {
       return;
     }
-
-    console.log('ngOnChange', event);
-    if (event.lendPeak) {
-      // this.lendPeak = event.lendPeak.currentValue;
-      // if (this.lendPeak) {
-      //   this.lendPeak.depositRecords._records = [
-      //     ...this.lendPeak.depositRecords._records,
-      //   ];
-      //   this.cdr.detectChanges();
-      // }
-    }
-
-    // if (this.lendPeak.depositRecords) {
-    //   this.lendPeak.depositRecords.updateModelValues();
-    //   this.lendPeak.depositRecords.updateJsValues();
-    // }
-    // if (this.lendPeak.bills) {
-    //   this.lendPeak.bills.updateModelValues();
-    //   this.lendPeak.bills.updateJsValues();
-    // }
   }
 
   showBulkEditDialog: boolean = false;

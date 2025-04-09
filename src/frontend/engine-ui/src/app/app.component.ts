@@ -1174,7 +1174,7 @@ export class AppComponent implements OnChanges {
 
     try {
       // console.trace('running calc');
-      console.log('running calc on LendPeak', this.lendPeak);
+      //  console.log('running calc on LendPeak', this.lendPeak);
       this.lendPeak.calc();
 
       const currentStateJson = this.lendPeak.toJSON();

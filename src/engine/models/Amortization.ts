@@ -411,6 +411,7 @@ export class Amortization {
 
   runGarbageCollection() {
     this.balanceModifications.removeMarkedForRemoval();
+    this.calculateAmortizationPlan();
   }
   /**
    * JS values are primarily to assist with Angular bindings
@@ -1832,6 +1833,7 @@ export class Amortization {
           daysInPeriod: row.daysInPeriod,
           startBalance: row.startBalance.getRoundedValue(this.roundingPrecision).toNumber(),
           endBalance: row.endBalance.getRoundedValue(this.roundingPrecision).toNumber(),
+          BalanceModification: row.balanceModificationAmount.toNumber(),
           // unbilledInterestDueToRounding: row.unbilledInterestDueToRounding.toNumber(), // Include unbilled interest due to rounding in the printed table
           //  metadata: JSON.stringify(row.metadata), // Include metadata in the printed table
         };
@@ -2242,7 +2244,7 @@ export class Amortization {
         //   acceptableRateVariance: staticInterestOverride.acceptableRateVariance,
         //   equivalentAnnualRateVarianceExceeded: equivalentAnnualRateVarianceExceeded,
         // };
-        console.log("loan balance modifications", loanBalancesInAPeriod);
+        // console.log("loan balance modifications", loanBalancesInAPeriod);
 
         schedule.addEntry(
           new AmortizationEntry({
@@ -2636,6 +2638,51 @@ export class Amortization {
    */
   private round(value: Currency): Currency {
     return value.round(this.roundingPrecision, this.roundingMethod);
+  }
+
+  get compactJSON() {
+    return {
+      id: this.id,
+      name: this.name,
+      description: this.description,
+      loanAmount: this.loanAmount.toNumber(),
+      originationFee: this.originationFee.toNumber(),
+      totalLoanAmount: this.totalLoanAmount.toNumber(),
+      annualInterestRate: this.annualInterestRate.toString(),
+      term: this.term,
+      hasCustomPreBillDays: this.hasCustomPreBillDays,
+      preBillDays: this.preBillDays.json,
+      hasCustomBillDueDays: this.hasCustomBillDueDays,
+      dueBillDays: this.dueBillDays.json,
+      defaultPreBillDaysConfiguration: this.defaultPreBillDaysConfiguration,
+      defaultBillDueDaysAfterPeriodEndConfiguration: this.defaultBillDueDaysAfterPeriodEndConfiguration,
+      startDate: this.startDate.toDate(),
+      endDate: this.endDate.toDate(),
+      payoffDate: this.payoffDate?.toDate(),
+      hasCustomEndDate: this.hasCustomEndDate,
+      equitedMonthlyPayment: this.equitedMonthlyPayment.toNumber(),
+      hasCustomEquitedMonthlyPayment: this.hasCustomEquitedMonthlyPayment,
+      roundingMethod: this.roundingMethod,
+      flushUnbilledInterestRoundingErrorMethod: this.flushUnbilledInterestRoundingErrorMethod,
+      roundingPrecision: this.roundingPrecision,
+      flushThreshold: this.flushThreshold.toNumber(),
+      periodsSchedule: this.periodsSchedule.json,
+      rateSchedules: this.rateSchedules.json,
+      allowRateAbove100: this.allowRateAbove100,
+      termPaymentAmountOverride: this.termPaymentAmountOverride.json,
+      termInterestAmountOverride: this.termInterestAmountOverride.json,
+      termPeriodDefinition: this.termPeriodDefinition,
+      changePaymentDates: this.changePaymentDates.json,
+      balanceModifications: this.balanceModifications.json,
+      perDiemCalculationType: this.perDiemCalculationType,
+      billingModel: this.billingModel,
+      feesPerTerm: this.feesPerTerm.json,
+      feesForAllTerms: this.feesForAllTerms.json,
+      repaymentSchedule: this.repaymentSchedule.json,
+      calendars: this.calendars.json,
+      acceptableRateVariance: this.acceptableRateVariance.toNumber(),
+      accrueInterestAfterEndDate: this.accrueInterestAfterEndDate,
+    };
   }
 
   get json() {

@@ -26,6 +26,7 @@ export class BalanceModifications {
           return new BalanceModification(bm);
         }
       })
+      .filter((bm) => bm.amount.greaterThan(0) && bm.isSystemModification !== true)
       .sort((a, b) => {
         return a.date.diff(b.date);
       });

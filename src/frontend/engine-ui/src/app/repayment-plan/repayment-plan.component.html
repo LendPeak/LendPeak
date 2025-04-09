@@ -132,14 +132,12 @@
                   styleClass="mr-2"
                   pTooltip="Balance {{
                     rowData.balanceModificationAmount.greaterThan(0)
-                      ? 'decreased'
-                      : 'increased'
+                      ? 'increased'
+                      : 'decreased'
                   }} by {{
                     (rowData.balanceModificationAmount.greaterThan(0)
                       ? rowData.balanceModificationAmount.toNumber()
-                      : rowData.balanceModificationAmount
-                          .multiply(-1)
-                          .toNumber()
+                      : rowData.balanceModificationAmount.abs().toNumber()
                     ) | currency
                   }}"
                   tooltipPosition="top"

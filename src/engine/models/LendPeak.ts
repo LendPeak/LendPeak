@@ -149,10 +149,17 @@ export class LendPeak {
 
   set bills(value: Bills) {
     // check type and inflate if necessary
-    if (!(value instanceof Bills)) {
-      this._bills = new Bills(value);
+
+    if (!(value instanceof Bills) && value !== undefined && Array.isArray(value)) {
+      this._bills = new Bills({
+        bills: value,
+      });
     } else {
       this._bills = value;
+    }
+
+    if (this._bills.all.length === 0) {
+      console.trace("bills are being set to zero");
     }
   }
 
@@ -348,7 +355,11 @@ export class LendPeak {
     if (!amortization) {
       this.amortization = new Amortization(LendPeak.DEFAULT_AMORTIZATION_PARAMS);
     } else {
-      this.amortization = amortization;
+      if (amortization instanceof Amortization) {
+        this.amortization = amortization;
+      } else {
+        this.amortization = new Amortization(amortization);
+      }
     }
   }
 
@@ -396,7 +407,20 @@ export class LendPeak {
       }
     }
 
-    return new LendPeak(params);
+    const lendPeak = new LendPeak(params);
+    lendPeak.calc();
+    return lendPeak;
+  }
+
+  printPayoffQuote() {
+    console.table({
+      duePrincipal: this.payoffQuote.duePrincipal.toNumber(),
+      dueInterest: this.payoffQuote.dueInterest.toNumber(),
+      dueFees: this.payoffQuote.dueFees.toNumber(),
+      dueTotal: this.payoffQuote.dueTotal.toNumber(),
+      unusedAmountFromDeposis: this.payoffQuote.unusedAmountFromDeposis.toNumber(),
+      amortizationVersionId: this.amortization.versionId,
+    });
   }
 
   /**
@@ -513,6 +537,22 @@ export class LendPeak {
       bills: this.bills.json,
       amortizationVersionManager: this.amortizationVersionManager?.toJSON(),
       financialOpsVersionManager: this.financialOpsVersionManager?.toJSON(),
+      allocationStrategy: PaymentApplication.getAllocationStrategyFromClass(this.allocationStrategy),
+      paymentPriority: this.paymentPriority,
+    };
+  }
+
+  get compactJSON() {
+    return this.toCompactJSON();
+  }
+
+  toCompactJSON() {
+    return {
+      amortization: this.amortization.json,
+      depositRecords: this.depositRecords.json,
+      bills: this.bills.json,
+      //amortizationVersionManager: this.amortizationVersionManager?.toJSON(),
+      //financialOpsVersionManager: this.financialOpsVersionManager?.toJSON(),
       allocationStrategy: PaymentApplication.getAllocationStrategyFromClass(this.allocationStrategy),
       paymentPriority: this.paymentPriority,
     };

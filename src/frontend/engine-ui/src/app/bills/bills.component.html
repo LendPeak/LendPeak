@@ -15,6 +15,7 @@
       </p-toolbar>
 
       <p-table
+        *ngIf="lendPeak.bills"
         [value]="lendPeak.bills.all"
         sortField="dueDate"
         [scrollable]="true"

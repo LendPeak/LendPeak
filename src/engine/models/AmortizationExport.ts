@@ -256,7 +256,17 @@ export class AmortizationExport {
             break;
 
           case "balanceModifications":
-            serializedValue = serializeArray(value as BalanceModification[], (mod) => mod.toCode());
+            // check if values are array of BalanceModification objects, if not
+            // inflate it into an object
+            for (let v of value) {
+              if (!(v instanceof BalanceModification)) {
+                v = new BalanceModification(v);
+              }
+            }
+            serializedValue = serializeArray(value as BalanceModification[], (mod) => {
+              // print instance type for mod
+              return mod.toCode();
+            });
             break;
 
           // Handle other complex types as needed

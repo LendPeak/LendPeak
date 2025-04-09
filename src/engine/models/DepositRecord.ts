@@ -62,9 +62,6 @@ export class DepositRecord {
   private _applyExcessAtTheEndOfThePeriod: boolean = false;
   jsApplyExcessAtTheEndOfThePeriod?: boolean = false;
 
-  private _balanceModificationId?: string;
-  jsBalanceModificationId?: string;
-
   private _versionId: string = uuidv4();
   private _dateChanged: Dayjs = dayjs();
   private initialized = false;
@@ -95,7 +92,6 @@ export class DepositRecord {
     applyExcessAtTheEndOfThePeriod?: boolean;
     usageDetails?: UsageDetail[] | any;
     unusedAmount?: Currency | number;
-    balanceModificationId?: string;
     metadata?: DepositMetadata;
     active?: boolean;
     staticAllocation?: StaticAllocation | JsStaticAllocation;
@@ -143,7 +139,6 @@ export class DepositRecord {
     }
     this.usageDetails = params.usageDetails || [];
     this.unusedAmount = params.unusedAmount ? params.unusedAmount : 0;
-    this.balanceModificationId = params.balanceModificationId;
 
     if (params.staticAllocation) {
       this.staticAllocation = params.staticAllocation;
@@ -199,16 +194,6 @@ export class DepositRecord {
     return new DepositRecord(json);
   }
 
-  get balanceModifications(): BalanceModification[] {
-    const balanceModifications: BalanceModification[] = [];
-    for (let usageDetail of this.usageDetails) {
-      if (usageDetail.balanceModification) {
-        balanceModifications.push(usageDetail.balanceModification);
-      }
-    }
-    return balanceModifications;
-  }
-
   addUsageDetail(detail: UsageDetail): void {
     // lets ignore if all amounts are zeros
     if (detail.allocatedPrincipal.isZero() && detail.allocatedInterest.isZero() && detail.allocatedFees.isZero()) {
@@ -245,7 +230,6 @@ export class DepositRecord {
   clearHistory(): void {
     this.resetUsageDetails();
     this.unusedAmount = Currency.Zero();
-    this.balanceModificationId = undefined;
     this.versionChanged();
   }
 
@@ -391,10 +375,6 @@ export class DepositRecord {
     return this._unusedAmount;
   }
 
-  get balanceModificationId(): string | undefined {
-    return this._balanceModificationId;
-  }
-
   get metadata(): DepositMetadata | undefined {
     return this._metadata;
   }
@@ -444,12 +424,6 @@ export class DepositRecord {
     this.versionChanged();
   }
 
-  set balanceModificationId(value: string | undefined) {
-    this._balanceModificationId = value;
-    this.jsBalanceModificationId = value;
-    this.versionChanged();
-  }
-
   removeStaticAllocation(): void {
     this._staticAllocation = undefined;
     this.versionChanged();
@@ -469,11 +443,14 @@ export class DepositRecord {
     this.applyExcessToPrincipal = this.jsApplyExcessToPrincipal || false;
     this.excessAppliedDate = this.jsExcessAppliedDate ? dayjs(this.jsExcessAppliedDate) : undefined;
     this.unusedAmount = Currency.of(this.jsUnusedAmount || 0);
-    this.balanceModificationId = this.jsBalanceModificationId;
     if (this.staticAllocation) {
       this.staticAllocation.updateModelValues();
     }
     this.applyExcessAtTheEndOfThePeriod = this.jsApplyExcessAtTheEndOfThePeriod || false;
+  }
+
+  get balanceModifications(): BalanceModification[] {
+    return this.usageDetails.filter((detail) => detail.balanceModification).map((detail) => detail.balanceModification!);
   }
 
   updateJsValues(): void {
@@ -490,7 +467,6 @@ export class DepositRecord {
     this.jsApplyExcessToPrincipal = this.applyExcessToPrincipal;
     this.jsExcessAppliedDate = this.excessAppliedDate?.toDate();
     this.jsUnusedAmount = this.unusedAmount.toNumber();
-    this.jsBalanceModificationId = this.balanceModificationId;
     if (this.staticAllocation) {
       this.staticAllocation.updateJsValues();
     }
@@ -550,7 +526,6 @@ export class DepositRecord {
         return detail.json;
       }),
       unusedAmount: this.unusedAmount.toNumber(),
-      balanceModificationId: this.balanceModificationId,
       metadata: this.metadata,
       active: this.active,
       staticAllocation: this.staticAllocation ? this.staticAllocation.json : undefined,

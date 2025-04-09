@@ -7,6 +7,7 @@ import {
   QueryList,
   ElementRef,
   AfterViewInit,
+  OnChanges,
 } from '@angular/core';
 import { LendPeak } from 'lendpeak-engine/models/LendPeak';
 import { Bill } from 'lendpeak-engine/models/Bill';
@@ -21,7 +22,7 @@ import { BillPaymentDetail } from 'lendpeak-engine/models/Bill/BillPaymentDetail
   styleUrls: ['./bills.component.css'],
   standalone: false,
 })
-export class BillsComponent implements AfterViewInit {
+export class BillsComponent implements OnChanges, AfterViewInit {
   @Input({ required: true }) lendPeak?: LendPeak;
   @Input() snapshotDate: Date = new Date();
 
@@ -42,6 +43,13 @@ export class BillsComponent implements AfterViewInit {
   ngAfterViewInit(): void {
     // The rows should be available after the view initializes.
     // If bills are loaded asynchronously later, consider calling scrollToLastDueBill after bills change.
+  }
+
+  ngOnChanges(event: any): void {
+    if (event.lendPeak && event.lendPeak.currentValue) {
+      this.lendPeak = event.lendPeak.currentValue;
+      console.log('lendPeak in bills', this.lendPeak);
+    }
   }
 
   viewPaymentDetails(bill: Bill) {

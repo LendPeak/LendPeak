@@ -136,6 +136,7 @@ export class Bill {
     this.versionChanged();
   }
 
+
   get versionId(): string {
     return this._versionId;
   }

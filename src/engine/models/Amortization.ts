@@ -430,7 +430,7 @@ export class Amortization {
     this.jsLoanAmount = this.loanAmount.toNumber();
     this.jsOriginationFee = this.originationFee.toNumber();
     this.jsTerm = this.term;
-    this.jsStartDate = this.startDate.toDate();
+    this.jsStartDate = DateUtil.normalizeDateToJsDate(this.startDate);
     this.jsAnnualInterestRate = this.annualInterestRate.toNumber();
     this.jsTotalChargedInterestRounded = this.totalChargedInterestRounded.toNumber();
     this.jsTotalChargedInterestUnrounded = this.totalChargedInterestUnrounded.toNumber();
@@ -441,7 +441,7 @@ export class Amortization {
     this.jsFlushThreshold = this.flushThreshold.toNumber();
     this.jsHasCustomPeriodsSchedule = this.hasCustomPeriodsSchedule;
     this.jsAllowRateAbove100 = this.allowRateAbove100;
-    this.jsFirstPaymentDate = this.firstPaymentDate.toDate();
+    this.jsFirstPaymentDate = DateUtil.normalizeDateToJsDate(this.firstPaymentDate);
     this.jsEarlyRepayment = this.earlyRepayment;
     this.jsEquitedMonthlyPayment = this.equitedMonthlyPayment.toNumber();
     this.jsHasCustomEquitedMonthlyPayment = this.hasCustomEquitedMonthlyPayment;
@@ -449,10 +449,12 @@ export class Amortization {
     this.jsHasCustomBillDueDays = this.hasCustomBillDueDays;
     this.jshasCustomFirstPaymentDate = this.hasCustomFirstPaymentDate;
     this.jsHasCustomEndDate = this.hasCustomEndDate;
-    this.jsEndDate = this.endDate.toDate();
+    this.jsEndDate = DateUtil.normalizeDateToJsDate(this.endDate);
     this.jsDefaultPreBillDaysConfiguration = this.defaultPreBillDaysConfiguration;
     this.jsDefaultBillDueDaysAfterPeriodEndConfiguration = this.defaultBillDueDaysAfterPeriodEndConfiguration;
-    this.jsPayoffDate = this.payoffDate?.toDate();
+    if (this.payoffDate) {
+      this.jsPayoffDate = DateUtil.normalizeDateToJsDate(this.payoffDate);
+    }
   }
 
   updateModelValues() {

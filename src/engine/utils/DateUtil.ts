@@ -22,4 +22,12 @@ export class DateUtil {
       return dayjs.utc().startOf("day");
     }
   }
+
+  // function returns Date object but discards the time part and timezone
+  // ensuring that that the date is the same in all timezones.
+  // this helps in UI to display the same date in all timezones
+  // and it returns regular javascript Date
+  static normalizeDateToJsDate(date: dayjs.Dayjs): Date {
+    return new Date(date.year(), date.month(), date.date());
+  }
 }

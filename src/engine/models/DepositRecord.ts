@@ -293,8 +293,9 @@ export class DepositRecord {
   }
 
   set effectiveDate(value: Dayjs | Date | string | undefined) {
-    this._effectiveDate = DateUtil.normalizeDate(value);
-    this.jsEffectiveDate = this._effectiveDate.toDate();
+    const normalizedDate = DateUtil.normalizeDate(value);
+    this._effectiveDate = normalizedDate;
+    this.jsEffectiveDate = DateUtil.normalizeDateToJsDate(normalizedDate);
     this.versionChanged();
   }
 
@@ -303,8 +304,10 @@ export class DepositRecord {
   }
 
   set clearingDate(value: Dayjs | Date | undefined) {
-    this._clearingDate = DateUtil.normalizeDate(value);
-    this.jsClearingDate = this._clearingDate.toDate();
+    const normalizedDate = DateUtil.normalizeDate(value);
+
+    this._clearingDate = normalizedDate;
+    this.jsClearingDate = DateUtil.normalizeDateToJsDate(normalizedDate);
     this.versionChanged();
   }
 
@@ -345,8 +348,9 @@ export class DepositRecord {
   }
 
   set excessAppliedDate(value: Dayjs | undefined) {
-    this._excessAppliedDate = DateUtil.normalizeDate(value);
-    this.jsExcessAppliedDate = this._excessAppliedDate.toDate();
+    const normalizedDate = DateUtil.normalizeDate(value);
+    this._excessAppliedDate = normalizedDate;
+    this.jsExcessAppliedDate = DateUtil.normalizeDateToJsDate(normalizedDate);
     this.versionChanged();
   }
 

@@ -2,6 +2,8 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { MenuItem } from 'primeng/api';
 import dayjs from 'dayjs';
+import { LocalDate, ChronoUnit } from '@js-joda/core';
+import { DateUtil } from 'lendpeak-engine/utils/DateUtil';
 
 @Component({
   selector: 'app-toolbar',
@@ -16,7 +18,7 @@ export class ToolbarComponent {
   @Input() toolbarActions: MenuItem[] = [];
 
   isToday(date: Date): boolean {
-    return dayjs(date).isSame(dayjs(), 'day');
+    return DateUtil.normalizeDate(date).isEqual(DateUtil.today());
   }
 
   onSnapshotDateChange(date: Date) {

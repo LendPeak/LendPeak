@@ -10,11 +10,13 @@ import {
   OnChanges,
 } from '@angular/core';
 import { LendPeak } from 'lendpeak-engine/models/LendPeak';
+import { DateUtil } from 'lendpeak-engine/utils/DateUtil';
 import { Bill } from 'lendpeak-engine/models/Bill';
 import { Bills } from 'lendpeak-engine/models/Bills';
 import { DepositRecords } from 'lendpeak-engine/models/DepositRecords';
 import { DepositRecord } from 'lendpeak-engine/models/DepositRecord';
 import { BillPaymentDetail } from 'lendpeak-engine/models/Bill/BillPaymentDetail';
+import { LocalDate, ZoneId } from '@js-joda/core';
 
 @Component({
   selector: 'app-bills',
@@ -80,7 +82,7 @@ export class BillsComponent implements OnChanges, AfterViewInit {
     }
     // Filter unpaid due bills
     const dueBills = this.lendPeak.bills.all.filter((bill) =>
-      bill.dueDate.isBefore(this.snapshotDate, 'day'),
+      bill.dueDate.isBefore(DateUtil.normalizeDate(this.snapshotDate)),
     );
 
     if (dueBills.length === 0) {
@@ -89,7 +91,7 @@ export class BillsComponent implements OnChanges, AfterViewInit {
     }
 
     // Sort to find the last due bill by date
-    dueBills.sort((a, b) => a.dueDate.diff(b.dueDate));
+    dueBills.sort((a, b) => a.dueDate.compareTo(b.dueDate));
     const lastDueBill = dueBills[dueBills.length - 1];
 
     this.highlightedBillId = lastDueBill.id;

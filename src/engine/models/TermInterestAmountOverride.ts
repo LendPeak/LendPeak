@@ -4,6 +4,7 @@ import dayjs, { Dayjs } from "dayjs";
 import isSameOrAfter from "dayjs/plugin/isSameOrAfter";
 import isSameOrBefore from "dayjs/plugin/isSameOrBefore";
 import isBetween from "dayjs/plugin/isBetween";
+import { LocalDate, ChronoUnit } from "@js-joda/core";
 
 dayjs.extend(isSameOrAfter);
 dayjs.extend(isSameOrBefore);
@@ -13,7 +14,7 @@ export interface TermInterestAmountOverrideParams {
   termNumber: number;
   interestAmount: Currency | number;
   acceptableRateVariance?: number;
-  date?: Dayjs | Date;
+  date?: LocalDate | Date | string;
   active?: boolean;
 }
 
@@ -30,7 +31,7 @@ export class TermInterestAmountOverride {
   private _acceptableRateVariance = 0.01; // 1%
   jsAcceptableRateVariance = 0.01; // 1%
 
-  _date?: Dayjs;
+  _date?: LocalDate;
   jsDate?: Date;
 
   constructor(params: TermInterestAmountOverrideParams) {
@@ -73,14 +74,14 @@ export class TermInterestAmountOverride {
     this.jsTermNumber = value;
   }
 
-  get date(): Dayjs | undefined {
+  get date(): LocalDate | undefined {
     return this._date;
   }
 
-  set date(value: Dayjs | Date | string | undefined) {
+  set date(value: LocalDate | Date | string | undefined) {
     if (value) {
       this._date = DateUtil.normalizeDate(value);
-      this.jsDate = this._date.toDate();
+      this.jsDate = DateUtil.normalizeDateToJsDate(this._date);
     } else {
       this._date = undefined;
       this.jsDate = undefined;
@@ -107,7 +108,11 @@ export class TermInterestAmountOverride {
   updateJsValues(): void {
     this.jsTermNumber = this.termNumber;
     this.jsInterestAmount = this.interestAmount.toNumber();
-    this.jsDate = this.date?.toDate();
+    if (this.date) {
+      this.jsDate = DateUtil.normalizeDateToJsDate(this.date);
+    } else {
+      this.jsDate = undefined;
+    }
     this.jsActive = this.active;
     this.jsAcceptableRateVariance = this.acceptableRateVariance;
   }
@@ -117,7 +122,7 @@ export class TermInterestAmountOverride {
       termNumber: this.termNumber,
       interestAmount: this.interestAmount.toNumber(),
       acceptableRateVariance: this.acceptableRateVariance,
-      date: this.date?.toDate(),
+      date: this.date?.toString(),
       active: this.active,
     };
   }

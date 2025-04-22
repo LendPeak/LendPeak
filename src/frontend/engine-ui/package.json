@@ -20,6 +20,7 @@
     "@angular/platform-browser": "^19.0.6",
     "@angular/platform-browser-dynamic": "^19.0.6",
     "@angular/router": "^19.0.6",
+    "@js-joda/core": "^5.6.5",
     "@primeng/themes": "^19.0.5",
     "angular-gtag": "^1.0.4",
     "dayjs": "^1.11.13",

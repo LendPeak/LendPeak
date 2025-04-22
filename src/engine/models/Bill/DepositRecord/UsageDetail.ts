@@ -1,24 +1,19 @@
-import dayjs, { Dayjs } from "dayjs";
+import { LocalDate } from "@js-joda/core";
 import { Currency } from "../../../utils/Currency";
-import isSameOrAfter from "dayjs/plugin/isSameOrAfter";
-import isSameOrBefore from "dayjs/plugin/isSameOrBefore";
-import { DateUtil } from "../../../utils/DateUtil";
 import { BalanceModification } from "../../Amortization/BalanceModification";
-
-dayjs.extend(isSameOrAfter);
-dayjs.extend(isSameOrBefore);
+import { DateUtil } from "../../../utils/DateUtil";
 
 export interface UsageDetailParams {
   billId: string;
   period: number;
-  billDueDate: Dayjs | Date;
+  billDueDate: LocalDate | Date | string;
   allocatedPrincipal: Currency | number;
   allocatedInterest: Currency | number;
   allocatedFees: Currency | number;
-  date: Dayjs | Date;
+  date: LocalDate | Date | string;
   daysLate?: number;
   daysEarly?: number;
-  billFullySatisfiedDate?: Dayjs | Date;
+  billFullySatisfiedDate?: LocalDate | Date | string;
   balanceModification?: BalanceModification;
 }
 
@@ -26,7 +21,7 @@ export class UsageDetail {
   billId: string;
   period: number;
 
-  _billDueDate!: Dayjs;
+  _billDueDate!: LocalDate;
   jsBillDueDate!: Date;
 
   _allocatedPrincipal!: Currency;
@@ -38,7 +33,7 @@ export class UsageDetail {
   _allocatedFees!: Currency;
   jsAllocatedFees!: number;
 
-  _date!: Dayjs;
+  _date!: LocalDate;
   jsDate!: Date;
 
   daysLate?: number;
@@ -46,17 +41,17 @@ export class UsageDetail {
 
   _balanceModification?: BalanceModification;
 
-  private _billFullySatisfiedDate?: Dayjs;
+  private _billFullySatisfiedDate?: LocalDate;
   jsBillFullySatisfiedDate?: Date;
 
   constructor(params: UsageDetailParams) {
     this.billId = params.billId;
     this.period = params.period;
-    this.billDueDate = DateUtil.normalizeDate(params.billDueDate);
+    this.billDueDate = params.billDueDate;
     this.allocatedPrincipal = Currency.of(params.allocatedPrincipal);
     this.allocatedInterest = Currency.of(params.allocatedInterest);
     this.allocatedFees = Currency.of(params.allocatedFees);
-    this.date = DateUtil.normalizeDate(params.date);
+    this.date = params.date;
     this.daysLate = params.daysLate;
     this.daysEarly = params.daysEarly;
 
@@ -74,47 +69,40 @@ export class UsageDetail {
   }
 
   set balanceModification(value: BalanceModification | undefined) {
-    // check if the balance modification is already set
     if (value && this._balanceModification) {
       if (value.id !== this._balanceModification.id) {
         throw new Error("Balance modification is already set and cannot be changed");
       }
     }
     if (value) {
-      // ensure that instance is correct, otherwise send it through the constructor
-      if (value instanceof BalanceModification) {
-        this._balanceModification = value;
-      } else {
-        this._balanceModification = new BalanceModification(value);
-      }
+      this._balanceModification = value instanceof BalanceModification ? value : new BalanceModification(value);
     } else {
       this._balanceModification = undefined;
     }
   }
 
   static rehydrateFromJSON(json: any): UsageDetail {
-    // console.log("rehydrating usage details", json);
     return new UsageDetail({
-      billId: json.jsBillId,
+      billId: json.billId,
       period: json.period,
-      billDueDate: json.jsBillDueDate,
+      billDueDate: DateUtil.normalizeDate(json.billDueDate),
       allocatedPrincipal: json.allocatedPrincipal ? Currency.fromJSON(json.allocatedPrincipal) : Currency.Zero(),
       allocatedInterest: json.allocatedInterest ? Currency.fromJSON(json.allocatedInterest) : Currency.Zero(),
       allocatedFees: json.allocatedFees ? Currency.fromJSON(json.allocatedFees) : Currency.Zero(),
-      date: json.jsDate,
+      date: DateUtil.normalizeDate(json.date),
       daysLate: json.daysLate,
       daysEarly: json.daysEarly,
-      billFullySatisfiedDate: json.jsBillFullySatisfiedDate,
+      billFullySatisfiedDate: json.billFullySatisfiedDate ? DateUtil.normalizeDate(json.billFullySatisfiedDate) : undefined,
     });
   }
 
-  get billDueDate(): Dayjs {
+  get billDueDate(): LocalDate {
     return this._billDueDate;
   }
 
-  set billDueDate(date: Dayjs | Date | string) {
+  set billDueDate(date: LocalDate | Date | string) {
     this._billDueDate = DateUtil.normalizeDate(date);
-    this.jsBillDueDate = this._billDueDate.toDate();
+    this.jsBillDueDate = DateUtil.normalizeDateToJsDate(this._billDueDate);
   }
 
   get allocatedPrincipal(): Currency {
@@ -144,23 +132,24 @@ export class UsageDetail {
     this.jsAllocatedFees = this._allocatedFees.toNumber();
   }
 
-  get date(): Dayjs {
+  get date(): LocalDate {
     return this._date;
   }
 
-  set date(date: Dayjs | Date) {
+  set date(date: LocalDate | Date | string) {
     this._date = DateUtil.normalizeDate(date);
-    this.jsDate = this._date.toDate();
+    this.jsDate = DateUtil.normalizeDateToJsDate(this._date);
   }
 
   syncJSPropertiesFromValues(): void {
-    this.jsBillDueDate = this.billDueDate.toDate();
+    this.jsBillDueDate = DateUtil.normalizeDateToJsDate(this.billDueDate);
     this.jsAllocatedPrincipal = this.allocatedPrincipal.toNumber();
     this.jsAllocatedInterest = this.allocatedInterest.toNumber();
     this.jsAllocatedFees = this.allocatedFees.toNumber();
-    this.jsDate = this.date.toDate();
+    this.jsDate = DateUtil.normalizeDateToJsDate(this.date);
+
     if (this.billFullySatisfiedDate) {
-      this.jsBillFullySatisfiedDate = this.billFullySatisfiedDate.toDate();
+      this.jsBillFullySatisfiedDate = DateUtil.normalizeDateToJsDate(this.billFullySatisfiedDate);
     }
   }
 
@@ -170,18 +159,20 @@ export class UsageDetail {
     this.allocatedInterest = Currency.of(this.jsAllocatedInterest);
     this.allocatedFees = Currency.of(this.jsAllocatedFees);
     this.date = this.jsDate;
+
     if (this.jsBillFullySatisfiedDate) {
       this.billFullySatisfiedDate = this.jsBillFullySatisfiedDate;
     }
   }
 
-  get billFullySatisfiedDate(): Dayjs | undefined {
+  get billFullySatisfiedDate(): LocalDate | undefined {
     return this._billFullySatisfiedDate;
   }
-  set billFullySatisfiedDate(date: Dayjs | Date | undefined) {
+
+  set billFullySatisfiedDate(date: LocalDate | Date | string | undefined) {
     if (date) {
       this._billFullySatisfiedDate = DateUtil.normalizeDate(date);
-      this.jsBillFullySatisfiedDate = this._billFullySatisfiedDate.toDate();
+      this.jsBillFullySatisfiedDate = DateUtil.normalizeDateToJsDate(this._billFullySatisfiedDate);
     } else {
       this._billFullySatisfiedDate = undefined;
       this.jsBillFullySatisfiedDate = undefined;
@@ -193,19 +184,17 @@ export class UsageDetail {
   }
 
   get json() {
-    const json = {
+    return {
       billId: this.billId,
       period: this.period,
-      billDueDate: this.billDueDate.toDate(),
-      allocatedPrincipal: this.allocatedPrincipal.toNumber(),
-      allocatedInterest: this.allocatedInterest.toNumber(),
-      allocatedFees: this.allocatedFees.toNumber(),
-      date: this.date.toDate(),
+      billDueDate: this.jsBillDueDate,
+      allocatedPrincipal: this.jsAllocatedPrincipal,
+      allocatedInterest: this.jsAllocatedInterest,
+      allocatedFees: this.jsAllocatedFees,
+      date: this.jsDate,
       daysLate: this.daysLate,
       daysEarly: this.daysEarly,
-      billFullySatisfiedDate: this.billFullySatisfiedDate?.toDate(),
+      billFullySatisfiedDate: this.jsBillFullySatisfiedDate,
     };
-
-    return json;
   }
 }

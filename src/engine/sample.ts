@@ -9,6 +9,7 @@ import { CalendarType } from "./models/Calendar";
 import Decimal from "decimal.js";
 import { TermPaymentAmounts } from "./models/TermPaymentAmounts";
 import { TermCalendars } from "./models/TermCalendars";
+import { LocalDate, ChronoUnit } from "@js-joda/core";
 
 // const loanAmount = Currency.of(1); // 1 unit of currency
 // const interestRate = 0.05; // 5% annual interest rate
@@ -18,7 +19,7 @@ import { TermCalendars } from "./models/TermCalendars";
 const loanAmount = Currency.of(10000); // 1 unit of currency
 const interestRate = new Decimal(0.1); // 5% annual interest rate
 const term = 12; // 12 months
-const startDate = dayjs("2024-09-13");
+const startDate = LocalDate.parse("2024-09-13");
 
 const loan: Loan = {
   id: "loan1",

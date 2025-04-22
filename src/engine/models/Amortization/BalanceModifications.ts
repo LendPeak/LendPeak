@@ -1,5 +1,6 @@
 import { BalanceModification } from "./BalanceModification";
 import { Currency } from "../../utils/Currency";
+import { LocalDate, ZoneId, ChronoUnit } from "@js-joda/core";
 
 export class BalanceModifications {
   private _balanceModifications: BalanceModification[] = [];
@@ -27,9 +28,8 @@ export class BalanceModifications {
         }
       })
       .filter((bm) => bm.amount.greaterThan(0) && bm.isSystemModification !== true)
-      .sort((a, b) => {
-        return a.date.diff(b.date);
-      });
+      .sort((a, b) => ChronoUnit.DAYS.between(a.date, b.date));
+
   }
 
   get lastModification(): BalanceModification | undefined {
@@ -58,7 +58,7 @@ export class BalanceModifications {
     // to find if the balance modification already exists
     const existingBalanceModification = this._balanceModifications.find((bm) => {
       if (bm.metadata && balanceModification.metadata) {
-        return bm.metadata.depositId === balanceModification.metadata.depositId && bm.amount.equals(balanceModification.amount) && bm.date.isSame(balanceModification.date) && bm.type === balanceModification.type;
+        return bm.metadata.depositId === balanceModification.metadata.depositId && bm.amount.equals(balanceModification.amount) && bm.date.isEqual(balanceModification.date) && bm.type === balanceModification.type;
       }
       return false;
     });
@@ -150,7 +150,7 @@ export class BalanceModifications {
           id: r.id,
           amount: r.amount.toNumber(),
           unusedAmount: r.unusedAmount.toNumber(),
-          date: r.date.format("YYYY-MM-DD"),
+          date: r.date.toString(),
           type: r.type,
           description: r.description,
           metadata: r.metadata,

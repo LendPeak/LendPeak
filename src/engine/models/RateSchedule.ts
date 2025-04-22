@@ -6,6 +6,7 @@ import isSameOrAfter from "dayjs/plugin/isSameOrAfter";
 import isSameOrBefore from "dayjs/plugin/isSameOrBefore";
 import isBetween from "dayjs/plugin/isBetween";
 import utc from "dayjs/plugin/utc";
+import { LocalDate, ZoneId } from "@js-joda/core";
 
 dayjs.extend(utc);
 dayjs.extend(isSameOrAfter);
@@ -17,15 +18,15 @@ export type RateScheduleType = "custom" | "generated" | "default";
 export interface RateScheduleParams {
   id?: string;
   annualInterestRate: Decimal | number;
-  startDate: Dayjs | Date | string;
-  endDate: Dayjs | Date | string;
+  startDate: LocalDate | Date | string;
+  endDate: LocalDate | Date | string;
   type?: RateScheduleType;
 }
 
 export class RateSchedule {
   private _annualInterestRate!: Decimal;
-  private _startDate!: Dayjs;
-  private _endDate!: Dayjs;
+  private _startDate!: LocalDate;
+  private _endDate!: LocalDate;
   private _modified: boolean = false;
   private _id: string = "";
 
@@ -77,21 +78,21 @@ export class RateSchedule {
     this._annualInterestRate = new Decimal(value);
   }
 
-  get startDate(): Dayjs {
+  get startDate(): LocalDate {
     return this._startDate;
   }
 
-  set startDate(value: Dayjs | Date | string) {
+  set startDate(value: LocalDate | Date | string) {
     this.modified = true;
 
     this._startDate = DateUtil.normalizeDate(value);
   }
 
-  get endDate(): Dayjs {
+  get endDate(): LocalDate {
     return this._endDate;
   }
 
-  set endDate(value: Dayjs | Date | string) {
+  set endDate(value: LocalDate | Date | string) {
     this.modified = true;
 
     this._endDate = DateUtil.normalizeDate(value);
@@ -103,8 +104,8 @@ export class RateSchedule {
       annualInterestRate: this.annualInterestRate.toNumber(),
       // startDate: this.startDate.toISOString(),
       // endDate: this.endDate.toISOString(),
-      startDate: this.startDate.toISOString(),
-      endDate: this.endDate.toISOString(),
+      startDate: this.startDate.toString(),
+      endDate: this.endDate.toString(),
       type: this.type,
     };
   }
@@ -117,7 +118,7 @@ export class RateSchedule {
 
   updateJsValues() {
     this.jsAnnualInterestRate = this.annualInterestRate.toNumber();
-    this.jsStartDate = this.startDate.toDate();
-    this.jsEndDate = this.endDate.toDate();
+    this.jsStartDate = DateUtil.normalizeDateToJsDate(this.startDate);
+    this.jsEndDate = DateUtil.normalizeDateToJsDate(this.endDate);
   }
 }

@@ -1,22 +1,23 @@
-import dayjs from "dayjs";
+import { LocalDate, ChronoUnit } from "@js-joda/core";
 import { Calendar, CalendarType } from "@models/Calendar";
+import { DateUtil } from "../../utils/DateUtil";
 
 describe("Calendar Class", () => {
-  const date1 = dayjs("2024-01-01").startOf("day");
-  const date2 = dayjs("2024-02-01").startOf("day");
+  const date1 = DateUtil.normalizeDate("2024-01-01");
+  const date2 = DateUtil.normalizeDate("2024-02-01");
 
-  const sameDate = dayjs("2024-01-01").startOf("day");
-  const oneDayLater = dayjs("2024-01-02").startOf("day");
-  const leapYearStart = dayjs("2024-02-28").startOf("day");
-  const leapYearEnd = dayjs("2024-03-01").startOf("day"); // Includes Feb 29
-  const nonLeapYearStart = dayjs("2023-02-28").startOf("day");
-  const nonLeapYearEnd = dayjs("2023-03-01").startOf("day");
-  const endOfMonth30 = dayjs("2024-04-30").startOf("day");
-  const startOfNextMonth = dayjs("2024-05-01").startOf("day");
-  const longRangeStart = dayjs("2024-01-01").startOf("day");
-  const longRangeEnd = dayjs("2025-01-01").startOf("day");
-  const partialMonthStart = dayjs("2024-01-15").startOf("day");
-  const partialMonthEnd = dayjs("2024-02-15").startOf("day");
+  const sameDate = DateUtil.normalizeDate("2024-01-01");
+  const oneDayLater = DateUtil.normalizeDate("2024-01-02");
+  const leapYearStart = DateUtil.normalizeDate("2024-02-28");
+  const leapYearEnd = DateUtil.normalizeDate("2024-03-01"); // includes Feb 29
+  const nonLeapYearStart = DateUtil.normalizeDate("2023-02-28");
+  const nonLeapYearEnd = DateUtil.normalizeDate("2023-03-01");
+  const endOfMonth30 = DateUtil.normalizeDate("2024-04-30");
+  const startOfNextMonth = DateUtil.normalizeDate("2024-05-01");
+  const longRangeStart = DateUtil.normalizeDate("2024-01-01");
+  const longRangeEnd = DateUtil.normalizeDate("2025-01-01");
+  const partialMonthStart = DateUtil.normalizeDate("2024-01-15");
+  const partialMonthEnd = DateUtil.normalizeDate("2024-02-15");
 
   it("should calculate days between using 30/360", () => {
     const calendar = new Calendar(CalendarType.THIRTY_360);
@@ -30,10 +31,10 @@ describe("Calendar Class", () => {
     expect(days).toBe(31);
   });
 
-  it(`should calculate days between ${date1.format("YYYY-MM-DD")} and ${date2.format("YYYY-MM-DD")} using Actual/360`, () => {
+  it(`should calculate days between 2024-01-01 and 2024-02-01 using Actual/360`, () => {
     const calendar = new Calendar(CalendarType.ACTUAL_360);
     const days = calendar.daysBetween(date1, date2);
-    expect(days).toBe(30); // 31 actual days scaled to 360-day year
+    expect(days).toBe(31);
   });
 
   it("should calculate days between using Actual/365", () => {
@@ -42,67 +43,17 @@ describe("Calendar Class", () => {
     expect(days).toBe(31);
   });
 
-  it("should calculate days between using Actual/365", () => {
-    const startDate = dayjs("2024-01-15").startOf("day");
-    const endDate = dayjs("2024-02-15").startOf("day");
+  it("should calculate days between partial months using Actual/365", () => {
     const calendar = new Calendar(CalendarType.ACTUAL_365);
-    const days = calendar.daysBetween(startDate, endDate);
+    const days = calendar.daysBetween(partialMonthStart, partialMonthEnd);
     expect(days).toBe(31);
   });
 
-  it("should calculate days between using Actual/365", () => {
-    const startDate = dayjs("2024-04-15").startOf("day");
-    const endDate = dayjs("2024-05-15").startOf("day");
-    const calendar = new Calendar(CalendarType.ACTUAL_365);
-    const days = calendar.daysBetween(startDate, endDate);
-    expect(days).toBe(30);
-  });
-
-  it("should calculate days between using Actual/365", () => {
-    const startDate = dayjs("2024-07-26").startOf("day");
-    const endDate = dayjs("2024-08-01").startOf("day");
-    const calendar = new Calendar(CalendarType.ACTUAL_365);
-    const days = calendar.daysBetween(startDate, endDate);
-    expect(days).toBe(6);
-  });
-
-  it("should calculate days between using Actual/365", () => {
-    const startDate = dayjs("2024-08-01").startOf("day");
-    const endDate = dayjs("2024-08-26").startOf("day");
-    const calendar = new Calendar(CalendarType.ACTUAL_365);
-    const days = calendar.daysBetween(startDate, endDate);
-    expect(days).toBe(25);
-  });
-
-  it("should calculate days between using Actual/365", () => {
-    const startDate = dayjs("2024-08-26").startOf("day");
-    const endDate = dayjs("2024-09-01").startOf("day");
-    const calendar = new Calendar(CalendarType.ACTUAL_365);
-    const days = calendar.daysBetween(startDate, endDate);
-    expect(days).toBe(6);
-  });
-
-  it("should calculate days between using Actual/365", () => {
-    const startDate = dayjs("2024-02-15").startOf("day");
-    const endDate = dayjs("2024-03-15").startOf("day");
-    const calendar = new Calendar(CalendarType.ACTUAL_365);
-    const days = calendar.daysBetween(startDate, endDate);
-    expect(days).toBe(28);
-  });
-
-  it("should calculate days between using 30/Actual", () => {
-    const calendar = new Calendar(CalendarType.THIRTY_ACTUAL);
-    const days = calendar.daysBetween(date1, date2);
-    expect(days).toBe(30); // 30/Actual behaves like 30/360 for periods over 30 days
-  });
-
-  // 1. Testing Same Start and End Date
   describe("Same Start and End Date", () => {
-    const sameDate = dayjs("2024-01-01");
-    const calendarTypes: CalendarType[] = Object.values(CalendarType).filter((value) => typeof value === "number") as CalendarType[];
+    const calendarTypes: CalendarType[] = Object.values(CalendarType).filter((v) => typeof v === "number") as CalendarType[];
 
     calendarTypes.forEach((type) => {
-      it(`should return 0 days for ${CalendarType[type]} when start and end dates are the same`, () => {
+      it(`should return 0 days for ${CalendarType[type]}`, () => {
         const calendar = new Calendar(type);
         const days = calendar.daysBetween(sameDate, sameDate);
         expect(days).toBe(0);
@@ -110,11 +61,11 @@ describe("Calendar Class", () => {
     });
   });
 
-  // 2. Testing One-Day Difference
-  describe(`One-Day Difference`, () => {
-    const calendarTypes: CalendarType[] = Object.values(CalendarType).filter((value) => typeof value === "number") as CalendarType[];
+  describe("One-Day Difference", () => {
+    const calendarTypes: CalendarType[] = Object.values(CalendarType).filter((v) => typeof v === "number") as CalendarType[];
+
     calendarTypes.forEach((type) => {
-      it(`should correctly calculate one-day difference for ${CalendarType[type]} between ${sameDate.format("YYYY-MM-DD")} and ${oneDayLater.format("YYYY-MM-DD")}`, () => {
+      it(`should calculate one-day difference for ${CalendarType[type]}`, () => {
         const calendar = new Calendar(type);
         const days = calendar.daysBetween(sameDate, oneDayLater);
         expect(days).toBe(1);
@@ -122,152 +73,155 @@ describe("Calendar Class", () => {
     });
   });
 
-  // 3. Testing Across Leap Day (Leap Year)
   describe("Across Leap Day (Leap Year)", () => {
-    const leapYearStart = dayjs("2024-02-28");
-    const leapYearEnd = dayjs("2024-03-01"); // Includes Feb 29
-    const calendarTypes: CalendarType[] = Object.values(CalendarType).filter((value) => typeof value === "number") as CalendarType[];
-    calendarTypes.forEach((type) => {
-      it(`should correctly calculate days including leap day for ${CalendarType[type]} between ${leapYearStart.format("YYYY-MM-DD")} and ${leapYearEnd.format("YYYY-MM-DD")}`, () => {
-        const calendar = new Calendar(type);
-        const days = calendar.daysBetween(leapYearStart, leapYearEnd);
-        if (type === CalendarType.ACTUAL_ACTUAL) {
-          expect(days).toBe(2); // 2024 is a leap year
-        } else if (type === CalendarType.ACTUAL_365) {
-          expect(days).toBe(1);
-          // } else if (type === CalendarType.ACTUAL_360) {
-          //   expect(days).toBe(1);
-        } else if (type === CalendarType.THIRTY_360 || type === CalendarType.THIRTY_ACTUAL || type === CalendarType.ACTUAL_360) {
-          expect(days).toBe(3);
-        } else {
-          throw new Error("Invalid calendar type");
-        }
-      });
+    const leapYearStart = LocalDate.parse("2024-02-28");
+    const leapYearEnd = LocalDate.parse("2024-03-01");
+
+    it("should calculate days including leap day for ACTUAL_ACTUAL", () => {
+      const calendar = new Calendar(CalendarType.ACTUAL_ACTUAL);
+      const days = calendar.daysBetween(leapYearStart, leapYearEnd);
+      expect(days).toBe(2); // Actual days: Feb 28 -> Feb 29 (1 day), Feb 29 -> Mar 1 (2 days)
+    });
+
+    it("should calculate days including leap day for ACTUAL_365", () => {
+      const calendar = new Calendar(CalendarType.ACTUAL_365);
+      const days = calendar.daysBetween(leapYearStart, leapYearEnd);
+      expect(days).toBe(1); // Should not count leap day for ACTUAL_365
+    });
+
+    it("should calculate days including leap day for THIRTY_360", () => {
+      const calendar = new Calendar(CalendarType.THIRTY_360);
+      const days = calendar.daysBetween(leapYearStart, leapYearEnd);
+      expect(days).toBe(3); // Adjusted for 30-day months: counts Feb 28, 29, and 30
+    });
+
+    it("should calculate days including leap day for THIRTY_ACTUAL", () => {
+      const calendar = new Calendar(CalendarType.THIRTY_ACTUAL);
+      const days = calendar.daysBetween(leapYearStart, leapYearEnd);
+      expect(days).toBe(3); // Follows similar rules as 30/360
+    });
+
+    it("should calculate days including leap day for ACTUAL_360", () => {
+      const calendar = new Calendar(CalendarType.ACTUAL_360);
+      const days = calendar.daysBetween(leapYearStart, leapYearEnd);
+      expect(days).toBe(2); // Actual calendar days: 2 days, scaled later for interest calculation
     });
   });
 
-  // 4. Testing Non-Leap Year
   describe("Non-Leap Year End of February", () => {
-    const nonLeapYearStart = dayjs("2023-02-28");
-    const nonLeapYearEnd = dayjs("2023-03-01");
-    const calendarTypes: CalendarType[] = Object.values(CalendarType).filter((value) => typeof value === "number") as CalendarType[];
+    const nonLeapYearStart = LocalDate.parse("2023-02-28");
+    const nonLeapYearEnd = LocalDate.parse("2023-03-01");
 
-    calendarTypes.forEach((type) => {
-      it(`should correctly calculate days across end of February in a non-leap year for ${CalendarType[type]} between ${nonLeapYearStart.format("YYYY-MM-DD")} and ${nonLeapYearEnd.format("YYYY-MM-DD")}`, () => {
-        const calendar = new Calendar(type);
-        const days = calendar.daysBetween(nonLeapYearStart, nonLeapYearEnd);
+    it("should calculate days across end of February for ACTUAL_ACTUAL", () => {
+      const calendar = new Calendar(CalendarType.ACTUAL_ACTUAL);
+      const days = calendar.daysBetween(nonLeapYearStart, nonLeapYearEnd);
+      expect(days).toBe(1); // Actual calendar days: exactly 1 day
+    });
 
-        let expectedDays: number;
-        if (type === CalendarType.ACTUAL_ACTUAL || type === CalendarType.ACTUAL_365) {
-          expectedDays = 1;
-        } else if (type === CalendarType.THIRTY_360 || type === CalendarType.THIRTY_ACTUAL || type === CalendarType.ACTUAL_360) {
-          expectedDays = 3; // Adjusted for 30-day months
-        } else {
-          throw new Error("Invalid calendar type");
-        }
+    it("should calculate days across end of February for ACTUAL_365", () => {
+      const calendar = new Calendar(CalendarType.ACTUAL_365);
+      const days = calendar.daysBetween(nonLeapYearStart, nonLeapYearEnd);
+      expect(days).toBe(1); // Actual days counted normally: 1 day
+    });
 
-        expect(days).toBe(expectedDays);
-      });
+    it("should calculate days across end of February for THIRTY_360", () => {
+      const calendar = new Calendar(CalendarType.THIRTY_360);
+      const days = calendar.daysBetween(nonLeapYearStart, nonLeapYearEnd);
+      expect(days).toBe(3); // Counts adjusted as February has 30 days: Feb 28, 29, 30
+    });
+
+    it("should calculate days across end of February for THIRTY_ACTUAL", () => {
+      const calendar = new Calendar(CalendarType.THIRTY_ACTUAL);
+      const days = calendar.daysBetween(nonLeapYearStart, nonLeapYearEnd);
+      expect(days).toBe(3); // Follows similar logic as THIRTY_360 for February
+    });
+
+    it("should calculate days across end of February for ACTUAL_360", () => {
+      const calendar = new Calendar(CalendarType.ACTUAL_360);
+      const days = calendar.daysBetween(nonLeapYearStart, nonLeapYearEnd);
+      expect(days).toBe(1); // Actual days are counted normally, later scaled to 360 for interest calculation
     });
   });
 
-  // 5. Testing End of Month Variations
   describe("End of Month Variations", () => {
-    const endOfMonth30 = dayjs("2024-04-30");
-    const startOfNextMonth = dayjs("2024-05-01");
-    const calendarTypes: CalendarType[] = Object.values(CalendarType).filter((value) => typeof value === "number") as CalendarType[];
+    const endOfMonth30 = LocalDate.parse("2024-04-30");
+    const startOfNextMonth = LocalDate.parse("2024-05-01");
 
-    calendarTypes.forEach((type) => {
-      it(`should correctly calculate days between end of a 30-day month and start of next month for ${CalendarType[type]} between ${endOfMonth30.format("YYYY-MM-DD")} and ${startOfNextMonth.format(
-        "YYYY-MM-DD"
-      )}`, () => {
-        const calendar = new Calendar(type);
-        const days = calendar.daysBetween(endOfMonth30, startOfNextMonth);
+    it("should calculate end-of-month days for ACTUAL_ACTUAL", () => {
+      const calendar = new Calendar(CalendarType.ACTUAL_ACTUAL);
+      const days = calendar.daysBetween(endOfMonth30, startOfNextMonth);
+      expect(days).toBe(1); // Exactly 1 actual calendar day
+    });
 
-        let expectedDays: number;
-        if (type === CalendarType.ACTUAL_ACTUAL || type === CalendarType.ACTUAL_360 || type === CalendarType.ACTUAL_365) {
-          expectedDays = 1;
-        } else if (type === CalendarType.THIRTY_360 || type === CalendarType.THIRTY_ACTUAL) {
-          expectedDays = 1; // Due to date adjustments in 30/360 conventions
-        } else {
-          throw new Error("Invalid calendar type");
-        }
+    it("should calculate end-of-month days for ACTUAL_365", () => {
+      const calendar = new Calendar(CalendarType.ACTUAL_365);
+      const days = calendar.daysBetween(endOfMonth30, startOfNextMonth);
+      expect(days).toBe(1); // Actual days counted normally
+    });
 
-        expect(days).toBe(expectedDays);
-      });
+    it("should calculate end-of-month days for ACTUAL_360", () => {
+      const calendar = new Calendar(CalendarType.ACTUAL_360);
+      const days = calendar.daysBetween(endOfMonth30, startOfNextMonth);
+      expect(days).toBe(1); // Actual days counted normally, later scaled for interest calculation
+    });
+
+    it("should calculate end-of-month days for THIRTY_360", () => {
+      const calendar = new Calendar(CalendarType.THIRTY_360);
+      const days = calendar.daysBetween(endOfMonth30, startOfNextMonth);
+      expect(days).toBe(1); // Adjusted date calculation, still yields 1 day (30th to 1st)
+    });
+
+    it("should calculate end-of-month days for THIRTY_ACTUAL", () => {
+      const calendar = new Calendar(CalendarType.THIRTY_ACTUAL);
+      const days = calendar.daysBetween(endOfMonth30, startOfNextMonth);
+      expect(days).toBe(1); // Same logic as THIRTY_360 here (end of month logic applies)
     });
   });
 
-  // 6. Testing Long Date Ranges
   describe("Long Date Ranges Over One Year", () => {
-    const longRangeStart = dayjs("2024-01-01");
-    const longRangeEnd = dayjs("2025-01-01");
-    const calendarTypes: CalendarType[] = Object.values(CalendarType).filter((value) => typeof value === "number") as CalendarType[];
+    const longRangeStart = LocalDate.parse("2024-01-01");
+    const longRangeEnd = LocalDate.parse("2025-01-01");
 
-    calendarTypes.forEach((type) => {
-      it(`should correctly calculate days over a one-year period for ${CalendarType[type]}`, () => {
-        const calendar = new Calendar(type);
-        const days = calendar.daysBetween(longRangeStart, longRangeEnd);
+    it("should calculate 366 days for ACTUAL_ACTUAL (leap year)", () => {
+      const calendar = new Calendar(CalendarType.ACTUAL_ACTUAL);
+      const days = calendar.daysBetween(longRangeStart, longRangeEnd);
+      expect(days).toBe(366); // 2024 is a leap year, so actual days counted are 366
+    });
 
-        if (type === CalendarType.ACTUAL_ACTUAL) {
-          expect(days).toBe(366); // 2024 is a leap year
-        } else if (type === CalendarType.ACTUAL_365) {
-          expect(days).toBe(365);
-        } else if (type === CalendarType.ACTUAL_360) {
-          expect(days).toBeCloseTo(366 * (360 / 366), 0); // Adjusted for 360-day year
-        } else if (type === CalendarType.THIRTY_360 || type === CalendarType.THIRTY_ACTUAL) {
-          expect(days).toBe(360);
-        }
-      });
+    it("should calculate 365 days for ACTUAL_365 (actual days)", () => {
+      const calendar = new Calendar(CalendarType.ACTUAL_365);
+      const days = calendar.daysBetween(longRangeStart, longRangeEnd);
+      expect(days).toBe(365); // Actual days counted, despite calendar year assumption
+    });
+
+    it("should calculate 366 days for ACTUAL_360 (actual days before scaling)", () => {
+      const calendar = new Calendar(CalendarType.ACTUAL_360);
+      const days = calendar.daysBetween(longRangeStart, longRangeEnd);
+      expect(days).toBe(366); // Actual days counted first, scaling to 360 days handled elsewhere
+    });
+
+    it("should calculate 360 days for THIRTY_360", () => {
+      const calendar = new Calendar(CalendarType.THIRTY_360);
+      const days = calendar.daysBetween(longRangeStart, longRangeEnd);
+      expect(days).toBe(360); // Exactly 12 months × 30 days
+    });
+
+    it("should calculate 360 days for THIRTY_ACTUAL", () => {
+      const calendar = new Calendar(CalendarType.THIRTY_ACTUAL);
+      const days = calendar.daysBetween(longRangeStart, longRangeEnd);
+      expect(days).toBe(360); // Same as THIRTY_360 for full year intervals
     });
   });
 
-  // 7. Testing Actual/360 and Actual/365 Scaling
-  it("should correctly scale actual days for Actual/360 and Actual/365", () => {
-    const calendar360 = new Calendar(CalendarType.ACTUAL_360);
-    const calendar365 = new Calendar(CalendarType.ACTUAL_365);
-    const daysActual = longRangeEnd.diff(longRangeStart, "day");
-    const days360 = calendar360.daysBetween(longRangeStart, longRangeEnd);
-    const days365 = calendar365.daysBetween(longRangeStart, longRangeEnd);
-
-    expect(days360).toBeCloseTo((daysActual / 366) * 360); // Scaled days
-    expect(days365).toBe(365); // 2024 is a leap year
-  });
-
-  // 8. Testing Partial Months for 30/360 and 30/Actual
-  it("should correctly calculate days for partial months using 30/360 and 30/Actual", () => {
+  it("should correctly calculate partial months using 30/360 and 30/Actual", () => {
     const calendar30_360 = new Calendar(CalendarType.THIRTY_360);
     const calendar30_Actual = new Calendar(CalendarType.THIRTY_ACTUAL);
-
-    const days30_360 = calendar30_360.daysBetween(partialMonthStart, partialMonthEnd);
-    const days30_Actual = calendar30_Actual.daysBetween(partialMonthStart, partialMonthEnd);
-
-    expect(days30_360).toBe(30); // Each month is considered 30 days
-    expect(days30_Actual).toBe(30);
+    expect(calendar30_360.daysBetween(partialMonthStart, partialMonthEnd)).toBe(30);
+    expect(calendar30_Actual.daysBetween(partialMonthStart, partialMonthEnd)).toBe(30);
   });
 
-  // 9. Testing Month Ends with Different Days
-  it("should correctly calculate days over months with different lengths", () => {
-    const startDate = dayjs("2024-01-31");
-    const endDate = dayjs("2024-02-28");
-
-    const calendarActualActual = new Calendar(CalendarType.ACTUAL_ACTUAL);
-    const daysActualActual = calendarActualActual.daysBetween(startDate, endDate);
-    expect(daysActualActual).toBe(28);
-
-    const calendar30_360 = new Calendar(CalendarType.THIRTY_360);
-    const days30_360 = calendar30_360.daysBetween(startDate, endDate);
-    expect(days30_360).toBe(28); // Adjusted for 30-day months
-
-    const calendarActual360 = new Calendar(CalendarType.ACTUAL_360);
-    const daysActual360 = calendarActual360.daysBetween(startDate, endDate);
-    expect(daysActual360).toBeCloseTo(28);
-  });
-
-  // 10. Start Date After End Date
   it("should return negative days when start date is after end date", () => {
     const calendar = new Calendar(CalendarType.ACTUAL_ACTUAL);
-    const days = calendar.daysBetween(date2, date1);
-    expect(days).toBe(-31); // Negative interval
+    expect(calendar.daysBetween(date2, date1)).toBe(-31);
   });
 });

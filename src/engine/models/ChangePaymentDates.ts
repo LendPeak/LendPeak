@@ -80,7 +80,7 @@ export class ChangePaymentDates {
 
       // Overlap if nextStart <= currentEnd
       // or “touch” if nextStart == currentEnd
-      if (nextStart.isSame(currentEnd) || nextStart.isBefore(currentEnd)) {
+      if (nextStart.isEqual(currentEnd) || nextStart.isBefore(currentEnd)) {
         // Merge intervals => extend current “end” if nextEnd is later
         if (nextEnd.isAfter(currentEnd)) {
           current.newDate = nextEnd; // the new "end"

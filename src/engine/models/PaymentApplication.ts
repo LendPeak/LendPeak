@@ -6,6 +6,8 @@ import { BalanceModification } from "./Amortization/BalanceModification";
 import { UsageDetail } from "./Bill/DepositRecord/UsageDetail";
 import dayjs, { Dayjs } from "dayjs";
 import { v4 as uuidv4 } from "uuid";
+import { LocalDate, ChronoUnit } from "@js-joda/core";
+
 import isBetween from "dayjs/plugin/isBetween";
 dayjs.extend(isBetween);
 
@@ -26,10 +28,12 @@ export class PaymentApplication {
   bills: Bills;
   deposits: DepositRecords;
   amortization: Amortization;
+  currentDate: LocalDate;
   private allocationStrategy: AllocationStrategy;
   private paymentPriority: PaymentPriority;
 
-  constructor(params: { amortization: Amortization; bills: Bills; deposits: DepositRecords; options?: { allocationStrategy?: AllocationStrategy; paymentPriority?: PaymentPriority } }) {
+  constructor(params: { currentDate: LocalDate; amortization: Amortization; bills: Bills; deposits: DepositRecords; options?: { allocationStrategy?: AllocationStrategy; paymentPriority?: PaymentPriority } }) {
+    this.currentDate = params.currentDate;
     this.bills = params.bills;
     this.bills.sortBills();
     this.deposits = params.deposits;
@@ -56,7 +60,6 @@ export class PaymentApplication {
   }
 
   static getAllocationStrategyFromName(strategyName: PaymentAllocationStrategyName): AllocationStrategy {
-    // Build the allocation strategy based on user selection
     let allocationStrategy: AllocationStrategy;
     switch (strategyName) {
       case "FIFO":
@@ -69,7 +72,7 @@ export class PaymentApplication {
         allocationStrategy = new EqualDistributionStrategy();
         break;
       case "CustomOrder":
-        allocationStrategy = new CustomOrderStrategy((a: Bill, b: Bill) => a.dueDate.diff(b.dueDate));
+        allocationStrategy = new CustomOrderStrategy((a: Bill, b: Bill) => ChronoUnit.DAYS.between(a.dueDate, b.dueDate));
         break;
       default:
         throw new Error(`Unknown allocation strategy: ${strategyName}`);
@@ -93,21 +96,22 @@ export class PaymentApplication {
     return strategyName;
   }
 
-  processDeposits(currentDate: Dayjs | Date | string = dayjs()): PaymentApplicationResult[] {
-    currentDate = DateUtil.normalizeDate(currentDate);
+  processDeposits(currentDate: LocalDate): PaymentApplicationResult[] {
     const results: PaymentApplicationResult[] = [];
 
-    for (const deposit of this.deposits.all) {
+    const allSortedDeposits = this.deposits.allSorted;
+
+    for (const deposit of allSortedDeposits) {
       if (deposit.active !== true) {
         // console.debug(`Skipping deposit ${deposit.id} because it is not active`);
         continue;
       }
       // if effective date is after the current date, skip the deposit
-      if (dayjs(deposit.effectiveDate).isAfter(currentDate)) {
+      if (deposit.effectiveDate.isAfter(currentDate)) {
         // console.debug(`Skipping deposit ${deposit.id} because its effective date is after the current date`);
         continue;
       }
-      const result = this.applyDeposit(deposit, {
+      const result = this.applyDeposit(currentDate, deposit, {
         allocationStrategy: this.allocationStrategy,
         paymentPriority: this.paymentPriority,
       });
@@ -118,6 +122,7 @@ export class PaymentApplication {
   }
 
   applyDeposit(
+    currentDate: LocalDate,
     deposit: DepositRecord,
     options?: {
       allocationStrategy?: AllocationStrategy;
@@ -128,7 +133,7 @@ export class PaymentApplication {
     options.allocationStrategy = options.allocationStrategy || this.allocationStrategy;
     options.paymentPriority = options.paymentPriority || this.paymentPriority;
 
-    const result = options.allocationStrategy.apply(deposit, this.bills, options.paymentPriority);
+    const result = options.allocationStrategy.apply(currentDate, deposit, this.bills, options.paymentPriority);
 
     if (deposit.applyExcessToPrincipal && result.unallocatedAmount.greaterThan(0)) {
       let excessAmount = Currency.of(result.unallocatedAmount);
@@ -186,31 +191,37 @@ export class PaymentApplication {
     return result;
   }
 
-  private determineBalanceModificationDate(deposit: DepositRecord): Dayjs {
+  private determineBalanceModificationDate(deposit: DepositRecord): LocalDate {
     const excessAppliedDate = deposit.excessAppliedDate || deposit.effectiveDate;
 
     if (!excessAppliedDate) {
       throw new Error(`Deposit ${deposit.id} has no effective date or excess applied date.`);
     }
 
-    const depositEffectiveDayjs = dayjs(deposit.effectiveDate);
-    const openBillsAtDepositDate = this.bills.all
-      .filter((bill) => bill.isOpen && bill.dueDate.isSameOrAfter(depositEffectiveDayjs) && bill.openDate.isSameOrBefore(depositEffectiveDayjs))
-      .sort((a, b) => a.openDate.diff(b.openDate));
+    const depositEffectiveDate = deposit.effectiveDate;
+    const excessAppliedLocalDate = excessAppliedDate;
 
-    let balanceModificationDate: Dayjs;
+    const openBillsAtDepositDate = this.bills.all
+      .filter(
+        (bill) =>
+          bill.isOpen(this.currentDate) &&
+          (bill.dueDate.isEqual(depositEffectiveDate) || bill.dueDate.isAfter(depositEffectiveDate)) &&
+          (bill.openDate.isEqual(depositEffectiveDate) || bill.openDate.isBefore(depositEffectiveDate))
+      )
+      .sort((a, b) => ChronoUnit.DAYS.between(a.openDate, b.openDate));
+
+    let balanceModificationDate: LocalDate;
 
     if (deposit.applyExcessAtTheEndOfThePeriod === true && openBillsAtDepositDate.length > 0) {
       const firstOpenBill = openBillsAtDepositDate[0];
-
       const nextTermStartDate = firstOpenBill.amortizationEntry.periodEndDate;
 
       balanceModificationDate = nextTermStartDate;
     } else {
-      balanceModificationDate = depositEffectiveDayjs.isAfter(excessAppliedDate) ? depositEffectiveDayjs : dayjs(excessAppliedDate).startOf("day");
+      balanceModificationDate = depositEffectiveDate.isAfter(excessAppliedLocalDate) ? depositEffectiveDate : excessAppliedLocalDate;
     }
 
-    return balanceModificationDate.utc();
+    return balanceModificationDate;
   }
 
   private generateUniqueId(): string {

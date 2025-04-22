@@ -12,7 +12,9 @@ import isBetween from "dayjs/plugin/isBetween";
 dayjs.extend(isBetween);
 import { PaymentAllocationStrategyName, PaymentComponent, PaymentPriority } from "./Types";
 import { PaymentApplicationResult } from "./PaymentApplicationResult";
+import { LocalDate } from "@js-joda/core";
+
 // Allocation Strategy Interface
 export interface AllocationStrategy {
-  apply(deposit: DepositRecord, bills: Bills, paymentPriority: PaymentPriority): PaymentApplicationResult;
+  apply(currentDate: LocalDate, deposit: DepositRecord, bills: Bills, paymentPriority: PaymentPriority): PaymentApplicationResult;
 }

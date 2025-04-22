@@ -2,6 +2,8 @@ import dayjs, { Dayjs } from "dayjs";
 import isSameOrAfter from "dayjs/plugin/isSameOrAfter";
 import isSameOrBefore from "dayjs/plugin/isSameOrBefore";
 import isBetween from "dayjs/plugin/isBetween";
+import { LocalDate, ZoneId } from "@js-joda/core";
+import { DateUtil } from "../utils/DateUtil";
 
 dayjs.extend(isSameOrAfter);
 dayjs.extend(isSameOrBefore);
@@ -10,16 +12,16 @@ dayjs.extend(isBetween);
 export type PeriodSchedulesType = "custom" | "generated" | "default";
 
 export interface ParamsPeriodSchedule {
-  startDate: Dayjs | Date | string;
-  endDate: Dayjs | Date | string;
+  startDate: LocalDate | Date | string;
+  endDate: LocalDate | Date | string;
   type?: PeriodSchedulesType;
 }
 
 export class PeriodSchedule {
-  private _startDate!: Dayjs;
+  private _startDate!: LocalDate;
   jsStartDate!: Date;
 
-  private _endDate!: Dayjs;
+  private _endDate!: LocalDate;
   jsEndDate!: Date;
 
   private _type: PeriodSchedulesType = "custom";
@@ -34,13 +36,13 @@ export class PeriodSchedule {
   }
 
   updateJsValues() {
-    this.jsStartDate = this.startDate.toDate();
-    this.jsEndDate = this.endDate.toDate();
+    this.jsStartDate = DateUtil.normalizeDateToJsDate(this.startDate);
+    this.jsEndDate = DateUtil.normalizeDateToJsDate(this.endDate);
   }
 
   updateModelValues() {
-    this.startDate = this.jsStartDate;
-    this.endDate = this.jsEndDate;
+    this.startDate = DateUtil.normalizeDate(this.jsStartDate);
+    this.endDate = DateUtil.normalizeDate(this.jsEndDate);
   }
 
   get type(): PeriodSchedulesType {
@@ -51,20 +53,20 @@ export class PeriodSchedule {
     this._type = value;
   }
 
-  get startDate(): Dayjs {
+  get startDate(): LocalDate {
     return this._startDate;
   }
 
-  set startDate(value: Dayjs | Date | string) {
-    this._startDate = dayjs(value).startOf("day");
+  set startDate(value: LocalDate | Date | string) {
+    this._startDate = DateUtil.normalizeDate(value);
   }
 
-  get endDate(): Dayjs {
+  get endDate(): LocalDate {
     return this._endDate;
   }
 
-  set endDate(value: Dayjs | Date | string) {
-    this._endDate = dayjs(value).startOf("day");
+  set endDate(value: LocalDate | Date | string) {
+    this._endDate = DateUtil.normalizeDate(value);
   }
 
   get json() {

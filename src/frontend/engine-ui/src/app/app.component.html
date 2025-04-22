@@ -428,7 +428,7 @@
             <p class="m-0 text-300 font-semibold text-5xl text-center">
               {{
                 lendPeak.bills.nextUpcomingBill
-                  ? (lendPeak.bills.nextUpcomingBill.dueDate.toDate()
+                  ? (lendPeak.bills.nextUpcomingBill.dueDate.toString()
                     | date: "MM/dd/yyyy")
                   : "No more bills left"
               }}
@@ -490,7 +490,7 @@
             <p class="m-0 text-300 font-semibold text-5xl text-center">
               {{
                 lendPeak.depositRecords.lastActive
-                  ? (lendPeak.depositRecords.lastActive.effectiveDate.toDate()
+                  ? (lendPeak.depositRecords.lastActive.effectiveDate.toString()
                     | date: "MM/dd/yyyy")
                   : "None"
               }}

@@ -362,10 +362,10 @@
 
               <!-- Date fields -->
               <ng-container *ngSwitchCase="'periodStartDate'">
-                {{ rowData.periodStartDate.toDate() | date: "MM/dd/yyyy" }}
+                {{ rowData.periodStartDate.toString() | date: "MM/dd/yyyy" }}
               </ng-container>
               <ng-container *ngSwitchCase="'periodEndDate'">
-                {{ rowData.periodEndDate.toDate() | date: "MM/dd/yyyy" }}
+                {{ rowData.periodEndDate.toString() | date: "MM/dd/yyyy" }}
                 <p-badge
                   *ngIf="
                     lendPeak.amortization.changePaymentDates.getChangePaymentDate(
@@ -393,7 +393,9 @@
                   <span class="pi pi-arrow-down"></span>
                 </span>
                 <span *ngIf="rowData.billablePeriod">
-                  {{ rowData.periodBillOpenDate.toDate() | date: "MM/dd/yyyy" }}
+                  {{
+                    rowData.periodBillOpenDate.toString() | date: "MM/dd/yyyy"
+                  }}
                 </span>
               </ng-container>
               <ng-container *ngSwitchCase="'periodBillDueDate'">
@@ -401,7 +403,9 @@
                   <span class="pi pi-arrow-down"></span>
                 </span>
                 <span *ngIf="rowData.billablePeriod">
-                  {{ rowData.periodBillDueDate.toDate() | date: "MM/dd/yyyy" }}
+                  {{
+                    rowData.periodBillDueDate.toString() | date: "MM/dd/yyyy"
+                  }}
                 </span>
               </ng-container>
 

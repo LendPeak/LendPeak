@@ -1,34 +1,34 @@
 import { Currency } from "../../utils/Currency";
 import { DepositRecord } from "../DepositRecord";
 import { Bills } from "../Bills";
-import dayjs, { Dayjs } from "dayjs";
 import { AllocationStrategy } from "./AllocationStrategy";
-import isBetween from "dayjs/plugin/isBetween";
-dayjs.extend(isBetween);
 import { PaymentPriority } from "./Types";
 import { PaymentApplicationResult } from "./PaymentApplicationResult";
 import { PaymentAllocation } from "./PaymentAllocation";
 import { AllocationHelper } from "./AllocationHelper";
+import { DateUtil } from "../../utils/DateUtil";
+import { LocalDate, ChronoUnit } from "@js-joda/core";
+
 /*
 LIFO Strategy (Last-In, First-Out)
 The LIFO Strategy applies payments to the most recent bills first. This is useful when you want to prioritize clearing the newest debts.
 
 Explanation:
-- Bill Sorting: Bill[] are sorted in descending order of due date, so the most recent bills are prioritized.
+- Bill Sorting: Bills are sorted in descending order of due date, so the most recent bills are prioritized.
 - Allocation Logic: The allocation sequence is interest, then fees, then principal, similar to the FIFO strategy.
 - Bill Status Update: Marks bills as paid if all components are fully allocated.
 */
 export class LIFOStrategy implements AllocationStrategy {
-  apply(deposit: DepositRecord, bills: Bills, paymentPriority: PaymentPriority): PaymentApplicationResult {
+  apply(currentDate: LocalDate, deposit: DepositRecord, bills: Bills, paymentPriority: PaymentPriority): PaymentApplicationResult {
     let remainingAmount = deposit.amount;
     const allocations: PaymentAllocation[] = [];
 
     // Sort bills by due date descending (most recent first)
-    let sortedBills = bills.all.filter((bill) => bill.isOpen === true && !bill.isPaid).sort((a, b) => b.dueDate.diff(a.dueDate));
+    let sortedBills = bills.all.filter((bill) => bill.isOpen(currentDate) && !bill.isPaid).sort((a, b) => ChronoUnit.DAYS.between(b.dueDate, a.dueDate));
 
     if (deposit.applyExcessToPrincipal) {
-      const excessAppliedDate = deposit.excessAppliedDate || deposit.effectiveDate;
-      sortedBills = sortedBills.filter((bill) => bill.openDate.isSameOrBefore(excessAppliedDate));
+      const excessAppliedDate = DateUtil.normalizeDate(deposit.excessAppliedDate || deposit.effectiveDate);
+      sortedBills = sortedBills.filter((bill) => bill.openDate.isEqual(excessAppliedDate) || bill.openDate.isBefore(excessAppliedDate));
     }
 
     for (const bill of sortedBills) {
@@ -47,8 +47,8 @@ export class LIFOStrategy implements AllocationStrategy {
       totalAllocated,
       allocations,
       unallocatedAmount: remainingAmount,
-      excessAmount: Currency.Zero(), // Handle excess according to business rules
-      effectiveDate: deposit.effectiveDate,
+      excessAmount: Currency.Zero(), // Adjust excess handling according to your business rules if necessary
+      effectiveDate: DateUtil.normalizeDate(deposit.effectiveDate),
     };
   }
 }

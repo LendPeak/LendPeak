@@ -17,6 +17,7 @@ import { Currency } from "../utils/Currency";
 import { PaymentApplication } from "./PaymentApplication";
 import { PaymentApplicationResult } from "./PaymentApplication/PaymentApplicationResult";
 import { PaymentAllocationStrategyName, PaymentComponent } from "./PaymentApplication/Types";
+import { LocalDate, ZoneId } from "@js-joda/core";
 
 import Decimal from "decimal.js";
 import dayjs, { Dayjs } from "dayjs";
@@ -24,6 +25,7 @@ import isSameOrAfter from "dayjs/plugin/isSameOrAfter";
 import isSameOrBefore from "dayjs/plugin/isSameOrBefore";
 import isBetween from "dayjs/plugin/isBetween";
 import { AllocationStrategy } from "./PaymentApplication/AllocationStrategy";
+import { DateUtil } from "../utils/DateUtil";
 dayjs.extend(isBetween);
 dayjs.extend(isSameOrAfter);
 dayjs.extend(isSameOrBefore);
@@ -40,7 +42,7 @@ export class LendPeak {
   _amortization!: Amortization;
   _depositRecords!: DepositRecords;
   _bills!: Bills;
-  _currentDate: Dayjs = dayjs();
+  _currentDate: LocalDate = LocalDate.now();
 
   _amortizationVersionManager?: AmortizationVersionManager;
   _financialOpsVersionManager?: FinancialOpsVersionManager;
@@ -53,11 +55,11 @@ export class LendPeak {
   private payoffQuoteCache?: {
     results: PayoffQuoteResult;
     amortizationVersionId: string;
-    amortizationDate: Dayjs;
+    amortizationDate: LocalDate;
     billsVersionId: string;
-    billsDate: Dayjs;
+    billsDate: LocalDate;
     depositRecordsVersionId: string;
-    depositRecordsDate: Dayjs;
+    depositRecordsDate: LocalDate;
   };
 
   paymentApplicationResults: PaymentApplicationResult[] = [];
@@ -69,7 +71,7 @@ export class LendPeak {
     financialOpsVersionManager?: FinancialOpsVersionManager;
     allocationStrategy?: AllocationStrategy | PaymentAllocationStrategyName;
     paymentPriority?: PaymentComponent[];
-    currentDate?: Dayjs;
+    currentDate?: LocalDate;
   }) {
     this.setAmortization(params.amortization);
 
@@ -153,6 +155,7 @@ export class LendPeak {
     if (!(value instanceof Bills) && value !== undefined && Array.isArray(value)) {
       this._bills = new Bills({
         bills: value,
+        currentDate: this.currentDate,
       });
     } else {
       this._bills = value;
@@ -163,18 +166,12 @@ export class LendPeak {
     }
   }
 
-  get currentDate(): Dayjs {
+  get currentDate(): LocalDate {
     return this._currentDate || dayjs();
   }
 
-  set currentDate(value: Dayjs | Date | string) {
-    if (value instanceof Date) {
-      this._currentDate = dayjs(value);
-    } else if (typeof value === "string") {
-      this._currentDate = dayjs(value);
-    } else {
-      this._currentDate = value;
-    }
+  set currentDate(value: LocalDate | Date | string) {
+    this._currentDate = DateUtil.normalizeDate(value);
   }
 
   get amortizationVersionManager(): AmortizationVersionManager | undefined {
@@ -283,6 +280,7 @@ export class LendPeak {
     const allocationStrategy = this.allocationStrategy;
     const paymentPriority = this.paymentPriority;
     const paymentApp = new PaymentApplication({
+      currentDate: this.currentDate,
       amortization: this.amortization,
       bills: this.bills,
       deposits: this.depositRecords,
@@ -311,7 +309,6 @@ export class LendPeak {
     //   });
     // });
 
-    this.bills.updateStatus();
     // for (let balanceModification of this.depositRecords.balanceModifications) {
     //   this.amortization.balanceModifications.addBalanceModification(balanceModification);
     // }
@@ -371,7 +368,7 @@ export class LendPeak {
       originationFee: Currency.of(10),
       annualInterestRate: new Decimal(0.06),
       term: 24,
-      startDate: dayjs().subtract(2, "month").startOf("day"),
+      startDate: LocalDate.now().minusMonths(2),
     };
     return defaultAmortizationParams;
   }
@@ -441,9 +438,9 @@ export class LendPeak {
 
       // Compare dateChanged using .isSame()
       if (
-        !this.amortization.dateChanged.isSame(this.payoffQuoteCache.amortizationDate) ||
-        !this.bills.dateChanged.isSame(this.payoffQuoteCache.billsDate) ||
-        !this.depositRecords.dateChanged.isSame(this.payoffQuoteCache.depositRecordsDate)
+        !this.amortization.dateChanged.isEqual(this.payoffQuoteCache.amortizationDate) ||
+        !this.bills.dateChanged.isEqual(this.payoffQuoteCache.billsDate) ||
+        !this.depositRecords.dateChanged.isEqual(this.payoffQuoteCache.depositRecordsDate)
       ) {
         return this.recomputePayoffQuote();
       }

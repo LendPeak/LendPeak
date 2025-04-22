@@ -201,7 +201,7 @@ export class AmortizationExplainer {
     let explanation = `Term-by-Term Breakdown:\n`;
     for (const entry of this.schedule.entries) {
       explanation += `Term ${entry.term}:\n`;
-      explanation += `  Period: ${entry.periodStartDate.format("YYYY-MM-DD")} to ${entry.periodEndDate.format("YYYY-MM-DD")}\n`;
+      explanation += `  Period: ${entry.periodStartDate.toString()} to ${entry.periodEndDate.toString()}\n`;
       explanation += `  Start Balance: ${entry.startBalance.toCurrencyString()} | End Balance: ${entry.endBalance.toCurrencyString()}\n`;
       explanation += `  Interest: ${entry.accruedInterestForPeriod.toCurrencyString()}, Principal: ${entry.principal.toCurrencyString()}, Fees: ${entry.fees.toCurrencyString()}\n`;
       explanation += `  Payment: ${entry.totalPayment.toCurrencyString()}\n`;

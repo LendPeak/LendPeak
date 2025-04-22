@@ -1,8 +1,9 @@
 import dayjs from "dayjs";
 import { describe, test, expect } from "@jest/globals";
+import { LocalDate, ZoneId } from "@js-joda/core";
 
 import { Currency, RoundingMethod } from "@utils/Currency";
-import { DateUtil } from "@utils/DateUtil";
+import { DateUtil } from "../../utils/DateUtil";
 import { Amortization, FlushUnbilledInterestDueToRoundingErrorType } from "@models/Amortization";
 import { ChangePaymentDate } from "@models/ChangePaymentDate";
 import { ChangePaymentDates } from "@models/ChangePaymentDates";
@@ -21,19 +22,19 @@ import { DepositRecords } from "../../models/DepositRecords";
 import utc from "dayjs/plugin/utc";
 dayjs.extend(utc);
 
-const today = DateUtil.normalizeDate(dayjs());
+const today = DateUtil.normalizeDate(LocalDate.now());
 
 // A helper function to create a LendPeak instance with minimal defaults
 function createLendPeakInstance({
   loanAmount = 1000,
-  startDate = dayjs().subtract(30, "day"),
+  startDate = LocalDate.now().minusDays(30),
   annualInterest = 0.05,
   term = 6,
   depositRecords,
   bills,
 }: {
   loanAmount?: number;
-  startDate?: dayjs.Dayjs;
+  startDate?: LocalDate;
   annualInterest?: number;
   term?: number;
   depositRecords?: DepositRecords;
@@ -49,8 +50,10 @@ function createLendPeakInstance({
   const lendPeak = new LendPeak({
     amortization,
     depositRecords: depositRecords || new DepositRecords(),
-    bills: bills || new Bills(),
-    currentDate: dayjs(),
+    bills: bills || new Bills({
+      currentDate: LocalDate.now(),
+    }),
+    currentDate: LocalDate.now(),
   });
 
   // Force generation of schedule/bills, etc.
@@ -65,7 +68,7 @@ describe("LendPeak payoffQuote() Tests", () => {
   it("Scenario #1: No Payments => payoff should be entire principal + interest (some interest as of last bill)", () => {
     const lendPeak = createLendPeakInstance({ loanAmount: 1000, annualInterest: 0.1, term: 3 });
 
-    lendPeak.currentDate = dayjs().add(45, "day");
+    lendPeak.currentDate = LocalDate.now().plusDays(45);
     // Re-calc everything
     lendPeak.calc();
 
@@ -90,7 +93,7 @@ describe("LendPeak payoffQuote() Tests", () => {
     const lendPeak = createLendPeakInstance({ loanAmount: 2000, annualInterest: 0.12, term: 4 });
 
     // Advance currentDate so that 1-2 bills are considered 'past due'
-    lendPeak.currentDate = dayjs().add(75, "day"); // ~2.5 months in the future
+    lendPeak.currentDate = LocalDate.now().plusDays(75); // 2.5 months
     lendPeak.calc();
 
     const payoff = lendPeak.payoffQuote;
@@ -112,12 +115,12 @@ describe("LendPeak payoffQuote() Tests", () => {
       id: "DEPOSIT-1",
       amount: 300,
       currency: "USD",
-      effectiveDate: dayjs().add(30, "day"), // mid of first month
+      effectiveDate: LocalDate.now().plusDays(30),
     });
 
     lendPeak.depositRecords.addRecord(partialPayment);
 
-    lendPeak.currentDate = dayjs().add(60, "day");
+    lendPeak.currentDate = LocalDate.now().plusDays(60); // 2 months in
 
     lendPeak.calc(); // Recalc to apply partial payment
 
@@ -142,12 +145,12 @@ describe("LendPeak payoffQuote() Tests", () => {
       id: "DEPOSIT-FULL",
       amount: 5000, // well above the loan amt + interest
       currency: "USD",
-      effectiveDate: dayjs().add(10, "day"),
+      effectiveDate: LocalDate.now().plusDays(10), // 10 days from now
       applyExcessToPrincipal: true,
     });
     lendPeak.depositRecords.addRecord(bigPayment);
 
-    lendPeak.currentDate = dayjs().add(20, "day");
+    lendPeak.currentDate = LocalDate.now().plusDays(20); // 20 days from now
 
     lendPeak.calc();
 
@@ -169,26 +172,26 @@ describe("LendPeak payoffQuote() Tests", () => {
       id: "DEPOSIT-1",
       amount: 400,
       currency: "USD",
-      effectiveDate: dayjs().add(10, "day"),
+      effectiveDate: LocalDate.now().plusDays(10), // 10 days from now
     });
     const deposit2 = new DepositRecord({
       id: "DEPOSIT-2",
       amount: 600,
       currency: "USD",
-      effectiveDate: dayjs().add(40, "day"),
+      effectiveDate: LocalDate.now().plusDays(40), // 40 days from now
     });
     const deposit3 = new DepositRecord({
       id: "DEPOSIT-3",
       amount: 1000,
       currency: "USD",
-      effectiveDate: dayjs().add(70, "day"),
+      effectiveDate: LocalDate.now().plusDays(70), // 70 days from now
     });
     lendPeak.depositRecords.addRecord(deposit1);
     lendPeak.depositRecords.addRecord(deposit2);
     lendPeak.depositRecords.addRecord(deposit3);
 
     // Advance time to after the third deposit
-    lendPeak.currentDate = dayjs().add(80, "day");
+    lendPeak.currentDate = LocalDate.now().plusDays(80); // 80 days from now
     lendPeak.calc();
 
     const payoff = lendPeak.payoffQuote;
@@ -217,13 +220,13 @@ describe("LendPeak payoffQuote() Tests", () => {
       id: "DEPOSIT-PREPAY",
       amount: 1300,
       currency: "USD",
-      effectiveDate: dayjs().add(15, "day"),
+      effectiveDate: LocalDate.now().plusDays(15),
       applyExcessToPrincipal: true,
     });
     lendPeak.depositRecords.addRecord(deposit);
 
     // Move currentDate so deposit is recognized
-    lendPeak.currentDate = dayjs().add(30, "day");
+    lendPeak.currentDate = LocalDate.now().plusDays(30); // 30 days from now
 
     lendPeak.calc();
     const payoff = lendPeak.payoffQuote;
@@ -254,7 +257,7 @@ describe("LendPeak payoffQuote() Tests", () => {
     );
 
     // Recalc to incorporate new fees
-    lendPeak.currentDate = dayjs().add(30, "day");
+    lendPeak.currentDate = LocalDate.now().plusDays(30); // 30 days from now
     lendPeak.calc();
 
     // We haven't made any payments, so payoff includes principal + some interest + fees
@@ -278,19 +281,19 @@ describe("LendPeak payoffQuote() Tests", () => {
       id: "DEPOSIT-1",
       amount: 300,
       currency: "USD",
-      effectiveDate: dayjs().add(10, "day"),
+      effectiveDate: LocalDate.now().plusDays(10), // 10 days from now
     });
     const deposit2 = new DepositRecord({
       id: "DEPOSIT-2",
       amount: 200,
       currency: "USD",
-      effectiveDate: dayjs().add(35, "day"),
+      effectiveDate: LocalDate.now().plusDays(35),
     });
     const deposit3 = new DepositRecord({
       id: "DEPOSIT-3",
       amount: 500,
       currency: "USD",
-      effectiveDate: dayjs().add(60, "day"),
+      effectiveDate: LocalDate.now().plusDays(60),
     });
 
     lendPeak.depositRecords.addRecord(deposit1);
@@ -298,7 +301,7 @@ describe("LendPeak payoffQuote() Tests", () => {
     lendPeak.depositRecords.addRecord(deposit3);
 
     // Move currentDate after the last deposit to ensure they're recognized
-    lendPeak.currentDate = dayjs().add(80, "day");
+    lendPeak.currentDate = LocalDate.now().plusDays(80); // 80 days from now
     lendPeak.calc();
 
     const payoff = lendPeak.payoffQuote;
@@ -320,7 +323,7 @@ describe("LendPeak payoffQuote() Tests", () => {
       term: 4,
     });
 
-    lendPeak.currentDate = dayjs().add(30, "day");
+    lendPeak.currentDate = LocalDate.now().plusDays(30); // 30 days from now
     lendPeak.calc();
 
     // First call
@@ -336,7 +339,7 @@ describe("LendPeak payoffQuote() Tests", () => {
       id: "DEPOSIT-NEW",
       amount: 200,
       currency: "USD",
-      effectiveDate: lendPeak.currentDate.subtract(1, "day"), // ensures it's recognized
+      effectiveDate: lendPeak.currentDate.minusDays(1), // ensures it's recognized
     });
     lendPeak.depositRecords.addRecord(newDeposit);
     lendPeak.calc();
@@ -384,13 +387,13 @@ describe("LendPeak payoffQuote() Tests", () => {
       id: "DEPOSIT-LARGE-NO-EXCESS",
       amount: 3000,
       currency: "USD",
-      effectiveDate: dayjs().add(10, "day"),
+      effectiveDate: LocalDate.now().plusDays(10), // 10 days from now
       applyExcessToPrincipal: false, // no auto-prepayment
     });
     lendPeak.depositRecords.addRecord(deposit);
 
     // Move currentDate so deposit is recognized
-    lendPeak.currentDate = dayjs().add(20, "day");
+    lendPeak.currentDate = LocalDate.now().plusDays(20); // 20 days from now
     lendPeak.calc();
 
     const payoff = lendPeak.payoffQuote;
@@ -413,7 +416,7 @@ describe("LendPeak payoffQuote() Tests", () => {
 
   it("Scenario #12: Last open Bill ended in the past, no future bills => payoff includes extra daily interest from Bill-end -> currentDate (single-term)", () => {
     // 1) Create a 1-term loan starting 30 days ago => Bill ends today (day 30)
-    const start = dayjs().subtract(30, "day"); // day 0 => 30 days ago
+    const start = LocalDate.now().minusDays(30);
     const lendPeak = new LendPeak({
       amortization: new Amortization({
         loanAmount: 1000,
@@ -421,7 +424,7 @@ describe("LendPeak payoffQuote() Tests", () => {
         term: 1, // single term => ends ~ day 30
         startDate: start,
       }),
-      currentDate: start.add(30, "day"), // "today" => exactly the Bill end date
+      currentDate: start.plusDays(30), // "today" => exactly the Bill end date
     });
 
     lendPeak.calc();
@@ -431,7 +434,7 @@ describe("LendPeak payoffQuote() Tests", () => {
     const interest30 = payoffAt30.dueInterest.toNumber();
 
     // 3) Move currentDate 10 days further => day 40
-    lendPeak.currentDate = start.add(40, "day");
+    lendPeak.currentDate = start.plusDays(40);
     lendPeak.calc();
 
     const payoffAt40 = lendPeak.payoffQuote;
@@ -440,7 +443,7 @@ describe("LendPeak payoffQuote() Tests", () => {
     // 4) We expect the second payoff's interest to be bigger by ~10 days * dailyRate
     const extraAccrued = interest40 - interest30;
 
-    expect(extraAccrued).toBeGreaterThan(8); 
-    expect(extraAccrued).toBeLessThan(9); 
+    expect(extraAccrued).toBeGreaterThan(8);
+    expect(extraAccrued).toBeLessThan(9);
   });
 });

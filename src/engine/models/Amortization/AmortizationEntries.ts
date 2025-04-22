@@ -5,6 +5,8 @@ import isSameOrAfter from "dayjs/plugin/isSameOrAfter";
 import isSameOrBefore from "dayjs/plugin/isSameOrBefore";
 import isBetween from "dayjs/plugin/isBetween";
 import { DateUtil } from "../../utils/DateUtil";
+import { LocalDate, ZoneId, ChronoUnit } from "@js-joda/core";
+
 dayjs.extend(isSameOrAfter);
 dayjs.extend(isSameOrBefore);
 dayjs.extend(isBetween);
@@ -74,13 +76,13 @@ export class AmortizationEntries {
     }, Currency.zero);
   }
 
-  getPeriodByDate(date: Dayjs): AmortizationEntry {
-    // find period where passed date is between period start and end date
-    const activePeriod = this._entries.find((period) => date.isBetween(period.periodStartDate, period.periodEndDate, null, "[]"))!;
+  getPeriodByDate(date: LocalDate): AmortizationEntry {
+    const activePeriod = this._entries.find((period) => DateUtil.isBetweenInclusive(date, period.periodStartDate, period.periodEndDate));
+
     return activePeriod || this.lastEntry;
   }
 
-  getPerDiemForPeriodByDate(date: Dayjs | Date): Currency {
+  getPerDiemForPeriodByDate(date: LocalDate | Date): Currency {
     date = DateUtil.normalizeDate(date);
 
     // first we get the period where the date is
@@ -102,8 +104,7 @@ export class AmortizationEntries {
    * @param now The reference date (defaults to today's date).
    * @returns The number of days until the next billable period's due date.
    */
-  getDaysLeftInTerm(now: Dayjs | Date = dayjs()): number {
-
+  getDaysLeftInTerm(now: LocalDate | Date = LocalDate.now()): number {
     now = DateUtil.normalizeDate(now);
 
     // Find the next upcoming billable period whose due date is after 'now'
@@ -115,7 +116,8 @@ export class AmortizationEntries {
     }
 
     // Calculate and return the difference in whole days
-    return upcomingEntry.periodBillDueDate.diff(now, "day");
+    // return upcomingEntry.periodBillDueDate.diff(now, "day");
+    return ChronoUnit.DAYS.between(now, upcomingEntry.periodBillDueDate);
   }
 
   /**
@@ -127,9 +129,7 @@ export class AmortizationEntries {
    * @param date The reference date from which to consider future interest.
    * @returns The projected future interest as a Currency object.
    */
-  getProjectedFutureInterest(date: Dayjs): Currency {
-    date = date.startOf("day");
-
+  getProjectedFutureInterest(date: LocalDate): Currency {
     let projectedFutureInterest = Currency.zero;
 
     for (const entry of this._entries) {

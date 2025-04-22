@@ -3,6 +3,7 @@ import utc from "dayjs/plugin/utc";
 dayjs.extend(utc);
 import { v4 as uuidv4 } from "uuid";
 import { DateUtil } from "../utils/DateUtil";
+import { LocalDate, ZoneId } from "@js-joda/core";
 
 import isBetween from "dayjs/plugin/isBetween";
 dayjs.extend(isBetween);
@@ -14,7 +15,7 @@ export class DepositRecords {
   _records: DepositRecord[] = [];
   private _modified: boolean = false;
   private _versionId: string = uuidv4();
-  private _dateChanged: Dayjs = dayjs();
+  private _dateChanged: LocalDate = LocalDate.now();
 
   constructor(records: DepositRecord[] = []) {
     this.records = records;
@@ -31,7 +32,7 @@ export class DepositRecords {
     return this._versionId;
   }
 
-  get dateChanged(): Dayjs {
+  get dateChanged(): LocalDate {
     return this._dateChanged;
   }
 
@@ -44,7 +45,7 @@ export class DepositRecords {
   }
 
   versionChanged() {
-    this._dateChanged = dayjs();
+    this._dateChanged = LocalDate.now();
     this._versionId = uuidv4();
   }
 
@@ -96,7 +97,7 @@ export class DepositRecords {
         return record;
       })
       .sort((a, b) => {
-        return dayjs(a.effectiveDate).isBefore(dayjs(b.effectiveDate)) ? -1 : 1;
+        return a.effectiveDate.isBefore(b.effectiveDate) ? -1 : 1;
       });
     this.versionChanged();
   }
@@ -126,7 +127,7 @@ export class DepositRecords {
     record.depositRecords = this;
     this._records.push(record);
     this._records = this._records.sort((a, b) => {
-      return dayjs(a.effectiveDate).isBefore(dayjs(b.effectiveDate)) ? -1 : 1;
+      return a.effectiveDate.isBefore(b.effectiveDate) ? -1 : 1;
     });
     this.versionChanged();
   }
@@ -135,7 +136,7 @@ export class DepositRecords {
     this.modified = true;
     this._records.splice(index, 1);
     this._records = this._records.sort((a, b) => {
-      return dayjs(a.effectiveDate).isBefore(dayjs(b.effectiveDate)) ? -1 : 1;
+      return a.effectiveDate.isBefore(b.effectiveDate) ? -1 : 1;
     });
     this.versionChanged();
   }
@@ -144,7 +145,7 @@ export class DepositRecords {
     this.modified = true;
     this._records = this._records.filter((record) => record.id !== id);
     this._records = this._records.sort((a, b) => {
-      return dayjs(a.effectiveDate).isBefore(dayjs(b.effectiveDate)) ? -1 : 1;
+      return a.effectiveDate.isBefore(b.effectiveDate) ? -1 : 1;
     });
     this.versionChanged();
   }
@@ -159,19 +160,19 @@ export class DepositRecords {
 
   get allSorted(): DepositRecord[] {
     return this._records.sort((a, b) => {
-      return dayjs(a.effectiveDate).isBefore(dayjs(b.effectiveDate)) ? -1 : 1;
+      return a.effectiveDate.isBefore(b.effectiveDate) ? -1 : 1;
     });
   }
 
   get allActiveSorted(): DepositRecord[] {
     return this.active.sort((a, b) => {
-      return dayjs(a.effectiveDate).isBefore(dayjs(b.effectiveDate)) ? -1 : 1;
+      return a.effectiveDate.isBefore(b.effectiveDate) ? -1 : 1;
     });
   }
 
   sortByEffectiveDate() {
     this._records = this._records.sort((a, b) => {
-      return dayjs(a.effectiveDate).isBefore(dayjs(b.effectiveDate)) ? -1 : 1;
+      return a.effectiveDate.isBefore(b.effectiveDate) ? -1 : 1;
     });
   }
 
@@ -205,8 +206,8 @@ export class DepositRecords {
           id: r.id,
           amount: r.amount.toNumber(),
           unusedAmount: r.unusedAmount.toNumber(),
-          effectiveDate: r.effectiveDate.format("YYYY-MM-DD"),
-          excessAppliedDate: r.excessAppliedDate ? r.excessAppliedDate.format("YYYY-MM-DD") : "",
+          effectiveDate: r.effectiveDate.toString(),
+          excessAppliedDate: r.excessAppliedDate ? r.excessAppliedDate.toString() : "",
           active: r.active,
         };
       })

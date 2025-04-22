@@ -135,7 +135,7 @@
         <td>
           {{ getVersionById(setting.previousVersionId)?.version || "N/A" }}
         </td>
-        <td>{{ setting.createdAt | date: "short" }}</td>
+        <td>{{ setting.createdAt.toString() | date: "short" }}</td>
         <td>
           <p-button
             icon="pi pi-eye"
@@ -408,13 +408,13 @@
 
                   <td>
                     {{
-                      getStartDateForTerm(override.termNumber).toDate()
+                      getStartDateForTerm(override.termNumber).toString()
                         | date: "MM/dd/yyyy"
                     }}
                   </td>
                   <td>
                     {{
-                      getEndDateForTerm(override.termNumber).toDate()
+                      getEndDateForTerm(override.termNumber).toString()
                         | date: "MM/dd/yyyy"
                     }}
                   </td>
@@ -641,13 +641,13 @@
 
                   <td>
                     {{
-                      getStartDateForTerm(override.jsTermNumber).toDate()
+                      getStartDateForTerm(override.jsTermNumber).toString()
                         | date: "MM/dd/yyyy"
                     }}
                   </td>
                   <td>
                     {{
-                      getEndDateForTerm(override.jsTermNumber).toDate()
+                      getEndDateForTerm(override.jsTermNumber).toString()
                         | date: "MM/dd/yyyy"
                     }}
                   </td>
@@ -843,17 +843,11 @@
                   <!-- Term Dates -->
                   <td>
                     <span class="font-medium text-md">
-                      {{
-                        getStartDateForTerm(override.termNumber).format(
-                          "MM/DD/YYYY"
-                        )
-                      }}
+                      {{ getStartDateForTerm(override.termNumber).toString() }}
                     </span>
                     <span class="font-bold text-xl"> - </span>
                     <span class="font-medium text-md">{{
-                      getEndDateForTerm(override.termNumber).format(
-                        "MM/DD/YYYY"
-                      )
+                      getEndDateForTerm(override.termNumber).toString()
                     }}</span>
                   </td>
                   <!-- Term Number -->
@@ -1096,14 +1090,14 @@
                       {{
                         getStartDateForTerm(
                           paymentConfiguration.termNumber
-                        ).format("MM/DD/YYYY")
+                        ).toString()
                       }}
                     </span>
                     <span class="font-bold text-xl"> - </span>
                     <span class="font-medium text-md">{{
-                      getEndDateForTerm(paymentConfiguration.termNumber).format(
-                        "MM/DD/YYYY"
-                      )
+                      getEndDateForTerm(
+                        paymentConfiguration.termNumber
+                      ).toString()
                     }}</span>
                   </td>
                   <!-- Term Number -->
@@ -1213,14 +1207,12 @@
                       {{
                         getStartDateForTerm(
                           changePaymentDate.termNumber
-                        ).format("MM/DD/YYYY")
+                        ).toString()
                       }}
                     </span>
                     <span class="font-bold text-xl"> - </span>
                     <span class="font-medium text-md">{{
-                      getEndDateForTerm(changePaymentDate.termNumber).format(
-                        "MM/DD/YYYY"
-                      )
+                      getEndDateForTerm(changePaymentDate.termNumber).toString()
                     }}</span>
                   </td>
                   <!-- Term Number -->
@@ -1316,16 +1308,12 @@
                   <td>
                     <span class="font-medium text-md">
                       {{
-                        getStartDateForTerm(preBillDay.termNumber).format(
-                          "MM/DD/YYYY"
-                        )
+                        getStartDateForTerm(preBillDay.termNumber).toString()
                       }}
                     </span>
                     <span class="font-bold text-xl"> - </span>
                     <span class="font-medium text-md">{{
-                      getEndDateForTerm(preBillDay.termNumber).format(
-                        "MM/DD/YYYY"
-                      )
+                      getEndDateForTerm(preBillDay.termNumber).toString()
                     }}</span>
                   </td>
                   <!-- Term Number -->
@@ -1410,16 +1398,12 @@
                   <td>
                     <span class="font-medium text-md">
                       {{
-                        getStartDateForTerm(dueBillDay.termNumber).format(
-                          "MM/DD/YYYY"
-                        )
+                        getStartDateForTerm(dueBillDay.termNumber).toString()
                       }}
                     </span>
                     <span class="font-bold text-xl"> - </span>
                     <span class="font-medium text-md">{{
-                      getEndDateForTerm(dueBillDay.termNumber).format(
-                        "MM/DD/YYYY"
-                      )
+                      getEndDateForTerm(dueBillDay.termNumber).toString()
                     }}</span>
                   </td>
                   <!-- Term Number -->

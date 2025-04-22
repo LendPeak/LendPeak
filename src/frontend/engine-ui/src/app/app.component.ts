@@ -4,6 +4,7 @@ import { ActivatedRoute, Router, NavigationEnd } from '@angular/router';
 import { Location } from '@angular/common';
 import { AmortizationExplainer } from 'lendpeak-engine/models/AmortizationExplainer';
 import { ConfirmationService } from 'primeng/api';
+import { LocalDate, ChronoUnit } from '@js-joda/core';
 
 import { ConfirmPopup } from 'primeng/confirmpopup';
 
@@ -26,6 +27,7 @@ import {
 import { IndexedDbService } from './services/indexed-db.service';
 
 import { Amortization } from 'lendpeak-engine/models/Amortization';
+import { DateUtil } from 'lendpeak-engine/utils/DateUtil';
 
 import { LendPeak } from 'lendpeak-engine/models/LendPeak';
 
@@ -273,7 +275,7 @@ export class AppComponent implements OnChanges {
   private getActualLoanSummary(): ActualLoanSummary {
     let actualPrincipalPaid = Currency.Zero();
     let actualInterestPaid = Currency.Zero();
-    let lastPaymentDate: Dayjs | null = null;
+    let lastPaymentDate: LocalDate | null = null;
     let lastPaymentAmount = Currency.Zero();
 
     // Sum principal and interest actually paid from bills
@@ -282,7 +284,7 @@ export class AppComponent implements OnChanges {
         for (const pd of bill.paymentDetails) {
           actualPrincipalPaid = actualPrincipalPaid.add(pd.allocatedPrincipal);
           actualInterestPaid = actualInterestPaid.add(pd.allocatedInterest);
-          const pdDate = dayjs(pd.date);
+          const pdDate = DateUtil.normalizeDate(pd.date);
           if (!lastPaymentDate || pdDate.isAfter(lastPaymentDate)) {
             lastPaymentDate = pdDate;
             lastPaymentAmount = pd.allocatedPrincipal
@@ -299,7 +301,7 @@ export class AppComponent implements OnChanges {
     if (unpaidBills.length > 0) {
       // sort by dueDate
       unpaidBills.sort((a, b) => (a.dueDate.isAfter(b.dueDate) ? 1 : -1));
-      nextBillDate = unpaidBills[0].dueDate.toDate();
+      nextBillDate = unpaidBills[0].jsDueDate;
     }
 
     const originalPrincipal = Currency.of(
@@ -318,7 +320,9 @@ export class AppComponent implements OnChanges {
       nextBillDate,
       actualPrincipalPaid,
       actualInterestPaid,
-      lastPaymentDate: lastPaymentDate ? lastPaymentDate.toDate() : undefined,
+      lastPaymentDate: lastPaymentDate
+        ? DateUtil.normalizeDateToJsDate(lastPaymentDate)
+        : undefined,
       lastPaymentAmount,
       actualRemainingPrincipal,
       actualCurrentPayoff,
@@ -442,18 +446,18 @@ export class AppComponent implements OnChanges {
   }
 
   // Method to handle changes to snapshotDate
-  onSnapshotDateChange(date: Date) {
+  onSnapshotDateChange(date:  Date) {
     this.snapshotDate = date;
     this.lendPeak.currentDate = this.snapshotDate;
 
     // if snapshot date is today, we don't need to store it in local storage
     // and we want to clear the stored snapshot date
-    const today = dayjs().startOf('day');
-    const selectedDate = dayjs(date).startOf('day');
-    if (selectedDate.isSame(today)) {
+    const today = DateUtil.today();
+    const selectedDate = DateUtil.normalizeDate(date);
+    if (selectedDate.isEqual(today)) {
       localStorage.removeItem('snapshotDate');
     } else {
-      localStorage.setItem('snapshotDate', date.toISOString());
+      localStorage.setItem('snapshotDate', date.toString());
     }
 
     this.submitLoan();
@@ -502,17 +506,18 @@ export class AppComponent implements OnChanges {
     try {
       const snapshotDate = localStorage.getItem('snapshotDate');
       if (snapshotDate) {
-        this.snapshotDate = new Date(snapshotDate);
-        if (isNaN(this.snapshotDate.getTime())) {
+        this.snapshotDate = DateUtil.normalizeDateToJsDate(DateUtil.normalizeDate(snapshotDate));
+;
+        if (!this.snapshotDate) {
           this.snapshotDate = new Date();
         }
       } else {
-        this.snapshotDate = new Date();
+          this.snapshotDate = new Date();
       }
     } catch (e) {
       // clear the snapshot date from local storage
       localStorage.removeItem('snapshotDate');
-      this.snapshotDate = new Date();
+          this.snapshotDate = new Date();
     }
 
     this.lendPeak.currentDate = this.snapshotDate;
@@ -1114,7 +1119,7 @@ export class AppComponent implements OnChanges {
     // when end date is changed following start date should be updated
     const selectedRow =
       this.lendPeak.amortization.periodsSchedule.periods[index];
-    const endDate = dayjs(selectedRow.endDate);
+    const endDate = dayjs(selectedRow.jsEndDate);
     const startDate = endDate;
     this.lendPeak.amortization.periodsSchedule.periods[index + 1].startDate =
       selectedRow.endDate;
@@ -1222,14 +1227,14 @@ export class AppComponent implements OnChanges {
   }
 
   private getPastDueSummary(): PastDueSummary {
-    const snapshot = dayjs(this.snapshotDate).startOf('day');
+    const snapshot = DateUtil.normalizeDate(this.snapshotDate);
     let pastDueCount = 0;
     let totalPastDuePrincipal = Currency.Zero();
     let totalPastDueInterest = Currency.Zero();
     let totalPastDueFees = Currency.Zero();
     let totalPastDueAmount = Currency.Zero();
 
-    let earliestPastDueBillDate: Dayjs | null = null;
+    let earliestPastDueBillDate: LocalDate | null = null;
 
     for (const bill of this.lendPeak.bills.all) {
       // A bill is past due if it's not fully paid and due before the snapshot date
@@ -1267,8 +1272,12 @@ export class AppComponent implements OnChanges {
 
     // Calculate days the contract is past due based on earliest past due bill date
     let daysContractIsPastDue = 0;
+
     if (earliestPastDueBillDate) {
-      daysContractIsPastDue = snapshot.diff(earliestPastDueBillDate, 'day');
+      daysContractIsPastDue = ChronoUnit.DAYS.between(
+        earliestPastDueBillDate,
+        snapshot,
+      );
     }
 
     return {

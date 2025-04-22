@@ -4,6 +4,8 @@ import { BalanceModification } from "./BalanceModification";
 import { Currency } from "../../utils/Currency";
 import { Calendar, CalendarType } from "../Calendar";
 import { DateUtil } from "../../utils/DateUtil";
+import { LocalDate, ZoneId } from "@js-joda/core";
+
 /**
  * Optional metadata interface for the schedule entry
  */
@@ -42,16 +44,16 @@ export interface AmortizationEntryParams {
   term: number;
   // zeroPeriod can be derived from `term - 1`, but if you want it explicit, make it optional:
   // zeroPeriod?: number;
-  periodStartDate: string | Date | Dayjs;
-  periodEndDate: string | Date | Dayjs;
+  periodStartDate: string | Date | LocalDate;
+  periodEndDate: string | Date | LocalDate;
 
   prebillDaysConfiguration: number;
   billDueDaysAfterPeriodEndConfiguration: number;
 
   billablePeriod: boolean;
 
-  periodBillOpenDate: string | Date | Dayjs;
-  periodBillDueDate: string | Date | Dayjs;
+  periodBillOpenDate: string | Date | LocalDate;
+  periodBillDueDate: string | Date | LocalDate;
 
   periodInterestRate: string | number | Decimal;
 
@@ -93,17 +95,16 @@ export class AmortizationEntry {
   // ================= PRIVATE BACKING FIELDS =================
   //
   private _term!: number;
-  private _zeroPeriod!: number; // Usually derived from `term - 1`.
 
-  private _periodStartDate!: Dayjs;
-  private _periodEndDate!: Dayjs;
+  private _periodStartDate!: LocalDate;
+  private _periodEndDate!: LocalDate;
 
   private _prebillDaysConfiguration!: number;
   private _billDueDaysAfterPeriodEndConfiguration!: number;
 
   private _billablePeriod!: boolean;
-  private _periodBillOpenDate!: Dayjs;
-  private _periodBillDueDate!: Dayjs;
+  private _periodBillOpenDate!: LocalDate;
+  private _periodBillDueDate!: LocalDate;
 
   private _periodInterestRate!: Decimal;
 
@@ -140,17 +141,16 @@ export class AmortizationEntry {
   // =========== PUBLIC "js*" PROPERTIES FOR UI BINDING ===========
   //
   public jsTerm!: number;
-  public jsZeroPeriod!: number;
 
-  public jsPeriodStartDate!: string; // store ISO or "YYYY-MM-DD"
-  public jsPeriodEndDate!: string;
+  public jsPeriodStartDate!: Date; // store ISO or "YYYY-MM-DD"
+  public jsPeriodEndDate!: Date;
 
   public jsPrebillDaysConfiguration!: number;
   public jsBillDueDaysAfterPeriodEndConfiguration!: number;
 
   public jsBillablePeriod!: boolean;
-  public jsPeriodBillOpenDate!: string;
-  public jsPeriodBillDueDate!: string;
+  public jsPeriodBillOpenDate!: Date;
+  public jsPeriodBillDueDate!: Date;
 
   public jsPeriodInterestRate!: string; // e.g. "0.06" or "6" or "0.06..."
   public jsPrincipal!: number;
@@ -185,9 +185,6 @@ export class AmortizationEntry {
   //
   constructor(params: AmortizationEntryParams) {
     this.term = params.term;
-    // If you want zeroPeriod to be automatically derived:
-    this.zeroPeriod = params.term - 1;
-    // (Else if you pass it in, you could do: this.zeroPeriod = params.zeroPeriod || params.term - 1)
 
     this.periodStartDate = params.periodStartDate;
     this.periodEndDate = params.periodEndDate;
@@ -265,27 +262,17 @@ export class AmortizationEntry {
     this._term = value;
   }
 
-  public get zeroPeriod(): number {
-    return this._zeroPeriod;
-  }
-  public set zeroPeriod(value: number) {
-    if (typeof value !== "number") {
-      throw new Error(`zeroPeriod must be a number. Received: ${typeof value}`);
-    }
-    this._zeroPeriod = value;
-  }
-
-  public get periodStartDate(): Dayjs {
+  public get periodStartDate(): LocalDate {
     return this._periodStartDate;
   }
-  public set periodStartDate(raw: string | Date | Dayjs) {
+  public set periodStartDate(raw: string | Date | LocalDate) {
     this._periodStartDate = DateUtil.normalizeDate(raw);
   }
 
-  public get periodEndDate(): Dayjs {
+  public get periodEndDate(): LocalDate {
     return this._periodEndDate;
   }
-  public set periodEndDate(raw: string | Date | Dayjs) {
+  public set periodEndDate(raw: string | Date | LocalDate) {
     this._periodEndDate = DateUtil.normalizeDate(raw);
   }
 
@@ -313,17 +300,17 @@ export class AmortizationEntry {
     this._billablePeriod = raw;
   }
 
-  public get periodBillOpenDate(): Dayjs {
+  public get periodBillOpenDate(): LocalDate {
     return this._periodBillOpenDate;
   }
-  public set periodBillOpenDate(raw: string | Date | Dayjs) {
+  public set periodBillOpenDate(raw: string | Date | LocalDate) {
     this._periodBillOpenDate = DateUtil.normalizeDate(raw);
   }
 
-  public get periodBillDueDate(): Dayjs {
+  public get periodBillDueDate(): LocalDate {
     return this._periodBillDueDate;
   }
-  public set periodBillDueDate(raw: string | Date | Dayjs) {
+  public set periodBillDueDate(raw: string | Date | LocalDate) {
     this._periodBillDueDate = DateUtil.normalizeDate(raw);
   }
 
@@ -512,17 +499,16 @@ export class AmortizationEntry {
   /** Push model data → js* fields (for UI binding). */
   public updateJsValues(): void {
     this.jsTerm = this.term;
-    this.jsZeroPeriod = this.zeroPeriod;
 
-    this.jsPeriodStartDate = this.periodStartDate.toISOString();
-    this.jsPeriodEndDate = this.periodEndDate.toISOString();
+    this.jsPeriodStartDate = DateUtil.normalizeDateToJsDate(this.periodStartDate);
+    this.jsPeriodEndDate = DateUtil.normalizeDateToJsDate(this.periodEndDate);
 
     this.jsPrebillDaysConfiguration = this.prebillDaysConfiguration;
     this.jsBillDueDaysAfterPeriodEndConfiguration = this.billDueDaysAfterPeriodEndConfiguration;
 
     this.jsBillablePeriod = this.billablePeriod;
-    this.jsPeriodBillOpenDate = this.periodBillOpenDate.toISOString();
-    this.jsPeriodBillDueDate = this.periodBillDueDate.toISOString();
+    this.jsPeriodBillOpenDate = DateUtil.normalizeDateToJsDate(this.periodBillOpenDate);
+    this.jsPeriodBillDueDate = DateUtil.normalizeDateToJsDate(this.periodBillDueDate);
 
     this.jsPeriodInterestRate = this.periodInterestRate.toString();
     this.jsPrincipal = this.principal.toNumber();
@@ -556,7 +542,6 @@ export class AmortizationEntry {
   /** Push js* (UI-edited) fields → real model fields. */
   public updateModelValues(): void {
     this.term = this.jsTerm;
-    this.zeroPeriod = this.jsZeroPeriod;
 
     this.periodStartDate = this.jsPeriodStartDate;
     this.periodEndDate = this.jsPeriodEndDate;
@@ -608,15 +593,14 @@ export class AmortizationEntry {
   public get json(): any {
     return {
       term: this.term,
-      zeroPeriod: this.zeroPeriod,
-      periodStartDate: this.periodStartDate.toISOString(),
-      periodEndDate: this.periodEndDate.toISOString(),
+      periodStartDate: this.periodStartDate.toString(),
+      periodEndDate: this.periodEndDate.toString(),
       prebillDaysConfiguration: this.prebillDaysConfiguration,
       billDueDaysAfterPeriodEndConfiguration: this.billDueDaysAfterPeriodEndConfiguration,
 
       billablePeriod: this.billablePeriod,
-      periodBillOpenDate: this.periodBillOpenDate.toISOString(),
-      periodBillDueDate: this.periodBillDueDate.toISOString(),
+      periodBillOpenDate: this.periodBillOpenDate.toString(),
+      periodBillDueDate: this.periodBillDueDate.toString(),
 
       periodInterestRate: this.periodInterestRate.toString(),
       principal: this.principal.toNumber(),

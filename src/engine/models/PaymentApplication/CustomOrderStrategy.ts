@@ -2,22 +2,21 @@ import { Currency } from "../../utils/Currency";
 import { DepositRecord } from "../DepositRecord";
 import { Bill } from "../Bill";
 import { Bills } from "../Bills";
-import dayjs, { Dayjs } from "dayjs";
+import { LocalDate } from "@js-joda/core";
 import { AllocationStrategy } from "./AllocationStrategy";
-import isBetween from "dayjs/plugin/isBetween";
-dayjs.extend(isBetween);
 import { PaymentPriority } from "./Types";
 import { PaymentApplicationResult } from "./PaymentApplicationResult";
 import { PaymentAllocation } from "./PaymentAllocation";
 import { AllocationHelper } from "./AllocationHelper";
+import { DateUtil } from "../../utils/DateUtil";
 
 /*
 Custom Order Strategy
-The CustomOrderStrategy allows you to define a custom order for bill allocation based on specific criteria, such as priority levels or custom attributes.
+The CustomOrderStrategy allows you to define a custom order for bill allocation based on specific criteria.
 
 Explanation:
-- Custom Ordering: Allows you to define any sorting logic based on your business needs.
-- Flexible Allocation: The allocation logic remains consistent, but the order in which bills are processed is customizable.
+- Custom Ordering: Define any sorting logic based on business needs.
+- Flexible Allocation: Allocation logic remains consistent; only the bill processing order is customizable.
 */
 export class CustomOrderStrategy implements AllocationStrategy {
   private compareFunction: (a: Bill, b: Bill) => number;
@@ -26,16 +25,15 @@ export class CustomOrderStrategy implements AllocationStrategy {
     this.compareFunction = compareFunction;
   }
 
-  apply(deposit: DepositRecord, bills: Bills, paymentPriority: PaymentPriority): PaymentApplicationResult {
-    let remainingAmount = deposit.amount;
+  apply(currentDate: LocalDate, deposit: DepositRecord, bills: Bills, paymentPriority: PaymentPriority): PaymentApplicationResult {
+    let remainingAmount = deposit.amount.clone();
     const allocations: PaymentAllocation[] = [];
 
-    // Sort bills using the custom compare function
-    let sortedBills = bills.all.filter((bill) => bill.isOpen === true && !bill.isPaid).sort(this.compareFunction);
+    let sortedBills = bills.all.filter((bill) => bill.isOpen(currentDate) && !bill.isPaid()).sort(this.compareFunction);
 
     if (deposit.applyExcessToPrincipal) {
-      const excessAppliedDate = deposit.excessAppliedDate || deposit.effectiveDate;
-      sortedBills = sortedBills.filter((bill) => bill.openDate.isSameOrBefore(excessAppliedDate));
+      const excessAppliedDate = DateUtil.normalizeDate(deposit.excessAppliedDate || deposit.effectiveDate);
+      sortedBills = sortedBills.filter((bill) => bill.openDate.isBefore(excessAppliedDate) || bill.openDate.isEqual(excessAppliedDate));
     }
 
     for (const bill of sortedBills) {
@@ -50,12 +48,12 @@ export class CustomOrderStrategy implements AllocationStrategy {
     const totalAllocated = deposit.amount.subtract(remainingAmount);
 
     return {
-      effectiveDate: deposit.effectiveDate,
+      effectiveDate: DateUtil.normalizeDate(deposit.effectiveDate),
       depositId: deposit.id,
       totalAllocated,
       allocations,
       unallocatedAmount: remainingAmount,
-      excessAmount: Currency.Zero(), // Handle excess according to business rules
+      excessAmount: Currency.Zero(), // Adjust excess handling as needed
     };
   }
 }

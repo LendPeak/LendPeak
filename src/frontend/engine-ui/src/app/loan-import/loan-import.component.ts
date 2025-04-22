@@ -15,7 +15,7 @@ import {
 } from 'lendpeak-engine/models/Amortization';
 import { TermInterestAmountOverride } from 'lendpeak-engine/models/TermInterestAmountOverride';
 import { TermInterestAmountOverrides } from 'lendpeak-engine/models/TermInterestAmountOverrides';
-import { parseODataDate, Payment } from '../models/loanpro.model';
+import { Payment } from '../models/loanpro.model';
 import dayjs from 'dayjs';
 import { Subscription, from } from 'rxjs';
 import { mergeMap, tap, finalize } from 'rxjs/operators';
@@ -43,6 +43,7 @@ import { TermCalendars } from 'lendpeak-engine/models/TermCalendars';
 import { TermCalendar } from 'lendpeak-engine/models/TermCalendar';
 import { Calendar } from 'lendpeak-engine/models/Calendar';
 import { DateUtil } from 'lendpeak-engine/utils/DateUtil';
+import { LocalDate, ZoneId } from '@js-joda/core';
 
 @Component({
   selector: 'app-loan-import',
@@ -138,15 +139,19 @@ export class LoanImportComponent implements OnInit, OnDestroy {
             // convert payment dates
             loan.d.Payments.filter((payment: any) => payment.active === 1).map(
               (payment: any) => {
-                payment.date = parseODataDate(payment.date, true);
-                payment.created = parseODataDate(payment.created, true);
+                payment.date = DateUtil.parseLoanProDateToLocalDate(
+                  payment.date,
+                );
+                payment.created = DateUtil.parseLoanProDateToLocalDate(
+                  payment.created,
+                );
               },
             );
             // convert contractDate to string for display
-            loan.d.LoanSetup.contractDate = parseODataDate(
-              loan.d.LoanSetup.contractDate,
-              true,
-            ).toDateString();
+            loan.d.LoanSetup.contractDate =
+              DateUtil.parseLoanProDateToLocalDate(
+                loan.d.LoanSetup.contractDate,
+              ).toString();
           }
 
           this.previewLoans = previewLoans;
@@ -342,45 +347,62 @@ export class LoanImportComponent implements OnInit, OnDestroy {
   }
 
   patchInterestOverrideDates(overrides: TermInterestAmountOverride[]) {
-    // 1. Sort them chronologically
-    overrides.sort(
-      (a, b) => (a.date?.valueOf() ?? 0) - (b.date?.valueOf() ?? 0),
-    );
+    // 1. Sort overrides chronologically, handling undefined dates
+    overrides.sort((a, b) => {
+      const aEpoch = a.date ? a.date.toEpochDay() : 0;
+      const bEpoch = b.date ? b.date.toEpochDay() : 0;
+      return aEpoch - bEpoch;
+    });
 
-    // 2. First pass: if it’s February and day < 28 => add 1 day
+    // 2. First pass: Add one day if the date is before Feb 28
     for (let i = 0; i < overrides.length; i++) {
-      const currentDate = dayjs(overrides[i].date);
+      if (!overrides[i].date) continue;
 
-      // Day.js months are zero-based: January=0, February=1, ...
-      if (currentDate.month() === 1 && currentDate.date() < 28) {
-        const patched = currentDate.add(1, 'day');
+      const currentDate = overrides[i].date;
+      if (currentDate === undefined) {
+        console.log('Date is undefined, skipping');
+        continue;
+      }
+      if (currentDate.monthValue() === 2 && currentDate.dayOfMonth() < 28) {
+        const patched = currentDate.plusDays(1);
         console.log(
-          `Adding one day because it's before Feb 28. Changing ${currentDate.format('MM/DD/YYYY')} to ${patched.format('MM/DD/YYYY')}`,
+          `Adding one day because it's before Feb 28. Changing ${currentDate} to ${patched}`,
         );
-        overrides[i].date = patched; // or overrides[i].date = patched.toDate() if your code expects a JS Date
+        overrides[i].date = patched;
       }
     }
 
-    // 3. Second pass: your existing “end of month” patch logic
+    // 3. Second pass: End-of-month patch logic
     for (let i = 1; i < overrides.length; i++) {
-      const prevDate = dayjs(overrides[i - 1].date);
-      const currDate = dayjs(overrides[i].date);
+      if (!overrides[i - 1].date || !overrides[i].date) continue;
 
-      // If the previous date = 28, and the current is 27 in the very next month => patch current to 28
-      if (
-        prevDate.date() === 28 &&
-        prevDate.add(1, 'month').month() === currDate.month() &&
-        currDate.date() === 27
-      ) {
-        const fixedDate = currDate.date(28);
+      const prevDate = overrides[i - 1].date;
+      if (prevDate === undefined) {
+        console.log('Previous date is undefined, skipping');
+        continue;
+      }
+      const currDate = overrides[i].date;
+      if (currDate === undefined) {
+        console.log('Current date is undefined, skipping');
+        continue;
+      }
+
+      // Check if previous day was the 28th and the current month is next month with day 27
+      const isPrev28 = prevDate.dayOfMonth() === 28;
+      const isCurr27 = currDate.dayOfMonth() === 27;
+      const isNextMonth =
+        prevDate.plusMonths(1).monthValue() === currDate.monthValue() &&
+        prevDate.plusMonths(1).year() === currDate.year();
+
+      if (isPrev28 && isCurr27 && isNextMonth) {
+        const fixedDate = currDate.withDayOfMonth(28);
         console.log(
-          `Patching interest override date from ${currDate.format('MM/DD/YYYY')} to ${fixedDate.format('MM/DD/YYYY')}`,
+          `Patching interest override date from ${currDate} to ${fixedDate}`,
         );
         overrides[i].date = fixedDate;
       }
     }
   }
-
   private getSelectedConnector(): Connector | null {
     const connector = this.connectorService.getConnectorById(
       this.selectedConnectorId,
@@ -437,7 +459,7 @@ export class LoanImportComponent implements OnInit, OnDestroy {
       return new TermInterestAmountOverride({
         termNumber: -1,
         interestAmount: parseFloat(amount),
-        date: parseODataDate(tr.date, true),
+        date: DateUtil.parseLoanProDateToLocalDate(tr.date),
       });
     });
 
@@ -453,11 +475,18 @@ export class LoanImportComponent implements OnInit, OnDestroy {
       (tr) => tr.type === 'scheduledPayment',
     ).sort((a, b) => a.period - b.period);
     const lastScheduledPeriod = scheduledPayments[scheduledPayments.length - 1];
-    let endDate: dayjs.Dayjs | undefined = undefined;
+    let endDate: LocalDate | undefined = undefined;
     if (lastScheduledPeriod) {
-      const lastScheduledPeriodEndDate = dayjs(
-        parseODataDate(lastScheduledPeriod.periodEnd, true),
-      ).add(1, 'day');
+      // console.trace(
+      //   'lastScheduledPeriod.periodEnd',
+      //   lastScheduledPeriod.periodEnd,
+      // );
+      // const lastScheduledPeriodEndDate = DateUtil.normalizeDate(
+      //   parseODataDate(lastScheduledPeriod.periodEnd, true),
+      // ).plusDays(1);
+      const lastScheduledPeriodEndDate = DateUtil.parseLoanProDateToLocalDate(
+        lastScheduledPeriod.periodEnd,
+      ).plusDays(1);
       endDate = lastScheduledPeriodEndDate;
     }
 
@@ -468,7 +497,7 @@ export class LoanImportComponent implements OnInit, OnDestroy {
         tr.title.toLocaleLowerCase().includes('payoff'),
     );
     if (payoffTransaction) {
-      endDate = dayjs(parseODataDate(payoffTransaction.date, true));
+      endDate = DateUtil.parseLoanProDateToLocalDate(payoffTransaction.date);
     }
 
     const uiLoan: AmortizationParams = {
@@ -484,15 +513,16 @@ export class LoanImportComponent implements OnInit, OnDestroy {
       term: scheduledPayments.length,
       //   feesForAllTerms: [],
       feesPerTerm: FeesPerTerm.empty(),
-      startDate: parseODataDate(loanData.d.LoanSetup.contractDate, true),
-      firstPaymentDate: parseODataDate(
+      startDate: DateUtil.parseLoanProDateToLocalDate(
+        loanData.d.LoanSetup.contractDate,
+      ),
+      firstPaymentDate: DateUtil.parseLoanProDateToLocalDate(
         loanData.d.LoanSetup.firstPaymentDate,
-        true,
       ),
       // endDate: parseODataDate(loanData.d.LoanSetup.origFinalPaymentDate, true),
       endDate: endDate,
       payoffDate: payoffTransaction
-        ? dayjs(parseODataDate(payoffTransaction.date, true))
+        ? DateUtil.parseLoanProDateToLocalDate(payoffTransaction.date)
         : undefined,
       calendars: new TermCalendars({ primary: calendarType }),
       roundingMethod: 'ROUND_HALF_EVEN',
@@ -534,8 +564,10 @@ export class LoanImportComponent implements OnInit, OnDestroy {
           // });
           return new ChangePaymentDate({
             termNumber: -1,
-            originalDate: parseODataDate(change.changedDate, true),
-            newDate: parseODataDate(change.newDate, true),
+            originalDate: DateUtil.parseLoanProDateToLocalDate(
+              change.changedDate,
+            ),
+            newDate: DateUtil.parseLoanProDateToLocalDate(change.newDate),
           });
         }),
       ),
@@ -597,9 +629,9 @@ export class LoanImportComponent implements OnInit, OnDestroy {
           amount: parseFloat(payment.amount),
           active: payment.active === 1,
           currency: 'USD',
-          effectiveDate: parseODataDate(payment.date, true),
-          clearingDate: parseODataDate(payment.date, true),
-          systemDate: parseODataDate(payment.created, true),
+          effectiveDate: DateUtil.parseLoanProDateToLocalDate(payment.date),
+          clearingDate: DateUtil.parseLoanProDateToLocalDate(payment.date),
+          systemDate: DateUtil.parseLoanProDateToLocalDate(payment.created),
           id: `(${payment.id}) ${payment.info}`,
           // LPTs had excess applied to principal
           applyExcessToPrincipal: payment.info.includes('LPT') ? true : false,
@@ -607,7 +639,7 @@ export class LoanImportComponent implements OnInit, OnDestroy {
             ? true
             : false,
           excessAppliedDate: payment.info.includes('LPT')
-            ? parseODataDate(payment.date, true)
+            ? DateUtil.parseLoanProDateToLocalDate(payment.date)
             : undefined,
         });
 
@@ -651,10 +683,8 @@ export class LoanImportComponent implements OnInit, OnDestroy {
             prepayment: depositRecord.amount,
           };
           depositRecord.applyExcessToPrincipal = true;
-          depositRecord.excessAppliedDate = depositRecord.effectiveDate.add(
-            1,
-            'day',
-          );
+          depositRecord.excessAppliedDate =
+            depositRecord.effectiveDate.plusDays(1);
         }
         return depositRecord;
       }),

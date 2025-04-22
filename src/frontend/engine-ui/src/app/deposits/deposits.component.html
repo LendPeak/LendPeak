@@ -35,7 +35,7 @@
           class="p-datatable-sm"
           [scrollable]="true"
           scrollHeight="600px"
-          sortField="effectiveDate"
+          sortField="jsEffectiveDate"
           [sortOrder]="-1"
           [(selection)]="selectedDeposits"
           selectionMode="multiple"
@@ -49,11 +49,11 @@
               <th>ID</th>
               <th>Amount</th>
               <th>Currency</th>
-              <th pSortableColumn="effectiveDate">
-                Effective Date <p-sortIcon field="effectiveDate"></p-sortIcon>
+              <th pSortableColumn="jsEffectiveDate">
+                Effective Date <p-sortIcon field="jsEffectiveDate"></p-sortIcon>
               </th>
-              <th pSortableColumn="clearingDate">
-                Clearing Date <p-sortIcon field="clearingDate"></p-sortIcon>
+              <th pSortableColumn="jsClearingDate">
+                Clearing Date <p-sortIcon field="jsClearingDate"></p-sortIcon>
               </th>
               <th>Unused Amount</th>
               <th>Apply Excess to Principal</th>
@@ -80,7 +80,7 @@
                 <span
                   [class.opacity-30]="
                     !deposit.active ||
-                    deposit.effectiveDate.isAfter(snapshotDate)
+                    dateIsInTheFutureFromSnapshotDate(deposit.effectiveDate)
                   "
                 >
                   {{ deposit.id }}
@@ -95,7 +95,9 @@
                   tooltipPosition="top"
                 ></p-badge>
                 <p-badge
-                  *ngIf="deposit.effectiveDate.isAfter(snapshotDate)"
+                  *ngIf="
+                    dateIsInTheFutureFromSnapshotDate(deposit.effectiveDate)
+                  "
                   value="Future"
                   severity="warn"
                   styleClass="mr-2"
@@ -134,9 +136,9 @@
               <td>{{ deposit.jsAmount | currency }}</td>
               <td>{{ deposit.currency }}</td>
               <td>
-                {{ deposit.jsEffectiveDate | date: "MM/dd/yyyy" : "UTC" }}
+                {{ deposit.jsEffectiveDate | date: "MM/dd/yyyy" }}
               </td>
-              <td>{{ deposit.jsClearingDate | date: "MM/dd/yyyy" : "UTC" }}</td>
+              <td>{{ deposit.jsClearingDate | date: "MM/dd/yyyy" }}</td>
               <td>
                 {{ deposit.jsUnusedAmount | currency }}
               </td>
@@ -266,7 +268,27 @@
           [inputStyle]="{
             width: '100%',
           }"
-        ></p-datepicker>
+        >
+          <ng-template pTemplate="date" let-date>
+            <span
+              [ngStyle]="
+                this.lendPeak?.amortization?.isPeriodEndDate(date)
+                  ? {
+                      backgroundColor: 'orange',
+                      color: 'white',
+                      borderRadius: '50%',
+                      padding: '5px',
+                      display: 'inline-block',
+                      textAlign: 'center',
+                      width: '24px',
+                    }
+                  : {}
+              "
+            >
+              {{ date.day }}
+            </span>
+          </ng-template>
+        </p-datepicker>
       </div>
       <div class="field col">
         <label for="clearingDate-{{ depositData.id }}">Clearing Date</label>
@@ -285,7 +307,27 @@
           [inputStyle]="{
             width: '100%',
           }"
-        ></p-datepicker>
+        >
+          <ng-template pTemplate="date" let-date>
+            <span
+              [ngStyle]="
+                this.lendPeak?.amortization?.isPeriodEndDate(date)
+                  ? {
+                      backgroundColor: 'orange',
+                      color: 'white',
+                      borderRadius: '50%',
+                      padding: '5px',
+                      display: 'inline-block',
+                      textAlign: 'center',
+                      width: '24px',
+                    }
+                  : {}
+              "
+            >
+              {{ date.day }}
+            </span>
+          </ng-template>
+        </p-datepicker>
       </div>
     </div>
     <div class="field">
@@ -324,7 +366,27 @@
             'font-size': '1.1rem',
           }"
           class="w-full"
-        ></p-datepicker>
+        >
+          <ng-template pTemplate="date" let-date>
+            <span
+              [ngStyle]="
+                this.lendPeak?.amortization?.isPeriodEndDate(date)
+                  ? {
+                      backgroundColor: 'orange',
+                      color: 'white',
+                      borderRadius: '50%',
+                      padding: '5px',
+                      display: 'inline-block',
+                      textAlign: 'center',
+                      width: '24px',
+                    }
+                  : {}
+              "
+            >
+              {{ date.day }}
+            </span>
+          </ng-template>
+        </p-datepicker>
 
         <p-inputgroup-addon>
           <i class="pi pi-calendar"></i>
@@ -521,7 +583,7 @@
         tooltipPosition="top"
       ></p-badge>
       <p-badge
-        *ngIf="selectedDeposit?.effectiveDate?.isAfter(snapshotDate)"
+        *ngIf="effectiveDateIsAfterSnapshotDate(selectedDeposit)"
         value="Future"
         severity="warn"
         styleClass="mr-2"
@@ -590,7 +652,7 @@
     <ng-template pTemplate="body" let-detail>
       <tr>
         <td>{{ detail.period }}</td>
-        <td>{{ detail.billDueDate.toDate() | date: "MM/dd/yyyy" }}</td>
+        <td>{{ detail.billDueDate.toString() | date: "MM/dd/yyyy" }}</td>
         <td>
           <!-- Bill ID + button to open Bill Card -->
           <p-button
@@ -621,21 +683,21 @@
 
               <!-- If bill is open and not paid -->
               <p-tag
-                *ngIf="bill.isOpen && !bill.isPaid"
+                *ngIf="bill.isOpen(snapshotDate) && !bill.isPaid()"
                 value="Open Bill"
                 severity="success"
               ></p-tag>
 
               <!-- If bill is future (not open) and not paid -->
               <p-tag
-                *ngIf="!bill.isOpen && !bill.isPaid"
+                *ngIf="!bill.isOpen(snapshotDate) && !bill.isPaid()"
                 value="Future"
                 severity="info"
               ></p-tag>
 
               <!-- If total due is 0 => 'Skip A Pay' -->
               <p-tag
-                *ngIf="bill.jsTotalDue == 0"
+                *ngIf="bill.jsOriginalTotalDue == 0"
                 value="Skip A Pay"
                 severity="secondary"
               ></p-tag>
@@ -643,19 +705,19 @@
               <!-- If total due > 0 => 'Paid' or 'Unpaid' -->
               <p-tag
                 *ngIf="bill.jsTotalDue > 0"
-                [value]="bill.isPaid ? 'Paid' : 'Unpaid'"
-                [severity]="bill.isPaid ? 'success' : 'warn'"
+                [value]="bill.isPaid() ? 'Paid' : 'Unpaid'"
+                [severity]="bill.isPaid() ? 'success' : 'warn'"
               ></p-tag>
 
               <!-- If past due and not paid => e.g. 'X Days Past Due' -->
               <p-tag
-                *ngIf="bill.isPastDue && !bill.isPaid"
-                [value]="bill.daysPastDue + ' Days Past Due'"
+                *ngIf="bill.isPastDue(snapshotDate)"
+                [value]="bill.getDaysPastDue(snapshotDate) + ' Days Past Due'"
                 severity="danger"
               ></p-tag>
 
               <!-- If the bill is paid and has a satisfied date, check days late/early/on-time -->
-              <ng-container *ngIf="bill.isPaid && bill.dateFullySatisfied">
+              <ng-container *ngIf="bill.isPaid() && bill.dateFullySatisfied">
                 <p-tag
                   *ngIf="bill.daysLate"
                   [value]="bill.daysLate + ' Days Late'"
@@ -681,7 +743,7 @@
         <td>{{ detail.allocatedPrincipal.toNumber() | currency }}</td>
         <td>{{ detail.allocatedInterest.toNumber() | currency }}</td>
         <td>{{ detail.allocatedFees.toNumber() | currency }}</td>
-        <td>{{ detail.date.toDate() | date: "MM/dd/yyyy" }}</td>
+        <td>{{ detail.date.toString() | date: "MM/dd/yyyy" }}</td>
       </tr>
     </ng-template>
 
@@ -843,14 +905,14 @@
 
       <!-- If bill is open and not paid -->
       <p-tag
-        *ngIf="bill.isOpen && !bill.isPaid"
+        *ngIf="bill.isOpen(snapshotDate) && !bill.isPaid()"
         value="Open Bill"
         severity="success"
       ></p-tag>
 
       <!-- If bill is future (not open) and not paid -->
       <p-tag
-        *ngIf="!bill.isOpen && !bill.isPaid"
+        *ngIf="!bill.isOpen(snapshotDate) && !bill.isPaid()"
         value="Future"
         severity="info"
       ></p-tag>
@@ -865,19 +927,19 @@
       <!-- If total due > 0 => 'Paid' or 'Unpaid' -->
       <p-tag
         *ngIf="bill.jsTotalDue > 0"
-        [value]="bill.isPaid ? 'Paid' : 'Unpaid'"
-        [severity]="bill.isPaid ? 'success' : 'warn'"
+        [value]="bill.isPaid() ? 'Paid' : 'Unpaid'"
+        [severity]="bill.isPaid() ? 'success' : 'warn'"
       ></p-tag>
 
       <!-- If past due and not paid => e.g. 'X Days Past Due' -->
       <p-tag
-        *ngIf="bill.isPastDue && !bill.isPaid"
-        [value]="bill.daysPastDue + ' Days Past Due'"
+        *ngIf="bill.isPastDue(snapshotDate)"
+        [value]="bill.getDaysPastDue(snapshotDate) + ' Days Past Due'"
         severity="danger"
       ></p-tag>
 
       <!-- If the bill is paid + dateFullySatisfied => check days late/early/on-time -->
-      <ng-container *ngIf="bill.isPaid && bill.dateFullySatisfied">
+      <ng-container *ngIf="bill.isPaid() && bill.dateFullySatisfied">
         <!-- If daysLate > 0 => 'X Days Late' -->
         <p-tag
           *ngIf="bill.daysLate"
@@ -943,12 +1005,12 @@
       <!-- Row 4: Satisfied On (only if Paid) -->
       <div
         class="grid text-sm gap-2 mt-2"
-        *ngIf="bill.isPaid && bill.dateFullySatisfied"
+        *ngIf="bill.isPaid() && bill.dateFullySatisfied"
       >
         <div class="col-12 md:col-6 flex align-items-center">
           <span class="font-semibold text-300 mr-1">Satisfied On:</span>
           <span>{{
-            bill.dateFullySatisfied.toDate() | date: "MM/dd/yyyy"
+            bill.dateFullySatisfied.toString() | date: "MM/dd/yyyy"
           }}</span>
         </div>
       </div>

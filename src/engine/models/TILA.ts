@@ -5,6 +5,7 @@ import isSameOrBefore from "dayjs/plugin/isSameOrBefore";
 import isBetween from "dayjs/plugin/isBetween";
 import { Amortization } from "./Amortization";
 import Decimal from "decimal.js";
+import { LocalDate, ChronoUnit } from "@js-joda/core";
 
 dayjs.extend(isSameOrAfter);
 dayjs.extend(isSameOrBefore);
@@ -15,7 +16,7 @@ dayjs.extend(isBetween);
  */
 export interface PaymentScheduleEntry {
   paymentNumber: number;
-  paymentDate: Dayjs;
+  paymentDate: LocalDate;
   paymentAmount: Currency;
   principal: Currency;
   interest: Currency;
@@ -90,7 +91,6 @@ export class TILA {
     // Format numbers and dates
     const formatCurrency = (value: Currency): string => `$${value.toCurrencyString()}`;
     const formatPercentage = (value: Decimal): string => `${value.toFixed(2)}%`;
-    const formatDate = (date: Dayjs): string => date.format("MM/DD/YYYY");
 
     // Build the document string
     let document = "";
@@ -109,7 +109,7 @@ export class TILA {
 
     tilaDisclosures.paymentSchedule.forEach((payment) => {
       document += `${payment.paymentNumber.toString().padStart(11)} | `;
-      document += `${formatDate(payment.paymentDate).padEnd(12)} | `;
+      document += `${payment.toString().padEnd(12)} | `;
       document += `${formatCurrency(payment.paymentAmount).padStart(14)} | `;
       document += `${formatCurrency(payment.principal).padStart(9)} | `;
       document += `${formatCurrency(payment.interest).padStart(8)} | `;

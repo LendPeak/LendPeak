@@ -4,6 +4,8 @@ import isSameOrAfter from "dayjs/plugin/isSameOrAfter";
 import isSameOrBefore from "dayjs/plugin/isSameOrBefore";
 import Decimal from "decimal.js";
 import { DateUtil } from "../../utils/DateUtil";
+import { LocalDate, ZoneId } from "@js-joda/core";
+
 dayjs.extend(isSameOrAfter);
 dayjs.extend(isSameOrBefore);
 
@@ -12,7 +14,7 @@ export type BalanceModificationType = "increase" | "decrease";
 export interface IBalanceModification {
   id?: string;
   amount: Currency | number;
-  date: Dayjs | Date | string;
+  date: LocalDate | Date | string;
   type: BalanceModificationType;
   description?: string;
   metadata?: any;
@@ -25,7 +27,7 @@ export class BalanceModification {
   private _amount!: Currency;
   jsAmount!: number;
 
-  private _date!: Dayjs;
+  private _date!: LocalDate;
   jsDate!: Date;
 
   type: BalanceModificationType;
@@ -69,7 +71,7 @@ export class BalanceModification {
 
   updateJsValues() {
     this.jsAmount = this.amount.toNumber();
-    this.jsDate = this.date.toDate();
+    this.jsDate = DateUtil.normalizeDateToJsDate(this.date);
     this.jsUsedAmount = this.usedAmount.toNumber();
     this.jsUnusedAmount = this.unusedAmount.toNumber();
   }
@@ -93,12 +95,12 @@ export class BalanceModification {
     this.jsUnusedAmount = amount.toNumber();
   }
 
-  set date(date: Dayjs | Date | string) {
-    this._date = dayjs.utc(date).startOf("day");
-    this.jsDate = this._date.toDate();
+  set date(date: LocalDate | Date | string) {
+    this._date = DateUtil.normalizeDate(date);
+    this.jsDate = DateUtil.normalizeDateToJsDate(this._date);
   }
 
-  get date(): Dayjs {
+  get date(): LocalDate {
     return this._date;
   }
 
@@ -173,8 +175,8 @@ export class BalanceModification {
       }
     };
 
-    const serializeDayjs = (date: Dayjs | Date | string): string => {
-      const dateStr = dayjs.isDayjs(date) ? date.format("YYYY-MM-DD") : dayjs(date).format("YYYY-MM-DD");
+    const serializeDayjs = (date: LocalDate | Date | string): string => {
+      const dateStr = dayjs.isDayjs(date) ? date.format("YYYY-MM-DD") : date.toString();
       return `dayjs('${dateStr}')`;
     };
 
@@ -220,7 +222,7 @@ export class BalanceModification {
     return {
       id: this.id,
       amount: this.amount.toNumber(),
-      date: this.date.toISOString(),
+      date: this.date.toString(),
       type: this.type,
       description: this.description,
       metadata: this.metadata,
@@ -239,7 +241,7 @@ export class BalanceModification {
     const params: IBalanceModification = {
       id: json.id,
       amount: Currency.of(json.amount),
-      date: dayjs.utc(json.date),
+      date: DateUtil.normalizeDate(json.date),
       type: json.type,
       description: json.description,
       metadata: json.metadata,

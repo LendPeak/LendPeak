@@ -10,11 +10,13 @@ import dayjs, { Dayjs } from "dayjs";
 import { v4 as uuidv4 } from "uuid"; // Import UUID
 import isBetween from "dayjs/plugin/isBetween";
 import { PaymentAllocation } from "./PaymentAllocation";
+import { DateUtil } from "../../utils/DateUtil";
+import { LocalDate, ChronoUnit } from "@js-joda/core";
 
 // Payment Application Result
 export interface PaymentApplicationResult {
   depositId: string;
-  effectiveDate: Dayjs;
+  effectiveDate: LocalDate;
   totalAllocated: Currency;
   allocations: PaymentAllocation[];
   unallocatedAmount: Currency;

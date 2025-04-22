@@ -8,6 +8,7 @@ import { v4 as uuidv4 } from "uuid";
 import { DateUtil } from "../utils/DateUtil";
 import { Amortization } from "./Amortization";
 import { BillGenerator } from "./BillGenerator";
+import { LocalDate, ZoneId, ChronoUnit, Instant } from "@js-joda/core";
 
 export interface BillsSummary {
   remainingTotal: Currency;
@@ -37,16 +38,16 @@ export class Bills {
   private cacheSummary?: {
     results: BillsSummary;
     versionId: string;
-    dateChanged: Dayjs;
+    dateChanged: LocalDate;
   };
   private _versionId: string = uuidv4();
-  private _dateChanged: Dayjs = dayjs();
+  private _dateChanged: LocalDate = LocalDate.now();
   amortization?: Amortization;
-  private _currentDate!: Dayjs;
+  private _currentDate!: LocalDate;
 
-  constructor(params: { bills?: Bill[]; currentDate?: Dayjs; amortization?: Amortization } = {}) {
+  constructor(params: { bills?: Bill[]; currentDate: LocalDate; amortization?: Amortization }) {
+    this.currentDate = params.currentDate;
     this.bills = params.bills || [];
-    this.currentDate = params.currentDate || dayjs();
     if (params.amortization) {
       this.amortization = params.amortization;
       this.generateBills();
@@ -66,7 +67,7 @@ export class Bills {
     }
   }
 
-  regenerateBillsAfterDate(dateToRegenerateBillsAfter: Dayjs) {
+  regenerateBillsAfterDate(dateToRegenerateBillsAfter: LocalDate) {
     if (this.amortization) {
       const bills = BillGenerator.generateBills({
         amortizationSchedule: this.amortization.repaymentSchedule,
@@ -78,7 +79,7 @@ export class Bills {
       // so we will take this.bills and get all bills that were created before dateToRegenerateBillsAfter
       // add then to array, and then everything that is after dateToRegenerateBillsAfter
       // we will add from the new bills array
-      const billsBeforeDate = this.bills.filter((bill) => bill.dueDate.isBefore(dateToRegenerateBillsAfter));
+      const billsBeforeDate = this.bills.filter((bill) => bill.dueDate.isEqual(dateToRegenerateBillsAfter) || bill.dueDate.isBefore(dateToRegenerateBillsAfter));
       const billsAfterDate = bills.all.filter((bill) => bill.dueDate.isAfter(dateToRegenerateBillsAfter));
       this.bills = billsBeforeDate.concat(billsAfterDate);
     } else {
@@ -90,7 +91,7 @@ export class Bills {
     return this._currentDate;
   }
 
-  set currentDate(value: Dayjs) {
+  set currentDate(value: LocalDate) {
     this._currentDate = DateUtil.normalizeDate(value);
   }
 
@@ -98,12 +99,12 @@ export class Bills {
     return this._versionId;
   }
 
-  get dateChanged(): Dayjs {
+  get dateChanged(): LocalDate {
     return this._dateChanged;
   }
 
   versionChanged() {
-    this._dateChanged = dayjs();
+    this._dateChanged = LocalDate.now();
     this._versionId = uuidv4();
   }
 
@@ -116,32 +117,35 @@ export class Bills {
   }
 
   get sortedByDueDate(): Bill[] {
-    return this._bills.sort((a, b) => a.dueDate.diff(b.dueDate));
+    return this._bills.sort((a, b) => ChronoUnit.DAYS.between(a.dueDate, b.dueDate));
   }
 
   get unpaid(): Bill[] {
-    return this._bills.filter((bill) => !bill.isPaid).sort((a, b) => a.dueDate.diff(b.dueDate));
+    const unpaidBills = this._bills.filter((bill) => !bill.isPaid());
+    return unpaidBills;
+  }
+
+  get openBills(): Bill[] {
+    const openBills = this._bills.filter((bill) => bill.isOpen(this.currentDate));
+    return openBills;
   }
 
   get lastOpenBill(): Bill | undefined {
-    return this._bills.filter((bill) => bill.isOpen).sort((a, b) => b.period - a.period)[0];
+    const lastOpenBill = this.openBills[0];
+    return lastOpenBill;
   }
 
   /**
    * Return the earliest Bill whose amortizationEntry.periodEndDate is strictly after `currentDate`.
    * If none exist, returns undefined.
    */
-  getFirstFutureBill(currentDate: Dayjs | Date = dayjs()): Bill | undefined {
-    const refDate = DateUtil.normalizeDate(currentDate);
+  getFirstFutureBill(currentDate: LocalDate | Date = LocalDate.now()): Bill | undefined {
+    const refDate = currentDate instanceof Date ? LocalDate.ofInstant(Instant.ofEpochMilli(currentDate.getTime()), ZoneId.systemDefault()) : currentDate;
 
     // "Future" means the Bill’s periodEndDate is after currentDate.
-    const futureBills = this._bills.filter((bill) => bill.amortizationEntry.periodEndDate.isAfter(refDate)).sort((a, b) => a.amortizationEntry.periodEndDate.diff(b.amortizationEntry.periodEndDate));
+    const futureBills = this._bills.filter((bill) => bill.amortizationEntry.periodEndDate.isAfter(refDate)).sort((a, b) => ChronoUnit.DAYS.between(a.amortizationEntry.periodEndDate, b.amortizationEntry.periodEndDate));
 
     return futureBills.length > 0 ? futureBills[0] : undefined;
-  }
-
-  updateStatus() {
-    this._bills.forEach((bill) => bill.updateStatus());
   }
 
   set bills(value: Bill[]) {
@@ -160,12 +164,12 @@ export class Bills {
     });
 
     // sort bills from olders to newest
-    this._bills = this._bills.sort((a, b) => a.period - b.period);
+    this.sortBills();
     this.versionChanged();
   }
 
   get pastDue(): Bill[] {
-    return this._bills.filter((bill) => bill.isPastDue && !bill.isPaid);
+    return this._bills.filter((bill) => bill.isPastDue(this.currentDate));
   }
 
   get nextUpcomingBill(): Bill | undefined {
@@ -203,10 +207,10 @@ export class Bills {
       remainingFees = remainingFees.add(bill.remainingFees);
       remainingPrincipal = remainingPrincipal.add(bill.remainingPrincipal);
       remainingInterest = remainingInterest.add(bill.remainingInterest);
-      if (!bill.isPaid) {
+      if (!bill.isPaid()) {
         remainingUnpaidBills++;
       }
-      if (!bill.isPaid && bill.isOpen) {
+      if (bill.isOpen(this.currentDate) && !bill.isPaid()) {
         dueTotal = dueTotal.add(bill.totalDue);
         duePrincipal = duePrincipal.add(bill.principalDue);
         dueInterest = dueInterest.add(bill.interestDue);
@@ -216,14 +220,14 @@ export class Bills {
       allocatedFeesSum = allocatedFeesSum.add(bill.allocatedFeesSum);
       allocatedPrincipalSum = allocatedPrincipalSum.add(bill.allocatedPrincipalSum);
       allocatedInterestSum = allocatedInterestSum.add(bill.allocatedInterestSum);
-      if (bill.isPastDue && !bill.isPaid) {
+      if (bill.isPastDue(this.currentDate)) {
         pastDueTotal = pastDueTotal.add(bill.remainingTotal);
         pastDuePrincipal = pastDuePrincipal.add(bill.remainingPrincipal);
         pastDueInterest = pastDueInterest.add(bill.remainingInterest);
         pastDueFees = pastDueFees.add(bill.remainingFees);
         billsPastDue++;
         // we want to capture a bill with the highest days past due
-        daysPastDue = Math.max(daysPastDue, bill.daysPastDue);
+        daysPastDue = Math.max(daysPastDue, bill.getDaysPastDue(this.currentDate));
       }
     });
 
@@ -268,7 +272,7 @@ export class Bills {
       if (this.cacheSummary.versionId !== this.versionId) {
         return this.calculateSummary();
       }
-      if (!this.cacheSummary.dateChanged.isSame(this.dateChanged)) {
+      if (!this.cacheSummary.dateChanged.isEqual(this.dateChanged)) {
         return this.calculateSummary();
       }
 
@@ -279,19 +283,20 @@ export class Bills {
   }
 
   sortBills() {
-    this._bills = this._bills.sort((a, b) => a.period - b.period);
+    const sortedBills = this._bills.sort((a, b) => a.period - b.period);
+    this._bills = sortedBills;
   }
 
   getBillByPeriod(period: number): Bill | undefined {
     return this._bills.find((bill) => bill.period === period);
   }
 
-  getBillByDueDate(dueDate: Dayjs): Bill | undefined {
-    return this._bills.find((bill) => bill.dueDate.isSame(dueDate, "day"));
+  getBillByDueDate(dueDate: LocalDate): Bill | undefined {
+    return this._bills.find((bill) => bill.dueDate.isEqual(dueDate));
   }
 
-  getBillByOpenDate(openDate: Dayjs): Bill | undefined {
-    return this._bills.find((bill) => bill.openDate.isSame(openDate, "day"));
+  getBillByOpenDate(openDate: LocalDate): Bill | undefined {
+    return this._bills.find((bill) => bill.openDate.isEqual(openDate));
   }
 
   getBillById(id: string): Bill | undefined {
@@ -301,12 +306,14 @@ export class Bills {
   addBill(bill: Bill): void {
     bill.bills = this;
     this._bills.push(bill);
-    this._bills = this._bills.sort((a, b) => a.period - b.period);
+    this.sortBills();
+    this.versionChanged();
   }
 
   removeBill(bill: Bill): void {
     this._bills = this._bills.filter((_bill) => _bill.id !== bill.id);
-    this._bills = this._bills.sort((a, b) => a.period - b.period);
+    this.sortBills();
+    this.versionChanged();
   }
 
   updateModelValues() {
@@ -350,15 +357,16 @@ export class Bills {
       this._bills.map((r) => {
         return {
           period: r.period,
-          dueDate: r.dueDate.format("YYYY-MM-DD"),
-          openDate: r.openDate.format("YYYY-MM-DD"),
+          dueDate: r.dueDate.toString(),
+          openDate: r.openDate.toString(),
           totalDue: r.totalDue.toNumber(),
           principalDue: r.principalDue.toNumber(),
           interestDue: r.interestDue.toNumber(),
           feesDue: r.feesDue.toNumber(),
-          isPaid: r.isPaid,
-          isPastDue: r.isPastDue,
-          daysPastDue: r.daysPastDue,
+          isOpen: r.isOpen(this.currentDate),
+          isPaid: r.isPaid(),
+          isPastDue: r.isPastDue(this.currentDate),
+          daysPastDue: r.getDaysPastDue(this.currentDate),
         };
       })
     );

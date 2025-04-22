@@ -3,6 +3,7 @@ import { DateUtil } from "../utils/DateUtil";
 import isSameOrAfter from "dayjs/plugin/isSameOrAfter";
 import isSameOrBefore from "dayjs/plugin/isSameOrBefore";
 import isBetween from "dayjs/plugin/isBetween";
+import { LocalDate, ChronoUnit, TemporalAdjusters } from "@js-joda/core";
 
 dayjs.extend(isSameOrAfter);
 dayjs.extend(isSameOrBefore);
@@ -10,9 +11,9 @@ dayjs.extend(isBetween);
 
 export interface ChangePaymentDateParams {
   termNumber?: number;
-  newDate: Dayjs | Date | string;
-  originalDate?: Dayjs | Date | string;
-  originalEndDate?: Dayjs | Date | string;
+  newDate: LocalDate | Date | string;
+  originalDate?: LocalDate | Date | string;
+  originalEndDate?: LocalDate | Date | string;
 }
 
 export class ChangePaymentDate {
@@ -22,13 +23,13 @@ export class ChangePaymentDate {
   _humanTermNumber!: number;
   jsHumanTermNumber!: number;
 
-  _newDate!: Dayjs;
+  _newDate!: LocalDate;
   jsNewDate!: Date;
 
-  _originalDate?: Dayjs;
+  _originalDate?: LocalDate;
   jsOriginalDate?: Date;
 
-  _originalEndDate?: Dayjs;
+  _originalEndDate?: LocalDate;
   jsOriginalEndDate?: Date;
 
   constructor(params: ChangePaymentDateParams) {
@@ -40,12 +41,12 @@ export class ChangePaymentDate {
     }
   }
 
-  set originalEndDate(originalEndDate: Dayjs | Date | string) {
+  set originalEndDate(originalEndDate: LocalDate | Date | string) {
     this._originalEndDate = DateUtil.normalizeDate(originalEndDate);
-    this.jsOriginalEndDate = this._originalEndDate.toDate();
+    this.jsOriginalEndDate = DateUtil.normalizeDateToJsDate(this._originalEndDate);
   }
 
-  get originalEndDate(): Dayjs | undefined {
+  get originalEndDate(): LocalDate | undefined {
     return this._originalEndDate;
   }
 
@@ -68,22 +69,22 @@ export class ChangePaymentDate {
     return this._humanTermNumber;
   }
 
-  set newDate(newDate: Dayjs | Date | string) {
+  set newDate(newDate: LocalDate | Date | string) {
     this._newDate = DateUtil.normalizeDate(newDate);
-    this.jsNewDate = this._newDate.toDate();
+    this.jsNewDate = DateUtil.normalizeDateToJsDate(this._newDate);
   }
 
-  get newDate(): Dayjs {
+  get newDate(): LocalDate {
     return this._newDate;
   }
 
-  set originalDate(originalDate: Dayjs | Date | string) {
+  set originalDate(originalDate: LocalDate | Date | string) {
     // console.trace("setting original date", originalDate);
     this._originalDate = DateUtil.normalizeDate(originalDate);
-    this.jsOriginalDate = this._originalDate.toDate();
+    this.jsOriginalDate = DateUtil.normalizeDateToJsDate(this._originalDate);
   }
 
-  get originalDate(): Dayjs | undefined {
+  get originalDate(): LocalDate | undefined {
     return this._originalDate;
   }
 
@@ -91,9 +92,9 @@ export class ChangePaymentDate {
     return {
       termNumber: this.termNumber,
       humanTermNumber: this.humanTermNumber,
-      newDate: this.newDate.toDate(),
-      originalEndDate: this.originalEndDate?.toDate(),
-      originalDate: this.originalDate?.toDate(),
+      newDate: this.newDate.toString(),
+      originalEndDate: this.originalEndDate?.toString(),
+      originalDate: this.originalDate?.toString(),
     };
   }
 
@@ -104,9 +105,9 @@ export class ChangePaymentDate {
   updateJsValues() {
     this.jsTermNumber = this.termNumber;
     this.jsHumanTermNumber = this.humanTermNumber;
-    this.jsNewDate = this.newDate.toDate();
+    this.jsNewDate = DateUtil.normalizeDateToJsDate(this.newDate);
     if (this.originalDate) {
-      this.jsOriginalDate = this.originalDate.toDate();
+      this.jsOriginalDate = DateUtil.normalizeDateToJsDate(this.originalDate);
     }
   }
 

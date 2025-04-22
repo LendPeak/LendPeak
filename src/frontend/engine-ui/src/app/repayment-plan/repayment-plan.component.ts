@@ -12,11 +12,13 @@ import { MessageService } from 'primeng/api';
 import { Popover } from 'primeng/popover';
 import dayjs from 'dayjs';
 import { LendPeak } from 'lendpeak-engine/models/LendPeak';
+import { DateUtil } from 'lendpeak-engine/utils/DateUtil';
 import { Currency } from 'lendpeak-engine/utils/Currency';
 import {
   SystemSettingsService,
   DeveloperModeType,
 } from '../services/system-settings.service';
+import { LocalDate, ChronoUnit } from '@js-joda/core';
 
 interface Column {
   field: string;
@@ -244,7 +246,7 @@ export class RepaymentPlanComponent {
     )
       return;
 
-    const snapshot = dayjs(this.snapshotDate).startOf('day');
+    const snapshot = DateUtil.normalizeDate(this.snapshotDate);
 
     // Find the last period due on or before snapshot date
     let lastDueIndex = -1;
@@ -254,8 +256,8 @@ export class RepaymentPlanComponent {
       i--
     ) {
       const plan = this.lendPeak.amortization.repaymentSchedule.entries[i];
-      const dueDate = dayjs(plan.periodBillDueDate);
-      if (dueDate.isSameOrBefore(snapshot)) {
+      const dueDate = plan.periodBillDueDate;
+      if (dueDate.isEqual(snapshot) || dueDate.isBefore(snapshot)) {
         lastDueIndex = i;
         break;
       }

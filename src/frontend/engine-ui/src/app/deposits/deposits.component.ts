@@ -10,6 +10,7 @@ import {
   OnChanges,
 } from '@angular/core';
 import { DropDownOptionString } from '../models/common.model';
+import { DateUtil } from 'lendpeak-engine/utils/DateUtil';
 import { LendPeak } from 'lendpeak-engine/models/LendPeak';
 import { DepositRecord } from 'lendpeak-engine/models/DepositRecord';
 import { DepositRecords } from 'lendpeak-engine/models/DepositRecords';
@@ -23,6 +24,7 @@ import isBetween from 'dayjs/plugin/isBetween';
 import { UsageDetail } from 'lendpeak-engine/models/Bill/DepositRecord/UsageDetail';
 import { StaticAllocation } from 'lendpeak-engine/models/Bill/DepositRecord/StaticAllocation';
 import { Popover } from 'primeng/popover';
+import { LocalDate, ChronoUnit } from '@js-joda/core';
 
 dayjs.extend(isSameOrBefore);
 dayjs.extend(isBetween);
@@ -126,10 +128,29 @@ export class DepositsComponent implements OnChanges {
     },
   ];
 
+  effectiveDateIsAfterSnapshotDate(deposit: DepositRecord): boolean {
+    if (!this.snapshotDate) {
+      return false;
+    }
+    return deposit.effectiveDate.isAfter(
+      DateUtil.normalizeDate(this.snapshotDate),
+    );
+  }
+
   openBulkEditDialog() {
     if (this.selectedDeposits.length === 0) return;
     this.bulkAllocationType = 'default';
     this.showBulkEditDialog = true;
+  }
+
+ 
+
+  dateIsInTheFutureFromSnapshotDate(date: LocalDate): boolean {
+    if (!this.snapshotDate) {
+      return false;
+    }
+    const snapshotDate = DateUtil.normalizeDate(this.snapshotDate);
+    return date.isAfter(snapshotDate);
   }
 
   applyBulkEdit() {
@@ -290,6 +311,7 @@ export class DepositsComponent implements OnChanges {
 
     if (
       this.depositData.applyExcessToPrincipal &&
+      this.depositData.excessAppliedDate !== undefined &&
       this.depositData.effectiveDate.isAfter(this.depositData.excessAppliedDate)
     ) {
       this.depositData.excessAppliedDate = this.depositData.effectiveDate;

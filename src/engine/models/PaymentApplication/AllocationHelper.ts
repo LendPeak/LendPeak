@@ -84,8 +84,6 @@ export class AllocationHelper {
       );
     }
 
-    bill.updateStatus();
-
     // Ensure deposit ID is in Bill's metadata
     if (!bill.paymentMetadata) {
       bill.paymentMetadata = { depositIds: [] };

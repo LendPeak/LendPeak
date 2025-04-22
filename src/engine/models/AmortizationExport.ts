@@ -49,19 +49,19 @@ export class AmortizationExport {
       },
       {
         header: "Period Start Date",
-        value: (entry: AmortizationEntry) => entry.periodStartDate.format("YYYY-MM-DD"),
+        value: (entry: AmortizationEntry) => entry.periodStartDate.toString(),
       },
       {
         header: "Period End Date",
-        value: (entry: AmortizationEntry) => entry.periodEndDate.format("YYYY-MM-DD"),
+        value: (entry: AmortizationEntry) => entry.periodEndDate.toString(),
       },
       {
         header: "Bill Open Date",
-        value: (entry: AmortizationEntry) => entry.periodBillOpenDate.format("YYYY-MM-DD"),
+        value: (entry: AmortizationEntry) => entry.periodBillOpenDate.toString(),
       },
       {
         header: "Bill Due Date",
-        value: (entry: AmortizationEntry) => entry.periodBillDueDate.format("YYYY-MM-DD"),
+        value: (entry: AmortizationEntry) => entry.periodBillDueDate.toString(),
       },
       {
         header: "Period Interest Rate",
@@ -199,7 +199,7 @@ export class AmortizationExport {
     };
 
     const serializeDayjs = (date: dayjs.Dayjs | Date | string): string => {
-      const dateStr = dayjs.isDayjs(date) ? date.format("YYYY-MM-DD") : dayjs(date).format("YYYY-MM-DD");
+      const dateStr = dayjs.isDayjs(date) ? date.toString() : dayjs(date).toString();
       return `dayjs('${dateStr}')`;
     };
 

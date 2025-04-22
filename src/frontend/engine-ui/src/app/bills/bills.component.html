@@ -17,7 +17,7 @@
       <p-table
         *ngIf="lendPeak.bills"
         [value]="lendPeak.bills.all"
-        sortField="dueDate"
+        sortField="jsDueDate"
         [scrollable]="true"
         scrollHeight="600px"
       >
@@ -31,9 +31,9 @@
               Period
               <p-sortIcon field="period"></p-sortIcon>
             </th>
-            <th pSortableColumn="dueDate">
+            <th pSortableColumn="jsDueDate">
               Due Date
-              <p-sortIcon field="dueDate"></p-sortIcon>
+              <p-sortIcon field="jsDueDate"></p-sortIcon>f
             </th>
             <th>Principal Due</th>
             <th>Interest Due</th>
@@ -97,7 +97,7 @@
             <td>{{ bill.jsTotalDue | currency }}</td>
             <td>
               <!-- Only show if the bill is paid and we have a satisfied date -->
-              <ng-container *ngIf="bill.isPaid && bill.dateFullySatisfied">
+              <ng-container *ngIf="bill.isPaid() && bill.dateFullySatisfied">
                 <!-- Display date satisfied -->
                 <span class="mr-3">{{
                   bill.dateFullySatisfied | date: "MM/dd/yyyy"
@@ -134,13 +134,13 @@
             <td>
               <!-- Existing Status Tags -->
               <p-tag
-                *ngIf="bill.isOpen && !bill.isPaid"
+                *ngIf="bill.isOpen(snapshotDate) && !bill.isPaid()"
                 value="Open Bill"
                 severity="success"
                 class="status-tag"
               ></p-tag>
               <p-tag
-                *ngIf="!bill.isOpen && !bill.isPaid"
+                *ngIf="!bill.isOpen(snapshotDate) && !bill.isPaid()"
                 value="Future"
                 severity="info"
                 class="status-tag"
@@ -153,13 +153,13 @@
               ></p-tag>
               <p-tag
                 *ngIf="bill.jsTotalDue > 0"
-                value="{{ bill.isPaid ? 'Paid' : 'Unpaid' }}"
-                [severity]="bill.isPaid ? 'success' : 'warn'"
+                value="{{ bill.isPaid() ? 'Paid' : 'Unpaid' }}"
+                [severity]="bill.isPaid() ? 'success' : 'warn'"
                 class="status-tag"
               ></p-tag>
               <p-tag
-                *ngIf="bill.isPastDue && !bill.isPaid"
-                value="{{ bill.daysPastDue }} Days Past Due"
+                *ngIf="bill.isPastDue(snapshotDate) && !bill.isPaid()"
+                value="{{ bill.getDaysPastDue(snapshotDate) }} Days Past Due"
                 severity="danger"
                 class="status-tag"
               ></p-tag>
@@ -206,7 +206,7 @@
       </p-tag>
 
       <ng-container
-        *ngIf="selectedBill.isPaid && selectedBill.dateFullySatisfied"
+        *ngIf="selectedBill.isPaid() && selectedBill.dateFullySatisfied"
       >
         <!-- Show how many days late/early in a p-tag -->
         <ng-container *ngIf="selectedBill.daysLate">
@@ -233,13 +233,13 @@
 
       <!-- Existing Status Tags -->
       <p-tag
-        *ngIf="selectedBill.isOpen && !selectedBill.isPaid"
+        *ngIf="selectedBill.isOpen(snapshotDate) && !selectedBill.isPaid()"
         value="Open Bill"
         severity="success"
         class="status-tag"
       ></p-tag>
       <p-tag
-        *ngIf="!selectedBill.isOpen && !selectedBill.isPaid"
+        *ngIf="!selectedBill.isOpen(snapshotDate) && !selectedBill.isPaid()"
         value="Future"
         severity="info"
         class="status-tag"
@@ -251,14 +251,14 @@
         class="status-tag"
       ></p-tag>
       <p-tag
-        *ngIf="selectedBill.jsTotalDue > 0"
-        value="{{ selectedBill.isPaid ? 'Paid' : 'Unpaid' }}"
-        [severity]="selectedBill.isPaid ? 'success' : 'warn'"
+        *ngIf="selectedBill.jsOriginalTotalDue > 0"
+        value="{{ selectedBill.isPaid() ? 'Paid' : 'Unpaid' }}"
+        [severity]="selectedBill.isPaid() ? 'success' : 'warn'"
         class="status-tag"
       ></p-tag>
       <p-tag
-        *ngIf="selectedBill.isPastDue && !selectedBill.isPaid"
-        value="{{ selectedBill.daysPastDue }} Days Past Due"
+        *ngIf="selectedBill.isPastDue(snapshotDate)"
+        value="{{ selectedBill.getDaysPastDue(snapshotDate) }} Days Past Due"
         severity="danger"
         class="status-tag"
       ></p-tag>
@@ -521,7 +521,7 @@
             <td>{{ usage.allocatedPrincipal.toNumber() | currency }}</td>
             <td>{{ usage.allocatedInterest.toNumber() | currency }}</td>
             <td>{{ usage.allocatedFees.toNumber() | currency }}</td>
-            <td>{{ usage.date.toDate() | date: "MM/dd/yyyy" }}</td>
+            <td>{{ usage.date.toString() | date: "MM/dd/yyyy" }}</td>
           </tr>
         </ng-template>
       </p-table>

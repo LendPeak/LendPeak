@@ -1,13 +1,7 @@
-import { Currency, RoundingMethod } from "../utils/Currency";
-import dayjs, { Dayjs } from "dayjs";
-import isSameOrAfter from "dayjs/plugin/isSameOrAfter";
-import isSameOrBefore from "dayjs/plugin/isSameOrBefore";
-import isBetween from "dayjs/plugin/isBetween";
+import { Currency } from "../utils/Currency";
 import { Amortization } from "./Amortization";
-
-dayjs.extend(isSameOrAfter);
-dayjs.extend(isSameOrBefore);
-dayjs.extend(isBetween);
+import { LocalDate } from "@js-joda/core";
+import { DateUtil } from "../utils/DateUtil";
 
 export class AmortizationSummary {
   private amortization: Amortization;
@@ -15,74 +9,69 @@ export class AmortizationSummary {
   constructor(amortization: Amortization) {
     this.amortization = amortization;
   }
+
   /**
    * Computes a comprehensive LoanSummary object at a given snapshot date.
    */
-  calculateLoanSummaryAsOfDate(date?: Dayjs | Date | string) {
+  calculateLoanSummaryAsOfDate(date?: LocalDate | Date | string) {
+    // Normalize provided date
+    let snapshotDate: LocalDate;
+
     if (!date) {
       console.log("No date provided, using today's date");
-      console.trace("Stack Trace");
-      date = dayjs();
+      snapshotDate = LocalDate.now();
     } else {
-      date = dayjs(date);
+      snapshotDate = DateUtil.normalizeDate(date);
     }
-    // total terms = this.term
+
     const totalTerms = this.amortization.term;
 
-    // Determine how many terms have been fully paid
-    // A fully paid term is one where the billable period entries sum up to principal + interest paid
-    // For simplicity, count terms as completed if periodEndDate < date
-    const completedTerms = this.amortization.repaymentSchedule.entries.filter((e) => e.billablePeriod && e.periodEndDate.isBefore(date, "day")).map((e) => e.term);
+    // Determine completed terms (billable periods with periodEndDate strictly before snapshotDate)
+    const completedEntries = this.amortization.repaymentSchedule.entries.filter((e) => e.billablePeriod && e.periodEndDate.isBefore(snapshotDate));
+    const completedTerms = completedEntries.map((e) => e.term);
     const maxCompletedTerm = completedTerms.length > 0 ? Math.max(...completedTerms) : 0;
     const remainingTerms = totalTerms - maxCompletedTerm;
 
-    // Next bill date: the end date of the next unpaid period
-    const nextTermEntry = this.amortization.repaymentSchedule.entries.find((e) => e.term === maxCompletedTerm + 1 && e.billablePeriod);
-    const nextBillDate = nextTermEntry ? nextTermEntry.periodBillDueDate.toDate() : undefined;
+    // Next bill date: due date of the next unpaid period after snapshotDate
+    const nextTermEntry = this.amortization.repaymentSchedule.entries.find((e) => e.billablePeriod && e.term === maxCompletedTerm + 1);
+    const nextBillDate = nextTermEntry ? DateUtil.normalizeDateToJsDate(nextTermEntry.periodBillDueDate) : undefined;
 
-    // Paid principal to date and paid interest to date
-    // Sum all principal and interest paid in periods fully before 'date'
+    // Paid principal and interest up to snapshotDate
     let paidPrincipalToDate = Currency.Zero();
     let paidInterestToDate = Currency.Zero();
     let lastPaymentDate: Date | undefined = undefined;
     let lastPaymentAmount = Currency.Zero();
 
-    // Iterate through all fully-paid periods
-    for (const entry of this.amortization.repaymentSchedule.entries) {
-      if (entry.billablePeriod && entry.periodEndDate.isBefore(date, "day")) {
-        paidPrincipalToDate = paidPrincipalToDate.add(entry.principal);
-        // accruedInterestForPeriod is the interest charged this period
-        paidInterestToDate = paidInterestToDate.add(entry.accruedInterestForPeriod);
-        // lastPayment info
-        if (!lastPaymentDate || entry.periodEndDate.isAfter(dayjs(lastPaymentDate))) {
-          lastPaymentDate = entry.periodEndDate.toDate();
-          lastPaymentAmount = entry.totalPayment;
-        }
+    completedEntries.forEach((entry) => {
+      paidPrincipalToDate = paidPrincipalToDate.add(entry.principal);
+      paidInterestToDate = paidInterestToDate.add(entry.accruedInterestForPeriod);
+
+      if (!lastPaymentDate || entry.periodEndDate.isAfter(DateUtil.normalizeDate(lastPaymentDate))) {
+        lastPaymentDate = DateUtil.normalizeDateToJsDate(entry.periodEndDate);
+        lastPaymentAmount = entry.totalPayment;
       }
-    }
+    });
 
-    // Remaining Principal = last period that ended before 'date' endBalance of that period,
-    // or if date is mid-period use activePeriod startBalance minus principal if any partial calculation done
-    // For simplicity, use the active period's startBalance as remaining principal approximation
-    const activePeriod = this.amortization.repaymentSchedule.getPeriodByDate(date) || this.amortization.repaymentSchedule.lastEntry;
-    const remainingPrincipal = activePeriod.startBalance;
+    // Remaining principal: startBalance of active period
+    const activePeriod = this.amortization.repaymentSchedule.getPeriodByDate(snapshotDate);
+    const remainingPrincipal = activePeriod ? activePeriod.startBalance : Currency.Zero();
 
-    const accruedInterestToDate = this.amortization.getAccruedInterestToDate(date);
-    const projectedFutureInterest = this.amortization.repaymentSchedule.getProjectedFutureInterest(date);
-    const currentPayoffAmount = this.amortization.getCurrentPayoffAmount(date);
+    const accruedInterestToDate = this.amortization.getAccruedInterestToDate(snapshotDate);
+    const projectedFutureInterest = this.amortization.repaymentSchedule.getProjectedFutureInterest(snapshotDate);
+    const currentPayoffAmount = this.amortization.getCurrentPayoffAmount(snapshotDate);
 
     return {
-      totalTerms: totalTerms,
-      remainingTerms: remainingTerms,
-      nextBillDate: nextBillDate,
-      paidPrincipalToDate: paidPrincipalToDate,
-      paidInterestToDate: paidInterestToDate,
-      lastPaymentDate: lastPaymentDate,
-      lastPaymentAmount: lastPaymentAmount,
-      remainingPrincipal: remainingPrincipal,
-      currentPayoffAmount: currentPayoffAmount,
-      accruedInterestToDate: accruedInterestToDate,
-      projectedFutureInterest: projectedFutureInterest,
+      totalTerms,
+      remainingTerms,
+      nextBillDate,
+      paidPrincipalToDate,
+      paidInterestToDate,
+      lastPaymentDate,
+      lastPaymentAmount,
+      remainingPrincipal,
+      currentPayoffAmount,
+      accruedInterestToDate,
+      projectedFutureInterest,
     };
   }
 }

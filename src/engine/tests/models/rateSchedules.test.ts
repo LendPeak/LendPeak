@@ -1,5 +1,6 @@
 import dayjs from "dayjs";
 import { describe, test, expect } from "@jest/globals";
+import { LocalDate, ZoneId } from "@js-joda/core";
 
 import { Currency, RoundingMethod } from "@utils/Currency";
 import { Amortization, FlushUnbilledInterestDueToRoundingErrorType } from "@models/Amortization";
@@ -11,11 +12,12 @@ import Decimal from "decimal.js";
 import { RateSchedule, RateScheduleParams } from "../../models/RateSchedule";
 import { RateSchedules } from "../../models/RateSchedules";
 import { LendPeak } from "../../models/LendPeak";
+import { DateUtil } from "../../utils/DateUtil";
 
 import utc from "dayjs/plugin/utc";
 dayjs.extend(utc);
 
-const today = dayjs().utc().startOf("day");
+const today = LocalDate.now();
 
 describe("Rate Schedule", () => {
   it("Should have only default rate schedule", () => {
@@ -35,7 +37,7 @@ describe("Rate Schedule", () => {
     lendPeak.amortization.rateSchedules.addSchedule(
       new RateSchedule({
         startDate: today,
-        endDate: today.add(1, "month"),
+        endDate: today.plusMonths(1),
         annualInterestRate: 0.3,
         type: "custom",
       })
@@ -56,13 +58,13 @@ describe("Rate Schedule", () => {
     expect(lendPeak.amortization.rateSchedules.all[1].type).toEqual("custom");
     expect(lendPeak.amortization.rateSchedules.all[1].modified).toEqual(false);
     expect(lendPeak.amortization.rateSchedules.all[1].startDate).toEqual(today);
-    expect(lendPeak.amortization.rateSchedules.all[1].endDate).toEqual(today.add(1, "month"));
+    expect(lendPeak.amortization.rateSchedules.all[1].endDate).toEqual(today.plusMonths(1));
 
     expect(lendPeak.amortization.rateSchedules.all[2].id).toBeDefined();
     expect(lendPeak.amortization.rateSchedules.all[2].annualInterestRate).toEqual(lendPeak.amortization.annualInterestRate);
     expect(lendPeak.amortization.rateSchedules.all[2].type).toEqual("generated");
     expect(lendPeak.amortization.rateSchedules.all[2].modified).toEqual(false);
-    expect(lendPeak.amortization.rateSchedules.all[2].startDate).toEqual(today.add(1, "month"));
+    expect(lendPeak.amortization.rateSchedules.all[2].startDate).toEqual(today.plusMonths(1));
     expect(lendPeak.amortization.rateSchedules.all[2].endDate).toEqual(lendPeak.amortization.endDate);
   });
 
@@ -98,7 +100,7 @@ describe("Rate Schedule", () => {
   it("custom rate at the end", () => {
     const lendPeak = LendPeak.demoObject();
 
-    const customRateEndDate = lendPeak.amortization.endDate.subtract(45, "days");
+    const customRateEndDate = lendPeak.amortization.endDate.minusDays(45);
     lendPeak.amortization.rateSchedules.addSchedule(
       new RateSchedule({
         startDate: customRateEndDate,
@@ -131,7 +133,7 @@ describe("Rate Schedule", () => {
     lendPeak.amortization.rateSchedules.addSchedule(
       new RateSchedule({
         startDate: today,
-        endDate: today.add(1, "month"),
+        endDate: today.plusMonths(1),
         annualInterestRate: 0.3,
         type: "custom",
       })
@@ -183,8 +185,8 @@ describe("RateSchedules Class", () => {
     const plainObjects = [
       {
         annualInterestRate: 8,
-        startDate: dayjs("2026-01-01"),
-        endDate: dayjs("2026-12-31"),
+        startDate: DateUtil.normalizeDate("2026-01-01"),
+        endDate: DateUtil.normalizeDate("2026-12-31"),
         type: "generated",
       },
     ];
@@ -363,15 +365,15 @@ describe("RateSchedules Class", () => {
       id: "id-1",
       type: "custom",
       annualInterestRate: 5,
-      startDate: schedule1.startDate.toISOString(),
-      endDate: schedule1.endDate.toISOString(),
+      startDate: schedule1.startDate.toString(),
+      endDate: schedule1.endDate.toString(),
     });
     expect(jsonResult[1]).toEqual({
       id: "id-2",
       type: "default",
       annualInterestRate: 6,
-      startDate: schedule2.startDate.toISOString(),
-      endDate: schedule2.endDate.toISOString(),
+      startDate: schedule2.startDate.toString(),
+      endDate: schedule2.endDate.toString(),
     });
   });
 
@@ -416,8 +418,8 @@ describe("RateSchedule Class", () => {
     expect(rs.annualInterestRate.toNumber()).toBe(5);
 
     // Check Dayjs fields for startDate and endDate
-    expect(rs.startDate.format("YYYY-MM-DD")).toBe("2025-01-01");
-    expect(rs.endDate.format("YYYY-MM-DD")).toBe("2025-12-31");
+    expect(rs.startDate.toString()).toBe("2025-01-01");
+    expect(rs.endDate.toString()).toBe("2025-12-31");
 
     // Check that modified defaults to false
     expect(rs.modified).toBe(false);
@@ -429,8 +431,8 @@ describe("RateSchedule Class", () => {
       id: customId,
       type: "generated",
       annualInterestRate: 7.25,
-      startDate: new Date("2025-02-01"),
-      endDate: new Date("2026-01-31"),
+      startDate: LocalDate.parse("2025-02-01"),
+      endDate: LocalDate.parse("2026-01-31"),
     };
     const rs = new RateSchedule(params);
 
@@ -441,8 +443,8 @@ describe("RateSchedule Class", () => {
     expect(rs.id).toBe(customId);
 
     // Check date conversions
-    expect(rs.startDate.format("YYYY-MM-DD")).toBe("2025-02-01");
-    expect(rs.endDate.format("YYYY-MM-DD")).toBe("2026-01-31");
+    expect(rs.startDate.toString()).toBe("2025-02-01");
+    expect(rs.endDate.toString()).toBe("2026-01-31");
 
     // Check interest rate
     expect(rs.annualInterestRate.toNumber()).toBe(7.25);
@@ -454,8 +456,8 @@ describe("RateSchedule Class", () => {
   test("Setting annualInterestRate updates Decimal value and flags modified", () => {
     const rs = new RateSchedule({
       annualInterestRate: 2,
-      startDate: dayjs("2025-01-01"),
-      endDate: dayjs("2025-01-10"),
+      startDate: LocalDate.parse("2025-01-01"),
+      endDate: LocalDate.parse("2025-01-10"),
     });
     expect(rs.modified).toBe(false);
 
@@ -479,10 +481,10 @@ describe("RateSchedule Class", () => {
 
     rs.startDate = "2025-03-15T14:30:00";
     expect(rs.modified).toBe(true);
-    expect(rs.startDate.format("YYYY-MM-DD HH:mm:ss")).toBe("2025-03-15 00:00:00");
+    expect(rs.startDate.toString()).toBe("2025-03-15");
 
     rs.endDate = new Date("2025-04-20T23:59:59Z");
-    expect(rs.endDate.format("YYYY-MM-DD HH:mm:ss")).toBe("2025-04-20 00:00:00");
+    expect(rs.endDate.toString()).toBe("2025-04-20");
   });
 
   test("updateJsValues and updateModelValues keep JS and model in sync", () => {
@@ -494,8 +496,8 @@ describe("RateSchedule Class", () => {
 
     // check initial JS values
     expect(rs.jsAnnualInterestRate).toBe(10);
-    expect(dayjs(rs.jsStartDate).utc().format("YYYY-MM-DD")).toBe("2025-01-01");
-    expect(dayjs(rs.jsEndDate).utc().format("YYYY-MM-DD")).toBe("2025-01-31");
+    expect(DateUtil.toIsoDateString(rs.jsStartDate)).toBe("2025-01-01");
+    expect(DateUtil.toIsoDateString(rs.jsEndDate)).toBe("2025-01-31");
 
     // change the model
     rs.annualInterestRate = 12;
@@ -505,8 +507,8 @@ describe("RateSchedule Class", () => {
     // update JS from model
     rs.updateJsValues();
     expect(rs.jsAnnualInterestRate).toBe(12);
-    expect(dayjs(rs.jsStartDate).utc().format("YYYY-MM-DD")).toBe("2025-03-10");
-    expect(dayjs(rs.jsEndDate).utc().format("YYYY-MM-DD")).toBe("2025-03-15");
+    expect(DateUtil.toIsoDateString(rs.jsStartDate)).toBe("2025-03-10");
+    expect(DateUtil.toIsoDateString(rs.jsEndDate)).toBe("2025-03-15");
 
     // now let's change the JS values
     rs.jsAnnualInterestRate = 15;
@@ -516,8 +518,8 @@ describe("RateSchedule Class", () => {
     // and update the model from JS
     rs.updateModelValues();
     expect(rs.annualInterestRate.toNumber()).toBe(15);
-    expect(rs.startDate.format("YYYY-MM-DD")).toBe("2025-04-01");
-    expect(rs.endDate.format("YYYY-MM-DD")).toBe("2025-04-05");
+    expect(rs.startDate.toString()).toBe("2025-04-01");
+    expect(rs.endDate.toString()).toBe("2025-04-05");
   });
 
   test("json getter returns expected structure", () => {
@@ -533,8 +535,8 @@ describe("RateSchedule Class", () => {
     expect(json).toEqual({
       id: "test-id-123",
       annualInterestRate: 6.5,
-      startDate: rs.startDate.toISOString(),
-      endDate: rs.endDate.toISOString(),
+      startDate: rs.startDate.toString(),
+      endDate: rs.endDate.toString(),
       type: "custom",
     });
   });

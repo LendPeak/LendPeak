@@ -2,6 +2,7 @@ import { Dayjs } from "dayjs";
 import { Currency } from "../utils/Currency";
 import { Calendar, CalendarType } from "./Calendar";
 import Decimal from "decimal.js";
+import { LocalDate } from "@js-joda/core";
 
 export type PerDiemCalculationType = "AnnualRateDividedByDaysInYear" | "MonthlyRateDividedByDaysInMonth";
 
@@ -12,8 +13,8 @@ export interface PaymentSplit {
 }
 
 export interface rateScheduleRow {
-  startDate: Dayjs;
-  endDate: Dayjs;
+  startDate: LocalDate;
+  endDate: LocalDate;
   annualInterestRate: number;
 }
 
@@ -35,6 +36,7 @@ export class InterestCalculator {
   private perDiemCalculationType: PerDiemCalculationType;
   private daysInAMonth?: number;
   private _perDiem?: Currency;
+  
 
   constructor(annualInterestRate: Decimal, calendarType: CalendarType = CalendarType.ACTUAL_ACTUAL, perDiemCalculationType: PerDiemCalculationType = "AnnualRateDividedByDaysInYear", daysInAMonth?: number) {
     this.annualInterestRate = annualInterestRate;
@@ -158,7 +160,7 @@ export class InterestCalculator {
    * @param endDate - The end date of the period.
    * @returns {Currency} - The interest amount as a Currency object.
    */
-  calculateInterest(principal: Currency, startDate: Dayjs, endDate: Dayjs): Currency {
+  calculateInterest(principal: Currency, startDate: LocalDate, endDate: LocalDate): Currency {
     if (this.annualInterestRate.equals(0)) {
       return Currency.of(0);
     }
@@ -239,7 +241,7 @@ export class InterestCalculator {
    * @param deferredInterest - (Optional) The deferred interest that needs to be paid off first (Currency).
    * @returns {PaymentSplit} - The split of principal and interest, and any remaining deferred interest.
    */
-  calculatePaymentSplit(principal: Currency, startDate: Dayjs, endDate: Dayjs, emi: Currency, deferredInterest: Currency = Currency.Zero()): PaymentSplit {
+  calculatePaymentSplit(principal: Currency, startDate: LocalDate, endDate: LocalDate, emi: Currency, deferredInterest: Currency = Currency.Zero()): PaymentSplit {
     let interest = this.calculateInterest(principal, startDate, endDate);
     let remainingDeferredInterest = deferredInterest;
 

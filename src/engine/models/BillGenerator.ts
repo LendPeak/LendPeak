@@ -7,33 +7,30 @@ import dayjs, { Dayjs } from "dayjs";
 import isSameOrAfter from "dayjs/plugin/isSameOrAfter";
 import isSameOrBefore from "dayjs/plugin/isSameOrBefore";
 import isBetween from "dayjs/plugin/isBetween";
+import { LocalDate, ZoneId, Instant, ChronoUnit } from "@js-joda/core";
+
 dayjs.extend(isBetween);
 
 dayjs.extend(isSameOrAfter);
 dayjs.extend(isSameOrBefore);
 
 export class BillGenerator {
-  static generateBills(params: { amortizationSchedule: AmortizationEntries; currentDate?: Dayjs | Date }): Bills {
-    const bills: Bills = new Bills({});
-    if (!params.currentDate) {
-      params.currentDate = dayjs();
-    }
-    if (params.currentDate instanceof Date) {
-      params.currentDate = dayjs(params.currentDate);
-    }
+  static generateBills(params: { amortizationSchedule: AmortizationEntries; currentDate: LocalDate }): Bills {
+    const currentDate = params.currentDate;
 
-    let billIdSequence = 1;
+    const bills: Bills = new Bills({
+      currentDate: currentDate,
+    });
+
+    let billIdSequence = 0;
     for (const entry of params.amortizationSchedule.entries) {
       if (!entry.billablePeriod) {
-        // Skip non-billable periods
-        continue;
+        continue; // Skip non-billable periods
       }
 
       const totalDue = entry.totalPayment;
       const id = BillGenerator.generateId(billIdSequence++);
-      const isPaid = totalDue.getValue().isZero() ? true : false;
-      const isDue = entry.periodBillDueDate.isSameOrBefore(params.currentDate);
-      const isOpen = entry.periodBillOpenDate.isSameOrBefore(params.currentDate);
+
       const bill: Bill = new Bill({
         id: id,
         period: entry.term,
@@ -43,16 +40,12 @@ export class BillGenerator {
         interestDue: entry.dueInterestForTerm,
         feesDue: entry.fees,
         totalDue: totalDue,
-        isPaid: isPaid,
-        isOpen: isOpen,
-        isDue: isDue,
-        isPastDue: isPaid === false && entry.periodBillDueDate.isSameOrBefore(params.currentDate),
-        daysPastDue: dayjs(params.currentDate).diff(entry.periodBillDueDate, "day"),
         amortizationEntry: entry,
       });
 
       bills.addBill(bill);
     }
+
     bills.sortBills();
 
     return bills;

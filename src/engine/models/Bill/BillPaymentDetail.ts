@@ -1,12 +1,14 @@
 import { Currency } from "../../utils/Currency";
 import dayjs, { Dayjs } from "dayjs";
 import { DateUtil } from "../../utils/DateUtil";
+import { LocalDate, ZoneId } from "@js-joda/core";
+
 export interface IBillPaymentDetail {
   depositId: string;
   allocatedPrincipal: Currency | number;
   allocatedInterest: Currency | number;
   allocatedFees: Currency | number;
-  date: Dayjs | Date;
+  date: LocalDate | Date;
 }
 
 export class BillPaymentDetail {
@@ -15,7 +17,7 @@ export class BillPaymentDetail {
   allocatedInterest: Currency;
   allocatedFees: Currency;
   allocatedTotal: Currency;
-  date: Dayjs;
+  date: LocalDate;
 
   constructor(params: IBillPaymentDetail) {
     this.depositId = params.depositId;
@@ -43,7 +45,7 @@ export class BillPaymentDetail {
   }
 
   get jsDate(): Date {
-    return this.date.toDate();
+    return DateUtil.normalizeDateToJsDate(this.date);
   }
 
   get json() {

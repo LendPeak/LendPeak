@@ -12,6 +12,7 @@ import {
 import dayjs from 'dayjs';
 import { AmortizationEntry } from 'lendpeak-engine/models/Amortization/AmortizationEntry';
 import { BalanceModification } from 'lendpeak-engine/models/Amortization/BalanceModification';
+import { DateUtil } from 'lendpeak-engine/utils/DateUtil';
 import { Amortization } from 'lendpeak-engine/models/Amortization';
 import { TermInterestAmountOverride } from 'lendpeak-engine/models/TermInterestAmountOverride';
 import { TermInterestRateOverride } from 'lendpeak-engine/models/TermInterestRateOverride';
@@ -44,6 +45,7 @@ import {
   DropDownOptionNumber,
   DropDownOptionString,
 } from '../models/common.model';
+import { LocalDate, ZoneId } from '@js-joda/core';
 
 @Component({
   selector: 'app-overrides',
@@ -570,9 +572,8 @@ export class OverridesComponent implements OnInit {
     this.lendPeak.amortization.rateSchedules.addSchedule(
       new RateSchedule({
         startDate: this.lendPeak.amortization.rateSchedules.last.endDate,
-        endDate: dayjs(
-          this.lendPeak.amortization.rateSchedules.last.endDate,
-        ).add(1, 'month'),
+        endDate:
+          this.lendPeak.amortization.rateSchedules.last.endDate.plusMonths(1),
         annualInterestRate:
           this.lendPeak.amortization.rateSchedules.last.annualInterestRate,
         type: 'custom',
@@ -606,9 +607,7 @@ export class OverridesComponent implements OnInit {
       changePaymentDates.addChangePaymentDate(
         new ChangePaymentDate({
           termNumber: 0,
-          newDate: dayjs(this.lendPeak.amortization.startDate)
-            .add(1, 'month')
-            .toDate(),
+          newDate: this.lendPeak.amortization.startDate.plusMonths(1),
         }),
       );
     } else {
@@ -617,9 +616,7 @@ export class OverridesComponent implements OnInit {
       changePaymentDates.addChangePaymentDate(
         new ChangePaymentDate({
           termNumber: lastTermNumber + 1,
-          newDate: dayjs(changePaymentDates.last.newDate)
-            .add(1, 'month')
-            .toDate(),
+          newDate: changePaymentDates.last.newDate.plusMonths(1),
         }),
       );
     }
@@ -628,36 +625,36 @@ export class OverridesComponent implements OnInit {
     this.emitLoanChange();
   }
 
-  getEndDateForTerm(termNumber: number): Dayjs {
+  getEndDateForTerm(termNumber: number): LocalDate {
     if (!this.lendPeak) {
-      return dayjs().startOf('day');
+      return DateUtil.today();
     }
     if (termNumber === undefined || termNumber < 0) {
-      return dayjs().startOf('day');
+      return DateUtil.today();
     }
     const term =
       this.lendPeak.amortization.repaymentSchedule.getEntryByTerm(termNumber);
     if (term) {
       return term.periodEndDate;
     }
-    return dayjs().startOf('day');
+    return DateUtil.today();
   }
 
-  getStartDateForTerm(termNumber: number): Dayjs {
+  getStartDateForTerm(termNumber: number): LocalDate {
     if (!this.lendPeak) {
-      return dayjs().startOf('day');
+      return DateUtil.today();
     }
     if (termNumber === undefined || termNumber < 0) {
-      return dayjs().startOf('day');
+      return DateUtil.today();
     } else if (termNumber > this.lendPeak.amortization.term) {
-      return dayjs().startOf('day');
+      return DateUtil.today();
     }
     const term =
       this.lendPeak.amortization.repaymentSchedule.getEntryByTerm(termNumber);
     if (term) {
       return term.periodStartDate;
     } else {
-      return dayjs().startOf('day');
+      return DateUtil.today();
     }
   }
 
@@ -871,12 +868,12 @@ export class OverridesComponent implements OnInit {
     if (!this.lendPeak) {
       return false;
     }
-    const passedDate = dayjs(
+    const passedDate = DateUtil.normalizeDate(
       new Date(ngDate.year, ngDate.month, ngDate.day),
-    ).startOf('day');
+    );
 
     for (const row of this.lendPeak.amortization.repaymentSchedule.entries) {
-      if (row.periodEndDate.isSame(passedDate)) {
+      if (row.periodEndDate.isEqual(passedDate)) {
         return true;
       }
     }
@@ -904,8 +901,8 @@ export class OverridesComponent implements OnInit {
       );
 
     const newDate =
-      termSchedule?.periodEndDate.toDate() ||
-      this.lendPeak.amortization.repaymentSchedule.lastEntry.periodEndDate.toDate();
+      termSchedule?.periodEndDate.toString() ||
+      this.lendPeak.amortization.repaymentSchedule.lastEntry.periodEndDate.toString();
     // dayjs(this.lendPeak.amortization.startDate).add(1, 'month').toDate();
     this.lendPeak.amortization.changePaymentDates.addChangePaymentDate(
       new ChangePaymentDate({

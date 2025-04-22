@@ -4,6 +4,7 @@ import isBetween from "dayjs/plugin/isBetween";
 dayjs.extend(isBetween);
 import { v4 as uuidv4 } from "uuid";
 import { DateUtil } from "../utils/DateUtil";
+import { LocalDate, ZoneId, Instant, ChronoUnit } from "@js-joda/core";
 
 import { Currency } from "../utils/Currency";
 import { AmortizationEntry } from "./Amortization/AmortizationEntry";
@@ -14,8 +15,8 @@ import { Bills } from "./Bills";
 export interface BillParams {
   id: string;
   period: number;
-  dueDate: Dayjs | Date;
-  openDate: Dayjs | Date;
+  dueDate: LocalDate | Date;
+  openDate: LocalDate | Date;
 
   originalPrincipalDue?: Currency | number;
   originalInterestDue?: Currency | number;
@@ -26,11 +27,6 @@ export interface BillParams {
   interestDue: Currency | number;
   feesDue: Currency | number;
   totalDue: Currency | number;
-  isPaid: boolean;
-  isOpen: boolean;
-  isDue: boolean;
-  isPastDue: boolean;
-  daysPastDue: number;
 
   isDSIBill?: boolean;
   amortizationEntry: AmortizationEntry;
@@ -39,7 +35,7 @@ export interface BillParams {
     depositIds?: string[];
   };
   paymentDetails?: BillPaymentDetail[];
-  dateFullySatisfied?: Dayjs | Date;
+  dateFullySatisfied?: LocalDate | Date;
   daysLate?: number;
   daysEarly?: number;
 
@@ -49,8 +45,8 @@ export interface BillParams {
 export class Bill {
   id: string;
   period: number;
-  dueDate: Dayjs;
-  openDate: Dayjs;
+  dueDate: LocalDate;
+  openDate: LocalDate;
   _principalDue!: Currency;
   _originalPrincipalDue!: Currency;
   _interestDue!: Currency;
@@ -59,14 +55,9 @@ export class Bill {
   _originalFeesDue!: Currency;
   _totalDue!: Currency;
   _originalTotalDue!: Currency;
-  _isPaid!: boolean;
-  isOpen: boolean;
-  isDue: boolean;
-  isPastDue: boolean;
-  daysPastDue: number;
   isDSIBill?: boolean;
   private _versionId: string = uuidv4();
-  private _dateChanged: Dayjs = dayjs();
+  private _dateChanged: LocalDate = LocalDate.now();
   private initialized: boolean = false;
 
   bills?: Bills;
@@ -78,7 +69,7 @@ export class Bill {
   };
   paymentDetails: BillPaymentDetail[] = [];
 
-  dateFullySatisfied?: Dayjs;
+  dateFullySatisfied?: LocalDate;
   daysLate?: number;
   daysEarly?: number;
 
@@ -100,11 +91,9 @@ export class Bill {
     this.totalDue = params.totalDue;
     this.originalTotalDue = params.originalTotalDue || params.totalDue;
 
-    this.isPaid = params.isPaid;
-    this.isOpen = params.isOpen;
-    this.isDue = params.isDue;
-    this.isPastDue = params.isPastDue;
-    this.daysPastDue = params.daysPastDue;
+    // this.isPaid = params.isPaid;
+    // this.isOpen = params.isOpen;
+    // this.isDue = params.isDue;
     // check if amortizationEntry is an instance of AmortizationEntry
     // if not, create a new AmortizationEntry object from the value
     if (params.amortizationEntry instanceof AmortizationEntry) {
@@ -136,32 +125,56 @@ export class Bill {
     this.versionChanged();
   }
 
-
   get versionId(): string {
     return this._versionId;
   }
 
-  get dateChanged(): Dayjs {
+  get dateChanged(): LocalDate {
     return this._dateChanged;
   }
 
-  get isPaid(): boolean {
-    return this._isPaid;
-  }
+  getDaysPastDue(date: LocalDate | Date): number {
+    const currentDate = DateUtil.normalizeDate(date);
 
-  set isPaid(value: boolean) {
-    this._isPaid = value;
-  }
-
-  updateStatus() {
-    if (this.principalDue.isZero() && this.interestDue.isZero() && this.feesDue.isZero()) {
-      this.isPaid = true;
+    if (this.isPaid()) {
+      return 0;
     }
+
+    if (!this.isOpen(currentDate)) {
+      return 0;
+    }
+    if (!this.isDue(currentDate)) {
+      return 0;
+    }
+
+    // calculate days between due date and current date
+    const days = ChronoUnit.DAYS.between(this.dueDate, currentDate);
+    return days > 0 ? days : 0;
+  }
+
+  isOpen(date: LocalDate | Date): boolean {
+    const currentDate = DateUtil.normalizeDate(date);
+    return this.openDate.isEqual(currentDate) || this.openDate.isBefore(currentDate);
+  }
+
+  isDue(date: LocalDate | Date): boolean {
+    const currentDate = DateUtil.normalizeDate(date);
+    return this.dueDate.isEqual(currentDate) || this.dueDate.isBefore(currentDate);
+  }
+
+  isPaid(): boolean {
+    return this.principalDue.isZero() && this.interestDue.isZero() && this.feesDue.isZero();
+  }
+
+  isPastDue(date: LocalDate | Date): boolean {
+    const currentDate = DateUtil.normalizeDate(date);
+    // unpaid and due date is before current date
+    return !this.isPaid() && currentDate.isAfter(this.dueDate);
   }
 
   versionChanged() {
     if (this.initialized === true) {
-      this._dateChanged = dayjs();
+      this._dateChanged = LocalDate.now();
       this._versionId = uuidv4();
       if (this.bills) {
         this.bills.versionChanged();
@@ -281,11 +294,11 @@ export class Bill {
   }
 
   get jsOpenDate(): Date {
-    return this.openDate.toDate();
+    return DateUtil.normalizeDateToJsDate(this.openDate);
   }
 
   get jsDueDate(): Date {
-    return this.dueDate.toDate();
+    return DateUtil.normalizeDateToJsDate(this.dueDate);
   }
 
   get jsTotalDue(): number {
@@ -305,7 +318,10 @@ export class Bill {
   }
 
   get jsDateFullySatisfied(): Date | undefined {
-    return this.dateFullySatisfied?.toDate();
+    if (!this.dateFullySatisfied) {
+      return undefined;
+    }
+    return DateUtil.normalizeDateToJsDate(this.dateFullySatisfied);
   }
 
   // 1) Simple numeric getters for the original amounts
@@ -422,11 +438,6 @@ export class Bill {
       originalInterestDue: this.jsOriginalInterestDue,
       originalFeesDue: this.jsOriginalFeesDue,
       originalTotalDue: this.jsOriginalTotalDue,
-      isPaid: this.isPaid,
-      isOpen: this.isOpen,
-      isDue: this.isDue,
-      isPastDue: this.isPastDue,
-      daysPastDue: this.daysPastDue,
       isDSIBill: this.isDSIBill,
       amortizationEntry: this.amortizationEntry.toJSON(),
       paymentMetadata: this.paymentMetadata,

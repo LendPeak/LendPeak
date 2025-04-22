@@ -99,9 +99,10 @@ export class PaymentApplication {
   processDeposits(currentDate: LocalDate): PaymentApplicationResult[] {
     const results: PaymentApplicationResult[] = [];
 
-    const allSortedDeposits = this.deposits.allSorted;
+    this.deposits.sortByEffectiveDate();
+    this.bills.sortBills();
 
-    for (const deposit of allSortedDeposits) {
+    for (const deposit of this.deposits.all) {
       if (deposit.active !== true) {
         // console.debug(`Skipping deposit ${deposit.id} because it is not active`);
         continue;

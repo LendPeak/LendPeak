@@ -272,7 +272,9 @@ export class LendPeak {
   */
   applyPayments() {
     console.log("running apply payments");
+
     this.depositRecords.clearHistory();
+
     // now we will remove system generated balance modifications, since we are clearing the history
     this.amortization.runGarbageCollection();
     this.generateBills();
@@ -470,7 +472,7 @@ export class LendPeak {
 
     // -- 3) Check if the "last open" Bill extends beyond the currentDate
     const lastOpenBill = this.bills.lastOpenBill;
-    if (lastOpenBill && lastOpenBill.amortizationEntry.periodEndDate.isBefore(this.currentDate)) {
+    if (lastOpenBill && this.currentDate.isBefore(lastOpenBill.amortizationEntry.periodEndDate)) {
       // That means the current date is mid-way through the last open bill’s period,
       // so we likely owe partial interest from the Bill’s period start up to `currentDate`.
       // The Bill summary might only include interest up to the Bill’s “period start,”

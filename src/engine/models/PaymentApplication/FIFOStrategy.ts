@@ -28,8 +28,10 @@ export class FIFOStrategy implements AllocationStrategy {
     let remainingAmount = deposit.amount.clone();
     const allocations: PaymentAllocation[] = [];
 
-    // Sort bills by due date ascending
-    let sortedBills = bills.all.filter((b) => b.isOpen(currentDate) && !b.isPaid()).sort((a, b) => a.period - b.period);
+    // Unpaid, Due, and Sort bills
+    const filteredBills = bills.all.filter((b) => b.isOpen(currentDate) && !b.isPaid());
+    // sort by terms from earliest to latest using period attribute
+    let sortedBills = filteredBills.sort((a, b) => a.period - b.period);
 
     if (deposit.applyExcessToPrincipal) {
       const cutoff = DateUtil.normalizeDate(deposit.excessAppliedDate || deposit.effectiveDate);
@@ -157,7 +159,7 @@ function allocateSingleComponentFIFO(
   let leftover = amountToAllocate.clone();
   let totalAllocated = Currency.Zero();
 
-  const openBills = bills.all.filter((b) => b.isOpen(currentDate) && !b.isPaid()).sort((a, b) => ChronoUnit.DAYS.between(a.dueDate, b.dueDate));
+  const openBills = bills.all.filter((b) => b.isOpen(currentDate) && !b.isPaid()).sort((a, b) => a.dueDate.compareTo(b.dueDate));
 
   for (const bill of openBills) {
     if (leftover.isZero()) break;

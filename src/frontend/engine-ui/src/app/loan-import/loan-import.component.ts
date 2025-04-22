@@ -598,23 +598,25 @@ export class LoanImportComponent implements OnInit, OnDestroy {
 
     // for this demo connector we will set 30/360 calendars for periods that
     // have interest adjustments
-    amortization.termInterestAmountOverride.all.forEach((override) => {
-      //console.log('adding calendar for term', override.termNumber);
+
+    // get last term of the override and backtrack from that to add calendar overrides to 30/360
+    const lastTerm = amortization.termInterestAmountOverride.all.slice(-1)[0];
+    const lastTermNumber = lastTerm.termNumber;
+    for (let i = 0; i < lastTermNumber; i++) {
       amortization.calendars.addCalendar(
         new TermCalendar({
-          termNumber: override.termNumber,
+          termNumber: i,
           calendar: new Calendar('THIRTY_360'),
         }),
       );
 
-      // we will also change prebill day cycle to 28 from default zero under DSI
       amortization.preBillDays.addConfiguration(
         new PreBillDaysConfiguration({
-          termNumber: override.termNumber,
+          termNumber: i,
           preBillDays: 28,
         }),
       );
-    });
+    }
 
     return { loan: amortization, deposits: deposits };
   }

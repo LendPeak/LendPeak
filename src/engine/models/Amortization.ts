@@ -901,7 +901,16 @@ export class Amortization {
           //return date.isBetween(period.startDate, period.endDate, "day", "[)"); // this is start and < end date;
         });
         if (term < 0) {
-          throw new Error("Invalid termInterestOverride: date does not fall within any term");
+          // check if date is after the last term and in that case
+          // we will set the term to the last term
+          // get last term date first
+          const lastTermEndDate = this.periodsSchedule.periods[this.periodsSchedule.periods.length - 1].endDate;
+          if (date.isAfter(lastTermEndDate) || date.isEqual(lastTermEndDate)) {
+            term = this.periodsSchedule.periods.length - 1;
+          } else {
+            console.error("termInterestOverride: date does not fall within any term", date, this.periodsSchedule.periods);
+            throw new Error("Invalid termInterestOverride: date does not fall within any term");
+          }
         }
 
         override.termNumber = term;

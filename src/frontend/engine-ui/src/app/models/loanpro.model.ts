@@ -57,6 +57,7 @@ export interface LoanData {
   ScheduleRolls: ScheduleRoll[];
   InterestAdjustments: InterestAdjustment[];
   Transactions: Transaction[];
+  StopInterestDates: StopInterestDates[];
 
   // Core properties
   id: number;
@@ -360,6 +361,29 @@ export interface ScheduleRoll {
   displayOrder: number;
   isCurtailment: number;
   lastAsFinal: number;
+}
+
+/*
+{
+                "__metadata": {
+                    "uri": "https://happymoney.simnang.com/api/public/api/1/odata.svc/StopInterestDates(id=250450)",
+                    "type": "Entity.StopInterestDate"
+                },
+                "id": 250450,
+                "entityType": "Entity.Loan",
+                "entityId": 136290,
+                "modId": null,
+                "date": "/Date(1535414400)/",
+                "type": "loan.stopInterestType.suspend"
+            }
+*/
+export interface StopInterestDates {
+  id: number;
+  entityType: string;
+  entityId: number;
+  modId: number | null;
+  date: string; // e.g. "/Date(1535414400)/"
+  type: 'loan.stopInterestType.suspend' | 'loan.stopInterestType.resume';
 }
 
 export interface Transaction {

@@ -134,7 +134,7 @@ export class LoanProService {
           // Expand whichever fields you need
           nopaging: 'true',
           $expand:
-            'Payments,DueDateChanges,ScheduleRolls,Transactions,LoanSetup,LoanSettings,InterestAdjustments',
+            'Payments,DueDateChanges,ScheduleRolls,Transactions,LoanSetup,LoanSettings,InterestAdjustments,StopInterestDates',
         },
       })
       .pipe(

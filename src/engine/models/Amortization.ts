@@ -884,26 +884,24 @@ export class Amortization {
   set termInterestAmountOverride(value: TermInterestAmountOverrides) {
     this.modifiedSinceLastCalculation = true;
 
-    // it is possible that value at runtime is not an instance of TermInterestAmountOverrides
-    // so we will inflate it
+    // Make sure 'value' is a TermInterestAmountOverrides instance
     if (!(value instanceof TermInterestAmountOverrides)) {
       value = new TermInterestAmountOverrides(value);
     }
 
-    this._termInterestAmountOverride = new TermInterestAmountOverrides();
-    // console.log("setting term amount overide", value);
-    for (const override of value.all) {
+    // Collect overrides in an array to sort/manipulate them before adding.
+    const collected = [...value.all]; // array of whatever shape your overrides have
+
+    // 1. For each override missing a term (i.e., override.termNumber < 0),
+    //    find the term by date (if override.date is present).
+    for (const override of collected) {
       if (override.termNumber < 0 && override.date) {
-        // this means term was not available so we will resolve term number through date
-        let date = DateUtil.normalizeDate(override.date);
-        let term = this.periodsSchedule.periods.findIndex((period) => {
-          return DateUtil.isBetweenHalfOpen(date, period.startDate, period.endDate);
-          //return date.isBetween(period.startDate, period.endDate, "day", "[)"); // this is start and < end date;
-        });
+        const date = DateUtil.normalizeDate(override.date);
+
+        let term = this.periodsSchedule.periods.findIndex((period) => DateUtil.isBetweenHalfOpen(date, period.startDate, period.endDate));
+
         if (term < 0) {
-          // check if date is after the last term and in that case
-          // we will set the term to the last term
-          // get last term date first
+          // If not found in schedule, but date >= lastTermEndDate, set to last term
           const lastTermEndDate = this.periodsSchedule.periods[this.periodsSchedule.periods.length - 1].endDate;
           if (date.isAfter(lastTermEndDate) || date.isEqual(lastTermEndDate)) {
             term = this.periodsSchedule.periods.length - 1;
@@ -912,14 +910,43 @@ export class Amortization {
             throw new Error("Invalid termInterestOverride: date does not fall within any term");
           }
         }
-
         override.termNumber = term;
       }
+    }
 
-      if (override.termNumber < 0 || override.termNumber > this.term) {
-        throw new Error(`Invalid termInterestOverride: termNumber ${override.termNumber} out of range`);
+    // 2. Sort by date so we can ensure term numbers are assigned in chronological order
+    collected.sort((a, b) => {
+      const dateA = DateUtil.normalizeDate(a.date);
+      const dateB = DateUtil.normalizeDate(b.date);
+      return dateA.compareTo(dateB);
+    });
+
+    // 3. Fix up the term numbering in a strictly ascending manner
+    this._termInterestAmountOverride = new TermInterestAmountOverrides();
+
+    let lastTermAssigned = -1;
+    for (let i = 0; i < collected.length; i++) {
+      const current = collected[i];
+
+      // If first in the list, force it to 0
+      if (i === 0) {
+        current.termNumber = 0;
+      } else {
+        // Ensure strictly increasing (no gaps or backward jumps)
+        // If the current term is not strictly one more than the last assigned term,
+        // we set current.termNumber = lastTermAssigned + 1
+        if (current.termNumber <= lastTermAssigned || current.termNumber > lastTermAssigned + 1) {
+          current.termNumber = lastTermAssigned + 1;
+        }
       }
-      this._termInterestAmountOverride.addOverride(override);
+
+      // 4. Range check
+      if (current.termNumber < 0 || current.termNumber > this.term) {
+        throw new Error(`Invalid termInterestOverride: termNumber ${current.termNumber} out of range`);
+      }
+
+      this._termInterestAmountOverride.addOverride(current);
+      lastTermAssigned = current.termNumber;
     }
   }
 

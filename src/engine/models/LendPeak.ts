@@ -172,6 +172,7 @@ export class LendPeak {
 
   set currentDate(value: LocalDate | Date | string) {
     this._currentDate = DateUtil.normalizeDate(value);
+    this.bills.currentDate = this._currentDate;
   }
 
   get amortizationVersionManager(): AmortizationVersionManager | undefined {
@@ -406,7 +407,10 @@ export class LendPeak {
       }
     }
 
-    const lendPeak = new LendPeak(params);
+    const lendPeak = new LendPeak({
+      ...params,
+      currentDate: params.currentDate ? LocalDate.parse(params.currentDate) : LocalDate.now(),
+    });
     lendPeak.calc();
     return lendPeak;
   }
@@ -531,6 +535,7 @@ export class LendPeak {
 
   toJSON() {
     return {
+      currentDate: this._currentDate?.toString(),
       amortization: this.amortization.json,
       depositRecords: this.depositRecords.json,
       bills: this.bills.json,

@@ -446,7 +446,7 @@ export class AppComponent implements OnChanges {
   }
 
   // Method to handle changes to snapshotDate
-  onSnapshotDateChange(date:  Date) {
+  onSnapshotDateChange(date: Date) {
     this.snapshotDate = date;
     this.lendPeak.currentDate = this.snapshotDate;
 
@@ -457,7 +457,7 @@ export class AppComponent implements OnChanges {
     if (selectedDate.isEqual(today)) {
       localStorage.removeItem('snapshotDate');
     } else {
-      localStorage.setItem('snapshotDate', date.toString());
+      localStorage.setItem('snapshotDate', date.toISOString());
     }
 
     this.submitLoan();
@@ -506,18 +506,24 @@ export class AppComponent implements OnChanges {
     try {
       const snapshotDate = localStorage.getItem('snapshotDate');
       if (snapshotDate) {
-        this.snapshotDate = DateUtil.normalizeDateToJsDate(DateUtil.normalizeDate(snapshotDate));
-;
+        this.snapshotDate = DateUtil.normalizeDateToJsDate(
+          DateUtil.normalizeDate(snapshotDate),
+        );
         if (!this.snapshotDate) {
           this.snapshotDate = new Date();
         }
       } else {
-          this.snapshotDate = new Date();
+        this.snapshotDate = new Date();
       }
     } catch (e) {
+      console.warn(
+        'Error while parsing snapshot date from local storage: ',
+        this.snapshotDate,
+        e,
+      );
       // clear the snapshot date from local storage
       localStorage.removeItem('snapshotDate');
-          this.snapshotDate = new Date();
+      this.snapshotDate = new Date();
     }
 
     this.lendPeak.currentDate = this.snapshotDate;
@@ -1224,70 +1230,6 @@ export class AppComponent implements OnChanges {
     };
 
     return new Proxy(obj, handler);
-  }
-
-  private getPastDueSummary(): PastDueSummary {
-    const snapshot = DateUtil.normalizeDate(this.snapshotDate);
-    let pastDueCount = 0;
-    let totalPastDuePrincipal = Currency.Zero();
-    let totalPastDueInterest = Currency.Zero();
-    let totalPastDueFees = Currency.Zero();
-    let totalPastDueAmount = Currency.Zero();
-
-    let earliestPastDueBillDate: LocalDate | null = null;
-
-    for (const bill of this.lendPeak.bills.all) {
-      // A bill is past due if it's not fully paid and due before the snapshot date
-      if (!bill.isPaid && bill.dueDate.isBefore(snapshot)) {
-        // Calculate the currently unpaid amount of the bill
-        const unpaidPrincipal = bill.principalDue;
-        const unpaidInterest = bill.interestDue;
-        const unpaidFees = bill.feesDue;
-
-        // If nothing is unpaid (fully satisfied), skip
-        if (
-          unpaidPrincipal.getValue().isZero() &&
-          unpaidInterest.getValue().isZero() &&
-          unpaidFees.getValue().isZero()
-        ) {
-          continue;
-        }
-
-        pastDueCount++;
-        totalPastDuePrincipal = totalPastDuePrincipal.add(unpaidPrincipal);
-        totalPastDueInterest = totalPastDueInterest.add(unpaidInterest);
-        totalPastDueFees = totalPastDueFees.add(unpaidFees);
-        const unpaidTotal = unpaidPrincipal.add(unpaidInterest).add(unpaidFees);
-        totalPastDueAmount = totalPastDueAmount.add(unpaidTotal);
-
-        // Track the earliest (oldest) past due bill date
-        if (
-          earliestPastDueBillDate === null ||
-          bill.dueDate.isBefore(earliestPastDueBillDate)
-        ) {
-          earliestPastDueBillDate = bill.dueDate;
-        }
-      }
-    }
-
-    // Calculate days the contract is past due based on earliest past due bill date
-    let daysContractIsPastDue = 0;
-
-    if (earliestPastDueBillDate) {
-      daysContractIsPastDue = ChronoUnit.DAYS.between(
-        earliestPastDueBillDate,
-        snapshot,
-      );
-    }
-
-    return {
-      pastDueCount,
-      totalPastDuePrincipal,
-      totalPastDueInterest,
-      totalPastDueFees,
-      totalPastDueAmount,
-      daysContractIsPastDue,
-    };
   }
 
   public handleRollback(params: { versionId: string; event?: Event }) {

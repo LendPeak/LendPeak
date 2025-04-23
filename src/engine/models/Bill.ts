@@ -1,7 +1,4 @@
 // Bill.ts
-import dayjs, { Dayjs } from "dayjs";
-import isBetween from "dayjs/plugin/isBetween";
-dayjs.extend(isBetween);
 import { v4 as uuidv4 } from "uuid";
 import { DateUtil } from "../utils/DateUtil";
 import { LocalDate, ZoneId, Instant, ChronoUnit } from "@js-joda/core";
@@ -174,7 +171,10 @@ export class Bill {
 
   versionChanged() {
     if (this.initialized === true) {
-      this._dateChanged = LocalDate.now();
+      // Use the parent’s currentDate if available.
+      // If for some reason there’s no parent (this.bills), you can fallback to LocalDate.now().
+      this._dateChanged = this.bills ? this.bills.currentDate : LocalDate.now();
+
       this._versionId = uuidv4();
       if (this.bills) {
         this.bills.versionChanged();
@@ -220,7 +220,6 @@ export class Bill {
 
   get principalDue(): Currency {
     return this._principalDue;
-    this.versionChanged();
   }
 
   set principalDue(value: Currency | number) {

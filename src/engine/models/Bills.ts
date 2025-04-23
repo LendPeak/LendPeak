@@ -93,6 +93,7 @@ export class Bills {
 
   set currentDate(value: LocalDate) {
     this._currentDate = DateUtil.normalizeDate(value);
+    this.versionChanged();
   }
 
   get versionId(): string {
@@ -104,7 +105,7 @@ export class Bills {
   }
 
   versionChanged() {
-    this._dateChanged = LocalDate.now();
+    this._dateChanged = this._currentDate;
     this._versionId = uuidv4();
   }
 

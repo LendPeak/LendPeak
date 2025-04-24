@@ -67,6 +67,7 @@ export interface AmortizationParams {
   defaultBillDueDaysAfterPeriodEndConfiguration?: number;
   startDate: LocalDate | Date;
   hasCustomEndDate?: boolean;
+  hasCustomFirstPaymentDate?: boolean;
   endDate?: LocalDate | Date;
   payoffDate?: LocalDate | Date;
   calendars?: TermCalendars;
@@ -290,8 +291,16 @@ export class Amortization {
     this.term = params.term;
     this.startDate = params.startDate;
 
+    if (params.hasCustomFirstPaymentDate !== undefined) {
+      this.hasCustomFirstPaymentDate = params.hasCustomFirstPaymentDate;
+    }
+
     if (params.firstPaymentDate) {
       this.firstPaymentDate = params.firstPaymentDate;
+    }
+
+    if (params.hasCustomEndDate !== undefined) {
+      this.hasCustomEndDate = params.hasCustomEndDate;
     }
 
     if (params.endDate) {
@@ -2776,6 +2785,7 @@ export class Amortization {
       endDate: DateUtil.normalizeDateToJsDate(this.endDate),
       payoffDate: this.payoffDate ? DateUtil.normalizeDateToJsDate(this.payoffDate) : undefined,
       hasCustomEndDate: this.hasCustomEndDate,
+      hasCustomFirstPaymentDate: this.hasCustomFirstPaymentDate,
       equitedMonthlyPayment: this.equitedMonthlyPayment.toNumber(),
       hasCustomEquitedMonthlyPayment: this.hasCustomEquitedMonthlyPayment,
       roundingMethod: this.roundingMethod,
@@ -2823,6 +2833,7 @@ export class Amortization {
       endDate: DateUtil.normalizeDateToJsDate(this.endDate),
       payoffDate: this.payoffDate ? DateUtil.normalizeDateToJsDate(this.payoffDate) : undefined,
       hasCustomEndDate: this.hasCustomEndDate,
+      hasCustomFirstPaymentDate: this.hasCustomFirstPaymentDate,
       equitedMonthlyPayment: this.equitedMonthlyPayment.toNumber(),
       hasCustomEquitedMonthlyPayment: this.hasCustomEquitedMonthlyPayment,
       roundingMethod: this.roundingMethod,

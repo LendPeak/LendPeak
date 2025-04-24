@@ -1,75 +1,44 @@
-import { LocalDate, TemporalAdjusters, ChronoUnit } from "@js-joda/core";
+import { LocalDate, ChronoUnit, TemporalAdjusters } from "@js-joda/core";
 import { DateUtil } from "../utils/DateUtil";
 
 /**
- * Enum representing different calendar types.
+ * Day-count conventions supported by LendPeak.
  *
- * - `ACTUAL_ACTUAL`: Uses actual days between two dates.
- * - `ACTUAL_360`: Scales the actual number of days to a 360-day year.
- * - `ACTUAL_365`: Uses actual days between two dates, assuming a 365-day year.
- * - `THIRTY_360`: Assumes 30 days per month and 360 days per year.
- * - `THIRTY_ACTUAL`: Uses 30 days per month when over 30 days, otherwise actual days.
+ * ─ ACTUAL types use the real day gap in the numerator.
+ * ─ 30/360  (European) adjusts both dates (31 → 30).
+ * ─ 30/360U (US/NASD) has an extra rule for the end-day.
  */
 export enum CalendarType {
-  ACTUAL_ACTUAL = 0,
-  ACTUAL_360 = 1,
-  ACTUAL_365 = 2,
-  THIRTY_360 = 3,
-  THIRTY_ACTUAL = 4,
+  ACTUAL_ACTUAL = 0, // ISDA – denom 365 / 366
+  ACTUAL_360 = 1, // Fixed 360
+  ACTUAL_365 = 2, // Fixed 365 – keeps leap day
+  ACTUAL_365_NL = 3, // Fixed 365 – **No-Leap** (skips 29 Feb)
+  THIRTY_360 = 4, // 30E/360 – European
+  THIRTY_ACTUAL = 5, // 30/Actual hybrid
+  THIRTY_360_US = 6, // 30U/360 – U.S. / NASD
 }
 
-/**
- * Calendar class for performing date arithmetic according to different calendar conventions.
- *
- * Uses js-joda's LocalDate for date manipulations and calculates days according to various calendar types.
- */
 export class Calendar {
-  calendarType: CalendarType;
+  /* ────────────────────────────────────────────────────────── */
+  /*  ctor & basic accessors                                    */
+  /* ────────────────────────────────────────────────────────── */
+
   private _date!: LocalDate;
 
-  constructor(calendarType?: CalendarType | string, date?: LocalDate) {
-    if (calendarType === undefined || calendarType === null) {
-      console.debug("CalendarType is undefined, defaulting to ACTUAL_ACTUAL");
-      calendarType = CalendarType.ACTUAL_ACTUAL;
-    }
-
-    if (date === undefined || date === null) {
-      // console.debug("Date is undefined, defaulting to today");
-      date = DateUtil.today();
-    }
-
-    if (typeof calendarType === "string") {
-      switch (calendarType) {
-        case "ACTUAL_ACTUAL":
-          calendarType = CalendarType.ACTUAL_ACTUAL;
-          break;
-        case "ACTUAL_360":
-          calendarType = CalendarType.ACTUAL_360;
-          break;
-        case "ACTUAL_365":
-          calendarType = CalendarType.ACTUAL_365;
-          break;
-        case "THIRTY_360":
-          calendarType = CalendarType.THIRTY_360;
-          break;
-        case "THIRTY_ACTUAL":
-          calendarType = CalendarType.THIRTY_ACTUAL;
-          break;
-        default:
-          calendarType = CalendarType.THIRTY_360;
-      }
-    }
-    this.calendarType = calendarType;
+  constructor(public calendarType: CalendarType = CalendarType.ACTUAL_ACTUAL, date: LocalDate | string | number | Date = DateUtil.today()) {
     this.date = date;
   }
 
-  set date(date: LocalDate | string | number | Date | null | undefined) {
-    this._date = DateUtil.normalizeDate(date);
+  set date(d: LocalDate | string | number | Date | null | undefined) {
+    this._date = DateUtil.normalizeDate(d);
   }
-
   get date(): LocalDate {
     return this._date;
   }
+
+  /* ────────────────────────────────────────────────────────── */
+  /*  Human-readable label                                      */
+  /* ────────────────────────────────────────────────────────── */
 
   get userFriendlyName(): string {
     switch (this.calendarType) {
@@ -78,58 +47,64 @@ export class Calendar {
       case CalendarType.ACTUAL_360:
         return "Actual/360";
       case CalendarType.ACTUAL_365:
-        return "Actual/365";
+        return "Actual/365 (Fixed)";
+      case CalendarType.ACTUAL_365_NL:
+        return "Actual/365 (No-Leap)";
       case CalendarType.THIRTY_360:
-        return "30/360";
+        return "30/360 (European)";
       case CalendarType.THIRTY_ACTUAL:
         return "30/Actual";
+      case CalendarType.THIRTY_360_US:
+        return "30/360 (U.S.)";
       default:
         return "Unknown";
     }
   }
 
-  setCalendarType(type: CalendarType) {
-    this.calendarType = type;
-  }
+  /* ────────────────────────────────────────────────────────── */
+  /*  Public API                                                */
+  /* ────────────────────────────────────────────────────────── */
 
-  getCalendarType(): CalendarType {
-    return this.calendarType;
-  }
-
-  daysBetween(date1: LocalDate, date2: LocalDate): number {
+  /** Signed day-count between two dates. */
+  daysBetween(d1: LocalDate, d2: LocalDate): number {
     switch (this.calendarType) {
       case CalendarType.THIRTY_360:
-        return this.daysBetween30_360_European(date1, date2);
+        return this.daysBetween30_360_EU(d1, d2);
+      case CalendarType.THIRTY_360_US:
+        return this.daysBetween30_360_US(d1, d2);
       case CalendarType.THIRTY_ACTUAL:
-        return this.daysBetween30_Actual(date1, date2);
+        return this.daysBetween30_Actual(d1, d2);
+      case CalendarType.ACTUAL_365_NL:
+        return this.daysBetweenActual365NoLeap(d1, d2);
       case CalendarType.ACTUAL_360:
-      case CalendarType.ACTUAL_ACTUAL:
-        return this.daysBetweenActual(date1, date2);
+      /* fall-through */
       case CalendarType.ACTUAL_365:
-        return this.daysBetweenActual365(date1, date2);
+      /* fall-through */
+      case CalendarType.ACTUAL_ACTUAL:
+        return ChronoUnit.DAYS.between(d1, d2);
       default:
         throw new Error("Invalid calendar type");
     }
   }
 
-  monthsBetween(date1: LocalDate, date2: LocalDate): number {
-    return this.daysBetween(date1, date2) / 30;
+  /** Whole-month difference (signed). */
+  monthsBetween(d1: LocalDate, d2: LocalDate): number {
+    return ChronoUnit.MONTHS.between(d1, d2);
   }
 
+  /** Add _n_ months, preserving “end-of-month” intent. */
   addMonths(date: LocalDate, months: number): LocalDate {
-    if (this.calendarType === CalendarType.THIRTY_360 || this.calendarType === CalendarType.THIRTY_ACTUAL) {
-      let newDate = date.plusMonths(months);
-      if (date.dayOfMonth() === 31 || this.isLastDayOfFebruary(date)) {
-        newDate = newDate.withDayOfMonth(30);
-      }
-      return newDate;
-    }
-    return date.plusMonths(months);
+    const cand = date.plusMonths(months);
+    const lastSrc = date.with(TemporalAdjusters.lastDayOfMonth());
+    const lastTgt = cand.with(TemporalAdjusters.lastDayOfMonth());
+    return date.dayOfMonth() === lastSrc.dayOfMonth() ? lastTgt : cand;
   }
 
+  /** Days in month for the current convention. */
   daysInMonth(date: LocalDate): number {
     switch (this.calendarType) {
       case CalendarType.THIRTY_360:
+      case CalendarType.THIRTY_360_US:
       case CalendarType.THIRTY_ACTUAL:
         return 30;
       default:
@@ -137,33 +112,67 @@ export class Calendar {
     }
   }
 
-  daysInYear(date?: LocalDate): number {
+  /** Days in year for the current convention. */
+  daysInYear(date: LocalDate = this.date): number {
     switch (this.calendarType) {
       case CalendarType.THIRTY_360:
+      case CalendarType.THIRTY_360_US:
       case CalendarType.ACTUAL_360:
         return 360;
       case CalendarType.ACTUAL_365:
+      /* fall-through */
+      case CalendarType.ACTUAL_365_NL:
         return 365;
-      case CalendarType.ACTUAL_ACTUAL:
       case CalendarType.THIRTY_ACTUAL:
-        if (!date) {
-          date = this.date;
-        }
+        return 360;
+      case CalendarType.ACTUAL_ACTUAL:
         return date.isLeapYear() ? 366 : 365;
       default:
         throw new Error("Invalid calendar type");
     }
   }
 
-  private daysBetweenActual(date1: LocalDate, date2: LocalDate): number {
-    return ChronoUnit.DAYS.between(date1, date2);
+  /** Inclusive start, exclusive end. */
+  isDateBetween(d: LocalDate, start: LocalDate, end: LocalDate): boolean {
+    return !d.isBefore(start) && d.isBefore(end);
   }
 
-  private daysBetweenActual365(date1: LocalDate, date2: LocalDate): number {
+  /* ────────────────────────────────────────────────────────── */
+  /*  Private helpers                                           */
+  /* ────────────────────────────────────────────────────────── */
+
+  /** 30E/360 (European): 31 ▶ 30 on **both** dates. */
+  private daysBetween30_360_EU(s: LocalDate, e: LocalDate): number {
+    let [d1, d2] = [s.dayOfMonth(), e.dayOfMonth()].map((d) => (d === 31 ? 30 : d));
+    return 360 * (e.year() - s.year()) + 30 * (e.monthValue() - s.monthValue()) + (d2 - d1);
+  }
+
+  /** 30U/360 (NASD). */
+  private daysBetween30_360_US(s: LocalDate, e: LocalDate): number {
+    let d1 = s.dayOfMonth();
+    let d2 = e.dayOfMonth();
+    if (d1 === 31) d1 = 30;
+    if (d2 === 31 && d1 >= 30) d2 = 30;
+    return 360 * (e.year() - s.year()) + 30 * (e.monthValue() - s.monthValue()) + (d2 - d1);
+  }
+
+  /** 30/Actual –
+   *  Same-month  ⇒  actual days
+   *  Cross-month ⇒  30E/360 rule
+   */
+  private daysBetween30_Actual(s: LocalDate, e: LocalDate): number {
+    if (s.year() === e.year() && s.monthValue() === e.monthValue()) {
+      return ChronoUnit.DAYS.between(s, e); // stay inside the month
+    }
+    return this.daysBetween30_360_EU(s, e); // cross-month ⇒ 30E/360
+  }
+
+  /** ACT/365 No-Leap – skips 29 Feb. */
+  private daysBetweenActual365NoLeap(s: LocalDate, e: LocalDate): number {
+    const sign = s.isAfter(e) ? -1 : 1;
+    let start = sign === 1 ? s : e;
+    const end = sign === 1 ? e : s;
     let days = 0;
-    const isReverse = date1.isAfter(date2);
-    let start = isReverse ? date2 : date1;
-    let end = isReverse ? date1 : date2;
 
     while (start.isBefore(end)) {
       if (!(start.monthValue() === 2 && start.dayOfMonth() === 29)) {
@@ -171,25 +180,6 @@ export class Calendar {
       }
       start = start.plusDays(1);
     }
-
-    return isReverse ? -days : days;
-  }
-
-  private daysBetween30_360_European(startDate: LocalDate, endDate: LocalDate): number {
-    let d1 = startDate.dayOfMonth() === 31 ? 30 : startDate.dayOfMonth();
-    let d2 = endDate.dayOfMonth() === 31 ? 30 : endDate.dayOfMonth();
-    return 360 * (endDate.year() - startDate.year()) + 30 * (endDate.monthValue() - startDate.monthValue()) + (d2 - d1);
-  }
-
-  private daysBetween30_Actual(startDate: LocalDate, endDate: LocalDate): number {
-    return this.daysBetween30_360_European(startDate, endDate);
-  }
-
-  private isLastDayOfFebruary(date: LocalDate): boolean {
-    return date.monthValue() === 2 && date.dayOfMonth() === date.lengthOfMonth();
-  }
-
-  isDateBetween(date: LocalDate, startDate: LocalDate, endDate: LocalDate): boolean {
-    return date.isEqual(startDate) || (date.isAfter(startDate) && date.isBefore(endDate));
+    return sign * days;
   }
 }

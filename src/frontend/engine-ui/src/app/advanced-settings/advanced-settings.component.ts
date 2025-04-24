@@ -72,7 +72,9 @@ export class AdvancedSettingsComponent implements OnInit {
     { label: 'Actual/Actual', value: CalendarType.ACTUAL_ACTUAL },
     { label: 'Actual/360', value: CalendarType.ACTUAL_360 },
     { label: 'Actual/365', value: CalendarType.ACTUAL_365 },
-    { label: '30/360', value: CalendarType.THIRTY_360 },
+    { label: 'Actual/365 (No-Leap)', value: CalendarType.ACTUAL_365_NL },
+    { label: '30/360 (EU)', value: CalendarType.THIRTY_360 },
+    { label: '30/360 (US)', value: CalendarType.THIRTY_360_US }, // NASD / Bond basis
     { label: '30/Actual', value: CalendarType.THIRTY_ACTUAL },
   ];
 
@@ -170,7 +172,9 @@ export class AdvancedSettingsComponent implements OnInit {
       return;
     }
     // Reset to default values
-    this.lendPeak.amortization.calendars = new TermCalendars({primary: 'THIRTY_360'});
+    this.lendPeak.amortization.calendars = new TermCalendars({
+      primary: CalendarType.THIRTY_360_US,
+    });
     this.lendPeak.amortization.termPeriodDefinition = {
       unit: 'month',
       count: [1],

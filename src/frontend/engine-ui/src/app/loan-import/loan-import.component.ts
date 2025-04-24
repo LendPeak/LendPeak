@@ -41,9 +41,10 @@ import { DepositRecords } from 'lendpeak-engine/models/DepositRecords';
 import { PeriodSchedule } from 'lendpeak-engine/models/PeriodSchedule';
 import { TermCalendars } from 'lendpeak-engine/models/TermCalendars';
 import { TermCalendar } from 'lendpeak-engine/models/TermCalendar';
-import { Calendar } from 'lendpeak-engine/models/Calendar';
+import { Calendar, CalendarType } from 'lendpeak-engine/models/Calendar';
 import { DateUtil } from 'lendpeak-engine/utils/DateUtil';
 import { LocalDate, ZoneId } from '@js-joda/core';
+import { RoundingMethod } from 'lendpeak-engine/utils/Currency';
 
 @Component({
   selector: 'app-loan-import',
@@ -525,7 +526,7 @@ export class LoanImportComponent implements OnInit, OnDestroy {
         ? DateUtil.parseLoanProDateToLocalDate(payoffTransaction.date)
         : undefined,
       calendars: new TermCalendars({ primary: calendarType }),
-      roundingMethod: 'ROUND_HALF_EVEN',
+      roundingMethod: RoundingMethod.ROUND_HALF_EVEN,
       billingModel: billingModel,
       perDiemCalculationType: perDiemCalculationType,
       roundingPrecision: 2,
@@ -606,7 +607,7 @@ export class LoanImportComponent implements OnInit, OnDestroy {
       amortization.calendars.addCalendar(
         new TermCalendar({
           termNumber: i,
-          calendar: new Calendar('THIRTY_360'),
+          calendar: new Calendar(CalendarType.THIRTY_360_US),
         }),
       );
 

@@ -83,10 +83,16 @@ describe("Calendar Class", () => {
       expect(days).toBe(2); // Actual days: Feb 28 -> Feb 29 (1 day), Feb 29 -> Mar 1 (2 days)
     });
 
+    it("should calculate days including leap day for ACTUAL_365_NL", () => {
+      const calendar = new Calendar(CalendarType.ACTUAL_365_NL);
+      const days = calendar.daysBetween(leapYearStart, leapYearEnd);
+      expect(days).toBe(1); // Should not count leap day for ACTUAL_365_NL
+    });
+
     it("should calculate days including leap day for ACTUAL_365", () => {
       const calendar = new Calendar(CalendarType.ACTUAL_365);
       const days = calendar.daysBetween(leapYearStart, leapYearEnd);
-      expect(days).toBe(1); // Should not count leap day for ACTUAL_365
+      expect(days).toBe(2);
     });
 
     it("should calculate days including leap day for THIRTY_360", () => {
@@ -188,10 +194,16 @@ describe("Calendar Class", () => {
       expect(days).toBe(366); // 2024 is a leap year, so actual days counted are 366
     });
 
-    it("should calculate 365 days for ACTUAL_365 (actual days)", () => {
+    it("counts the real number of days for ACTUAL_365 (Fixed)", () => {
       const calendar = new Calendar(CalendarType.ACTUAL_365);
       const days = calendar.daysBetween(longRangeStart, longRangeEnd);
-      expect(days).toBe(365); // Actual days counted, despite calendar year assumption
+      expect(days).toBe(366); // includes 29-Feb
+    });
+
+    it("drops the leap-day for ACTUAL_365_NL (No-Leap)", () => {
+      const calendar = new Calendar(CalendarType.ACTUAL_365_NL);
+      const days = calendar.daysBetween(longRangeStart, longRangeEnd);
+      expect(days).toBe(365); // 29-Feb excluded
     });
 
     it("should calculate 366 days for ACTUAL_360 (actual days before scaling)", () => {
@@ -223,5 +235,30 @@ describe("Calendar Class", () => {
   it("should return negative days when start date is after end date", () => {
     const calendar = new Calendar(CalendarType.ACTUAL_ACTUAL);
     expect(calendar.daysBetween(date2, date1)).toBe(-31);
+  });
+});
+
+describe("Calendar day-count conventions", () => {
+  it("distinguishes European vs U.S. 30/360", () => {
+    const s = LocalDate.parse("2025-02-28");
+    const e = LocalDate.parse("2025-03-31");
+
+    const eu = new Calendar(CalendarType.THIRTY_360); // European
+    const us = new Calendar(CalendarType.THIRTY_360_US); // U.S./NASD
+
+    expect(eu.daysBetween(s, e)).toBe(32); // 30E/360
+    expect(us.daysBetween(s, e)).toBe(33); // 30U/360
+  });
+
+  it("counts Feb-29 in the numerator for ACTUAL/365 (Fixed)", () => {
+    const s = LocalDate.parse("2024-02-28");
+    const e = LocalDate.parse("2024-03-01"); // leap year
+    const cal365 = new Calendar(CalendarType.ACTUAL_365);
+    const cal360 = new Calendar(CalendarType.ACTUAL_360);
+
+    expect(cal365.daysBetween(s, e)).toBe(2); // 28-Feb → 1-Mar = 2 calendar days
+    expect(cal360.daysBetween(s, e)).toBe(2); // same numerator …
+    expect(cal365.daysInYear()).toBe(365); // … but denominator is fixed 365
+    expect(cal360.daysInYear()).toBe(360);
   });
 });

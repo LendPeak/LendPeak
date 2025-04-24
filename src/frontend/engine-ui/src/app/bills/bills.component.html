@@ -152,7 +152,7 @@
                 class="status-tag"
               ></p-tag>
               <p-tag
-                *ngIf="bill.jsTotalDue > 0"
+                *ngIf="bill.isOpen(snapshotDate)"
                 value="{{ bill.isPaid() ? 'Paid' : 'Unpaid' }}"
                 [severity]="bill.isPaid() ? 'success' : 'warn'"
                 class="status-tag"

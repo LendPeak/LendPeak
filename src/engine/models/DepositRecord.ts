@@ -308,10 +308,14 @@ export class DepositRecord {
   }
 
   set clearingDate(value: LocalDate | Date | undefined) {
-    const normalizedDate = DateUtil.normalizeDate(value);
-
-    this._clearingDate = normalizedDate;
-    this.jsClearingDate = DateUtil.normalizeDateToJsDate(normalizedDate);
+    if (!value) {
+      this._clearingDate = undefined;
+      this.jsClearingDate = undefined;
+    } else {
+      const normalizedDate = DateUtil.normalizeDate(value);
+      this._clearingDate = normalizedDate;
+      this.jsClearingDate = DateUtil.normalizeDateToJsDate(normalizedDate);
+    }
     this.versionChanged();
   }
 
@@ -449,6 +453,7 @@ export class DepositRecord {
     this.insertedDate = this.jsInsertedDate;
     this.effectiveDate = this.jsEffectiveDate;
     this.systemDate = this.jsSystemDate;
+
     this.clearingDate = this.jsClearingDate;
     this.paymentMethod = this.jsPaymentMethod;
     this.depositor = this.jsDepositor;

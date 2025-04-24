@@ -140,7 +140,9 @@
               </td>
               <td>{{ deposit.jsClearingDate | date: "MM/dd/yyyy" }}</td>
               <td>
-                {{ deposit.jsUnusedAmount | currency }}
+                <span [class.font-semibold]="deposit.jsUnusedAmount > 0">
+                  {{ deposit.jsUnusedAmount | currency }}
+                </span>
               </td>
               <td>
                 <i

@@ -501,6 +501,8 @@ export class LoanImportComponent implements OnInit, OnDestroy {
       endDate = DateUtil.parseLoanProDateToLocalDate(payoffTransaction.date);
     }
 
+    const firstPaymentDate = DateUtil.parseLoanProDateToLocalDate(loanData.d.LoanSetup.firstPaymentDate);
+
     const uiLoan: AmortizationParams = {
       // objectVersion: 9,
       id: loanData.d.id.toString(),

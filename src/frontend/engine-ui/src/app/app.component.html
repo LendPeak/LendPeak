@@ -470,7 +470,7 @@
               />
               <p-tag
                 class="ml-4"
-                severity="secondary"
+                [severity]="lendPeak.payoffQuote.unusedAmountFromDeposis.isZero() ? 'secondary' : 'danger'"
                 value="Unused Amount: {{
                   lendPeak.payoffQuote.unusedAmountFromDeposis.toNumber()
                     | currency

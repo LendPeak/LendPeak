@@ -431,7 +431,10 @@ export class AppComponent implements OnChanges {
     // console.log('tab changed:', tabIndex);
     this.activeTabIndex = tabIndex;
     const tabName = this.tabNames[this.activeTabIndex];
-    const queryParams = { ...this.route.snapshot.queryParams, tab: tabName };
+    const queryParams: any = { ...this.route.snapshot.queryParams, tab: tabName };
+    if ( !queryParams.loan && this.lendPeak.amortization.name) {
+      queryParams.loan = this.lendPeak.amortization.name;
+    }
     const urlTree = this.router.createUrlTree([], {
       queryParams: queryParams,
       queryParamsHandling: 'merge',

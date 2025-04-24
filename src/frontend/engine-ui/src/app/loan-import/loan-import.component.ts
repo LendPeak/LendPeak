@@ -429,7 +429,7 @@ export class LoanImportComponent implements OnInit, OnDestroy {
     //   perDiemCalculationType = 'MonthlyRateDividedByDaysInMonth';
     // }
 
-    let calendarType = 'ACTUAL_ACTUAL';
+    let calendarType = CalendarType.ACTUAL_365;
     // if (loanData.d.LoanSetup.daysInYear === 'loan.daysInYear.frequency') {
     //   calendarType = 'ACTUAL_360';
     // }

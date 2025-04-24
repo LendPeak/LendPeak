@@ -5,7 +5,7 @@ export class TermCalendars {
   private _calendars: TermCalendar[] = [];
   private _primary!: Calendar;
 
-  constructor(params: { primary: Calendar | CalendarType | string; calendars?: TermCalendar[] }) {
+  constructor(params: { primary: Calendar | CalendarType ; calendars?: TermCalendar[] }) {
     if (params.calendars) {
       this.calendars = params.calendars;
     }
@@ -14,7 +14,7 @@ export class TermCalendars {
     this.updateJsValues();
   }
 
-  set primary(value: Calendar | CalendarType | string) {
+  set primary(value: Calendar | CalendarType ) {
     if (value instanceof Calendar) {
       this._primary = value;
       return;

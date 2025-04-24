@@ -18,7 +18,7 @@ import { TermInterestAmountOverrides } from 'lendpeak-engine/models/TermInterest
 import { Payment } from '../models/loanpro.model';
 import dayjs from 'dayjs';
 import { Subscription, from } from 'rxjs';
-import { mergeMap, tap, finalize } from 'rxjs/operators';
+import { mergeMap, tap, finalize, first } from 'rxjs/operators';
 import { PerDiemCalculationType } from 'lendpeak-engine/models/InterestCalculator';
 import {
   FlushUnbilledInterestDueToRoundingErrorType,
@@ -501,8 +501,16 @@ export class LoanImportComponent implements OnInit, OnDestroy {
       endDate = DateUtil.parseLoanProDateToLocalDate(payoffTransaction.date);
     }
 
-    const firstPaymentDate = DateUtil.parseLoanProDateToLocalDate(loanData.d.LoanSetup.firstPaymentDate);
+    const firstPaymentDate = DateUtil.parseLoanProDateToLocalDate(
+      loanData.d.LoanSetup.firstPaymentDate,
+    );
+    const startDate = DateUtil.parseLoanProDateToLocalDate(
+      loanData.d.LoanSetup.contractDate,
+    );
 
+    // if first payment due day is not the same as start date day, we need to set hasCustomFirstPaymentDate to true
+    const hasCustomFirstPaymentDate =
+      firstPaymentDate.dayOfMonth() !== startDate.dayOfMonth();
     const uiLoan: AmortizationParams = {
       // objectVersion: 9,
       id: loanData.d.id.toString(),
@@ -516,12 +524,11 @@ export class LoanImportComponent implements OnInit, OnDestroy {
       term: scheduledPayments.length,
       //   feesForAllTerms: [],
       feesPerTerm: FeesPerTerm.empty(),
-      startDate: DateUtil.parseLoanProDateToLocalDate(
-        loanData.d.LoanSetup.contractDate,
-      ),
+      startDate: startDate,
       firstPaymentDate: DateUtil.parseLoanProDateToLocalDate(
         loanData.d.LoanSetup.firstPaymentDate,
       ),
+      hasCustomFirstPaymentDate: hasCustomFirstPaymentDate,
       // endDate: parseODataDate(loanData.d.LoanSetup.origFinalPaymentDate, true),
       endDate: endDate,
       payoffDate: payoffTransaction

@@ -295,8 +295,10 @@ export class Amortization {
       this.hasCustomFirstPaymentDate = params.hasCustomFirstPaymentDate;
     }
 
-    if (params.firstPaymentDate) {
-      this.firstPaymentDate = params.firstPaymentDate;
+    if (this.hasCustomFirstPaymentDate) {
+      if (params.firstPaymentDate) {
+        this.firstPaymentDate = params.firstPaymentDate;
+      }
     }
 
     if (params.hasCustomEndDate !== undefined) {
@@ -1512,7 +1514,7 @@ export class Amortization {
       } else {
         date = DateUtil.normalizeDate(date);
       }
-      this.hasCustomFirstPaymentDate = true;
+      // this.hasCustomFirstPaymentDate = true;
       this._firstPaymentDate = date;
     } else {
       this._hasCustomFirstPaymentDate = false;

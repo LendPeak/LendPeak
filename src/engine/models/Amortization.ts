@@ -2834,6 +2834,7 @@ export class Amortization {
       payoffDate: this.payoffDate ? DateUtil.normalizeDateToJsDate(this.payoffDate) : undefined,
       hasCustomEndDate: this.hasCustomEndDate,
       hasCustomFirstPaymentDate: this.hasCustomFirstPaymentDate,
+      firstPaymentDate: this.firstPaymentDate,
       equitedMonthlyPayment: this.equitedMonthlyPayment.toNumber(),
       hasCustomEquitedMonthlyPayment: this.hasCustomEquitedMonthlyPayment,
       roundingMethod: this.roundingMethod,

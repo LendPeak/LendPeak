@@ -1,82 +1,94 @@
-import { Currency, RoundingMethod } from "../utils/Currency";
-import dayjs, { Dayjs } from "dayjs";
-import isSameOrAfter from "dayjs/plugin/isSameOrAfter";
-import isSameOrBefore from "dayjs/plugin/isSameOrBefore";
-import isBetween from "dayjs/plugin/isBetween";
-import { LargeNumberLike } from "crypto";
+/* TermPaymentAmount.ts */
+import { Currency } from "../utils/Currency";
+import { DateUtil } from "../utils/DateUtil";
 import Decimal from "decimal.js";
-
-dayjs.extend(isSameOrAfter);
-dayjs.extend(isSameOrBefore);
-dayjs.extend(isBetween);
 
 export interface TermPaymentAmountParams {
   termNumber: number;
   paymentAmount: Currency | number | Decimal | string;
+  /** optional – defaults to true */
+  active?: boolean;
 }
 
 export class TermPaymentAmount {
+  /* — model props — */
   private _termNumber!: number;
-  jsTermNumber!: number;
   private _paymentAmount!: Currency;
-  jsPaymentAmount!: number;
-  private _modified?: boolean = false;
+  private _active: boolean = true;
 
+  /* — JS / binding props — */
+  jsTermNumber!: number;
+  jsPaymentAmount!: number;
+  jsActive!: boolean;
+
+  /* — misc — */
+  private _modified = false;
+  get modified(): boolean {
+    return this._modified;
+  }
+  set modified(v: boolean) {
+    this._modified = v;
+  }
+
+  /* ─────────────────────────────────────────── */
   constructor(params: TermPaymentAmountParams) {
     this.termNumber = params.termNumber;
     this.paymentAmount = params.paymentAmount;
+    this.active = params.active ?? true;
     this.updateJsValues();
   }
 
-  set modified(value: boolean) {
-    this._modified = value;
+  /* ===== active ===== */
+  get active(): boolean {
+    return this._active;
+  }
+  set active(v: boolean) {
+    this._active = v;
+    this.jsActive = v;
+    this.modified = true;
   }
 
-  get modified(): boolean {
-    return this._modified || false;
-  }
-
-  updateJsValues() {
-    this.jsTermNumber = this.termNumber;
-    this.jsPaymentAmount = this.paymentAmount.toNumber();
-  }
-
-  updateModelValues() {
-    // console.log("updateModelValues", this.jsTermNumber, this.jsPaymentAmount);
-    this.termNumber = this.jsTermNumber;
-    this.paymentAmount = Currency.of(this.jsPaymentAmount);
-  }
-
+  /* ===== termNumber ===== */
   get termNumber(): number {
     return this._termNumber;
   }
-
-  set termNumber(value: number) {
+  set termNumber(v: number) {
+    this._termNumber = v;
+    this.jsTermNumber = v;
     this.modified = true;
-    this._termNumber = value;
   }
 
+  /* ===== paymentAmount ===== */
   get paymentAmount(): Currency {
     return this._paymentAmount;
   }
-
-  set paymentAmount(value: Currency | number | Decimal | string) {
+  set paymentAmount(v: Currency | number | Decimal | string) {
+    this._paymentAmount = v instanceof Currency ? v : new Currency(v);
+    this.jsPaymentAmount = this._paymentAmount.toNumber();
     this.modified = true;
-    // check type and inflate if necessary
-    if (value instanceof Currency) {
-      this._paymentAmount = value;
-    } else {
-      this._paymentAmount = new Currency(value);
-    }
   }
 
-  get json() {
+  /* ===== helpers ===== */
+  updateJsValues(): void {
+    this.jsTermNumber = this.termNumber;
+    this.jsPaymentAmount = this.paymentAmount.toNumber();
+    this.jsActive = this.active;
+  }
+
+  updateModelValues(): void {
+    this.termNumber = this.jsTermNumber;
+    this.paymentAmount = this.jsPaymentAmount;
+    this.active = this.jsActive;
+  }
+
+  /* ===== serialization ===== */
+  get json(): TermPaymentAmountParams {
     return {
       termNumber: this.termNumber,
       paymentAmount: this.paymentAmount.toNumber(),
+      active: this.active,
     };
   }
-
   toJSON() {
     return this.json;
   }

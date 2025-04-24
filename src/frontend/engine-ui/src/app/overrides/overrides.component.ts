@@ -755,6 +755,30 @@ export class OverridesComponent implements OnInit {
     }
   }
 
+  /* ────────── Term-Payment-Amount toggle-all ────────── */
+  toggleAllTermPaymentAmountOverrides(ev: any): void {
+    if (!this.lendPeak) return;
+    const tpa = this.lendPeak.amortization.termPaymentAmountOverride;
+    ev.checked ? tpa.activateAll() : tpa.deactivateAll();
+    this.onInputChange(true);
+  }
+
+  /* ────────── Change-Payment-Date toggle-all ────────── */
+  toggleAllChangePaymentDates(ev: any): void {
+    if (!this.lendPeak) return;
+    const cpd = this.lendPeak.amortization.changePaymentDates;
+    ev.checked ? cpd.activateAll() : cpd.deactivateAll();
+    this.onInputChange(true);
+  }
+
+  /* (optional) helpers if you want quick access elsewhere */
+  activateAllTPA() {
+    this.toggleAllTermPaymentAmountOverrides({ checked: true });
+  }
+  deactivateAllTPA() {
+    this.toggleAllTermPaymentAmountOverrides({ checked: false });
+  }
+
   // Methods related to Balance Modifications
   addBalanceModificationRow() {
     if (!this.lendPeak) {

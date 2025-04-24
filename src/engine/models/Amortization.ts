@@ -1847,9 +1847,11 @@ export class Amortization {
         }
       }
 
+      const activeChangeDates = this.changePaymentDates.active; // ← new helper
+
       // Check if we have a custom "change payment date" for this term
-      if (this.changePaymentDates.length > 0) {
-        const matchingChange = this.changePaymentDates.all.find((changePaymentDate) => {
+      if (activeChangeDates.length > 0) {
+        const matchingChange = activeChangeDates.find((changePaymentDate) => {
           if (changePaymentDate.termNumber < 0 && changePaymentDate.originalDate) {
             // i.e. if the original date is exactly the startDate
             if (endDate.isEqual(changePaymentDate.originalDate)) {

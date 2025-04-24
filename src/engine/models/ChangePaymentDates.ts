@@ -1,161 +1,150 @@
-import { ChangePaymentDate } from "./ChangePaymentDate";
+/* ChangePaymentDates.ts */
+import { ChangePaymentDate, ChangePaymentDateParams } from "./ChangePaymentDate";
 
 export class ChangePaymentDates {
   private _changePaymentDates: ChangePaymentDate[] = [];
+  private _modified = false; // simple dirty tracker
 
-  constructor(changePaymentDates: ChangePaymentDate[] = []) {
-    this.changePaymentDates = changePaymentDates;
+  /* ───────────────────────── constructor ───────────────────────── */
+  constructor(changePaymentDates: ChangePaymentDate[] | ChangePaymentDateParams[] = []) {
+    this.changePaymentDates = changePaymentDates as any;
   }
 
-  updateModelValues() {
-    this.changePaymentDates.forEach((bm) => bm.updateModelValues());
+  /* ─────────────────────── model/UI helpers ─────────────────────── */
+  updateModelValues(): void {
+    this.changePaymentDates.forEach((c) => c.updateModelValues());
+  }
+  updateJsValues(): void {
+    this.changePaymentDates.forEach((c) => c.updateJsValues());
   }
 
-  updateJsValues() {
-    this.changePaymentDates.forEach((bm) => bm.updateJsValues());
-  }
-
+  /* ──────────────────────── collections ──────────────────────── */
+  /** original “all” — returns every entry, active or not */
   get all(): ChangePaymentDate[] {
     return this.changePaymentDates;
+  }
+
+  /** convenience — only active entries */
+  get active(): ChangePaymentDate[] {
+    return this._changePaymentDates.filter((c) => c.active);
   }
 
   get changePaymentDates(): ChangePaymentDate[] {
     return this._changePaymentDates;
   }
-
-  set changePaymentDates(value: ChangePaymentDate[]) {
-    if (!value || value.length === 0) {
+  set changePaymentDates(val: ChangePaymentDate[] | ChangePaymentDateParams[]) {
+    if (!val || val.length === 0) {
       this._changePaymentDates = [];
       return;
     }
 
-    // 1) Normalize into ChangePaymentDate instances
-    const allEntries = value.map((c) => (c instanceof ChangePaymentDate ? c : new ChangePaymentDate(c)));
+    /* ① normalise */
+    const entries = val.map((v) => (v instanceof ChangePaymentDate ? v : new ChangePaymentDate(v)));
 
-    // 2) Split negative-term (date-based) from normal
-    const dateBased = allEntries.filter((cpd) => cpd.termNumber < 0);
-    const normal = allEntries.filter((cpd) => cpd.termNumber >= 0);
+    /* ② split */
+    const dateBased = entries.filter((c) => c.termNumber < 0);
+    const normal = entries.filter((c) => c.termNumber >= 0);
 
-    // If no date-based entries, we’re done
     if (dateBased.length === 0) {
-      this._changePaymentDates = allEntries;
-      return;
-    }
+      this._changePaymentDates = entries;
+    } else {
+      /* ③ sort by originalDate asc */
+      dateBased.sort((a, b) => {
+        if (!a.originalDate && !b.originalDate) return 0;
+        if (!a.originalDate) return -1;
+        if (!b.originalDate) return 1;
+        return a.originalDate.isAfter(b.originalDate) ? 1 : -1;
+      });
 
-    // 3) Sort date-based by originalDate ascending
-    const sorted = dateBased.sort((a, b) => {
-      if (!a.originalDate && !b.originalDate) return 0;
-      if (!a.originalDate) return -1;
-      if (!b.originalDate) return 1;
-      return a.originalDate.isAfter(b.originalDate) ? 1 : -1;
-    });
-
-    // 4) Merge overlapping or touching
-    const merged: ChangePaymentDate[] = [];
-    let current = sorted[0];
-
-    for (let i = 1; i < sorted.length; i++) {
-      const next = sorted[i];
-
-      // If either is missing start/end, handle per your biz rules.
-      // For simplicity, assume they both have originalDate (start).
-      if (!current.originalDate || !next.originalDate) {
-        // Just treat as separate intervals
-        merged.push(current);
-        current = next;
-        continue;
-      }
-
-      // Decide the "end" if you are using newDate as "end" or originalEndDate as "end".
-      // For demonstration, I'll assume `newDate` is effectively the "end" of the interval.
-      // If you actually use `originalEndDate` for the end, replace references below.
-
-      // The “start” is current.originalDate
-      // The “end” is current.newDate
-      const currentStart = current.originalDate;
-      const currentEnd = current.newDate; // if you treat newDate as an end
-
-      const nextStart = next.originalDate;
-      const nextEnd = next.newDate;
-
-      // Overlap if nextStart <= currentEnd
-      // or “touch” if nextStart == currentEnd
-      if (nextStart.isEqual(currentEnd) || nextStart.isBefore(currentEnd)) {
-        // Merge intervals => extend current “end” if nextEnd is later
-        if (nextEnd.isAfter(currentEnd)) {
-          current.newDate = nextEnd; // the new "end"
+      /* ④ merge overlapping/touching */
+      const merged: ChangePaymentDate[] = [];
+      let current = dateBased[0];
+      for (let i = 1; i < dateBased.length; i++) {
+        const next = dateBased[i];
+        if (!current.originalDate || !next.originalDate) {
+          merged.push(current);
+          current = next;
+          continue;
         }
-        // Do not push yet; we’re still merging into `current`
-      } else {
-        // No overlap => push current, move on
-        merged.push(current);
-        current = next;
+
+        /* treat newDate as “end” per original comment */
+        const curEnd = current.newDate;
+        if (next.originalDate.isBefore(curEnd) || next.originalDate.isEqual(curEnd)) {
+          if (next.newDate.isAfter(curEnd)) current.newDate = next.newDate;
+        } else {
+          merged.push(current);
+          current = next;
+        }
       }
+      merged.push(current);
+
+      /* ⑤ combine & sort by newDate */
+      this._changePaymentDates = [...normal, ...merged].sort((a, b) => (a.newDate.isBefore(b.newDate) ? -1 : 1));
     }
 
-    // push the final
-    merged.push(current);
-
-    // 5) Re-combine with normal entries
-    this._changePaymentDates = [...normal, ...merged];
-
-    // sort by newDate from oldest to newest
-    this._changePaymentDates = this._changePaymentDates.sort((a, b) => {
-      return a.newDate.isBefore(b.newDate) ? -1 : 1;
-    });
-  }
-  addChangePaymentDate(changePaymentDate: ChangePaymentDate) {
-    this.changePaymentDates.push(changePaymentDate);
+    this._modified = true;
   }
 
-  removeChangePaymentDate(changePaymentDate: ChangePaymentDate) {
-    this.changePaymentDates = this.changePaymentDates.filter((cpd) => cpd.termNumber !== changePaymentDate.termNumber);
+  /* ───────────────────── activation helpers ───────────────────── */
+  activateAll(): void {
+    this._changePaymentDates.forEach((c) => (c.active = true));
+    this._modified = true;
+  }
+  deactivateAll(): void {
+    this._changePaymentDates.forEach((c) => (c.active = false));
+    this._modified = true;
   }
 
+  /* ───────────────────────── CRUD helpers ───────────────────────── */
+  addChangePaymentDate(cpd: ChangePaymentDate): void {
+    this.changePaymentDates.push(cpd);
+  }
+
+  removeChangePaymentDate(cpd: ChangePaymentDate): void {
+    this.changePaymentDates = this.changePaymentDates.filter((entry) => entry.termNumber !== cpd.termNumber);
+  }
+
+  removeConfigurationAtIndex(index: number): void {
+    this.changePaymentDates.splice(index, 1);
+  }
+
+  /* ───────────────────────── look-ups ───────────────────────── */
+  /** returns first *active* entry for term */
   getChangePaymentDate(termNumber: number): ChangePaymentDate | undefined {
-    return this.changePaymentDates.find((cpd) => cpd.termNumber === termNumber);
+    return this.changePaymentDates.find((cpd) => cpd.active && cpd.termNumber === termNumber);
   }
 
   getChangePaymentDateIndex(termNumber: number): number {
     return this.changePaymentDates.findIndex((cpd) => cpd.termNumber === termNumber);
   }
 
-  removeConfigurationAtIndex(index: number) {
-    this.changePaymentDates.splice(index, 1);
-  }
-
+  /* ───────────────────────── misc helpers ───────────────────────── */
   get length(): number {
     return this.changePaymentDates.length;
   }
-
-  atIndex(index: number): ChangePaymentDate {
-    return this.changePaymentDates[index];
+  atIndex(i: number): ChangePaymentDate {
+    return this.changePaymentDates[i];
   }
-
   get first(): ChangePaymentDate {
     return this.changePaymentDates[0];
   }
-
   get last(): ChangePaymentDate {
     return this.changePaymentDates[this.changePaymentDates.length - 1];
   }
 
-  toJSON() {
-    return this.json;
+  isDuplicateTermNumber(termNumber: number): boolean {
+    return this._changePaymentDates.filter((cpd) => cpd.termNumber === termNumber).length > 1;
   }
 
+  reSort(): void {
+    this.changePaymentDates = this.changePaymentDates.sort((a, b) => (a.termNumber < b.termNumber ? -1 : 1));
+  }
+
+  /* ───────────────────────── serialization ───────────────────────── */
   get json() {
     return this.changePaymentDates.map((cpd) => cpd.json);
   }
-
-  isDuplicateTermNumber(termNumber: number): boolean {
-    // detect if there are more than one override for the same term number
-    return this._changePaymentDates.filter((bm) => bm.termNumber === termNumber).length > 1;
-  }
-
-  reSort() {
-    this.changePaymentDates = this.changePaymentDates.sort((a, b) => {
-      return a.termNumber < b.termNumber ? -1 : 1;
-    });
+  toJSON() {
+    return this.json;
   }
 }

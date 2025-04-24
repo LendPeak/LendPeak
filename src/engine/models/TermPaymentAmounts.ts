@@ -1,101 +1,106 @@
-import { TermPaymentAmount } from "./TermPaymentAmount";
+/* TermPaymentAmounts.ts */
+import { TermPaymentAmount, TermPaymentAmountParams } from "./TermPaymentAmount";
 
 export class TermPaymentAmounts {
   private _paymentAmounts: TermPaymentAmount[] = [];
-  private _modified: boolean = false;
+  private _modified = false;
 
-  constructor(paymentAmounts: TermPaymentAmount[] = []) {
-    this.paymentAmounts = paymentAmounts;
+  /* ─────────────────────────────────────────── */
+  constructor(paymentAmounts: TermPaymentAmount[] | TermPaymentAmountParams[] = []) {
+    this.paymentAmounts = paymentAmounts as any;
     this.updateJsValues();
   }
-  set modified(value: boolean) {
-    this._modified = value;
-  }
 
+  /* ===== modified flag (aggregate) ===== */
   get modified(): boolean {
-    return this._modified || false;
+    return this._modified || this._paymentAmounts.some((p) => p.modified);
   }
-
+  set modified(v: boolean) {
+    this._modified = v;
+  }
   get hasModified(): boolean {
-    return this.modified || this._paymentAmounts.some((bm) => bm.modified);
+    return this.modified;
   }
-
-  resetModified() {
+  resetModified(): void {
     this.modified = false;
-    this._paymentAmounts.forEach((bm) => (bm.modified = false));
+    this._paymentAmounts.forEach((p) => (p.modified = false));
   }
 
-  updateModelValues() {
-    this._paymentAmounts.forEach((bm) => bm.updateModelValues());
+  /* ===== model/JS sync helpers ===== */
+  updateModelValues(): void {
+    this._paymentAmounts.forEach((p) => p.updateModelValues());
+  }
+  updateJsValues(): void {
+    this._paymentAmounts.forEach((p) => p.updateJsValues());
   }
 
-  updateJsValues() {
-    this._paymentAmounts.forEach((bm) => bm.updateJsValues());
-  }
-
+  /* ===== getters / setters ===== */
   get paymentAmounts(): TermPaymentAmount[] {
     return this._paymentAmounts;
   }
-
-  set paymentAmounts(value: TermPaymentAmount[]) {
+  set paymentAmounts(vals: TermPaymentAmount[] | TermPaymentAmountParams[]) {
     this.modified = true;
-    this._paymentAmounts = value.map((c) => {
-      if (c instanceof TermPaymentAmount) {
-        return c;
-      }
-      return new TermPaymentAmount(c);
-    });
+    this._paymentAmounts = vals.map((v) => (v instanceof TermPaymentAmount ? v : new TermPaymentAmount(v)));
   }
 
+  /* ------ convenience collections ------ */
   get all(): TermPaymentAmount[] {
     return this._paymentAmounts;
   }
-
-  addPaymentAmount(paymentAmount: TermPaymentAmount) {
-    this.modified = true;
-    this._paymentAmounts.push(paymentAmount);
+  get active(): TermPaymentAmount[] {
+    return this._paymentAmounts.filter((p) => p.active);
   }
 
-  removePaymentAmountAtIndex(index: number) {
-    this.modified = true;
-    this._paymentAmounts.splice(index, 1);
+  /* ===== activation helpers ===== */
+  deactivateAll(): void {
+    this._paymentAmounts.forEach((p) => (p.active = false));
+  }
+  activateAll(): void {
+    this._paymentAmounts.forEach((p) => (p.active = true));
   }
 
+  /* ===== CRUD ===== */
+  addPaymentAmount(pa: TermPaymentAmount): void {
+    this.modified = true;
+    this._paymentAmounts.push(pa);
+  }
+  removePaymentAmountAtIndex(idx: number): void {
+    this.modified = true;
+    this._paymentAmounts.splice(idx, 1);
+  }
+
+  /* ===== look-ups ===== */
   get length(): number {
     return this._paymentAmounts.length;
   }
-
-  atIndex(index: number): TermPaymentAmount {
-    return this._paymentAmounts[index];
+  atIndex(idx: number): TermPaymentAmount {
+    return this._paymentAmounts[idx];
   }
-
   get first(): TermPaymentAmount {
     return this._paymentAmounts[0];
   }
-
   get last(): TermPaymentAmount {
     return this._paymentAmounts[this._paymentAmounts.length - 1];
   }
 
+  /** returns the *first active* override for the term (or undefined) */
   getPaymentAmountForTerm(termNumber: number): TermPaymentAmount | undefined {
-    return this._paymentAmounts.find((override) => override.termNumber === termNumber);
+    return this._paymentAmounts.find((p) => p.active && p.termNumber === termNumber);
   }
 
+  /* ===== utils ===== */
+  isDuplicateTermNumber(termNumber: number): boolean {
+    return this._paymentAmounts.filter((p) => p.termNumber === termNumber).length > 1;
+  }
+  reSort(): void {
+    this._paymentAmounts.sort((a, b) => a.termNumber - b.termNumber);
+  }
+
+  /* ===== serialization ===== */
   get json() {
-    return this._paymentAmounts.map((override) => override.json);
+    return this._paymentAmounts.map((p) => p.json);
   }
-
   toJSON() {
     return this.json;
-  }
-
-  isDuplicateTermNumber(termNumber: number): boolean {
-    return this._paymentAmounts.filter((val) => val.termNumber === termNumber).length > 1;
-  }
-
-  reSort() {
-    this._paymentAmounts = this._paymentAmounts.sort((a, b) => {
-      return a.termNumber < b.termNumber ? -1 : 1;
-    });
   }
 }

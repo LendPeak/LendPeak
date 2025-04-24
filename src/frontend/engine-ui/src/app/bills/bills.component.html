@@ -91,10 +91,86 @@
               {{ bill.jsDueDate | date: "MM/dd/yyyy" }}
             </td>
 
-            <td>{{ bill.jsPrincipalDue | currency }}</td>
-            <td>{{ bill.jsInterestDue | currency }}</td>
-            <td>{{ bill.jsFeesDue | currency }}</td>
-            <td>{{ bill.jsTotalDue | currency }}</td>
+            <td>
+              <ng-container *ngIf="showMathInTheTable">
+                {{ bill.jsOriginalPrincipalDue | currency }}
+                -
+                {{ bill.jsAllocatedPrincipalSum | currency }}
+                =
+              </ng-container>
+              <ng-container
+                *ngIf="
+                  !showMathInTheTable &&
+                  bill.jsOriginalPrincipalDue != bill.jsPrincipalDue
+                "
+              >
+                {{ bill.jsOriginalPrincipalDue | currency }}
+                <i class="pi pi-arrow-right" style="font-size: 0.7rem"></i>
+              </ng-container>
+              <span [class.font-semibold]="bill.jsPrincipalDue > 0">
+                {{ bill.jsPrincipalDue | currency }}</span
+              >
+            </td>
+            <td>
+              <ng-container *ngIf="showMathInTheTable">
+                {{ bill.jsOriginalInterestDue | currency }}
+                -
+                {{ bill.jsAllocatedInterestSum | currency }}
+                =
+              </ng-container>
+              <ng-container
+                *ngIf="
+                  !showMathInTheTable &&
+                  bill.jsOriginalInterestDue != bill.jsInterestDue
+                "
+              >
+                {{ bill.jsOriginalInterestDue | currency }}
+                <i class="pi pi-arrow-right" style="font-size: 0.7rem"></i>
+              </ng-container>
+              <span [class.font-semibold]="bill.jsInterestDue > 0">
+                {{ bill.jsInterestDue | currency }}</span
+              >
+            </td>
+            <td>
+              <ng-container *ngIf="showMathInTheTable">
+                {{ bill.jsOriginalFeesDue | currency }}
+                -
+                {{ bill.jsAllocatedFeesSum | currency }}
+                =
+              </ng-container>
+              <ng-container
+                *ngIf="
+                  !showMathInTheTable &&
+                  bill.jsFeesDue != bill.jsOriginalFeesDue
+                "
+              >
+                {{ bill.jsFeesDue | currency }}
+                <i class="pi pi-arrow-right" style="font-size: 0.7rem"></i>
+              </ng-container>
+              <span [class.font-semibold]="bill.jsFeesDue > 0">
+                {{ bill.jsFeesDue | currency }}
+              </span>
+            </td>
+            <td>
+              <ng-container *ngIf="showMathInTheTable">
+                {{ bill.jsOriginalTotalDue | currency }}
+                -
+                {{ bill.jsAllocatedTotalSum | currency }}
+                =
+              </ng-container>
+              <ng-container
+                *ngIf="
+                  !showMathInTheTable &&
+                  bill.jsTotalDue != bill.jsOriginalTotalDue
+                "
+              >
+                {{ bill.jsOriginalTotalDue | currency }}
+                <i class="pi pi-arrow-right" style="font-size: 0.7rem"></i>
+              </ng-container>
+              <span [class.font-semibold]="bill.jsTotalDue > 0">
+                {{ bill.jsTotalDue | currency }}
+              </span>
+            </td>
             <td>
               <!-- Only show if the bill is paid and we have a satisfied date -->
               <ng-container *ngIf="bill.isPaid() && bill.dateFullySatisfied">

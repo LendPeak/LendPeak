@@ -42,6 +42,8 @@ export class BillsComponent implements OnChanges, AfterViewInit {
   selectedPaymentDeposit: DepositRecord | null = null;
   showSinglePaymentDialog: boolean = false;
 
+  showMathInTheTable: boolean = false;
+
   ngAfterViewInit(): void {
     // The rows should be available after the view initializes.
     // If bills are loaded asynchronously later, consider calling scrollToLastDueBill after bills change.

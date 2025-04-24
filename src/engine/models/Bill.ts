@@ -85,9 +85,6 @@ export class Bill {
     this.feesDue = params.feesDue;
     this.originalFeesDue = params.originalFeesDue || params.feesDue;
 
-    this.totalDue = params.totalDue;
-    this.originalTotalDue = params.originalTotalDue || params.totalDue;
-
     // this.isPaid = params.isPaid;
     // this.isOpen = params.isOpen;
     // this.isDue = params.isDue;
@@ -195,7 +192,7 @@ export class Bill {
   }
 
   get originalTotalDue(): Currency {
-    return this._originalTotalDue;
+    return this._originalPrincipalDue.add(this._originalInterestDue).add(this._originalFeesDue);
   }
 
   set originalPrincipalDue(value: Currency | number) {
@@ -210,11 +207,6 @@ export class Bill {
 
   set originalFeesDue(value: Currency | number) {
     this._originalFeesDue = Currency.of(value);
-    this.versionChanged();
-  }
-
-  set originalTotalDue(value: Currency | number) {
-    this._originalTotalDue = Currency.of(value);
     this.versionChanged();
   }
 
@@ -246,50 +238,31 @@ export class Bill {
   }
 
   get totalDue(): Currency {
-    return this._totalDue;
-  }
-
-  set totalDue(value: Currency | number) {
-    this._totalDue = Currency.of(value);
-    this.versionChanged();
+    return this.principalDue.add(this.interestDue).add(this.feesDue);
   }
 
   reducePrincipalDueBy(amount: Currency) {
     this.principalDue = this.principalDue.subtract(amount);
-    this.reduceTotalDueBy(amount);
   }
 
   reduceInterestDueBy(amount: Currency) {
     this.interestDue = this.interestDue.subtract(amount);
-    this.reduceTotalDueBy(amount);
   }
 
   reduceFeesDueBy(amount: Currency) {
     this.feesDue = this.feesDue.subtract(amount);
-    this.reduceTotalDueBy(amount);
-  }
-
-  private reduceTotalDueBy(amount: Currency) {
-    this.totalDue = this.totalDue.subtract(amount);
   }
 
   increasePrincipalDueBy(amount: Currency) {
     this.principalDue = this.principalDue.add(amount);
-    this.increaseTotalDueBy(amount);
   }
 
   increaseInterestDueBy(amount: Currency) {
     this.interestDue = this.interestDue.add(amount);
-    this.increaseTotalDueBy(amount);
   }
 
   increaseFeesDueBy(amount: Currency) {
     this.feesDue = this.feesDue.add(amount);
-    this.increaseTotalDueBy(amount);
-  }
-
-  private increaseTotalDueBy(amount: Currency) {
-    this.totalDue = this.totalDue.add(amount);
   }
 
   get jsOpenDate(): Date {
@@ -325,16 +298,19 @@ export class Bill {
 
   // 1) Simple numeric getters for the original amounts
   get jsOriginalPrincipalDue(): number {
-    return this._originalPrincipalDue.toNumber();
+    return this.originalPrincipalDue.toNumber();
   }
+  
   get jsOriginalInterestDue(): number {
-    return this._originalInterestDue.toNumber();
+    return this.originalInterestDue.toNumber();
   }
+
   get jsOriginalFeesDue(): number {
-    return this._originalFeesDue.toNumber();
+    return this.originalFeesDue.toNumber();
   }
+
   get jsOriginalTotalDue(): number {
-    return this._originalTotalDue.toNumber();
+    return this.originalTotalDue.toNumber();
   }
 
   // 2) Sum of allocated amounts from paymentDetails
@@ -432,11 +408,9 @@ export class Bill {
       principalDue: this.jsPrincipalDue,
       interestDue: this.jsInterestDue,
       feesDue: this.jsFeesDue,
-      totalDue: this.jsTotalDue,
       originalPrincipalDue: this.jsOriginalPrincipalDue,
       originalInterestDue: this.jsOriginalInterestDue,
       originalFeesDue: this.jsOriginalFeesDue,
-      originalTotalDue: this.jsOriginalTotalDue,
       isDSIBill: this.isDSIBill,
       amortizationEntry: this.amortizationEntry.toJSON(),
       paymentMetadata: this.paymentMetadata,

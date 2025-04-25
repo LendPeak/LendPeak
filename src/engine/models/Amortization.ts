@@ -39,6 +39,15 @@ import { v4 as uuidv4 } from "uuid";
 import cloneDeep from "lodash/cloneDeep";
 import { AmortizationEntries } from "./Amortization/AmortizationEntries";
 
+/** A single “slice” of balance valid over a sub-range of the period */
+interface BalanceSlice {
+  balance: Currency; // balance that applies to this slice
+  balanceModification?: BalanceModification; // the mod that produced it (if any)
+  modificationAmount: Currency; // ↑ or ↓ amount applied at that point
+  startDate: LocalDate; // inclusive
+  endDate: LocalDate; // exclusive (half-open interval)
+}
+
 /**
  * Enum for flush cumulative rounding error types.
  */
@@ -2067,113 +2076,86 @@ export class Amortization {
     }
   }
 
-  getModifiedBalance(
-    startDate: LocalDate,
-    endDate: LocalDate,
-    balance: Currency
-  ): {
-    balance: Currency;
-    balanceModification?: BalanceModification;
-    modificationAmount: Currency;
-    startDate: LocalDate;
-    endDate: LocalDate;
-  }[] {
-    // range may contain more than one balance or might not contain any modification,
-    // in that case we will return just a single balance with the original balance
-    const balances: {
-      balance: Currency;
-      balanceModification?: BalanceModification;
-      modificationAmount: Currency;
-      startDate: LocalDate;
-      endDate: LocalDate;
-    }[] = [];
+  /**
+   * Returns the running balance broken into slices that reflect every
+   * BalanceModification between startDate (inclusive) and endDate (exclusive).
+   *
+   * – multiple modifications on the **same day** are all applied in the order
+   *   they appear in `balanceModifications.all`
+   * – the balance is updated cumulatively, so later mods see the already-modified
+   *   balance
+   * – the function never lets the running balance fall below zero
+   */
+  public getModifiedBalance(startDate: LocalDate, endDate: LocalDate, openingBalance: Currency): BalanceSlice[] {
+    const slices: BalanceSlice[] = [];
 
-    let balanceToModify = Currency.of(balance);
-    // console.log(
-    //   this.balanceModifications,
-    //   "balance modifications:",
-    //   this.balanceModifications.map((modification) => {
-    //     return {
-    //       date: modification.date.format("YYYY-MM-DD"),
-    //       type: modification.type,
-    //       amount: modification.amount.toNumber(),
-    //     };
-    //   })
-    // );
-    for (let modification of this.balanceModifications.all) {
-      // see if there are any modifications in the range
-      // console.log(`Checking modification ${modification.date.format("YYYY-MM-DD")} and comparing it to ${startDate.format("YYYY-MM-DD")} and ${endDate.format("YYYY-MM-DD")}`);
+    /** 1️⃣  Pull only the mods that fall into this period and sort them */
+    const modsInRange = this.balanceModifications.all.filter((m) => DateUtil.isBetweenHalfOpen(m.date, startDate, endDate)).sort((a, b) => a.date.compareTo(b.date));
 
-      // if (modification.date.isBetween(startDate, endDate, "day", "[)")) {
-      if (DateUtil.isBetweenHalfOpen(modification.date, startDate, endDate)) {
-        // we found a modification, lets get its start date
-        let modificationStartDate = balances.length > 0 ? balances[balances.length - 1].endDate : startDate;
-        let modificationEndDate = modification.date;
-        let modificationAmount: Currency;
-        let modifiedBalance: Currency;
-        switch (modification.type) {
-          case "increase":
-            modifiedBalance = balanceToModify.add(modification.amount);
-            modificationAmount = modification.amount;
-            break;
-          case "decrease":
-            modifiedBalance = balanceToModify.subtract(modification.amount);
-            if (modifiedBalance.isNegative()) {
-              const exess = modifiedBalance.abs();
-              modifiedBalance = Currency.zero;
-              modificationAmount = modification.amount.subtract(exess);
-              modification.usedAmount = modificationAmount;
-            } else {
-              modificationAmount = modification.amount.isZero() ? Currency.zero : modification.amount.negated();
-              modification.usedAmount = modificationAmount.negated();
-            }
+    let runningBalance = Currency.of(openingBalance);
+    let cursor = startDate; // marks the beginning of the next slice
 
-            break;
-          default:
-            throw new Error("Invalid balance modification type");
-        }
-        balances.push({
-          balance: modifiedBalance,
-          balanceModification: modification,
-          modificationAmount: modificationAmount,
-          startDate: modificationStartDate,
-          endDate: modificationEndDate,
+    for (const mod of modsInRange) {
+      /* ── slice **up to** the modification date (if at least 1 day long) ── */
+      if (!cursor.isEqual(mod.date)) {
+        slices.push({
+          balance: runningBalance,
+          modificationAmount: Currency.zero,
+          startDate: cursor,
+          endDate: mod.date,
         });
       }
+
+      /* ── apply the modification ── */
+      let delta: Currency;
+      switch (mod.type) {
+        case "increase":
+          delta = mod.amount;
+          break;
+        case "decrease":
+          delta = mod.amount.negated();
+          break;
+        default:
+          throw new Error(`Unknown balance modification type "${mod.type}"`);
+      }
+
+      let newBalance = runningBalance.add(delta);
+
+      /* keep balance from going negative and track how much of the mod was used */
+      if (newBalance.isNegative()) {
+        const excess = newBalance.abs();
+        newBalance = Currency.zero;
+        delta = delta.add(excess); // reduce delta by the excess
+        mod.usedAmount = delta.negated(); // same convention as your original code
+      } else {
+        mod.usedAmount = delta.negated();
+      }
+
+      /* ── zero-length slice *at* the modification point ── */
+      slices.push({
+        balance: newBalance,
+        balanceModification: mod,
+        modificationAmount: delta,
+        startDate: mod.date,
+        endDate: mod.date, // half-open ⇒ 0-day slice
+      });
+
+      /* advance cursors for next loop */
+      runningBalance = newBalance;
+      cursor = mod.date;
     }
-    // if we dont have any modifications in the range, we will just return the original balance
-    if (balances.length === 0) {
-      balances.push({ balance, startDate, endDate, modificationAmount: Currency.zero });
-    } else {
-      // if we have modifications, we will add the last balance to the end of the range
-      balances.push({ balance: balances[balances.length - 1].balance, startDate: balances[balances.length - 1].endDate, endDate, modificationAmount: Currency.zero });
 
-      // console.log(
-      //   "Balance Modifications:",
-      //   balances.map((balance) => {
-      //     return {
-      //       startDate: balance.startDate.format("YYYY-MM-DD"),
-      //       endDate: balance.endDate.format("YYYY-MM-DD"),
-      //       balance: balance.balance.toNumber(),
-      //       modificationAmount: balance.modificationAmount.toNumber(),
-      //     };
-      //   })
-      // );
+    /* 2️⃣  Tail slice from last mod (or startDate) to endDate */
+    if (!cursor.isEqual(endDate)) {
+      slices.push({
+        balance: runningBalance,
+        modificationAmount: Currency.zero,
+        startDate: cursor,
+        endDate: endDate,
+      });
     }
 
-    // console.log(
-    //   "Balance Modifications:",
-    //   balances.map((balance) => {
-    //     return {
-    //       startDate: balance.startDate.format("YYYY-MM-DD"),
-    //       endDate: balance.endDate.format("YYYY-MM-DD"),
-    //       balance: balance.balance.toNumber(),
-    //       modificationAmount: balance.modificationAmount.toNumber(),
-    //     };
-    //   })
-    // );
-
-    return balances;
+    return slices;
   }
 
   public jsGenerateSchedule(): AmortizationEntries {
@@ -2607,6 +2589,14 @@ export class Amortization {
             totalPayment = fixedMonthlyPayment;
           }
 
+          // balance might be lower than available principal, so we are dealing with excess
+          // we will recalculate it then.
+          if (principal.greaterThan(startBalance)) {
+            principal = startBalance;
+            totalPayment = dueInterestForTerm.add(principal).add(totalFees);
+            //this.earlyRepayment = true;
+          }
+
           const balanceBeforePayment = startBalance;
           const balanceAfterPayment = startBalance.subtract(principal);
 
@@ -2670,6 +2660,7 @@ export class Amortization {
     // Adjust the last payment if needed
     if (startBalance.toNumber() !== 0) {
       const lastPayment = schedule.lastEntry;
+
       const termCalendar = lastPayment.calendar;
       if (!lastPayment) {
         console.error(`Last payment is not defined`, schedule);

@@ -679,13 +679,16 @@ export class OverridesComponent implements OnInit {
     let termNumber: number;
     let preBillDays: number;
 
-    if (preBillDaysConfiguration.length === 0) {
+    if (!preBillDaysConfiguration.hasCustom) {
       // First entry
-      termNumber = 1;
+      termNumber = 0;
       preBillDays = this.lendPeak.amortization.defaultPreBillDaysConfiguration;
     } else {
       // Following entries
-      termNumber = preBillDaysConfiguration.last.termNumber + 1;
+      termNumber =
+        preBillDaysConfiguration.allCustom[
+          preBillDaysConfiguration.allCustom.length - 1
+        ].termNumber + 1;
       preBillDays = preBillDaysConfiguration.last.preBillDays;
     }
 
@@ -698,6 +701,7 @@ export class OverridesComponent implements OnInit {
     );
 
     this.lendPeak.amortization.preBillDays = preBillDaysConfiguration;
+
     this.emitLoanChange();
   }
 

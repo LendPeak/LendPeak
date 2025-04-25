@@ -398,13 +398,13 @@ export class LendPeak {
         delete params.amortization.endDate;
       }
 
-      if (!params.amortization.hasCustomPreBillDays) {
-        delete params.amortization.preBillDays;
-      }
+      // if (!params.amortization.hasCustomPreBillDays) {
+      //   delete params.amortization.preBillDays;
+      // }
 
-      if (!params.amortization.hasCustomBillDueDays) {
-        delete params.amortization.dueBillDays;
-      }
+      // if (!params.amortization.hasCustomBillDueDays) {
+      //   delete params.amortization.dueBillDays;
+      // }
     }
 
     const lendPeak = new LendPeak({

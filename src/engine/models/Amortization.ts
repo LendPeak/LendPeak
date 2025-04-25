@@ -183,8 +183,8 @@ export class Amortization {
   private _hasCustomEquitedMonthlyPayment: boolean = false;
   jsHasCustomEquitedMonthlyPayment!: boolean;
 
-  private _hasCustomPreBillDays: boolean = false;
-  jsHasCustomPreBillDays!: boolean;
+  // private _hasCustomPreBillDays: boolean = false;
+  // jsHasCustomPreBillDays!: boolean;
 
   private _hasCustomBillDueDays: boolean = false;
   jsHasCustomBillDueDays!: boolean;
@@ -362,7 +362,7 @@ export class Amortization {
       this.defaultPreBillDaysConfiguration = params.defaultPreBillDaysConfiguration;
     }
 
-    if (params.preBillDays && params.preBillDays.length > 0) {
+    if (params.preBillDays) {
       this.preBillDays = params.preBillDays;
     }
 
@@ -430,6 +430,8 @@ export class Amortization {
     this.termInterestAmountOverride.updateJsValues();
     this.balanceModifications.updateJsValues();
     this.periodsSchedule.updateJsValues();
+    this.preBillDays.updateJsValues();
+    this.dueBillDays.updateJsValues();
 
     this.jsId = this.id;
     this.jsName = this.name;
@@ -452,7 +454,7 @@ export class Amortization {
     this.jsEarlyRepayment = this.earlyRepayment;
     this.jsEquitedMonthlyPayment = this.equitedMonthlyPayment.toNumber();
     this.jsHasCustomEquitedMonthlyPayment = this.hasCustomEquitedMonthlyPayment;
-    this.jsHasCustomPreBillDays = this.hasCustomPreBillDays;
+    //  this.jsHasCustomPreBillDays = this.hasCustomPreBillDays;
     this.jsHasCustomBillDueDays = this.hasCustomBillDueDays;
     this.jshasCustomFirstPaymentDate = this.hasCustomFirstPaymentDate;
     this.jsHasCustomEndDate = this.hasCustomEndDate;
@@ -502,7 +504,7 @@ export class Amortization {
       this.equitedMonthlyPayment = undefined;
     }
     this.hasCustomEquitedMonthlyPayment = this.jsHasCustomEquitedMonthlyPayment;
-    this.hasCustomPreBillDays = this.jsHasCustomPreBillDays;
+    //  this.hasCustomPreBillDays = this.jsHasCustomPreBillDays;
     this.hasCustomBillDueDays = this.jsHasCustomBillDueDays;
 
     this.termPaymentAmountOverride.updateModelValues();
@@ -543,11 +545,7 @@ export class Amortization {
   }
 
   get hasCustomPreBillDays(): boolean {
-    return this._hasCustomPreBillDays;
-  }
-
-  set hasCustomPreBillDays(value: boolean) {
-    this._hasCustomPreBillDays = value;
+    return this._preBillDays.hasCustom;
   }
 
   get hasCustomBillDueDays(): boolean {
@@ -706,11 +704,11 @@ export class Amortization {
   set preBillDays(value: PreBillDaysConfigurations) {
     this.modifiedSinceLastCalculation = true;
 
-    if (!value || value.length === 0) {
-      this._hasCustomPreBillDays = false;
+    if (!value) {
+      // this._hasCustomPreBillDays = false;
       this._preBillDays = new PreBillDaysConfigurations();
     } else {
-      this._hasCustomBillDueDays = true;
+      //  this._hasCustomPreBillDays = true;
       // check type and if different inflate
       if (value instanceof PreBillDaysConfigurations) {
         this._preBillDays = value;
@@ -722,7 +720,7 @@ export class Amortization {
   }
 
   private generatePreBillDays(): void {
-    let value = this._preBillDays.all.filter((dueBillDay) => dueBillDay.type === "custom");
+    let value = this._preBillDays.allCustom;
 
     const completedPreBillDays: PreBillDaysConfigurations = new PreBillDaysConfigurations();
 
@@ -737,21 +735,21 @@ export class Amortization {
     }
 
     for (let preBillDay of value) {
-      completedPreBillDays.all[preBillDay.termNumber - 1] = preBillDay;
+      completedPreBillDays.all[preBillDay.termNumber] = preBillDay;
     }
 
     let lastUserDefinedTerm = value[0];
     for (let i = 0; i < this.term; i++) {
       if (!completedPreBillDays.all[i]) {
-        if (lastUserDefinedTerm.termNumber - 1 > i) {
+        if (lastUserDefinedTerm.termNumber > i) {
           completedPreBillDays.all[i] = new PreBillDaysConfiguration({
-            termNumber: i + 1,
+            termNumber: i,
             preBillDays: this.defaultPreBillDaysConfiguration,
             type: "generated",
           });
         } else {
           completedPreBillDays.all[i] = new PreBillDaysConfiguration({
-            termNumber: i + 1,
+            termNumber: i,
             preBillDays: lastUserDefinedTerm.preBillDays,
             type: "generated",
           });
@@ -1252,7 +1250,7 @@ export class Amortization {
       return this._periodsSchedule;
     }
     if (this._periodsSchedule.hasCustomPeriods === true) {
-      console.log("periods custom schedule", this._periodsSchedule);
+      //console.log("periods custom schedule", this._periodsSchedule);
       return this._periodsSchedule;
     } else {
       if (this.modifiedSinceLastCalculation === true) {
@@ -2421,6 +2419,7 @@ export class Amortization {
           break;
         }
         currentBalanceIndex++;
+
         const termInterestRateOverride = this.termInterestRateOverride.all.find((override) => override.termNumber === termIndex)?.interestRate;
 
         let periodRates: RateSchedule[];

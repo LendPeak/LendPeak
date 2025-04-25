@@ -70,7 +70,7 @@ export class PreBillDaysConfigurations {
   }
 
   get json() {
-    return this._configurations.map((r) => r.json);
+    return this.allCustom.map((r) => r.json);
   }
 
   toJSON() {

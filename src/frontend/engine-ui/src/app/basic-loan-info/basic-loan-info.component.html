@@ -240,7 +240,6 @@
           [(ngModel)]="lendPeak.amortization.jsEndDate"
           (ngModelChange)="inputChanged($event)"
           dateFormat="mm/dd/yy"
-          dataType="string"
           [numberOfMonths]="2"
           [showButtonBar]="true"
           [disabled]="!lendPeak.amortization.jsHasCustomEndDate"

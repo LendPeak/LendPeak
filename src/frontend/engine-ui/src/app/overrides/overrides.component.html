@@ -633,7 +633,7 @@
                   <td>
                     <p-toggleswitch
                       inputId="active-{{ override.id }}"
-                      [(ngModel)]="override.jsActive"
+                      [(ngModel)]="override.active"
                       (ngModelChange)="onInputChange($event)"
                     />
                   </td>
@@ -654,7 +654,7 @@
                   <!-- Term Number -->
                   <td>
                     <p-inputNumber
-                      [disabled]="!override.jsActive"
+                      [disabled]="!override.active"
                       [(ngModel)]="override.jsTermNumber"
                       name="termInterestOverride-term{{ rowIndex }}"
                       (ngModelChange)="onInputChange($event)"
@@ -665,7 +665,7 @@
                     <p-inputgroup>
                       <p-inputgroup-addon>$</p-inputgroup-addon>
                       <p-inputNumber
-                        [disabled]="!override.jsActive"
+                        [disabled]="!override.active"
                         [(ngModel)]="override.jsInterestAmount"
                         name="termInterestOverride-amount-{{ rowIndex }}"
                         locale="en-US"
@@ -679,7 +679,7 @@
                   <td>
                     <p-inputgroup>
                       <p-inputNumber
-                        [disabled]="!override.jsActive"
+                        [disabled]="!override.active"
                         [(ngModel)]="override.jsAcceptableRateVariance"
                         name="termInterestOverride-rateVariance-{{ rowIndex }}"
                         mode="decimal"
@@ -1072,13 +1072,13 @@
                       ) ||
                       cfg.jsTermNumber >=
                         lendPeak.amortization.repaymentSchedule.lastEntry.term,
-                    'opacity-40': !cfg.jsActive,
+                    'opacity-40': !cfg.active,
                   }"
                 >
                   <!-- active toggle -->
                   <td>
                     <p-toggleswitch
-                      [(ngModel)]="cfg.jsActive"
+                      [(ngModel)]="cfg.active"
                       (ngModelChange)="onInputChange($event)"
                     ></p-toggleswitch>
                   </td>
@@ -1099,7 +1099,7 @@
                   <!-- term # -->
                   <td>
                     <p-inputNumber
-                      [disabled]="!cfg.jsActive"
+                      [disabled]="!cfg.active"
                       [(ngModel)]="cfg.jsTermNumber"
                       (ngModelChange)="onInputChange($event)"
                     ></p-inputNumber>
@@ -1110,7 +1110,7 @@
                     <p-inputgroup>
                       <p-inputgroup-addon>$</p-inputgroup-addon>
                       <p-inputNumber
-                        [disabled]="!cfg.jsActive"
+                        [disabled]="!cfg.active"
                         [(ngModel)]="cfg.jsPaymentAmount"
                         mode="decimal"
                         [minFractionDigits]="2"
@@ -1202,13 +1202,13 @@
                       lendPeak.amortization.changePaymentDates.isDuplicateTermNumber(
                         cpd.jsTermNumber
                       ),
-                    'opacity-40': !cpd.jsActive,
+                    'opacity-40': !cpd.active,
                   }"
                 >
                   <!-- active toggle -->
                   <td>
                     <p-toggleswitch
-                      [(ngModel)]="cpd.jsActive"
+                      [(ngModel)]="cpd.active"
                       (ngModelChange)="onInputChange($event)"
                     ></p-toggleswitch>
                   </td>
@@ -1229,7 +1229,7 @@
                   <!-- term # -->
                   <td>
                     <p-inputNumber
-                      [disabled]="!cpd.jsActive"
+                      [disabled]="!cpd.active"
                       [(ngModel)]="cpd.jsTermNumber"
                       (ngModelChange)="cpdTermUpdated(rowIndex)"
                     ></p-inputNumber>
@@ -1238,7 +1238,7 @@
                   <!-- new date -->
                   <td>
                     <p-datepicker
-                      [disabled]="!cpd.jsActive"
+                      [disabled]="!cpd.active"
                       [(ngModel)]="cpd.jsNewDate"
                       dateFormat="mm/dd/yy"
                       showIcon
@@ -1290,73 +1290,91 @@
                   ? 'contrast'
                   : 'secondary'
               "
-              [value]="lendPeak.amortization.preBillDays.hasCustom ? 1 : 0"
+              [value]="lendPeak.amortization.preBillDays.allCustom.length"
             />
             Pre Bill Day Term
           </div></p-accordion-header
         >
         <p-accordion-content>
           <div class="p-fluid">
-            <table
-              *ngIf="lendPeak.amortization.preBillDays.allCustom.length > 0"
+            <p-table
+              *ngIf="lendPeak.amortization.preBillDays.length > 0"
+              [value]="lendPeak.amortization.preBillDays.allCustom"
               class="p-datatable p-component"
             >
-              <thead>
+              <ng-template pTemplate="header">
                 <tr>
+                  <th>
+                    <p-toggleswitch
+                      [ngModel]="true"
+                      inputId="preBillToggleAll"
+                      (onChange)="toggleAllPreBillDays($event)"
+                    />
+                  </th>
                   <th>Dates</th>
-                  <th>Term Number</th>
+                  <th>Term&nbsp;Number</th>
                   <th>Days</th>
                   <th>Actions</th>
                 </tr>
-              </thead>
-              <tbody>
+              </ng-template>
+
+              <ng-template pTemplate="body" let-conf let-rowIndex="rowIndex">
                 <tr
-                  *ngFor="
-                    let preBillDay of lendPeak.amortization.preBillDays
-                      .allCustom;
-                    let i = index
-                  "
+                  [ngClass]="{
+                    'opacity-40': !conf.active,
+                  }"
                 >
-                  <!-- Term Dates -->
+                  <!-- active toggle -->
                   <td>
-                    <span class="font-medium text-md">
-                      {{
-                        getStartDateForTerm(preBillDay.termNumber).toString()
-                      }}
-                    </span>
-                    <span class="font-bold text-xl"> - </span>
-                    <span class="font-medium text-md">{{
-                      getEndDateForTerm(preBillDay.termNumber).toString()
-                    }}</span>
+                    <p-toggleswitch
+                      [(ngModel)]="conf.active"
+                      (ngModelChange)="onInputChange($event)"
+                    ></p-toggleswitch>
                   </td>
-                  <!-- Term Number -->
+
+                  <!-- schedule dates -->
+                  <td>
+                    {{
+                      getStartDateForTerm(conf.termNumber).toString()
+                        | date: "MM/dd/yyyy"
+                    }}
+                    -
+                    {{
+                      getEndDateForTerm(conf.termNumber).toString()
+                        | date: "MM/dd/yyyy"
+                    }}
+                  </td>
+
+                  <!-- term # -->
                   <td>
                     <p-inputNumber
-                      [(ngModel)]="preBillDay.jsTermNumber"
-                      name="preBillDayConfiguration-term{{ i }}"
+                      [disabled]="!conf.active"
+                      [(ngModel)]="conf.jsTermNumber"
                       (ngModelChange)="onInputChange($event)"
                     ></p-inputNumber>
                   </td>
-                  <!-- Days -->
+
+                  <!-- days -->
                   <td>
                     <p-inputNumber
-                      [(ngModel)]="preBillDay.jsPreBillDays"
-                      name="prebillDays-day-{{ i }}"
+                      [disabled]="!conf.active"
+                      [(ngModel)]="conf.jsPreBillDays"
                       (ngModelChange)="onInputChange($event)"
                     ></p-inputNumber>
                   </td>
-                  <!-- Remove Button -->
+
+                  <!-- trash -->
                   <td>
                     <p-button
                       icon="pi pi-trash"
                       class="p-button-rounded"
                       severity="danger"
-                      (click)="removePreBillDayTerm(i)"
+                      (click)="removePreBillDayTerm(rowIndex)"
                     ></p-button>
                   </td>
                 </tr>
-              </tbody>
-            </table>
+              </ng-template>
+            </p-table>
             <div class="p-mt-2">
               <p-button
                 label="Add New Term Row"
@@ -1370,8 +1388,8 @@
 
       <!-- Due Bill Day Term -->
       <p-accordion-panel value="dueBillDayTerm">
-        <p-accordion-header
-          ><div>
+        <p-accordion-header>
+          <div>
             <p-badge
               class="mr-4"
               badgeSize="xlarge"
@@ -1380,84 +1398,136 @@
                   ? 'contrast'
                   : 'secondary'
               "
-              [value]="lendPeak.amortization.dueBillDays.hasCustom ? 1 : 0"
+              [value]="lendPeak.amortization.dueBillDays.allCustom.length"
             />
             Due Bill Day Term
-          </div></p-accordion-header
-        >
+          </div>
+        </p-accordion-header>
+
         <p-accordion-content>
           <div class="p-fluid">
-            <table
+            <p-table
               *ngIf="lendPeak.amortization.dueBillDays.hasCustom"
+              [value]="lendPeak.amortization.dueBillDays.allCustom"
               class="p-datatable p-component"
             >
-              <thead>
+              <ng-template pTemplate="header">
                 <tr>
-                  <th>Dates</th>
-                  <th>Term Number</th>
-                  <th>Days</th>
+                  <th>
+                    <p-toggleswitch
+                      [ngModel]="true"
+                      inputId="dueBillToggleAll"
+                      (onChange)="toggleAllDueBillDays($event)"
+                    />
+                  </th>
+                  <th>Period Start</th>
+                  <th>Period End</th>
+                  <th>Term #</th>
+                  <th>Days After Period End</th>
                   <th>Actions</th>
                 </tr>
-              </thead>
-              <tbody>
+                <!--  master row with loan defaults -->
+                <tr class="bg-blue-50">
+                  <th></th>
+                  <th>
+                    {{ lendPeak.amortization.jsStartDate | date: "MM/dd/yyyy" }}
+                  </th>
+                  <th>
+                    {{ lendPeak.amortization.jsEndDate | date: "MM/dd/yyyy" }}
+                  </th>
+                  <th>{{ lendPeak.amortization.term }}</th>
+                  <th>
+                    {{
+                      lendPeak.amortization
+                        .defaultBillDueDaysAfterPeriodEndConfiguration
+                    }}
+                  </th>
+                  <th></th>
+                </tr>
+              </ng-template>
+
+              <ng-template pTemplate="body" let-conf let-rowIndex="rowIndex">
                 <tr
-                  *ngFor="
-                    let dueBillDay of lendPeak.amortization.dueBillDays
-                      .allCustom;
-                    let i = index
-                  "
+                  [ngClass]="{
+                    'bg-red-50':
+                      lendPeak.amortization.dueBillDays.isDuplicateTermNumber(
+                        conf.jsTermNumber
+                      ),
+                    'opacity-40': !conf.active,
+                  }"
                 >
-                  <!-- Term Dates -->
+                  <!-- Active toggle -->
                   <td>
-                    <span class="font-medium text-md">
-                      {{
-                        getStartDateForTerm(dueBillDay.termNumber).toString()
-                      }}
-                    </span>
-                    <span class="font-bold text-xl"> - </span>
-                    <span class="font-medium text-md">{{
-                      getEndDateForTerm(dueBillDay.termNumber).toString()
-                    }}</span>
+                    <p-toggleswitch
+                      [(ngModel)]="conf.active"
+                      (ngModelChange)="onInputChange($event)"
+                    />
                   </td>
-                  <!-- Term Number -->
+
+                  <!-- Period dates -->
+                  <td>
+                    {{
+                      getStartDateForTerm(conf.termNumber).toString()
+                        | date: "MM/dd/yyyy"
+                    }}
+                  </td>
+                  <td>
+                    {{
+                      getEndDateForTerm(conf.termNumber).toString()
+                        | date: "MM/dd/yyyy"
+                    }}
+                  </td>
+
+                  <!-- Term # -->
                   <td>
                     <p-inputNumber
-                      [(ngModel)]="dueBillDay.jsTermNumber"
-                      name="dueBillDayConfiguration-term{{ i }}"
+                      [disabled]="!conf.active"
+                      [(ngModel)]="conf.jsTermNumber"
                       (ngModelChange)="onInputChange($event)"
                     ></p-inputNumber>
                   </td>
+
                   <!-- Days -->
                   <td>
                     <p-inputNumber
-                      [(ngModel)]="dueBillDay.jsDaysDueAfterPeriodEnd"
-                      name="duebillDays-day-{{ i }}"
+                      [disabled]="!conf.active"
+                      [(ngModel)]="conf.jsDaysDueAfterPeriodEnd"
                       (ngModelChange)="onInputChange($event)"
                     ></p-inputNumber>
                   </td>
-                  <!-- Remove Button -->
+
+                  <!-- Remove -->
                   <td>
                     <p-button
                       icon="pi pi-trash"
                       class="p-button-rounded"
                       severity="danger"
-                      (click)="removeDueBillDayTerm(i)"
+                      (click)="removeDueBillDayTerm(rowIndex)"
                     ></p-button>
                   </td>
                 </tr>
-              </tbody>
-            </table>
+              </ng-template>
+            </p-table>
+
+            <!-- ── Action buttons under table ──────────────────────────────── -->
             <div class="p-mt-2">
+              <p-divider></p-divider>
               <p-button
+                class="pr-2"
                 label="Add New Term Row"
                 icon="pi pi-plus"
                 (click)="addDueBillDayTermRow()"
+              ></p-button>
+              <p-button
+                severity="info"
+                label="Re-Sort"
+                icon="pi pi-refresh"
+                (click)="refreshSortForDueBillDays()"
               ></p-button>
             </div>
           </div>
         </p-accordion-content>
       </p-accordion-panel>
-
       <!-- Balance Modifications -->
       <p-accordion-panel value="balanceModifications">
         <p-accordion-header

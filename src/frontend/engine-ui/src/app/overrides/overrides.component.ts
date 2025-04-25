@@ -670,6 +670,25 @@ export class OverridesComponent implements OnInit {
     }
   }
 
+  refreshSortForDueBillDays(): void {
+    if (!this.lendPeak) return;
+    this.lendPeak.amortization.dueBillDays.reSort();
+  }
+
+  toggleAllDueBillDays(ev: any): void {
+    if (!this.lendPeak) return;
+    const db = this.lendPeak.amortization.dueBillDays;
+    ev.checked ? db.activateAll() : db.deactivateAll();
+    this.onInputChange(true);
+  }
+
+  toggleAllPreBillDays(ev: any): void {
+    if (!this.lendPeak) return;
+    const pb = this.lendPeak.amortization.preBillDays;
+    ev.checked ? pb.activateAll() : pb.deactivateAll();
+    this.onInputChange(true);
+  }
+
   // Methods related to Pre Bill Day Term
   addPrebillDayTermRow() {
     if (!this.lendPeak) {

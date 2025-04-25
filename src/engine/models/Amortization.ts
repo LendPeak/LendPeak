@@ -522,6 +522,8 @@ export class Amortization {
     this.balanceModifications.updateModelValues();
     this.periodsSchedule.updateModelValues();
     this.rateSchedules.updateModelValues();
+    this.preBillDays.updateModelValues();
+    this.dueBillDays.updateModelValues();
 
     this.defaultPreBillDaysConfiguration = this.jsDefaultPreBillDaysConfiguration;
     this.defaultBillDueDaysAfterPeriodEndConfiguration = this.jsDefaultBillDueDaysAfterPeriodEndConfiguration;
@@ -729,87 +731,83 @@ export class Amortization {
   }
 
   private generatePreBillDays(): void {
-    let value = this._preBillDays.allCustom;
+    /* ① start with a copy of every existing row (active **and** inactive) */
+    const completed = new PreBillDaysConfigurations([...this._preBillDays.all]);
 
-    const completedPreBillDays: PreBillDaysConfigurations = new PreBillDaysConfigurations();
+    /* ② the rows that drive the propagation logic */
+    const activeCustom = completed.all.filter((c) => c.type === "custom" && c.active);
 
-    if (value.length === 0) {
-      value = [
+    if (activeCustom.length === 0) {
+      activeCustom.push(
         new PreBillDaysConfiguration({
+          termNumber: 1,
           preBillDays: this.defaultPreBillDaysConfiguration,
-          termNumber: 0,
           type: "default",
-        }),
-      ];
+          active: true,
+        })
+      );
     }
 
-    for (let preBillDay of value) {
-      completedPreBillDays.all[preBillDay.termNumber] = preBillDay;
-    }
-
-    let lastUserDefinedTerm = value[0];
+    /* ③ back-fill the missing terms */
+    let last = activeCustom[0];
     for (let i = 0; i < this.term; i++) {
-      if (!completedPreBillDays.all[i]) {
-        if (lastUserDefinedTerm.termNumber > i) {
-          completedPreBillDays.all[i] = new PreBillDaysConfiguration({
-            termNumber: i,
-            preBillDays: this.defaultPreBillDaysConfiguration,
+      const term = i + 1;
+      if (!completed.all.find((c) => c.termNumber === term)) {
+        completed.addConfiguration(
+          new PreBillDaysConfiguration({
+            termNumber: term,
+            preBillDays: last.termNumber > term ? this.defaultPreBillDaysConfiguration : last.preBillDays,
             type: "generated",
-          });
-        } else {
-          completedPreBillDays.all[i] = new PreBillDaysConfiguration({
-            termNumber: i,
-            preBillDays: lastUserDefinedTerm.preBillDays,
-            type: "generated",
-          });
-        }
+            active: true,
+          })
+        );
       }
-      lastUserDefinedTerm = completedPreBillDays.all[i];
+      const customHere = activeCustom.find((c) => c.termNumber === term);
+      if (customHere) last = customHere;
     }
-    this._preBillDays = completedPreBillDays;
+
+    completed.reSort(); // keep row order stable for the UI
+    this._preBillDays = completed;
   }
 
   private generateDueBillDays(): void {
-    // lets remove all generated values and re-generate them
-    let value = this._dueBillDays.all.filter((dueBillDay) => dueBillDay.type === "custom");
-    const completedDueDayBillDays: BillDueDaysConfigurations = new BillDueDaysConfigurations();
-    if (value.length === 0) {
-      value = [
+    /* ①  start with a copy of ALL current rows (active **and** inactive) */
+    const completed = new BillDueDaysConfigurations([...this._dueBillDays.all]);
+
+    /* ②  these rows actually drive the generation logic */
+    const activeCustom = completed.all.filter((c) => c.type === "custom" && c.active);
+
+    if (activeCustom.length === 0) {
+      activeCustom.push(
         new BillDueDaysConfiguration({
+          termNumber: 1,
           daysDueAfterPeriodEnd: this.defaultBillDueDaysAfterPeriodEndConfiguration,
-          termNumber: 0,
           type: "default",
-        }),
-      ];
-    } else {
-      for (let dueBillDay of value) {
-        completedDueDayBillDays.all[dueBillDay.termNumber - 1] = dueBillDay;
-      }
+          active: true,
+        })
+      );
     }
 
-    let lastUserDefinedTerm = value[0];
+    /* ③  back-fill the missing terms */
+    let last = activeCustom[0];
     for (let i = 0; i < this.term; i++) {
-      if (!completedDueDayBillDays.all[i]) {
-        if (lastUserDefinedTerm.termNumber - 1 > i) {
-          completedDueDayBillDays.all[i] = new BillDueDaysConfiguration({
-            termNumber: i + 1,
-            daysDueAfterPeriodEnd: this.defaultBillDueDaysAfterPeriodEndConfiguration,
+      const term = i + 1;
+      if (!completed.all.find((c) => c.termNumber === term)) {
+        completed.addConfiguration(
+          new BillDueDaysConfiguration({
+            termNumber: term,
+            daysDueAfterPeriodEnd: last.termNumber > term ? this.defaultBillDueDaysAfterPeriodEndConfiguration : last.daysDueAfterPeriodEnd,
             type: "generated",
-          });
-        } else {
-          completedDueDayBillDays.all[i] = new BillDueDaysConfiguration({
-            termNumber: i + 1,
-            daysDueAfterPeriodEnd: lastUserDefinedTerm.daysDueAfterPeriodEnd,
-            type: "generated",
-          });
-        }
+            active: true,
+          })
+        );
       }
-      lastUserDefinedTerm = completedDueDayBillDays.all[i];
+      const customHere = activeCustom.find((c) => c.termNumber === term);
+      if (customHere) last = customHere;
     }
 
-    // console.log("completedDueBillDays", completedDueDayBillDays);
-
-    this._dueBillDays = completedDueDayBillDays;
+    completed.reSort(); // keep UI ↔ model order stable
+    this._dueBillDays = completed;
   }
 
   get dueBillDays(): BillDueDaysConfigurations {
@@ -842,7 +840,7 @@ export class Amortization {
       this._hasCustomBillDueDays = false;
       this._dueBillDays = new BillDueDaysConfigurations();
     } else {
-      this._hasCustomBillDueDays = true;
+      this._hasCustomBillDueDays = value.hasActiveCustom;
       if (value instanceof BillDueDaysConfigurations) {
         this._dueBillDays = value;
       } else {

@@ -111,7 +111,7 @@ describe("Amortization", () => {
       startDate: DateUtil.normalizeDate("2023-01-01"),
     });
     const schedule = amortization.calculateAmortizationPlan();
-    expect(schedule.lastEntry.metadata.finalAdjustment).toBe(true);
+    expect(schedule.lastEntry.endBalance.toNumber()).toEqual(0);
   });
 
   it("should detect correct term numbers for Change Payment Date at contract start", () => {

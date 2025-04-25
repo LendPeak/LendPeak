@@ -2,6 +2,7 @@ export interface PreBillDaysConfigurationParams {
   termNumber: number;
   preBillDays: number;
   type?: PreBillDaysConfigurationType;
+  active?: boolean;
 }
 
 export type PreBillDaysConfigurationType = "custom" | "generated" | "default";
@@ -15,6 +16,9 @@ export class PreBillDaysConfiguration {
 
   private _type: PreBillDaysConfigurationType = "custom";
 
+  private _active = true;
+  jsActive = true;
+
   constructor(params: PreBillDaysConfigurationParams) {
     this.termNumber = params.termNumber;
     this.preBillDays = params.preBillDays;
@@ -23,7 +27,18 @@ export class PreBillDaysConfiguration {
       this.type = params.type;
     }
 
+    if (params.active !== undefined) this.active = params.active;
+
     this.updateJsValues();
+  }
+
+  get active(): boolean {
+    return this._active;
+  }
+
+  set active(v: boolean) {
+    this._active = v;
+    this.jsActive = v;
   }
 
   get type(): PreBillDaysConfigurationType {
@@ -37,11 +52,13 @@ export class PreBillDaysConfiguration {
   updateJsValues() {
     this.jsTermNumber = this.termNumber;
     this.jsPreBillDays = this.preBillDays;
+    this.jsActive = this.active;
   }
 
   updateModelValues() {
     this.termNumber = this.jsTermNumber;
     this.preBillDays = this.jsPreBillDays;
+    this.active = this.jsActive;
   }
 
   get termNumber(): number {
@@ -50,6 +67,7 @@ export class PreBillDaysConfiguration {
 
   set termNumber(value: number) {
     this._termNumber = value;
+    this.jsTermNumber = value;
   }
 
   get preBillDays(): number {
@@ -65,6 +83,7 @@ export class PreBillDaysConfiguration {
       termNumber: this.termNumber,
       preBillDays: this.preBillDays,
       type: this.type,
+      active: this.active,
     };
   }
 

@@ -46,6 +46,40 @@ export class BillDueDaysConfigurations {
     return this.allCustom.length > 0;
   }
 
+  get hasActiveCustom(): boolean {
+    return this._configurations.some((c) => c.type === "custom" && c.active);
+  }
+
+  /** only rows that are active */
+  get allActive(): BillDueDaysConfiguration[] {
+    return this._configurations.filter((c) => c.active);
+  }
+
+  /** rows that are BOTH custom and active */
+  get allCustomActive(): BillDueDaysConfiguration[] {
+    return this._configurations.filter((c) => c.type === "custom" && c.active);
+  }
+
+  /* activate / deactivate helpers */
+  activateAll() {
+    this._configurations.forEach((c) => (c.active = true));
+  }
+  deactivateAll() {
+    this._configurations.forEach((c) => (c.active = false));
+  }
+
+  /** true when more than one row (active OR inactive) shares the same term # */
+  isDuplicateTermNumber(termNumber: number): boolean {
+    return this._configurations.filter((c) => c.termNumber === termNumber).length > 1;
+  }
+
+  /** sort in-place by termNumber ascending, preserving UI / model sync */
+  reSort(): void {
+    this.updateModelValues(); // commit any JS edits
+    this._configurations.sort((a, b) => a.termNumber - b.termNumber);
+    this.updateJsValues(); // refresh JS mirrors
+  }
+
   addConfiguration(configuration: BillDueDaysConfiguration) {
     this._configurations.push(configuration);
   }

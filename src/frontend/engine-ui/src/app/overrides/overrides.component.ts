@@ -46,7 +46,6 @@ import {
   DropDownOptionString,
 } from '../models/common.model';
 import { LocalDate, ZoneId } from '@js-joda/core';
-
 @Component({
   selector: 'app-overrides',
   templateUrl: './overrides.component.html',
@@ -90,8 +89,10 @@ export class OverridesComponent implements OnInit {
     { label: 'Actual/Actual', value: CalendarType.ACTUAL_ACTUAL },
     { label: 'Actual/360', value: CalendarType.ACTUAL_360 },
     { label: 'Actual/365', value: CalendarType.ACTUAL_365 },
-    { label: '30/360', value: CalendarType.THIRTY_360 },
+    { label: 'Actual/365 (No-Leap)', value: CalendarType.ACTUAL_365_NL },
+    { label: '30/360 (European)', value: CalendarType.THIRTY_360 },
     { label: '30/Actual', value: CalendarType.THIRTY_ACTUAL },
+    { label: '30/360 (U.S.)', value: CalendarType.THIRTY_360_US },
   ];
 
   constructor(private overrideSettingsService: OverrideSettingsService) {}
@@ -125,6 +126,246 @@ export class OverridesComponent implements OnInit {
     }
 
     //this.refreshOpenTabs();
+  }
+
+  /* deep snapshots keyed by term number */
+  private cpdSnapshots: Record<number, any> = {};
+
+  /* master toggle helper */
+  get cpdMasterActive(): boolean {
+    if (!this.lendPeak) return true;
+    return this.lendPeak.amortization.changePaymentDates.all.every(
+      (c) => c.active,
+    );
+  }
+  set cpdMasterActive(val: boolean) {
+    this.toggleAllChangePaymentDates({ checked: val });
+  }
+
+  /* ✏️ Edit */
+  onCpdEditInit(row: ChangePaymentDate) {
+    this.cpdSnapshots[row.termNumber] = row.json; // deep clone
+  }
+
+  /* ✔ Save */
+  onCpdEditSave(row: ChangePaymentDate) {
+    delete this.cpdSnapshots[row.termNumber];
+    this.lendPeak!.amortization.changePaymentDates.reSort();
+    this.isModified = true;
+    this.emitLoanChange();
+  }
+
+  /* ✖ Cancel */
+  onCpdEditCancel(row: ChangePaymentDate, ri: number) {
+    const saved = this.cpdSnapshots[row.termNumber];
+    if (!saved) return;
+
+    const restored = new ChangePaymentDate(saved);
+    Object.assign(row, restored); // rollback
+    delete this.cpdSnapshots[row.termNumber];
+  }
+
+  /* deep snapshots keyed by term number */
+  private dbdSnapshots: Record<number, any> = {};
+
+  /* master toggle for Due-Bill table */
+  get dbdMasterActive(): boolean {
+    if (!this.lendPeak) return true;
+    return this.lendPeak.amortization.dueBillDays.allCustom.every(
+      (c) => c.active,
+    );
+  }
+  set dbdMasterActive(val: boolean) {
+    this.toggleAllDueBillDays({ checked: val });
+  }
+
+  /* ✏️ Edit */
+  onDbdEditInit(row: BillDueDaysConfiguration) {
+    this.dbdSnapshots[row.termNumber] = row.json; // deep clone
+  }
+
+  /* ✔ Save */
+  onDbdEditSave(row: BillDueDaysConfiguration) {
+    delete this.dbdSnapshots[row.termNumber];
+    this.lendPeak!.amortization.dueBillDays.reSort();
+    this.isModified = true;
+    this.emitLoanChange();
+  }
+
+  /* ✖ Cancel */
+  onDbdEditCancel(row: BillDueDaysConfiguration, ri: number) {
+    const saved = this.dbdSnapshots[row.termNumber];
+    if (!saved) return;
+
+    const restored = new BillDueDaysConfiguration(saved);
+    Object.assign(row, restored); // rollback
+    delete this.dbdSnapshots[row.termNumber];
+  }
+
+  /* deep snapshots keyed by term number */
+  private pbdSnapshots: Record<number, any> = {};
+
+  /* master-toggle helper */
+  get pbdMasterActive(): boolean {
+    if (!this.lendPeak) return true;
+    return this.lendPeak.amortization.preBillDays.allCustom.every(
+      (c) => c.active,
+    );
+  }
+  set pbdMasterActive(val: boolean) {
+    this.toggleAllPreBillDays({ checked: val });
+  }
+
+  /* ✏️ Edit */
+  onPbdEditInit(row: PreBillDaysConfiguration) {
+    this.pbdSnapshots[row.termNumber] = row.json; // deep clone via .json
+  }
+
+  /* ✔ Save */
+  onPbdEditSave(row: PreBillDaysConfiguration) {
+    delete this.pbdSnapshots[row.termNumber];
+    this.lendPeak!.amortization.preBillDays.reSort();
+    this.isModified = true;
+    this.emitLoanChange();
+  }
+
+  /* ✖ Cancel */
+  onPbdEditCancel(row: PreBillDaysConfiguration, ri: number) {
+    const saved = this.pbdSnapshots[row.termNumber];
+    if (!saved) return;
+
+    const restored = new PreBillDaysConfiguration(saved);
+    Object.assign(row, restored); // rollback
+    delete this.pbdSnapshots[row.termNumber];
+  }
+
+  /* deep snapshots keyed by term # */
+  private tpaSnapshots: Record<number, any> = {};
+
+  /* master-toggle helper */
+  get tpaMasterActive(): boolean {
+    if (!this.lendPeak) return true;
+    return this.lendPeak.amortization.termPaymentAmountOverride.all.every(
+      (p) => p.active,
+    );
+  }
+  set tpaMasterActive(val: boolean) {
+    /* re-use your existing bulk-toggle method */
+    this.toggleAllTermPaymentAmountOverrides({ checked: val });
+  }
+
+  /* ✏️ Edit */
+  onTpaEditInit(row: TermPaymentAmount) {
+    this.tpaSnapshots[row.jsTermNumber] = row.json; // deep clone
+  }
+
+  /* ✔ Save */
+  onTpaEditSave(row: TermPaymentAmount) {
+    delete this.tpaSnapshots[row.jsTermNumber];
+    this.lendPeak!.amortization.termPaymentAmountOverride.reSort();
+    this.isModified = true;
+    this.emitLoanChange();
+  }
+
+  /* ✖ Cancel */
+  onTpaEditCancel(row: TermPaymentAmount, rowIndex: number) {
+    const saved = this.tpaSnapshots[row.jsTermNumber];
+    if (!saved) return;
+
+    const restored = new TermPaymentAmount(saved); // re-hydrate
+    Object.assign(row, restored); // rollback in place
+    delete this.tpaSnapshots[row.jsTermNumber];
+  }
+
+  // deep snapshots for Term Calendar Override
+  private tcoSnapshots: Record<number, any> = {};
+
+  /* ✏️ Edit  */
+  onTcoEditInit(row: TermCalendar) {
+    this.tcoSnapshots[row.jsTermNumber] = row.json; // deep clone
+  }
+
+  /* ✔ Save */
+  onTcoEditSave(row: TermCalendar) {
+    delete this.tcoSnapshots[row.jsTermNumber];
+    this.lendPeak!.amortization.calendars.reSort();
+    this.isModified = true;
+    this.emitLoanChange();
+  }
+
+  /* ✖ Cancel */
+  onTcoEditCancel(row: TermCalendar, rowIndex: number) {
+    const saved = this.tcoSnapshots[row.jsTermNumber];
+    if (!saved) return;
+
+    const restored = new TermCalendar(saved); // re-hydrate
+    Object.assign(row, restored); // rollback in place
+    delete this.tcoSnapshots[row.jsTermNumber];
+  }
+
+  /* ─── Term-Calendar master toggle (header switch) ──────────────── */
+  get tcoMasterActive(): boolean {
+    if (!this.lendPeak) return true;
+    return this.lendPeak.amortization.calendars.all.every((c) => c.active);
+  }
+  set tcoMasterActive(val: boolean) {
+    /* re-use your existing bulk-toggle handler */
+    this.toggleAllTermCalendarOverrides({ checked: val });
+  }
+
+  // deep snapshots keyed by term number
+  private tiaoSnapshots: Record<number, any> = {};
+
+  /* ✏️  — user enters edit mode */
+  onTiaoEditInit(row: TermInterestAmountOverride) {
+    this.tiaoSnapshots[row.jsTermNumber] = row.json; // deep, detached
+  }
+
+  /* ✔️  — user saves changes */
+  onTiaoEditSave(row: TermInterestAmountOverride) {
+    delete this.tiaoSnapshots[row.jsTermNumber];
+    this.lendPeak!.amortization.termInterestAmountOverride.reSort();
+    this.isModified = true;
+    this.emitLoanChange();
+  }
+
+  /* ✖️  — user cancels, revert the row */
+  onTiaoEditCancel(row: TermInterestAmountOverride, rowIndex: number) {
+    const saved = this.tiaoSnapshots[row.jsTermNumber];
+    if (!saved) {
+      return;
+    }
+
+    // Re-hydrate a fresh override from JSON
+    const restored = new TermInterestAmountOverride(saved);
+
+    // Overwrite the live row in place so the UI refreshes
+    Object.assign(row, restored);
+
+    delete this.tiaoSnapshots[row.jsTermNumber];
+  }
+
+  /* ─────────  helper getter / setter ───────── */
+  get tiaoMasterActive(): boolean {
+    if (!this.lendPeak) return true;
+    return this.lendPeak.amortization.termInterestAmountOverride.all.every(
+      (o) => o.active,
+    );
+  }
+  set tiaoMasterActive(val: boolean) {
+    // fired when user clicks the header switch
+    this.toggleAllTiao(val);
+  }
+
+  /* ─────────  actual toggler used by template ───────── */
+  toggleAllTiao(enable: boolean) {
+    if (!this.lendPeak) return;
+
+    const tiao = this.lendPeak.amortization.termInterestAmountOverride;
+    enable ? tiao.activateAll() : tiao.deactivateAll();
+
+    this.isModified = true; // mark form dirty
+    this.emitLoanChange(); // run recalcs / notify parent
   }
 
   expandAllUsedTabs() {

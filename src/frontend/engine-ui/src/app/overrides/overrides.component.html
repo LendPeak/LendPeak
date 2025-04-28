@@ -662,12 +662,43 @@
                   </td>
 
                   <!-- computed rate (read-only) -->
+                  <!-- Rate (%) – read-only, with warning icon -->
                   <td>
-                    {{
-                      lendPeak!.amortization.repaymentSchedule.getEntryByTerm(
-                        row.jsTermNumber
-                      )?.jsPeriodInterestRate | percent: "1.2-4"
-                    }}
+                    <ng-container *ngIf="row.active; else NA">
+                      <!-- warning icon (shown only when threshold exceeded) -->
+                      <i
+                        *ngIf="
+                          lendPeak!.amortization.repaymentSchedule.getEntryByTerm(
+                            row.jsTermNumber
+                          )?.metadata?.equivalentAnnualRateVarianceExceeded
+                        "
+                        class="pi pi-exclamation-triangle text-red-500 mr-1"
+                        style="font-size: 1.4rem"
+                        pTooltip="
+        WARNING: Equivalent annual rate variance for this term is
+        {{
+                          lendPeak!.amortization.repaymentSchedule.getEntryByTerm(
+                            row.jsTermNumber
+                          )?.metadata?.equivalentAnnualRateVariance
+                            | percent: '1.2-4'
+                        }},
+        which exceeds the acceptable threshold
+        {{ row.jsAcceptableRateVariance | percent: '1.2-4' }}.
+      "
+                        tooltipPosition="left"
+                      >
+                      </i>
+
+                      <!-- always show the calculated rate value -->
+                      {{
+                        lendPeak!.amortization.repaymentSchedule.getEntryByTerm(
+                          row.jsTermNumber
+                        )?.jsPeriodInterestRate | percent: "1.2-4"
+                      }}
+                    </ng-container>
+
+                    <!-- row is inactive -->
+                    <ng-template #NA>N/A</ng-template>
                   </td>
 
                   <!-- ACTIONS -->
@@ -1193,120 +1224,159 @@
         >
         <p-accordion-content>
           <div class="p-fluid">
-<!-- CHANGE-PAYMENT DATE TABLE -->
-<p-table
-    [value]="lendPeak!.amortization.changePaymentDates.all"
-    dataKey="termNumber"                 
-    editMode="row"
-    class="p-datatable p-component"
->
-  <!-- HEADER -->
-  <ng-template #header>
-    <tr>
-      <th style="width:3rem">
-        <p-toggleswitch
-          [(ngModel)]="cpdMasterActive"
-          (ngModelChange)="toggleAllChangePaymentDates($event)">
-        </p-toggleswitch>
-      </th>
-      <th>Period Start</th>
-      <th>Period End</th>
-      <th>Term&nbsp;#</th>
-      <th>New&nbsp;Date</th>
-      <th style="width:9rem">Actions</th>
-    </tr>
-  </ng-template>
+            <!-- CHANGE-PAYMENT DATE TABLE -->
+            <p-table
+              [value]="lendPeak!.amortization.changePaymentDates.all"
+              dataKey="termNumber"
+              editMode="row"
+              class="p-datatable p-component"
+            >
+              <!-- HEADER -->
+              <ng-template #header>
+                <tr>
+                  <th style="width: 3rem">
+                    <p-toggleswitch
+                      [(ngModel)]="cpdMasterActive"
+                      (ngModelChange)="toggleAllChangePaymentDates($event)"
+                    >
+                    </p-toggleswitch>
+                  </th>
+                  <th>Period Start</th>
+                  <th>Period End</th>
+                  <th>Term&nbsp;#</th>
+                  <th>New&nbsp;Date</th>
+                  <th style="width: 9rem">Actions</th>
+                </tr>
+              </ng-template>
 
-  <!-- BODY -->
-  <ng-template #body let-row let-editing="editing" let-ri="rowIndex">
-    <tr [pEditableRow]="row"
-        [ngClass]="{
-          'bg-red-50':
-            lendPeak!.amortization.changePaymentDates
-              .isDuplicateTermNumber(row.termNumber),
-          'opacity-40': !row.active
-        }">
+              <!-- BODY -->
+              <ng-template
+                #body
+                let-row
+                let-editing="editing"
+                let-ri="rowIndex"
+              >
+                <tr
+                  [pEditableRow]="row"
+                  [ngClass]="{
+                    'bg-red-50':
+                      lendPeak!.amortization.changePaymentDates.isDuplicateTermNumber(
+                        row.termNumber
+                      ),
+                    'opacity-40': !row.active,
+                  }"
+                >
+                  <!-- row toggle -->
+                  <td>
+                    <p-toggleswitch
+                      [(ngModel)]="row.active"
+                      (ngModelChange)="onInputChange($event)"
+                    >
+                    </p-toggleswitch>
+                  </td>
 
-      <!-- row toggle -->
-      <td>
-        <p-toggleswitch
-          [(ngModel)]="row.active"
-          (ngModelChange)="onInputChange($event)">
-        </p-toggleswitch>
-      </td>
+                  <!-- Dates from repayment schedule (read-only) -->
+                  <td>
+                    {{
+                      getStartDateForTerm(row.termNumber).toString()
+                        | date: "MM/dd/yyyy"
+                    }}
+                  </td>
+                  <td>
+                    {{
+                      getEndDateForTerm(row.termNumber).toString()
+                        | date: "MM/dd/yyyy"
+                    }}
+                  </td>
 
-      <!-- Dates from repayment schedule (read-only) -->
-      <td>{{ getStartDateForTerm(row.termNumber).toString() | date:'MM/dd/yyyy' }}</td>
-      <td>{{ getEndDateForTerm(row.termNumber).toString()   | date:'MM/dd/yyyy' }}</td>
+                  <!-- Term # (editable) -->
+                  <td pEditableColumn>
+                    <p-cellEditor>
+                      <ng-template #output>{{ row.termNumber }}</ng-template>
+                      <ng-template #input>
+                        <p-inputNumber
+                          [(ngModel)]="row.termNumber"
+                        ></p-inputNumber>
+                      </ng-template>
+                    </p-cellEditor>
+                  </td>
 
-      <!-- Term # (editable) -->
-      <td pEditableColumn>
-        <p-cellEditor>
-          <ng-template #output>{{ row.termNumber }}</ng-template>
-          <ng-template #input>
-            <p-inputNumber [(ngModel)]="row.termNumber"></p-inputNumber>
-          </ng-template>
-        </p-cellEditor>
-      </td>
+                  <!-- New Date (editable) -->
+                  <td pEditableColumn>
+                    <p-cellEditor>
+                      <ng-template #output>
+                        {{ row.jsNewDate | date: "MM/dd/yyyy" }}
+                      </ng-template>
+                      <ng-template #input>
+                        <p-datepicker
+                          [(ngModel)]="row.jsNewDate"
+                          dateFormat="mm/dd/yy"
+                          showIcon
+                          appendTo="body"
+                        >
+                        </p-datepicker>
+                      </ng-template>
+                    </p-cellEditor>
+                  </td>
 
-      <!-- New Date (editable) -->
-      <td pEditableColumn>
-        <p-cellEditor>
-          <ng-template #output>
-            {{ row.jsNewDate | date:'MM/dd/yyyy' }}
-          </ng-template>
-          <ng-template #input>
-            <p-datepicker
-              [(ngModel)]="row.jsNewDate"
-              dateFormat="mm/dd/yy"
-              showIcon
-              appendTo="body">
-            </p-datepicker>
-          </ng-template>
-        </p-cellEditor>
-      </td>
+                  <!-- ACTIONS -->
+                  <td class="text-center" style="width: 9rem">
+                    <div class="flex items-center justify-center gap-2">
+                      <!-- view mode -->
+                      <button
+                        *ngIf="!editing"
+                        pButton
+                        pRipple
+                        text
+                        rounded
+                        severity="secondary"
+                        pInitEditableRow
+                        icon="pi pi-pencil"
+                        (click)="onCpdEditInit(row)"
+                        pTooltip="Edit row"
+                      ></button>
 
-      <!-- ACTIONS -->
-      <td class="text-center" style="width:9rem">
-        <div class="flex items-center justify-center gap-2">
-          <!-- view mode -->
-          <button *ngIf="!editing"
-                  pButton pRipple text rounded severity="secondary"
-                  pInitEditableRow
-                  icon="pi pi-pencil"
-                  (click)="onCpdEditInit(row)"
-                  pTooltip="Edit row">
-          </button>
+                      <button
+                        *ngIf="!editing"
+                        pButton
+                        pRipple
+                        text
+                        rounded
+                        severity="danger"
+                        icon="pi pi-trash"
+                        (click)="removeChangePaymentDate(ri)"
+                        pTooltip="Remove row"
+                      ></button>
 
-          <button *ngIf="!editing"
-                  pButton pRipple text rounded severity="danger"
-                  icon="pi pi-trash"
-                  (click)="removeChangePaymentDate(ri)"
-                  pTooltip="Remove row">
-          </button>
+                      <!-- edit mode -->
+                      <button
+                        *ngIf="editing"
+                        pButton
+                        pRipple
+                        rounded
+                        severity="success"
+                        pSaveEditableRow
+                        icon="pi pi-check"
+                        (click)="onCpdEditSave(row)"
+                        pTooltip="Save"
+                      ></button>
 
-          <!-- edit mode -->
-          <button *ngIf="editing"
-                  pButton pRipple rounded severity="success"
-                  pSaveEditableRow
-                  icon="pi pi-check"
-                  (click)="onCpdEditSave(row)"
-                  pTooltip="Save">
-          </button>
-
-          <button *ngIf="editing"
-                  pButton pRipple rounded severity="secondary"
-                  pCancelEditableRow
-                  icon="pi pi-times"
-                  (click)="onCpdEditCancel(row, ri)"
-                  pTooltip="Cancel">
-          </button>
-        </div>
-      </td>
-    </tr>
-  </ng-template>
-</p-table>
-
+                      <button
+                        *ngIf="editing"
+                        pButton
+                        pRipple
+                        rounded
+                        severity="secondary"
+                        pCancelEditableRow
+                        icon="pi pi-times"
+                        (click)="onCpdEditCancel(row, ri)"
+                        pTooltip="Cancel"
+                      ></button>
+                    </div>
+                  </td>
+                </tr>
+              </ng-template>
+            </p-table>
 
             <div class="p-mt-2">
               <p-button
@@ -1518,113 +1588,155 @@
 
         <p-accordion-content>
           <div class="p-fluid">
-<!-- DUE-BILL DAY TERM TABLE -->
-<p-table
-    [value]="lendPeak!.amortization.dueBillDays.allCustom"
-    dataKey="termNumber"               
-    editMode="row"
-    class="p-datatable p-component"
->
-  <!-- HEADER -->
-  <ng-template #header>
-    <tr>
-      <th style="width:3rem">
-        <p-toggleswitch
-          [(ngModel)]="dbdMasterActive"
-          (ngModelChange)="toggleAllDueBillDays($event)">
-        </p-toggleswitch>
-      </th>
-      <th>Period Start</th>
-      <th>Period End</th>
-      <th>Term&nbsp;#</th>
-      <th>Days&nbsp;After&nbsp;End</th>
-      <th style="width:9rem">Actions</th>
-    </tr>
-  </ng-template>
+            <!-- DUE-BILL DAY TERM TABLE -->
+            <p-table
+              [value]="lendPeak!.amortization.dueBillDays.allCustom"
+              dataKey="termNumber"
+              editMode="row"
+              class="p-datatable p-component"
+            >
+              <!-- HEADER -->
+              <ng-template #header>
+                <tr>
+                  <th style="width: 3rem">
+                    <p-toggleswitch
+                      [(ngModel)]="dbdMasterActive"
+                      (ngModelChange)="toggleAllDueBillDays($event)"
+                    >
+                    </p-toggleswitch>
+                  </th>
+                  <th>Period Start</th>
+                  <th>Period End</th>
+                  <th>Term&nbsp;#</th>
+                  <th>Days&nbsp;After&nbsp;End</th>
+                  <th style="width: 9rem">Actions</th>
+                </tr>
+              </ng-template>
 
-  <!-- BODY -->
-  <ng-template #body let-row let-editing="editing" let-ri="rowIndex">
-    <tr [pEditableRow]="row"
-        [ngClass]="{
-          'bg-red-50':
-            lendPeak!.amortization.dueBillDays
-              .isDuplicateTermNumber(row.termNumber),
-          'opacity-40': !row.active
-        }">
+              <!-- BODY -->
+              <ng-template
+                #body
+                let-row
+                let-editing="editing"
+                let-ri="rowIndex"
+              >
+                <tr
+                  [pEditableRow]="row"
+                  [ngClass]="{
+                    'bg-red-50':
+                      lendPeak!.amortization.dueBillDays.isDuplicateTermNumber(
+                        row.termNumber
+                      ),
+                    'opacity-40': !row.active,
+                  }"
+                >
+                  <!-- row toggle -->
+                  <td>
+                    <p-toggleswitch
+                      [(ngModel)]="row.active"
+                      (ngModelChange)="onInputChange($event)"
+                    >
+                    </p-toggleswitch>
+                  </td>
 
-      <!-- row toggle -->
-      <td>
-        <p-toggleswitch
-          [(ngModel)]="row.active"
-          (ngModelChange)="onInputChange($event)">
-        </p-toggleswitch>
-      </td>
+                  <!-- Period dates (read-only) -->
+                  <td>
+                    {{
+                      getStartDateForTerm(row.termNumber).toString()
+                        | date: "MM/dd/yyyy"
+                    }}
+                  </td>
+                  <td>
+                    {{
+                      getEndDateForTerm(row.termNumber).toString()
+                        | date: "MM/dd/yyyy"
+                    }}
+                  </td>
 
-      <!-- Period dates (read-only) -->
-      <td>{{ getStartDateForTerm(row.termNumber).toString() | date:'MM/dd/yyyy' }}</td>
-      <td>{{ getEndDateForTerm(row.termNumber).toString()   | date:'MM/dd/yyyy' }}</td>
+                  <!-- Term # (editable) -->
+                  <td pEditableColumn>
+                    <p-cellEditor>
+                      <ng-template #output>{{ row.termNumber }}</ng-template>
+                      <ng-template #input>
+                        <p-inputNumber
+                          [(ngModel)]="row.termNumber"
+                        ></p-inputNumber>
+                      </ng-template>
+                    </p-cellEditor>
+                  </td>
 
-      <!-- Term # (editable) -->
-      <td pEditableColumn>
-        <p-cellEditor>
-          <ng-template #output>{{ row.termNumber }}</ng-template>
-          <ng-template #input>
-            <p-inputNumber [(ngModel)]="row.termNumber"></p-inputNumber>
-          </ng-template>
-        </p-cellEditor>
-      </td>
+                  <!-- Days after period end (editable) -->
+                  <td pEditableColumn>
+                    <p-cellEditor>
+                      <ng-template #output>{{
+                        row.daysDueAfterPeriodEnd
+                      }}</ng-template>
+                      <ng-template #input>
+                        <p-inputNumber
+                          [(ngModel)]="row.daysDueAfterPeriodEnd"
+                        ></p-inputNumber>
+                      </ng-template>
+                    </p-cellEditor>
+                  </td>
 
-      <!-- Days after period end (editable) -->
-      <td pEditableColumn>
-        <p-cellEditor>
-          <ng-template #output>{{ row.daysDueAfterPeriodEnd }}</ng-template>
-          <ng-template #input>
-            <p-inputNumber [(ngModel)]="row.daysDueAfterPeriodEnd"></p-inputNumber>
-          </ng-template>
-        </p-cellEditor>
-      </td>
+                  <!-- ACTIONS -->
+                  <td class="text-center" style="width: 9rem">
+                    <div class="flex items-center justify-center gap-2">
+                      <!-- view mode -->
+                      <button
+                        *ngIf="!editing"
+                        pButton
+                        pRipple
+                        text
+                        rounded
+                        severity="secondary"
+                        pInitEditableRow
+                        icon="pi pi-pencil"
+                        (click)="onDbdEditInit(row)"
+                        pTooltip="Edit row"
+                      ></button>
 
-      <!-- ACTIONS -->
-      <td class="text-center" style="width:9rem">
-        <div class="flex items-center justify-center gap-2">
-          <!-- view mode -->
-          <button *ngIf="!editing"
-                  pButton pRipple text rounded severity="secondary"
-                  pInitEditableRow
-                  icon="pi pi-pencil"
-                  (click)="onDbdEditInit(row)"
-                  pTooltip="Edit row">
-          </button>
+                      <button
+                        *ngIf="!editing"
+                        pButton
+                        pRipple
+                        text
+                        rounded
+                        severity="danger"
+                        icon="pi pi-trash"
+                        (click)="removeDueBillDayTerm(ri)"
+                        pTooltip="Remove row"
+                      ></button>
 
-          <button *ngIf="!editing"
-                  pButton pRipple text rounded severity="danger"
-                  icon="pi pi-trash"
-                  (click)="removeDueBillDayTerm(ri)"
-                  pTooltip="Remove row">
-          </button>
+                      <!-- edit mode -->
+                      <button
+                        *ngIf="editing"
+                        pButton
+                        pRipple
+                        rounded
+                        severity="success"
+                        pSaveEditableRow
+                        icon="pi pi-check"
+                        (click)="onDbdEditSave(row)"
+                        pTooltip="Save"
+                      ></button>
 
-          <!-- edit mode -->
-          <button *ngIf="editing"
-                  pButton pRipple rounded severity="success"
-                  pSaveEditableRow
-                  icon="pi pi-check"
-                  (click)="onDbdEditSave(row)"
-                  pTooltip="Save">
-          </button>
-
-          <button *ngIf="editing"
-                  pButton pRipple rounded severity="secondary"
-                  pCancelEditableRow
-                  icon="pi pi-times"
-                  (click)="onDbdEditCancel(row, ri)"
-                  pTooltip="Cancel">
-          </button>
-        </div>
-      </td>
-    </tr>
-  </ng-template>
-</p-table>
-
+                      <button
+                        *ngIf="editing"
+                        pButton
+                        pRipple
+                        rounded
+                        severity="secondary"
+                        pCancelEditableRow
+                        icon="pi pi-times"
+                        (click)="onDbdEditCancel(row, ri)"
+                        pTooltip="Cancel"
+                      ></button>
+                    </div>
+                  </td>
+                </tr>
+              </ng-template>
+            </p-table>
 
             <!-- ── Action buttons under table ──────────────────────────────── -->
             <div class="p-mt-2">

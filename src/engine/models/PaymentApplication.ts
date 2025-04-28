@@ -147,46 +147,48 @@ export class PaymentApplication {
         result.unallocatedAmount = Currency.Zero();
       }
 
-      // console.log("deposit after unused amount is being reset", deposit);
+      if (!excessAmount.isZero()) {
+        // console.log("deposit after unused amount is being reset", deposit);
 
-      const dateToApply = this.determineBalanceModificationDate(deposit);
+        const dateToApply = this.determineBalanceModificationDate(deposit);
 
-      const balanceModification = new BalanceModification({
-        id: this.generateUniqueId(),
-        amount: excessAmount.toNumber(),
-        date: dateToApply,
-        isSystemModification: true,
-        type: "decrease",
-        description: `Excess funds applied to principal from deposit ${deposit.id}`,
-        metadata: {
-          depositId: deposit.id,
-        },
-      });
+        const balanceModification = new BalanceModification({
+          id: this.generateUniqueId(),
+          amount: excessAmount.toNumber(),
+          date: dateToApply,
+          isSystemModification: true,
+          type: "decrease",
+          description: `Excess funds applied to principal from deposit ${deposit.id}`,
+          metadata: {
+            depositId: deposit.id,
+          },
+        });
 
-      result.balanceModification = balanceModification;
+        result.balanceModification = balanceModification;
 
-      const usageDetail = new UsageDetail({
-        billId: "Principal Prepayment",
-        period: 0,
-        billDueDate: dateToApply,
-        allocatedPrincipal: excessAmount.toNumber(),
-        allocatedInterest: 0,
-        allocatedFees: 0,
-        date: dateToApply,
-        balanceModification: balanceModification,
-      });
+        const usageDetail = new UsageDetail({
+          billId: "Principal Prepayment",
+          period: 0,
+          billDueDate: dateToApply,
+          allocatedPrincipal: excessAmount.toNumber(),
+          allocatedInterest: 0,
+          allocatedFees: 0,
+          date: dateToApply,
+          balanceModification: balanceModification,
+        });
 
-      this.amortization.balanceModifications.addBalanceModification(balanceModification);
-      // with every balance modification we need to recalculate the amortization plan
-      // past will remain the same, since facts didnt change for the past
-      // but future will change
-      this.amortization.calculateAmortizationPlan();
+        this.amortization.balanceModifications.addBalanceModification(balanceModification);
+        // with every balance modification we need to recalculate the amortization plan
+        // past will remain the same, since facts didnt change for the past
+        // but future will change
+        this.amortization.calculateAmortizationPlan();
 
-      // now after amortization changed, our future bills will change also, so that needs to get regenerated
-      this.bills.regenerateBillsAfterDate(dateToApply);
+        // now after amortization changed, our future bills will change also, so that needs to get regenerated
+        this.bills.regenerateBillsAfterDate(dateToApply);
 
-      deposit.addUsageDetail(usageDetail);
-      deposit.unusedAmount = result.unallocatedAmount;
+        deposit.addUsageDetail(usageDetail);
+        deposit.unusedAmount = result.unallocatedAmount;
+      }
     }
 
     return result;

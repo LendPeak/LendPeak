@@ -1123,28 +1123,30 @@ export class OverridesComponent implements OnInit {
     }
   }
 
-  // Methods related to Fees Per Term
-  addFeePerTerm() {
+  addFeePerTerm(): void {
     if (!this.lendPeak) {
       return;
     }
-    if (!this.lendPeak.amortization.feesPerTerm) {
-      this.lendPeak.amortization.feesPerTerm = FeesPerTerm.empty();
-    }
 
-    this.lendPeak.amortization.feesPerTerm.addFee(
+    const feesPerTerm =
+      this.lendPeak.amortization.feesPerTerm ?? FeesPerTerm.empty();
+    const nextTerm = feesPerTerm.length
+      ? Math.min(
+          feesPerTerm.all
+            .map((tf) => tf.termNumber)
+            .reduce((a, b) => Math.max(a, b)) + 1,
+          this.lendPeak.amortization.term, // never exceed loan term
+        )
+      : 1;
+
+    feesPerTerm.addFee(
       new TermFees({
-        termNumber: 1,
-        fees: [
-          new Fee({
-            type: 'fixed',
-            amount: 0,
-            description: '',
-          }),
-        ],
+        termNumber: nextTerm,
+        fees: [new Fee({ type: 'fixed', amount: 0, description: '' })],
       }),
     );
 
+    this.lendPeak.amortization.feesPerTerm = feesPerTerm;
     this.emitLoanChange();
   }
 

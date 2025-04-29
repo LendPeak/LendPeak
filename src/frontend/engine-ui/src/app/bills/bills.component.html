@@ -221,12 +221,12 @@
                 severity="info"
                 class="status-tag"
               ></p-tag>
-              <p-tag
+              <!-- <p-tag
                 *ngIf="bill.originalTotalDue.isZero()"
                 value="Skip A Pay"
                 severity="secondary"
                 class="status-tag"
-              ></p-tag>
+              ></p-tag> -->
               <p-tag
                 *ngIf="bill.isOpen(snapshotDate)"
                 value="{{ bill.isPaid() ? 'Paid' : 'Unpaid' }}"

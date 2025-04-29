@@ -6,6 +6,24 @@
   appendTo="body"
   [style]="{ width: '80%' }"
 >
+  <!-- ── Helper panel ────────────────────────────────────────────── -->
+  <p-card styleClass="helper-card mb-3 shadow-none surface-800">
+    <ng-template pTemplate="title">
+      <i class="pi pi-info-circle mr-2 text-primary-600"></i>
+      How to use
+    </ng-template>
+
+    <ng-template pTemplate="subtitle">
+      Enter an expression, hit <kbd>Enter</kbd> or click <i>Use&nbsp;result</i>.
+    </ng-template>
+
+    <ul class="helper-list m-0 pl-3 text-sm">
+      <li><code>1000 - 350.75 / 2</code> → <em>824.625</em></li>
+      <li><code>(25 + 5) * 1.07</code> → <em>32.1</em></li>
+      <li><code>max(50,&nbsp;75)</code> → <em>75</em></li>
+    </ul>
+  </p-card>
+
   <div class="p-inputgroup">
     <input
       pInputText

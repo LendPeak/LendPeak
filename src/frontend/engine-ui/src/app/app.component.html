@@ -341,25 +341,69 @@
         </div>
       </div>
     </p-card>
-
-    <!-- Show extra info only when early -->
+    <!-- Early-payoff extra panel -->
     <p-card *ngIf="lendPeak.isEarlyPayoff" styleClass="mb-3">
       <ng-template #header>
         <div class="card-header-container font-semibold text-xl">
-          Early Payoff Details
+          Early&nbsp;Payoff&nbsp;Details
         </div>
       </ng-template>
+
       <div class="grid">
-        <div class="col-6">
-          <strong>Expected Maturity:</strong><br />
-          {{
-            lendPeak.amortization.repaymentSchedule.lastEntry.periodEndDate.toString()
-              | date: "MM/dd/yyyy"
-          }}
+        <!-- Expected maturity -->
+        <div class="col-3">
+          <p-card>
+            <ng-template #header>
+              <div class="card-header-container font-semibold text-xl">
+                Expected&nbsp;Maturity
+              </div>
+            </ng-template>
+            <p class="m-0 text-300 font-semibold text-3xl text-center">
+              {{ lendPeak.expectedMaturity.toString() | date: "MM/dd/yyyy" }}
+            </p>
+          </p-card>
         </div>
-        <div class="col-6">
-          <strong>Paid Off On:</strong><br />
-          {{ lendPeak.depositRecords.lastPaymentDateStr | date: "MM/dd/yyyy" }}
+
+        <!-- Paid off on -->
+        <div class="col-3">
+          <p-card>
+            <ng-template #header>
+              <div class="card-header-container font-semibold text-xl">
+                Paid&nbsp;Off&nbsp;On
+              </div>
+            </ng-template>
+            <p class="m-0 text-300 font-semibold text-3xl text-center">
+              {{ lendPeak.actualPayoff.toString() | date: "MM/dd/yyyy" }}
+            </p>
+          </p-card>
+        </div>
+
+        <!-- Terms saved -->
+        <div class="col-3">
+          <p-card>
+            <ng-template #header>
+              <div class="card-header-container font-semibold text-xl">
+                Terms&nbsp;Saved
+              </div>
+            </ng-template>
+            <p class="m-0 text-300 font-semibold text-3xl text-center">
+              {{ lendPeak.termsSaved }}
+            </p>
+          </p-card>
+        </div>
+
+        <!-- Months saved -->
+        <div class="col-3">
+          <p-card>
+            <ng-template #header>
+              <div class="card-header-container font-semibold text-xl">
+                Months&nbsp;Ahead
+              </div>
+            </ng-template>
+            <p class="m-0 text-300 font-semibold text-3xl text-center">
+              {{ lendPeak.monthsSaved }}
+            </p>
+          </p-card>
         </div>
       </div>
     </p-card>
@@ -443,72 +487,72 @@
       </div>
     </p-card>
 
-<!-- Early-payoff extra panel -->
-<p-card *ngIf="lendPeak.isEarlyPayoff" styleClass="mb-3">
-  <ng-template #header>
-    <div class="card-header-container font-semibold text-xl">
-      Early&nbsp;Payoff&nbsp;Details
-    </div>
-  </ng-template>
+    <!-- Early-payoff extra panel -->
+    <p-card *ngIf="lendPeak.isEarlyPayoff" styleClass="mb-3">
+      <ng-template #header>
+        <div class="card-header-container font-semibold text-xl">
+          Early&nbsp;Payoff&nbsp;Details
+        </div>
+      </ng-template>
 
-  <div class="grid">
-    <!-- Expected maturity -->
-    <div class="col-3">
-      <p-card>
-        <ng-template #header>
-          <div class="card-header-container font-semibold text-xl">
-            Expected&nbsp;Maturity
-          </div>
-        </ng-template>
-        <p class="m-0 text-300 font-semibold text-3xl text-center">
-          {{ lendPeak.expectedMaturity.toString() | date:'MM/dd/yyyy' }}
-        </p>
-      </p-card>
-    </div>
+      <div class="grid">
+        <!-- Expected maturity -->
+        <div class="col-3">
+          <p-card>
+            <ng-template #header>
+              <div class="card-header-container font-semibold text-xl">
+                Expected&nbsp;Maturity
+              </div>
+            </ng-template>
+            <p class="m-0 text-300 font-semibold text-3xl text-center">
+              {{ lendPeak.expectedMaturity.toString() | date: "MM/dd/yyyy" }}
+            </p>
+          </p-card>
+        </div>
 
-    <!-- Paid off on -->
-    <div class="col-3">
-      <p-card>
-        <ng-template #header>
-          <div class="card-header-container font-semibold text-xl">
-            Paid&nbsp;Off&nbsp;On
-          </div>
-        </ng-template>
-        <p class="m-0 text-300 font-semibold text-3xl text-center">
-          {{ lendPeak.actualPayoff.toString() | date:'MM/dd/yyyy' }}
-        </p>
-      </p-card>
-    </div>
+        <!-- Paid off on -->
+        <div class="col-3">
+          <p-card>
+            <ng-template #header>
+              <div class="card-header-container font-semibold text-xl">
+                Paid&nbsp;Off&nbsp;On
+              </div>
+            </ng-template>
+            <p class="m-0 text-300 font-semibold text-3xl text-center">
+              {{ lendPeak.actualPayoff.toString() | date: "MM/dd/yyyy" }}
+            </p>
+          </p-card>
+        </div>
 
-    <!-- Terms saved -->
-    <div class="col-3">
-      <p-card>
-        <ng-template #header>
-          <div class="card-header-container font-semibold text-xl">
-            Terms&nbsp;Saved
-          </div>
-        </ng-template>
-        <p class="m-0 text-300 font-semibold text-3xl text-center">
-          {{ lendPeak.termsSaved }}
-        </p>
-      </p-card>
-    </div>
+        <!-- Terms saved -->
+        <div class="col-3">
+          <p-card>
+            <ng-template #header>
+              <div class="card-header-container font-semibold text-xl">
+                Terms&nbsp;Saved
+              </div>
+            </ng-template>
+            <p class="m-0 text-300 font-semibold text-3xl text-center">
+              {{ lendPeak.termsSaved }}
+            </p>
+          </p-card>
+        </div>
 
-    <!-- Months saved -->
-    <div class="col-3">
-      <p-card>
-        <ng-template #header>
-          <div class="card-header-container font-semibold text-xl">
-            Months&nbsp;Ahead
-          </div>
-        </ng-template>
-        <p class="m-0 text-300 font-semibold text-3xl text-center">
-          {{ lendPeak.monthsSaved }}
-        </p>
-      </p-card>
-    </div>
-  </div>
-</p-card>
+        <!-- Months saved -->
+        <div class="col-3">
+          <p-card>
+            <ng-template #header>
+              <div class="card-header-container font-semibold text-xl">
+                Months&nbsp;Ahead
+              </div>
+            </ng-template>
+            <p class="m-0 text-300 font-semibold text-3xl text-center">
+              {{ lendPeak.monthsSaved }}
+            </p>
+          </p-card>
+        </div>
+      </div>
+    </p-card>
   </div>
 
   <!-- Past Due Bills Status card -->

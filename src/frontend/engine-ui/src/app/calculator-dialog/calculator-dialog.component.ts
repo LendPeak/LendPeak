@@ -1,7 +1,7 @@
 // src/app/calculator-dialog/calculator-dialog.component.ts
 import { Component, EventEmitter, Output } from '@angular/core';
 import { evaluate } from 'mathjs';
-import { DynamicDialogRef } from 'primeng/dynamicdialog';
+import { DynamicDialogRef, DynamicDialogConfig } from 'primeng/dynamicdialog';
 
 @Component({
   selector: 'app-calculator-dialog',
@@ -12,12 +12,22 @@ import { DynamicDialogRef } from 'primeng/dynamicdialog';
 export class CalculatorDialogComponent {
   @Output() accept = new EventEmitter<number>();
 
-  constructor(private ref: DynamicDialogRef) {}
-
   visible = true;
   expr = '';
   result = 0;
   hasError = false;
+
+  constructor(
+    private ref: DynamicDialogRef,
+    private cfg: DynamicDialogConfig,
+  ) {
+    const init = this.cfg.data?.initial;
+    if (init !== undefined && init !== null) {
+      /** if your model is a Currency class, call `.toNumber()` first */
+      this.expr = String(init);
+      this.result = +init;
+    }
+  }
 
   update() {
     try {

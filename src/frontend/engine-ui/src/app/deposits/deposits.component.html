@@ -2,33 +2,29 @@
   <div class="col-12">
     <p-card header="Manage Deposits">
       <p-toolbar styleClass="mb-3 gap-2">
-        <!-- LEFT side – existing actions -->
+        <!-- left: existing actions -->
         <ng-template pTemplate="left">
           <p-button
             label="Add New Deposit"
             icon="pi pi-plus"
-            class="mr-2"
             (click)="openDepositDialog()"
-          ></p-button>
-
+          />
           <p-button
             label="Go to Last Deposit"
             icon="pi pi-arrow-down"
             severity="info"
             (click)="scrollToLastDeposit()"
             [disabled]="lendPeak.depositRecords.length === 0"
-          ></p-button>
-
+          />
           <p-button
             label="Bulk Edit"
             icon="pi pi-pencil"
             class="ml-2 p-button-warning"
             (click)="openBulkEditDialog()"
             [disabled]="lendPeak.depositRecords.length === 0"
-          ></p-button>
+          />
         </ng-template>
 
-        <!-- RIGHT side – NEW CSV actions -->
         <ng-template pTemplate="right">
           <p-button
             icon="pi pi-external-link"
@@ -39,259 +35,280 @@
             severity="help"
             label="Copy As CSV"
             icon="pi pi-copy"
-            class="ml-2 inline-block"
+            class="ml-2"
             (onClick)="copyDepositsAsCSV()"
+          />
+          <p-button
+            icon="pi pi-table"
+            severity="contrast"
+            class="ml-2"
+            (click)="depositColumnsDialog()"
           />
         </ng-template>
       </p-toolbar>
 
+      <!-- Column-picker dialog -->
+      <p-dialog
+        header="Deposit Columns"
+        [modal]="true"
+        [(visible)]="showDepositColumnsDialog"
+        [style]="{ width: '50%' }"
+      >
+        <div class="p-fluid">
+          <p-picklist
+            [source]="availableDepositCols"
+            [target]="selectedDepositCols"
+            [dragdrop]="true"
+            filterBy="header"
+            sourceFilterPlaceholder="Search by name"
+            targetFilterPlaceholder="Search by name"
+            breakpoint="1400px"
+            [sourceStyle]="{ height: '30rem' }"
+            [targetStyle]="{ height: '30rem' }"
+            scrollHeight="30rem"
+          >
+            <ng-template let-col #item>{{ col.header }}</ng-template>
+          </p-picklist>
+        </div>
+        <p-divider></p-divider>
+        <div class="flex justify-content-end gap-2">
+          <p-button
+            label="Cancel"
+            severity="secondary"
+            (click)="showDepositColumnsDialog = false"
+          />
+          <p-button
+            label="Reset"
+            severity="secondary"
+            (click)="resetDepositColumns()"
+          />
+          <p-button label="Save" (click)="saveDepositColumns()" />
+        </div>
+      </p-dialog>
+
       <p-divider></p-divider>
       <div class="p-fluid">
         <p-table
+          *ngIf="lendPeak.depositRecords.length"
           #dtDeposits
-          *ngIf="lendPeak.depositRecords.all.length"
-          [hidden]="!lendPeak.depositRecords.all.length"
           [value]="lendPeak.depositRecords._records"
+          [columns]="selectedDepositCols"
           editMode="cell"
           class="p-datatable-sm"
           [scrollable]="true"
           scrollHeight="600px"
-          sortField="jsEffectiveDate"
-          [sortOrder]="-1"
           [(selection)]="selectedDeposits"
           selectionMode="multiple"
+          sortField="jsEffectiveDate"
+          [sortOrder]="-1"
           stateStorage="session"
         >
-          <ng-template pTemplate="header">
+          <!-- dynamic header -->
+          <!-- header template in your <p-table> -->
+          <ng-template #header let-columns>
             <tr>
-              <th style="width: 3rem">
-                <p-tableHeaderCheckbox></p-tableHeaderCheckbox>
-              </th>
-              <th style="min-width: 9rem">
-                Enabled
-                <p-columnFilter field="active" type="boolean" display="menu">
-                </p-columnFilter>
-              </th>
-              <th pSortableColumn="id">
-                ID
-                <p-columnFilter field="id" type="text" display="menu">
-                </p-columnFilter>
-              </th>
-              <!-- Amount -->
-              <th style="min-width: 10rem">
-                Amount
-                <p-columnFilter
-                  field="jsAmount"
-                  type="numeric"
-                  display="menu"
-                  currency="USD"
-                  class="ml-auto"
-                />
-              </th>
-              <!-- Currency -->
-              <th style="min-width: 10rem">
-                Currency
-                <p-columnFilter field="currency" type="text" display="menu">
-                </p-columnFilter>
-              </th>
-              <!-- Effective Date -->
-              <th pSortableColumn="jsEffectiveDate" style="min-width: 15rem">
-                Effective Date
-                <p-sortIcon field="jsEffectiveDate"></p-sortIcon>
-                <p-columnFilter
-                  field="jsEffectiveDate"
-                  type="date"
-                  display="menu"
-                >
-                </p-columnFilter>
-              </th>
+              <th style="width: 3rem"><p-tableHeaderCheckbox /></th>
 
-              <!-- Clearing Date -->
-              <th pSortableColumn="jsClearingDate" style="min-width: 15rem">
-                Clearing Date <p-sortIcon field="jsClearingDate"></p-sortIcon>
-                <p-columnFilter
-                  field="jsClearingDate"
-                  type="date"
-                  display="menu"
-                >
-                </p-columnFilter>
-              </th>
-              <th style="min-width: 15rem">
-                Unused&nbsp;Amount
-                <p-columnFilter
-                  field="jsUnusedAmount"
-                  type="numeric"
-                  display="menu"
-                >
-                </p-columnFilter>
-              </th>
+              <ng-container *ngFor="let c of columns">
+                <!-- give the directive a field when sortable, otherwise null -->
+                <th [pSortableColumn]="c.sortable ? c.field : null">
+                  <!-- label -->
+                  <span class="p-column-title">{{ c.header }}</span>
 
-              <!-- Apply Excess to Principal -->
-              <th>Apply&nbsp;Excess&nbsp;to&nbsp;Principal</th>
-              <!-- Excess Applied Date -->
-              <th>Excess&nbsp;Applied&nbsp;Date</th>
+                  <!-- chevron (only if sortable) -->
+                  <p-sortIcon *ngIf="c.sortable" [field]="c.field"></p-sortIcon>
+
+                  <!-- funnel (only if filter metadata present) -->
+                  <p-columnFilter
+                    *ngIf="c.filter"
+                    [field]="c.field"
+                    [type]="c.filter"
+                    display="menu"
+                  >
+                  </p-columnFilter>
+                </th>
+              </ng-container>
+
               <th>Actions</th>
             </tr>
           </ng-template>
+          <!-- dynamic body -->
+          <ng-template #body let-row let-columns="columns">
+            <tr [class.selected-row]="isDepositHighlighted(row)">
+              <td style="width: 3rem"><p-tableCheckbox [value]="row" /></td>
 
-          <ng-template pTemplate="body" let-deposit let-rowIndex="rowIndex">
-            <tr
-              #depositRow
-              [class.selected-row]="isDepositHighlighted(deposit)"
-            >
-              <td style="width: 3rem">
-                <p-tableCheckbox [value]="deposit"></p-tableCheckbox>
-              </td>
-              <td>
-                <p-toggleswitch
-                  inputId="active-{{ deposit.id }}"
-                  [(ngModel)]="deposit.active"
-                  (ngModelChange)="depositActiveUpdated()"
-                />
-              </td>
-              <td>
-                <span
-                  [class.opacity-30]="
-                    !deposit.active ||
-                    dateIsInTheFutureFromSnapshotDate(deposit.effectiveDate)
-                  "
-                >
-                  {{ deposit.id }}
-                </span>
-                <!-- Display a badge if there's more than one usage detail -->
-                <p-badge
-                  *ngIf="deposit.usageDetails?.length > 1"
-                  value="{{ deposit.usageDetails.length + ' Bills' }}"
-                  severity="warn"
-                  styleClass="mr-2"
-                  pTooltip="This deposit covers multiple bills"
-                  tooltipPosition="top"
-                ></p-badge>
-                <p-badge
-                  *ngIf="
-                    dateIsInTheFutureFromSnapshotDate(deposit.effectiveDate)
-                  "
-                  value="Future"
-                  severity="warn"
-                  styleClass="mr-2"
-                  pTooltip="Deposit's effective date is after the snapshot date"
-                  tooltipPosition="top"
-                  tooltipStyleClass="wide-tooltip"
-                ></p-badge>
-                <p-badge
-                  *ngIf="!deposit.active"
-                  value="Inactive"
-                  severity="danger"
-                  styleClass="mr-2"
-                  pTooltip="Deposit is inactive"
-                  tooltipPosition="top"
-                  tooltipStyleClass="wide-tooltip"
-                ></p-badge>
-                <p-badge
-                  *ngIf="deposit.staticAllocation"
-                  value="Static"
-                  severity="info"
-                  styleClass="mr-2"
-                  pTooltip="Deposit is using static amounts allocation
-                  Principal: {{
-                    deposit.staticAllocation.jsPrincipal | currency
-                  }}
-                  Interest: {{ deposit.staticAllocation.jsInterest | currency }}
-                  Fees: {{ deposit.staticAllocation.jsFees | currency }}
-                  Prepayment: {{
-                    deposit.staticAllocation.jsPrepayment | currency
-                  }}
-                  "
-                  tooltipPosition="top"
-                  tooltipStyleClass="wide-tooltip"
-                ></p-badge>
-              </td>
-              <td>{{ deposit.jsAmount | currency }}</td>
-              <td>{{ deposit.currency }}</td>
-              <td>
-                {{ deposit.jsEffectiveDate | date: "MM/dd/yyyy" }}
-              </td>
-              <td>{{ deposit.jsClearingDate | date: "MM/dd/yyyy" }}</td>
-              <td>
-                <span
-                  [class.font-semibold]="deposit.unusedAmount.greaterThan(0)"
-                >
-                  {{ deposit.jsUnusedAmount | currency }}
-                </span>
-              </td>
-              <td>
-                <i
-                  class="pi"
-                  [ngClass]="{
-                    'pi-check-circle': deposit.applyExcessToPrincipal,
-                    'pi-minus-circle': !deposit.applyExcessToPrincipal,
-                  }"
-                  [style.color]="
-                    deposit.applyExcessToPrincipal ? 'green' : 'orange'
-                  "
-                ></i>
-                <span *ngIf="deposit.applyExcessToPrincipal">
-                  <p-badge
-                    *ngIf="deposit.excessAmountApplied.greaterThan(0)"
-                    value="Prepayment: {{
-                      deposit.excessAmountApplied.toNumber() | currency
-                    }}"
-                    severity="success"
-                    styleClass="ml-2"
-                    pTooltip="Deposit has pre-payment of {{
-                      deposit.excessAmountApplied.toNumber() | currency
-                    }} applied"
-                    badgeSize="large"
-                    tooltipPosition="top"
-                    tooltipStyleClass="wide-tooltip"
-                  ></p-badge>
-                  <p-badge
-                    *ngIf="deposit.excessAmountApplied.isZero()"
-                    value="No Excess Available"
-                    severity="warn"
-                    styleClass="ml-2"
-                    pTooltip="Deposit has pre-payment of {{
-                      deposit.excessAmountApplied.toNumber() | currency
-                    }} applied"
-                    tooltipPosition="top"
-                    tooltipStyleClass="wide-tooltip"
-                  ></p-badge>
-                </span>
-              </td>
-              <td>
-                <span *ngIf="deposit.balanceModificationId">{{
-                  lendPeak.amortization.balanceModifications.getBalanceModificationById(
-                    deposit.balanceModificationId
-                  )?.jsDate | date: "MM/dd/yyyy"
-                }}</span>
-              </td>
+              <!-- iterate chosen cols -->
+              <ng-container *ngFor="let c of columns">
+                <td [ngSwitch]="c.field">
+                  <!-- add the cases you need; a few common ones shown -->
+                  <ng-container *ngSwitchCase="'active'">
+                    <p-toggleswitch
+                      [(ngModel)]="row.active"
+                      (ngModelChange)="depositActiveUpdated()"
+                    />
+                  </ng-container>
+
+                  <ng-container *ngSwitchCase="'id'">
+                    <span
+                      [class.opacity-30]="
+                        !row.active ||
+                        dateIsInTheFutureFromSnapshotDate(row.effectiveDate)
+                      "
+                    >
+                      {{ row.id }}
+                    </span>
+
+                    <!-- -- multiple-bills badge -->
+                    <p-badge
+                      *ngIf="row.usageDetails?.length > 1"
+                      value="{{ row.usageDetails.length + ' Bills' }}"
+                      severity="warn"
+                      styleClass="mr-2"
+                      pTooltip="This deposit covers multiple bills"
+                      tooltipPosition="top"
+                    ></p-badge>
+
+                    <!-- -- future badge -->
+                    <p-badge
+                      *ngIf="
+                        dateIsInTheFutureFromSnapshotDate(row.effectiveDate)
+                      "
+                      value="Future"
+                      severity="warn"
+                      styleClass="mr-2"
+                      pTooltip="Deposit's effective date is after the snapshot date"
+                      tooltipPosition="top"
+                      tooltipStyleClass="wide-tooltip"
+                    ></p-badge>
+
+                    <!-- -- inactive badge -->
+                    <p-badge
+                      *ngIf="!row.active"
+                      value="Inactive"
+                      severity="danger"
+                      styleClass="mr-2"
+                      pTooltip="Deposit is inactive"
+                      tooltipPosition="top"
+                      tooltipStyleClass="wide-tooltip"
+                    ></p-badge>
+
+                    <!-- -- static-allocation badge -->
+                    <p-badge
+                      *ngIf="row.staticAllocation"
+                      value="Static"
+                      severity="info"
+                      styleClass="mr-2"
+                      pTooltip="Deposit is using static amounts allocation
+              Principal: {{ row.staticAllocation.jsPrincipal | currency }}
+              Interest:  {{ row.staticAllocation.jsInterest | currency }}
+              Fees:      {{ row.staticAllocation.jsFees | currency }}
+              Prepayment:{{ row.staticAllocation.jsPrepayment | currency }}"
+                      tooltipPosition="top"
+                      tooltipStyleClass="wide-tooltip"
+                    ></p-badge>
+                  </ng-container>
+
+                  <ng-container *ngSwitchCase="'amount'">{{
+                    row.jsAmount | currency
+                  }}</ng-container>
+
+                  <ng-container *ngSwitchCase="'jsEffectiveDate'">
+                    {{ row.jsEffectiveDate | date: "MM/dd/yyyy" }}
+                  </ng-container>
+
+                  <ng-container *ngSwitchCase="'jsClearingDate'">
+                    {{ row.jsClearingDate | date: "MM/dd/yyyy" }}
+                  </ng-container>
+
+                  <ng-container *ngSwitchCase="'jsUnusedAmount'">
+                    <span
+                      [class.font-semibold]="row.unusedAmount.greaterThan(0)"
+                    >
+                      {{ row.jsUnusedAmount | currency }}
+                    </span>
+                  </ng-container>
+
+                  <ng-container *ngSwitchCase="'applyExcessToPrincipal'">
+                    <!-- green check  /  orange minus -->
+                    <i
+                      class="pi"
+                      [ngClass]="{
+                        'pi-check-circle': row.applyExcessToPrincipal,
+                        'pi-minus-circle': !row.applyExcessToPrincipal,
+                      }"
+                      [style.color]="
+                        row.applyExcessToPrincipal ? 'green' : 'orange'
+                      "
+                    ></i>
+
+                    <!-- badges only when excess-to-principal is on -->
+                    <span *ngIf="row.applyExcessToPrincipal">
+                      <!-- prepayment amount badge -->
+                      <p-badge
+                        *ngIf="row.excessAmountApplied.greaterThan(0)"
+                        value="Prepayment: {{
+                          row.excessAmountApplied.toNumber() | currency
+                        }}"
+                        severity="success"
+                        badgeSize="large"
+                        styleClass="ml-2"
+                        pTooltip="Deposit has pre-payment of {{
+                          row.excessAmountApplied.toNumber() | currency
+                        }} applied"
+                        tooltipPosition="top"
+                        tooltipStyleClass="wide-tooltip"
+                      ></p-badge>
+
+                      <!-- zero-excess badge -->
+                      <p-badge
+                        *ngIf="row.excessAmountApplied.isZero()"
+                        value="No Excess Available"
+                        severity="warn"
+                        styleClass="ml-2"
+                        pTooltip="Deposit has pre-payment of {{
+                          row.excessAmountApplied.toNumber() | currency
+                        }} applied"
+                        tooltipPosition="top"
+                        tooltipStyleClass="wide-tooltip"
+                      ></p-badge>
+                    </span>
+                  </ng-container>
+
+                  <!-- default -->
+                  <ng-container *ngSwitchDefault>{{
+                    row[c.field]
+                  }}</ng-container>
+                </td>
+              </ng-container>
+
+              <!-- actions col (static) -->
               <td>
                 <div class="action-buttons">
                   <p-button
                     icon="pi pi-pencil"
-                    class="p-button-rounded p-button-warning"
-                    (click)="openDepositDialog(deposit)"
-                    pTooltip="Edit Deposit"
-                    tooltipPosition="top"
+                    severity="warn"
+                    rounded
+                    styleClass="mr-1"
+                    (click)="openDepositDialog(row)"
+                    pTooltip="Edit"
                   ></p-button>
+
                   <p-button
                     icon="pi pi-trash"
-                    class="p-button-rounded"
                     severity="danger"
-                    (click)="removeDeposit(deposit)"
-                    pTooltip="Remove Deposit"
-                    tooltipPosition="top"
+                    rounded
+                    styleClass="mr-1"
+                    (click)="removeDeposit(row)"
+                    pTooltip="Remove"
                   ></p-button>
+
                   <p-button
                     icon="pi pi-eye"
-                    class="p-button-rounded"
                     severity="info"
-                    [disabled]="
-                      !deposit.usageDetails || deposit.usageDetails.length === 0
-                    "
-                    (click)="viewDepositUsageDetails(deposit)"
-                    pTooltip="View Usage Details"
-                    tooltipPosition="top"
+                    rounded
+                    [disabled]="!row.usageDetails?.length"
+                    (click)="viewDepositUsageDetails(row)"
+                    pTooltip="View Usage"
                   ></p-button>
                 </div>
               </td>

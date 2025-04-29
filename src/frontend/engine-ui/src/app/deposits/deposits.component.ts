@@ -29,9 +29,22 @@ import { MessageService } from 'primeng/api';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { CalculatorDialogComponent } from '../calculator-dialog/calculator-dialog.component';
 import { NgModel } from '@angular/forms';
+import {
+  SystemSettingsService,
+  DeveloperModeType,
+} from '../services/system-settings.service';
 
 dayjs.extend(isSameOrBefore);
 dayjs.extend(isBetween);
+
+interface Column {
+  field: string;
+  header: string;
+  default: boolean;
+  filter?: 'text' | 'numeric' | 'boolean' | 'date';
+  sortable?: boolean;
+}
+
 
 @Component({
   selector: 'app-deposits',
@@ -51,10 +64,63 @@ export class DepositsComponent implements OnChanges {
     private cdr: ChangeDetectorRef,
     private messageService: MessageService,
     private dialogSvc: DialogService,
+    private systemSettingsService: SystemSettingsService,
   ) {}
 
   @ViewChildren('depositRow', { read: ElementRef })
   depositRows!: QueryList<ElementRef>;
+
+  /* ── column-picker state ─────────────────────────── */
+  showDepositColumnsDialog = false;
+
+  depositTableCols: Column[] = [
+    { field: 'active', header: 'Enabled', default: true, filter: 'boolean' },
+    {
+      field: 'id',
+      header: 'ID',
+      default: true,
+      filter: 'text',
+      sortable: true,
+    },
+    { field: 'amount', header: 'Amount', default: true, filter: 'numeric' },
+    { field: 'currency', header: 'Currency', default: false, filter: 'text' },
+    {
+      field: 'jsEffectiveDate',
+      header: 'Effective Date',
+      default: true,
+      filter: 'date',
+      sortable: true,
+    },
+    {
+      field: 'jsClearingDate',
+      header: 'Clearing Date',
+      default: false,
+      filter: 'date',
+      sortable: true,
+    },
+    {
+      field: 'jsUnusedAmount',
+      header: 'Unused Amount',
+      default: false,
+      filter: 'numeric',
+    },
+    {
+      field: 'applyExcessToPrincipal',
+      header: 'Apply Excess to Principal',
+      default: false,
+      filter: 'boolean',
+    },
+    {
+      field: 'excessAppliedDate',
+      header: 'Excess Applied Date',
+      default: false,
+      filter: 'date',
+    },
+  ];
+
+  availableDepositCols: Column[] = [];
+  selectedDepositCols: Column[] = [];
+  /* ────────────────────────────────────────────────── */
 
   test: any;
   showDepositDialog: boolean = false;
@@ -93,22 +159,25 @@ export class DepositsComponent implements OnChanges {
   bulkDepositEditAllocationType = false;
   bulkDepositEditApplyExccessToPrincipal = false;
 
-   /** Opens calculator, patches the originating control when user hits “Use result”. */
+  /** Opens calculator, patches the originating control when user hits “Use result”. */
   openCalc(ctrl: NgModel) {
-    const ref: DynamicDialogRef = this.dialogSvc.open(CalculatorDialogComponent, {
-      showHeader: false,
-      dismissableMask: true,
-      styleClass: 'p-fluid',            // shares PrimeFlex spacing
-      data: { initial: ctrl.model }     // optional – preload current value
-    });
+    const ref: DynamicDialogRef = this.dialogSvc.open(
+      CalculatorDialogComponent,
+      {
+        showHeader: false,
+        dismissableMask: true,
+        styleClass: 'p-fluid', // shares PrimeFlex spacing
+        data: { initial: ctrl.model }, // optional – preload current value
+      },
+    );
 
     ref.onClose.subscribe((val: number | undefined) => {
       if (val != null && !isNaN(val)) {
-        ctrl.control.setValue(val);     // ← write result back
+        ctrl.control.setValue(val); // ← write result back
       }
     });
   }
-  
+
   viewBillCard(billId: string) {
     if (!this.lendPeak) {
       return;
@@ -120,10 +189,45 @@ export class DepositsComponent implements OnChanges {
     }
   }
 
+  ngOnInit() {
+    const saved = this.systemSettingsService.getDepositColumns();
+
+    if (saved?.selectedDepositCols?.length) {
+      // enrich each saved column with the missing metadata
+      this.selectedDepositCols = saved.selectedDepositCols.map((sc: any) => {
+        const full = this.depositTableCols.find((d) => d.field === sc.field);
+        return { ...full, ...sc }; // full has filter & sortable
+      });
+
+      this.availableDepositCols = this.depositTableCols.filter(
+        (col) =>
+          !this.selectedDepositCols.some((sel) => sel.field === col.field),
+      );
+    } else {
+      this.resetDepositColumns(); // first-time users
+    }
+  }
+
   ngOnChanges(event: any) {
     if (!this.lendPeak) {
       return;
     }
+  }
+
+  depositColumnsDialog() {
+    this.showDepositColumnsDialog = true;
+  }
+
+  resetDepositColumns() {
+    this.availableDepositCols = this.depositTableCols.filter((c) => !c.default);
+    this.selectedDepositCols = this.depositTableCols.filter((c) => c.default);
+  }
+
+  saveDepositColumns() {
+    this.systemSettingsService.setDepositColumns?.({
+      selectedDepositCols: this.selectedDepositCols,
+    });
+    this.showDepositColumnsDialog = false;
   }
 
   showBulkEditDialog: boolean = false;

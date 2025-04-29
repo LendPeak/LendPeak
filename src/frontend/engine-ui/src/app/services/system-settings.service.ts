@@ -45,6 +45,14 @@ export class SystemSettingsService {
     this.saveToStorage();
   }
 
+  /* ── Deposits column prefs ───────────────────────── */
+  getDepositColumns() {
+    return JSON.parse(localStorage.getItem('depositColumns') || 'null');
+  }
+  setDepositColumns(payload: { selectedDepositCols: any[] }) {
+    localStorage.setItem('depositColumns', JSON.stringify(payload));
+  }
+
   /**
    * Returns the currently selected AI assistant (xAI or OpenAI).
    */

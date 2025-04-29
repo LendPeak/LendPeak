@@ -176,7 +176,7 @@
               <ng-container *ngIf="bill.isPaid() && bill.dateFullySatisfied">
                 <!-- Display date satisfied -->
                 <span class="mr-3">{{
-                  bill.dateFullySatisfied | date: "MM/dd/yyyy"
+                  bill.jsDateFullySatisfied | date: "MM/dd/yyyy"
                 }}</span>
 
                 <!-- Show how many days late/early in a p-tag -->

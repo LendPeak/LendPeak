@@ -1005,6 +1005,20 @@ export class Amortization {
     this._perDiemCalculationType = value;
   }
 
+  /**
+   * True when the last repayment-schedule entry ends before
+   * the original contractual end-date (i.e. before the last
+   * PeriodSchedule entry).  Works even after re-amortization.
+   */
+  get wasPaidEarly(): boolean {
+    if (!this.repaymentSchedule || this.repaymentSchedule.length === 0) return false;
+
+    const actualEnd = this.repaymentSchedule.lastEntry.periodEndDate;
+    const plannedEnd = this.periodsSchedule.lastPeriod.endDate;
+
+    return actualEnd.isBefore(plannedEnd);
+  }
+
   get earlyRepayment() {
     return this._earlyRepayment;
   }

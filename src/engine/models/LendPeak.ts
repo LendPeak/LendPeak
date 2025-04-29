@@ -17,7 +17,7 @@ import { Currency } from "../utils/Currency";
 import { PaymentApplication } from "./PaymentApplication";
 import { PaymentApplicationResult } from "./PaymentApplication/PaymentApplicationResult";
 import { PaymentAllocationStrategyName, PaymentComponent } from "./PaymentApplication/Types";
-import { LocalDate, ZoneId } from "@js-joda/core";
+import { LocalDate, ZoneId, ChronoUnit } from "@js-joda/core";
 
 import Decimal from "decimal.js";
 import dayjs, { Dayjs } from "dayjs";
@@ -371,21 +371,31 @@ export class LendPeak {
     return !this.payoffQuote.unusedAmountFromDeposis.isZero();
   }
 
+  /** Paid in full **and** sooner than the contractual schedule */
   get isEarlyPayoff(): boolean {
-    // must be paid off first
-    if (!this.isPaidInFull) return false;
+    return this.isPaidInFull && this.amortization.wasPaidEarly;
+  }
 
-    // contractual maturity (from amortization schedule)
-    const scheduleEnd = this.amortization.repaymentSchedule.lastEntry.periodEndDate;
+  /** Contractual maturity from the **period plan** */
+  get expectedMaturity(): LocalDate {
+    return this.amortization.periodsSchedule.lastPeriod.endDate;
+  }
 
-    // find the *last* bill that is fully satisfied
-    const satisfied = this.bills.all.filter((b) => b.remainingTotal.isZero()).sort((a, b) => a.period - b.period);
+  /** Last entry in the **repayment** schedule (actual pay-off) */
+  get actualPayoff(): LocalDate {
+    return this.amortization.repaymentSchedule.lastEntry.periodEndDate;
+  }
 
-    if (satisfied.length === 0) return false;
-    const lastSatisfiedEnd = satisfied[satisfied.length - 1].amortizationEntry.periodEndDate;
+  /** How many whole terms were skipped thanks to the early pay-off */
+  get termsSaved(): number {
+    const totalPlanned = this.amortization.term;
+    const totalActual = this.amortization.repaymentSchedule.length;
+    return Math.max(totalPlanned - totalActual, 0);
+  }
 
-    // early payoff only if the satisfied bill ends *before* the contractual end
-    return lastSatisfiedEnd.isBefore(scheduleEnd);
+  /** Calendar-month delta (rounded down) between planned and actual end dates */
+  get monthsSaved(): number {
+    return Math.max(ChronoUnit.MONTHS.between(this.actualPayoff, this.expectedMaturity), 0);
   }
 
   static get DEFAULT_AMORTIZATION_PARAMS(): AmortizationParams {

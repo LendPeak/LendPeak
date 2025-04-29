@@ -14,13 +14,14 @@
       </label>
 
       <p-inputgroup>
+        <p-inputgroup-addon>$</p-inputgroup-addon>
         <p-inputNumber
           inputId="loanAmount"
           [(ngModel)]="lendPeak.amortization.jsLoanAmount"
           (ngModelChange)="inputChanged($event)"
-          mode="currency"
-          currency="USD"
-          locale="en-US"
+          mode="decimal"
+          minFractionDigits="2"
+          maxFractionDigits="2"
           class="w-full"
         ></p-inputNumber>
         <p-inputgroup-addon
@@ -45,15 +46,20 @@
           (click)="showTooltip($event, originationFeeTooltip)"
         ></i>
       </label>
-      <p-inputNumber
-        inputId="originationFee"
-        [(ngModel)]="lendPeak.amortization.jsOriginationFee"
-        (ngModelChange)="inputChanged($event)"
-        mode="currency"
-        currency="USD"
-        locale="en-US"
-        class="w-full"
-      ></p-inputNumber>
+
+      <p-inputgroup>
+        <p-inputgroup-addon>$</p-inputgroup-addon>
+
+        <p-inputNumber
+          inputId="originationFee"
+          [(ngModel)]="lendPeak.amortization.jsOriginationFee"
+          (ngModelChange)="inputChanged($event)"
+          mode="decimal"
+          minFractionDigits="2"
+          maxFractionDigits="2"
+          class="w-full"
+        ></p-inputNumber>
+      </p-inputgroup>
 
       <!-- Popover for Origination Fee Tooltip -->
       <p-popover #originationFeeTooltip>

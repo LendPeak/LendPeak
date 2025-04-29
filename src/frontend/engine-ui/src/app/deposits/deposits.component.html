@@ -316,13 +316,15 @@
       <label for="amount-{{ depositData.id }}">Amount</label>
 
       <p-inputgroup>
+        <p-inputgroup-addon>$</p-inputgroup-addon>
+
         <p-inputNumber
           #amountCtrl="ngModel"
           inputId="amount-{{ depositData.id }}"
           [(ngModel)]="depositData.jsAmount"
-          mode="currency"
-          currency="USD"
-          locale="en-US"
+          mode="decimal"
+          minFractionDigits="2"
+          maxFractionDigits="2"
           (ngModelChange)="onDataChange($event)"
           required
           class="w-full"
@@ -557,68 +559,82 @@
       <div class="formgrid grid">
         <div class="field col">
           <label for="staticPrincipal-{{ depositData.id }}">Principal</label>
-          <p-inputNumber
-            inputId="staticPrincipal-{{ depositData.id }}"
-            [(ngModel)]="depositData.staticAllocation.jsPrincipal"
-            mode="currency"
-            currency="USD"
-            locale="en-US"
-            (ngModelChange)="onDataChange($event)"
-            required
-            class="w-full"
-            inputStyleClass="w-full"
-            [min]="0"
-          ></p-inputNumber>
+          <p-inputgroup>
+            <p-inputgroup-addon>$</p-inputgroup-addon>
+            <p-inputNumber
+              inputId="staticPrincipal-{{ depositData.id }}"
+              [(ngModel)]="depositData.staticAllocation.jsPrincipal"
+              mode="decimal"
+              minFractionDigits="2"
+              maxFractionDigits="2"
+              (ngModelChange)="onDataChange($event)"
+              required
+              class="w-full"
+              inputStyleClass="w-full"
+              [min]="0"
+            ></p-inputNumber>
+          </p-inputgroup>
         </div>
         <div class="field col">
           <label for="staticInterest-{{ depositData.id }}">Interest</label>
-          <p-inputNumber
-            inputId="staticInterest-{{ depositData.id }}"
-            [(ngModel)]="depositData.staticAllocation.jsInterest"
-            mode="currency"
-            currency="USD"
-            locale="en-US"
-            (ngModelChange)="onDataChange($event)"
-            required
-            class="w-full"
-            inputStyleClass="w-full"
-            [min]="0"
-          ></p-inputNumber>
+          <p-inputgroup>
+            <p-inputgroup-addon>$</p-inputgroup-addon>
+            <p-inputNumber
+              inputId="staticInterest-{{ depositData.id }}"
+              [(ngModel)]="depositData.staticAllocation.jsInterest"
+              mode="decimal"
+              minFractionDigits="2"
+              maxFractionDigits="2"
+              (ngModelChange)="onDataChange($event)"
+              required
+              class="w-full"
+              inputStyleClass="w-full"
+              [min]="0"
+            ></p-inputNumber>
+          </p-inputgroup>
         </div>
       </div>
 
       <div class="formgrid grid">
         <div class="field col">
           <label for="staticFees-{{ depositData.id }}">Fees</label>
-          <p-inputNumber
-            inputId="staticFees-{{ depositData.id }}"
-            [(ngModel)]="depositData.staticAllocation.jsFees"
-            mode="currency"
-            currency="USD"
-            locale="en-US"
-            (ngModelChange)="onDataChange($event)"
-            required
-            class="w-full"
-            inputStyleClass="w-full"
-            [min]="0"
-          ></p-inputNumber>
+          <p-inputgroup>
+            <p-inputgroup-addon>$</p-inputgroup-addon>
+            <p-inputNumber
+              inputId="staticFees-{{ depositData.id }}"
+              [(ngModel)]="depositData.staticAllocation.jsFees"
+              mode="decimal"
+              minFractionDigits="2"
+              maxFractionDigits="2"
+              (ngModelChange)="onDataChange($event)"
+              required
+              class="w-full"
+              inputStyleClass="w-full"
+              [min]="0"
+            ></p-inputNumber>
+          </p-inputgroup>
         </div>
         <div class="field col">
           <label for="staticPrepayment-{{ depositData.id }}"
             >Principal Prepayment</label
           >
-          <p-inputNumber
-            inputId="staticPrepayment-{{ depositData.id }}"
-            [(ngModel)]="depositData.staticAllocation.jsPrepayment"
-            mode="currency"
-            currency="USD"
-            locale="en-US"
-            (ngModelChange)="onDataChange($event)"
-            required
-            class="w-full"
-            inputStyleClass="w-full"
-            [min]="0"
-          ></p-inputNumber>
+
+          <p-inputgroup>
+            <p-inputgroup-addon>$</p-inputgroup-addon>
+
+            <p-inputNumber
+              inputId="staticPrepayment-{{ depositData.id }}"
+              [(ngModel)]="depositData.staticAllocation.jsPrepayment"
+              mode="decimal"
+              minFractionDigits="2"
+              maxFractionDigits="2"
+              (ngModelChange)="onDataChange($event)"
+              required
+              class="w-full"
+              inputStyleClass="w-full"
+              [min]="0"
+            ></p-inputNumber>
+          </p-inputgroup>
         </div>
       </div>
     </p-card>

@@ -45,7 +45,6 @@ interface Column {
   sortable?: boolean;
 }
 
-
 @Component({
   selector: 'app-deposits',
   templateUrl: './deposits.component.html',
@@ -82,8 +81,6 @@ export class DepositsComponent implements OnChanges {
       filter: 'text',
       sortable: true,
     },
-    { field: 'amount', header: 'Amount', default: true, filter: 'numeric' },
-    { field: 'currency', header: 'Currency', default: false, filter: 'text' },
     {
       field: 'jsEffectiveDate',
       header: 'Effective Date',
@@ -98,10 +95,13 @@ export class DepositsComponent implements OnChanges {
       filter: 'date',
       sortable: true,
     },
+    { field: 'amount', header: 'Amount', default: true, filter: 'numeric' },
+    { field: 'currency', header: 'Currency', default: false, filter: 'text' },
+
     {
       field: 'jsUnusedAmount',
       header: 'Unused Amount',
-      default: false,
+      default: true,
       filter: 'numeric',
     },
     {
@@ -109,21 +109,21 @@ export class DepositsComponent implements OnChanges {
       header: 'Allocated Total',
       sortable: true,
       filter: 'numeric',
-      default: false,
+      default: true,
     },
     {
       field: 'allocatedPrincipal',
       header: 'Allocated Principal',
       sortable: true,
       filter: 'numeric',
-      default: false,
+      default: true,
     },
     {
       field: 'allocatedInterest',
       header: 'Allocated Interest',
       sortable: true,
       filter: 'numeric',
-      default: false,
+      default: true,
     },
     {
       field: 'allocatedFees',

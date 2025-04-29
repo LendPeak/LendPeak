@@ -503,6 +503,20 @@ export class DepositRecord {
     this.versionChanged();
   }
 
+  /** convenience fields for the datatable */
+  get allocatedPrincipal(): Currency {
+    return this.summary.totalPrincipal;
+  }
+  get allocatedInterest(): Currency {
+    return this.summary.totalInterest;
+  }
+  get allocatedFees(): Currency {
+    return this.summary.totalFees;
+  }
+  get allocatedTotal(): Currency {
+    return this.summary.totalPrincipal.add(this.summary.totalInterest).add(this.summary.totalFees);
+  }
+
   get summary() {
     let total = this.amount;
     let totalUnused = this.unusedAmount;

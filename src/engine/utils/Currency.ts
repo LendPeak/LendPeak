@@ -45,6 +45,11 @@ export class Currency {
     return new Currency(this.value, this.roundingError);
   }
 
+  /** Allows JS/TS to treat Currency like a plain number */
+  valueOf(): number {
+    return this.toNumber();
+  }
+
   get value(): Decimal {
     return this._value;
   }

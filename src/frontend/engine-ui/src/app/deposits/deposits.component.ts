@@ -25,7 +25,7 @@ import { UsageDetail } from 'lendpeak-engine/models/Bill/DepositRecord/UsageDeta
 import { StaticAllocation } from 'lendpeak-engine/models/Bill/DepositRecord/StaticAllocation';
 import { Popover } from 'primeng/popover';
 import { LocalDate, ChronoUnit } from '@js-joda/core';
-import { MessageService } from 'primeng/api';
+import { MessageService, SortEvent } from 'primeng/api';
 import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
 import { CalculatorDialogComponent } from '../calculator-dialog/calculator-dialog.component';
 import { NgModel } from '@angular/forms';
@@ -105,6 +105,34 @@ export class DepositsComponent implements OnChanges {
       filter: 'numeric',
     },
     {
+      field: 'allocatedTotal',
+      header: 'Allocated Total',
+      sortable: true,
+      filter: 'numeric',
+      default: false,
+    },
+    {
+      field: 'allocatedPrincipal',
+      header: 'Allocated Principal',
+      sortable: true,
+      filter: 'numeric',
+      default: false,
+    },
+    {
+      field: 'allocatedInterest',
+      header: 'Allocated Interest',
+      sortable: true,
+      filter: 'numeric',
+      default: false,
+    },
+    {
+      field: 'allocatedFees',
+      header: 'Allocated Fees',
+      sortable: true,
+      filter: 'numeric',
+      default: false,
+    },
+    {
       field: 'applyExcessToPrincipal',
       header: 'Apply Excess to Principal',
       default: false,
@@ -158,6 +186,23 @@ export class DepositsComponent implements OnChanges {
   showBillCardDialog = false;
   bulkDepositEditAllocationType = false;
   bulkDepositEditApplyExccessToPrincipal = false;
+
+  currencySort(event: SortEvent) {
+    const field = event.field as keyof DepositRecord;
+
+    event.data?.sort(
+      (a: any, b: any) =>
+        (a[field] as Currency).toNumber() - (b[field] as Currency).toNumber(),
+    );
+  }
+
+  currencyFilter(value: Currency, filter: any /* string from input */) {
+    if (filter === undefined || filter === null || filter === '') return true;
+
+    const numFilter = +filter; // cast to number
+    // default “equals”; change to >=, <=, etc. as you wish
+    return value.toNumber() === numFilter;
+  }
 
   /** Opens calculator, patches the originating control when user hits “Use result”. */
   openCalc(ctrl: NgModel) {

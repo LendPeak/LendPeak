@@ -231,6 +231,22 @@ export class DepositRecords {
       { h: "Currency", v: (d: DepositRecord) => d.currency },
       { h: "Effective Date", v: (d: DepositRecord) => d.effectiveDate.toString() },
       { h: "Clearing Date", v: (d: DepositRecord) => (d.clearingDate ? d.clearingDate.toString() : "") },
+      {
+        h: "Allocated Total",
+        v: (d: DepositRecord) => d.allocatedTotal.getRoundedValue(roundingPrecision),
+      },
+      {
+        h: "Allocated Principal",
+        v: (d: DepositRecord) => d.allocatedPrincipal.getRoundedValue(roundingPrecision),
+      },
+      {
+        h: "Allocated Interest",
+        v: (d: DepositRecord) => d.allocatedInterest.getRoundedValue(roundingPrecision),
+      },
+      {
+        h: "Allocated Fees",
+        v: (d: DepositRecord) => d.allocatedFees.getRoundedValue(roundingPrecision),
+      },
       { h: "Unused Amount", v: (d: DepositRecord) => d.unusedAmount.getRoundedValue(roundingPrecision) },
       { h: "Apply Excess To Principal", v: (d: DepositRecord) => (d.applyExcessToPrincipal ? "Yes" : "No") },
       { h: "Excess Applied Date", v: (d: DepositRecord) => (d.excessAppliedDate ? d.excessAppliedDate.toString() : "") },
@@ -261,7 +277,7 @@ export class DepositRecords {
       totalInterest = totalInterest.add(s.totalInterest);
       totalFees = totalFees.add(s.totalFees);
       totalPrincipal = totalPrincipal.add(s.totalPrincipal);
-      totalUnused = totalUnused.add(s.totalUnused); 
+      totalUnused = totalUnused.add(s.totalUnused);
     });
 
     return {
@@ -269,7 +285,7 @@ export class DepositRecords {
       totalInterest,
       totalFees,
       totalPrincipal,
-      totalUnused, 
+      totalUnused,
     };
   }
 

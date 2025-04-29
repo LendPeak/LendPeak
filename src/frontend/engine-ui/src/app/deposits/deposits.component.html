@@ -220,6 +220,22 @@
                     {{ row.jsClearingDate | date: "MM/dd/yyyy" }}
                   </ng-container>
 
+                  <ng-container *ngSwitchCase="'allocatedTotal'">
+                    {{ row.allocatedTotal.toNumber() | currency }}
+                  </ng-container>
+
+                  <ng-container *ngSwitchCase="'allocatedPrincipal'">
+                    {{ row.allocatedPrincipal.toNumber() | currency }}
+                  </ng-container>
+
+                  <ng-container *ngSwitchCase="'allocatedInterest'">
+                    {{ row.allocatedInterest.toNumber() | currency }}
+                  </ng-container>
+
+                  <ng-container *ngSwitchCase="'allocatedFees'">
+                    {{ row.allocatedFees.toNumber() | currency }}
+                  </ng-container>
+
                   <ng-container *ngSwitchCase="'jsUnusedAmount'">
                     <span
                       [class.font-semibold]="row.unusedAmount.greaterThan(0)"

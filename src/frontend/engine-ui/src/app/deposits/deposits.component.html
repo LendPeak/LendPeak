@@ -314,17 +314,26 @@
   <div class="p-grid p-nogutter" *ngIf="depositData">
     <div class="field">
       <label for="amount-{{ depositData.id }}">Amount</label>
-      <p-inputNumber
-        inputId="amount-{{ depositData.id }}"
-        [(ngModel)]="depositData.jsAmount"
-        mode="currency"
-        currency="USD"
-        locale="en-US"
-        (ngModelChange)="onDataChange($event)"
-        required
-        class="w-full"
-        inputStyleClass="w-full"
-      ></p-inputNumber>
+
+      <p-inputgroup>
+        <p-inputNumber
+          #amountCtrl="ngModel"
+          inputId="amount-{{ depositData.id }}"
+          [(ngModel)]="depositData.jsAmount"
+          mode="currency"
+          currency="USD"
+          locale="en-US"
+          (ngModelChange)="onDataChange($event)"
+          required
+          class="w-full"
+          inputStyleClass="w-full"
+        ></p-inputNumber>
+
+        <!-- calculator toggle -->
+        <p-inputgroup-addon (click)="openCalc(amountCtrl)">
+          <i class="pi pi-calculator"></i>
+        </p-inputgroup-addon>
+      </p-inputgroup>
     </div>
     <div class="formgrid grid">
       <div class="field col">

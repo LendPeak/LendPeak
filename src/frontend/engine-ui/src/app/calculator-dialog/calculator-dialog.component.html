@@ -1,0 +1,34 @@
+<p-dialog
+  header="Calculator"
+  [(visible)]="visible"
+  [modal]="true"
+  [closable]="true"
+  appendTo="body"
+  [style]="{ width: '80%' }"
+>
+  <div class="p-inputgroup">
+    <input
+      pInputText
+      [(ngModel)]="expr"
+      (ngModelChange)="update()"
+      placeholder="Type 5*12 - 7%"
+    />
+    <p-inputgroup-addon>=</p-inputgroup-addon>
+    <input pInputText [value]="result" disabled />
+  </div>
+
+  <ng-template pTemplate="footer">
+    <p-button
+      label="Use result"
+      icon="pi pi-check"
+      (click)="apply()"
+      [disabled]="hasError"
+    />
+    <p-button
+      label="Close"
+      icon="pi pi-times"
+      class="p-button-text"
+      (click)="close()"
+    />
+  </ng-template>
+</p-dialog>

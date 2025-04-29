@@ -73,6 +73,7 @@ import { FinancialOpsHistoryComponent } from './financial-ops-history/financial-
 import { ValueRendererComponent } from './value-renderer/value-renderer.component';
 
 import { SystemSettingsComponent } from './system-settings/system-settings.component';
+import { CalculatorDialogComponent  } from './calculator-dialog/calculator-dialog.component';
 
 import { HighlightModule, LineNumbersOptions } from 'ngx-highlightjs';
 import { provideHighlightOptions } from 'ngx-highlightjs';
@@ -86,6 +87,7 @@ import Aura from '@primeng/themes/aura';
 
 import { IconField } from 'primeng/iconfield';
 import { InputIcon } from 'primeng/inputicon';
+import { DynamicDialogModule, DialogService } from 'primeng/dynamicdialog';
 
 import {
   provideHttpClient,
@@ -109,8 +111,10 @@ import {
     ValueRendererComponent,
     SystemSettingsComponent,
     FinancialOpsHistoryComponent,
+    CalculatorDialogComponent,
   ],
   imports: [
+    DynamicDialogModule,
     BrowserModule,
     BrowserAnimationsModule,
     ProgressSpinnerModule,
@@ -162,6 +166,7 @@ import {
     RouterModule.forRoot([]),
   ],
   providers: [
+    DialogService,
     AdvancedSettingsService,
     OverrideSettingsService,
     LoanProService,

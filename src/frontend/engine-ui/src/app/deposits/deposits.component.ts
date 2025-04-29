@@ -26,6 +26,9 @@ import { StaticAllocation } from 'lendpeak-engine/models/Bill/DepositRecord/Stat
 import { Popover } from 'primeng/popover';
 import { LocalDate, ChronoUnit } from '@js-joda/core';
 import { MessageService } from 'primeng/api';
+import { DialogService, DynamicDialogRef } from 'primeng/dynamicdialog';
+import { CalculatorDialogComponent } from '../calculator-dialog/calculator-dialog.component';
+import { NgModel } from '@angular/forms';
 
 dayjs.extend(isSameOrBefore);
 dayjs.extend(isBetween);
@@ -47,6 +50,7 @@ export class DepositsComponent implements OnChanges {
   constructor(
     private cdr: ChangeDetectorRef,
     private messageService: MessageService,
+    private dialogSvc: DialogService,
   ) {}
 
   @ViewChildren('depositRow', { read: ElementRef })
@@ -89,6 +93,22 @@ export class DepositsComponent implements OnChanges {
   bulkDepositEditAllocationType = false;
   bulkDepositEditApplyExccessToPrincipal = false;
 
+   /** Opens calculator, patches the originating control when user hits “Use result”. */
+  openCalc(ctrl: NgModel) {
+    const ref: DynamicDialogRef = this.dialogSvc.open(CalculatorDialogComponent, {
+      showHeader: false,
+      dismissableMask: true,
+      styleClass: 'p-fluid',            // shares PrimeFlex spacing
+      data: { initial: ctrl.model }     // optional – preload current value
+    });
+
+    ref.onClose.subscribe((val: number | undefined) => {
+      if (val != null && !isNaN(val)) {
+        ctrl.control.setValue(val);     // ← write result back
+      }
+    });
+  }
+  
   viewBillCard(billId: string) {
     if (!this.lendPeak) {
       return;

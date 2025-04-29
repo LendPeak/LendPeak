@@ -106,4 +106,8 @@ export class StaticAllocation {
     this.fees = this.jsFees;
     this.prepayment = this.jsPrepayment;
   }
+
+  toCode() {
+    return `new StaticAllocation(${this.json})`;  
+  }
 }

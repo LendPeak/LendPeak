@@ -269,6 +269,203 @@
 
   <!-- Repayment Plan at the Bottom -->
 
+  <!-- ✅ PAID IN FULL — NO OVERPAYMENT (GREEN) -->
+  <div *ngIf="lendPeak.isPaidInFull && !lendPeak.hasOverpayment">
+    <div class="col-12">
+      <div
+        class="w-full p-4 text-lg text-center shadow-2 border-top-3 border-green-400"
+      >
+        <span class="font-bold text-100 text-2xl">Contract Paid In Full</span>
+      </div>
+    </div>
+
+    <p-card styleClass="mb-3">
+      <div class="grid">
+        <!-- Last Payment Date -->
+        <div class="col-3">
+          <p-card>
+            <ng-template #header>
+              <div class="card-header-container font-semibold text-xl">
+                Last Payment Date
+              </div>
+            </ng-template>
+            <p class="m-0 text-300 font-semibold text-3xl text-center">
+              {{ lendPeak.depositRecords.lastPaymentDateStr || "—" }}
+            </p>
+          </p-card>
+        </div>
+
+        <!-- Last Payment Amount -->
+        <div class="col-3">
+          <p-card>
+            <ng-template #header>
+              <div class="card-header-container font-semibold text-xl">
+                Last Payment Amount
+              </div>
+            </ng-template>
+            <p class="m-0 text-300 font-semibold text-3xl text-center">
+              {{
+                lendPeak.depositRecords.lastPaymentAmt
+                  | currency: "USD" : "symbol" : "1.0-2"
+              }}
+            </p>
+          </p-card>
+        </div>
+
+        <!-- Last Satisfied Bill -->
+        <div class="col-3">
+          <p-card>
+            <ng-template #header>
+              <div class="card-header-container font-semibold text-xl">
+                Last Satisfied Bill
+              </div>
+            </ng-template>
+            <p class="m-0 text-300 font-semibold text-3xl text-center">
+              {{ lendPeak.bills.lastSatisfiedBillNo || "—" }}
+            </p>
+          </p-card>
+        </div>
+
+        <!-- Early Payoff? -->
+        <div class="col-3">
+          <p-card>
+            <ng-template #header>
+              <div class="card-header-container font-semibold text-xl">
+                Early&nbsp;Payoff
+              </div>
+            </ng-template>
+            <p class="m-0 text-300 font-semibold text-3xl text-center">
+              {{ lendPeak.isEarlyPayoff ? "Yes" : "No" }}
+            </p>
+          </p-card>
+        </div>
+      </div>
+    </p-card>
+
+    <!-- Show extra info only when early -->
+    <p-card *ngIf="lendPeak.isEarlyPayoff" styleClass="mb-3">
+      <ng-template #header>
+        <div class="card-header-container font-semibold text-xl">
+          Early Payoff Details
+        </div>
+      </ng-template>
+      <div class="grid">
+        <div class="col-6">
+          <strong>Expected Maturity:</strong><br />
+          {{
+            lendPeak.amortization.repaymentSchedule.lastEntry.periodEndDate.toString()
+              | date: "MM/dd/yyyy"
+          }}
+        </div>
+        <div class="col-6">
+          <strong>Paid Off On:</strong><br />
+          {{ lendPeak.depositRecords.lastPaymentDateStr | date: "MM/dd/yyyy" }}
+        </div>
+      </div>
+    </p-card>
+  </div>
+
+  <!-- ⚠️ PAID IN FULL — OVERPAYMENT (YELLOW) -->
+  <div *ngIf="lendPeak.isPaidInFull && lendPeak.hasOverpayment">
+    <div class="col-12">
+      <div
+        class="w-full p-4 text-lg text-center shadow-2 border-top-3 border-yellow-400"
+      >
+        <span class="font-bold text-100 text-2xl"
+          >Paid In Full — Overpayment Detected</span
+        >
+      </div>
+    </div>
+
+    <p-card styleClass="mb-3">
+      <div class="grid">
+        <!-- Overpayment Amount -->
+        <div class="col-3">
+          <p-card>
+            <ng-template #header>
+              <div class="card-header-container font-semibold text-xl">
+                Overpayment Amount
+              </div>
+            </ng-template>
+            <p class="m-0 text-300 font-bold text-3xl text-center">
+              {{
+                lendPeak.payoffQuote.unusedAmountFromDeposis.toNumber()
+                  | currency
+              }}
+            </p>
+          </p-card>
+        </div>
+
+        <!-- Last Payment Date -->
+        <div class="col-3">
+          <p-card>
+            <ng-template #header>
+              <div class="card-header-container font-semibold text-xl">
+                Last Payment Date
+              </div>
+            </ng-template>
+            <p class="m-0 text-300 font-semibold text-3xl text-center">
+              {{ lendPeak.depositRecords.lastPaymentDateStr || "—" }}
+            </p>
+          </p-card>
+        </div>
+
+        <!-- Last Payment Amount -->
+        <div class="col-3">
+          <p-card>
+            <ng-template #header>
+              <div class="card-header-container font-semibold text-xl">
+                Last Payment Amount
+              </div>
+            </ng-template>
+            <p class="m-0 text-300 font-semibold text-3xl text-center">
+              {{
+                lendPeak.depositRecords.lastPaymentAmt
+                  | currency: "USD" : "symbol" : "1.0-2"
+              }}
+            </p>
+          </p-card>
+        </div>
+
+        <!-- Early Payoff? -->
+        <div class="col-3">
+          <p-card>
+            <ng-template #header>
+              <div class="card-header-container font-semibold text-xl">
+                Early&nbsp;Payoff
+              </div>
+            </ng-template>
+            <p class="m-0 text-300 font-semibold text-3xl text-center">
+              {{ lendPeak.isEarlyPayoff ? "Yes" : "No" }}
+            </p>
+          </p-card>
+        </div>
+      </div>
+    </p-card>
+
+    <!-- extra info only when early -->
+    <p-card *ngIf="lendPeak.isEarlyPayoff" styleClass="mb-3">
+      <ng-template #header>
+        <div class="card-header-container font-semibold text-xl">
+          Early Payoff Details
+        </div>
+      </ng-template>
+      <div class="grid">
+        <div class="col-6">
+          <strong>Expected Maturity:</strong><br />
+          {{
+            lendPeak.amortization.repaymentSchedule.lastEntry.periodEndDate.toString()
+              | date: "MM/dd/yyyy"
+          }}
+        </div>
+        <div class="col-6">
+          <strong>Paid Off On:</strong><br />
+          {{ lendPeak.depositRecords.lastPaymentDateStr | date: "MM/dd/yyyy" }}
+        </div>
+      </div>
+    </p-card>
+  </div>
+
   <!-- Past Due Bills Status card -->
   <div *ngIf="lendPeak.bills.summary.billsPastDue > 0">
     <div class="col-12">
@@ -470,7 +667,11 @@
               />
               <p-tag
                 class="ml-4"
-                [severity]="lendPeak.payoffQuote.unusedAmountFromDeposis.isZero() ? 'secondary' : 'danger'"
+                [severity]="
+                  lendPeak.payoffQuote.unusedAmountFromDeposis.isZero()
+                    ? 'secondary'
+                    : 'danger'
+                "
                 value="Unused Amount: {{
                   lendPeak.payoffQuote.unusedAmountFromDeposis.toNumber()
                     | currency

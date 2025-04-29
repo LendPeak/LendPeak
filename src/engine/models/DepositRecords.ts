@@ -151,11 +151,7 @@ export class DepositRecords {
   }
 
   get unusedAmount(): Currency {
-    let total = Currency.of(0);
-    this.active.forEach((record) => {
-      total = total.add(record.unusedAmount);
-    });
-    return total;
+    return this.active.reduce((sum, r) => sum.add(r.unusedAmount), Currency.Zero());
   }
 
   get allSorted(): DepositRecord[] {
@@ -174,6 +170,14 @@ export class DepositRecords {
     this._records = this._records.sort((a, b) => {
       return a.effectiveDate.isBefore(b.effectiveDate) ? -1 : 1;
     });
+  }
+
+  /** convenience stats for the two new cards */
+  get lastPaymentDateStr(): string | null {
+    return this.lastActive ? this.lastActive.effectiveDate.toString() : null;
+  }
+  get lastPaymentAmt(): number {
+    return this.lastActive ? this.lastActive.amount.toNumber() : 0;
   }
 
   get all(): DepositRecord[] {
@@ -214,6 +218,36 @@ export class DepositRecords {
     );
   }
 
+  /**
+   * Creates a CSV dump of every deposit record (active + inactive, sorted).
+   * You can pass a rounding precision (defaults to 2).
+   */
+  exportToCSV(roundingPrecision = 2): string {
+    if (this.length === 0) return "";
+
+    const cols = [
+      { h: "ID", v: (d: DepositRecord) => d.id },
+      { h: "Amount", v: (d: DepositRecord) => d.amount.getRoundedValue(roundingPrecision) },
+      { h: "Currency", v: (d: DepositRecord) => d.currency },
+      { h: "Effective Date", v: (d: DepositRecord) => d.effectiveDate.toString() },
+      { h: "Clearing Date", v: (d: DepositRecord) => (d.clearingDate ? d.clearingDate.toString() : "") },
+      { h: "Unused Amount", v: (d: DepositRecord) => d.unusedAmount.getRoundedValue(roundingPrecision) },
+      { h: "Apply Excess To Principal", v: (d: DepositRecord) => (d.applyExcessToPrincipal ? "Yes" : "No") },
+      { h: "Excess Applied Date", v: (d: DepositRecord) => (d.excessAppliedDate ? d.excessAppliedDate.toString() : "") },
+      { h: "Active", v: (d: DepositRecord) => (d.active ? "Yes" : "No") },
+    ];
+
+    const esc = (s: any) => {
+      let str = String(s);
+      if (str.includes('"')) str = str.replace(/"/g, '""');
+      return /[",\n]/.test(str) ? `"${str}"` : str;
+    };
+
+    const header = cols.map((c) => c.h).join(",");
+    const rows = this.allSorted.map((d) => cols.map((c) => esc(c.v(d))).join(","));
+    return [header, ...rows].join("\n");
+  }
+
   get summary() {
     let total = Currency.of(0);
     let totalInterest = Currency.of(0);
@@ -222,19 +256,20 @@ export class DepositRecords {
     let totalUnused = Currency.of(0);
 
     this.active.forEach((record) => {
-      const recordSummary = record.summary;
-      total = total.add(recordSummary.total);
-      totalInterest = totalInterest.add(recordSummary.totalInterest);
-      totalFees = totalFees.add(recordSummary.totalFees);
-      totalPrincipal = totalPrincipal.add(recordSummary.totalPrincipal);
+      const s = record.summary;
+      total = total.add(s.total);
+      totalInterest = totalInterest.add(s.totalInterest);
+      totalFees = totalFees.add(s.totalFees);
+      totalPrincipal = totalPrincipal.add(s.totalPrincipal);
+      totalUnused = totalUnused.add(s.totalUnused); 
     });
 
     return {
-      total: total,
-      totalInterest: totalInterest,
-      totalFees: totalFees,
-      totalPrincipal: totalPrincipal,
-      totalUnused: totalUnused,
+      total,
+      totalInterest,
+      totalFees,
+      totalPrincipal,
+      totalUnused, 
     };
   }
 
@@ -244,5 +279,9 @@ export class DepositRecords {
 
   get json() {
     return this._records.map((r) => r.json);
+  }
+
+  toCode() {
+    return this._records.map((r) => r.toCode()).join(",\n");
   }
 }

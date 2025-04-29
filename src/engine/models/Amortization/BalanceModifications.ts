@@ -29,7 +29,6 @@ export class BalanceModifications {
       })
       .filter((bm) => bm.amount.greaterThan(0) && bm.isSystemModification !== true)
       .sort((a, b) => ChronoUnit.DAYS.between(a.date, b.date));
-
   }
 
   get lastModification(): BalanceModification | undefined {
@@ -140,6 +139,15 @@ export class BalanceModifications {
 
   get length() {
     return this._balanceModifications.length;
+  }
+
+  toCode() {
+    // we dont want system generated balance modifications
+    return this._balanceModifications
+      .filter((bm) => bm.isSystemModification !== true)
+      .map((bm) => {
+        return `new BalanceModification(${JSON.stringify(bm.json)})`;
+      });
   }
 
   printToConsole() {

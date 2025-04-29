@@ -363,6 +363,31 @@ export class LendPeak {
     }
   }
 
+  /** basic state flags */
+  get isPaidInFull(): boolean {
+    return this.payoffQuote.dueTotal.isZero();
+  }
+  get hasOverpayment(): boolean {
+    return !this.payoffQuote.unusedAmountFromDeposis.isZero();
+  }
+
+  get isEarlyPayoff(): boolean {
+    // must be paid off first
+    if (!this.isPaidInFull) return false;
+
+    // contractual maturity (from amortization schedule)
+    const scheduleEnd = this.amortization.repaymentSchedule.lastEntry.periodEndDate;
+
+    // find the *last* bill that is fully satisfied
+    const satisfied = this.bills.all.filter((b) => b.remainingTotal.isZero()).sort((a, b) => a.period - b.period);
+
+    if (satisfied.length === 0) return false;
+    const lastSatisfiedEnd = satisfied[satisfied.length - 1].amortizationEntry.periodEndDate;
+
+    // early payoff only if the satisfied bill ends *before* the contractual end
+    return lastSatisfiedEnd.isBefore(scheduleEnd);
+  }
+
   static get DEFAULT_AMORTIZATION_PARAMS(): AmortizationParams {
     const defaultAmortizationParams: AmortizationParams = {
       name: "Default Loan",
@@ -567,5 +592,10 @@ export class LendPeak {
       amortization: new Amortization(LendPeak.DEFAULT_AMORTIZATION_PARAMS),
     });
     return lendPeak;
+  }
+
+  toCode() {
+    // we will return toCode from amortization and from deposits for now
+    return this.depositRecords.toCode();
   }
 }

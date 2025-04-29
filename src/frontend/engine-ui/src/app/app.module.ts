@@ -84,6 +84,9 @@ import { providePrimeNG } from 'primeng/config';
 import Lara from '@primeng/themes/lara';
 import Aura from '@primeng/themes/aura';
 
+import { IconField } from 'primeng/iconfield';
+import { InputIcon } from 'primeng/inputicon';
+
 import {
   provideHttpClient,
   withInterceptorsFromDi,
@@ -153,6 +156,8 @@ import {
     HighlightModule,
     ConfirmDialogModule,
     TimelineModule,
+    IconField,
+    InputIcon,
     MarkdownModule.forRoot(),
     RouterModule.forRoot([]),
   ],

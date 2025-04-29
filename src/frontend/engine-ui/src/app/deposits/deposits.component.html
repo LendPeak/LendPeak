@@ -1,35 +1,56 @@
 <div class="grid" *ngIf="lendPeak">
   <div class="col-12">
     <p-card header="Manage Deposits">
-      <div class="p-mb-3">
-        <p-button
-          label="Add New Deposit"
-          icon="pi pi-plus"
-          class="mr-2"
-          (click)="openDepositDialog()"
-        ></p-button>
-        <p-button
-          [hidden]="this.lendPeak.depositRecords.length === 0"
-          label="Go to Last Deposit"
-          icon="pi pi-arrow-down"
-          severity="info"
-          (click)="scrollToLastDeposit()"
-          pTooltip="Scroll to the last deposit and highlight it"
-        ></p-button>
+      <p-toolbar styleClass="mb-3 gap-2">
+        <!-- LEFT side – existing actions -->
+        <ng-template pTemplate="left">
+          <p-button
+            label="Add New Deposit"
+            icon="pi pi-plus"
+            class="mr-2"
+            (click)="openDepositDialog()"
+          ></p-button>
 
-        <p-button
-          label="Bulk Edit"
-          icon="pi pi-pencil"
-          class="ml-2 p-button-warning"
-          (click)="openBulkEditDialog()"
-          [disabled]="lendPeak.depositRecords.length === 0"
-        ></p-button>
-      </div>
+          <p-button
+            label="Go to Last Deposit"
+            icon="pi pi-arrow-down"
+            severity="info"
+            (click)="scrollToLastDeposit()"
+            [disabled]="lendPeak.depositRecords.length === 0"
+          ></p-button>
+
+          <p-button
+            label="Bulk Edit"
+            icon="pi pi-pencil"
+            class="ml-2 p-button-warning"
+            (click)="openBulkEditDialog()"
+            [disabled]="lendPeak.depositRecords.length === 0"
+          ></p-button>
+        </ng-template>
+
+        <!-- RIGHT side – NEW CSV actions -->
+        <ng-template pTemplate="right">
+          <p-button
+            icon="pi pi-external-link"
+            label="Download"
+            (onClick)="downloadDepositsAsCSV()"
+          />
+          <p-button
+            severity="help"
+            label="Copy As CSV"
+            icon="pi pi-copy"
+            class="ml-2 inline-block"
+            (onClick)="copyDepositsAsCSV()"
+          />
+        </ng-template>
+      </p-toolbar>
+
       <p-divider></p-divider>
       <div class="p-fluid">
         <p-table
-          *ngIf="this.lendPeak.depositRecords.all.length > 0"
-          [hidden]="this.lendPeak.depositRecords.all.length === 0"
+          #dtDeposits
+          *ngIf="lendPeak.depositRecords.all.length"
+          [hidden]="!lendPeak.depositRecords.all.length"
           [value]="lendPeak.depositRecords._records"
           editMode="cell"
           class="p-datatable-sm"
@@ -39,28 +60,80 @@
           [sortOrder]="-1"
           [(selection)]="selectedDeposits"
           selectionMode="multiple"
+          stateStorage="session"
         >
           <ng-template pTemplate="header">
             <tr>
               <th style="width: 3rem">
                 <p-tableHeaderCheckbox></p-tableHeaderCheckbox>
               </th>
-              <th>Enable</th>
-              <th>ID</th>
-              <th>Amount</th>
-              <th>Currency</th>
-              <th pSortableColumn="jsEffectiveDate">
-                Effective Date <p-sortIcon field="jsEffectiveDate"></p-sortIcon>
+              <th style="min-width: 9rem">
+                Enabled
+                <p-columnFilter field="active" type="boolean" display="menu">
+                </p-columnFilter>
               </th>
-              <th pSortableColumn="jsClearingDate">
+              <th pSortableColumn="id">
+                ID
+                <p-columnFilter field="id" type="text" display="menu">
+                </p-columnFilter>
+              </th>
+              <!-- Amount -->
+              <th style="min-width: 10rem">
+                Amount
+                <p-columnFilter
+                  field="jsAmount"
+                  type="numeric"
+                  display="menu"
+                  currency="USD"
+                  class="ml-auto"
+                />
+              </th>
+              <!-- Currency -->
+              <th style="min-width: 10rem">
+                Currency
+                <p-columnFilter field="currency" type="text" display="menu">
+                </p-columnFilter>
+              </th>
+              <!-- Effective Date -->
+              <th pSortableColumn="jsEffectiveDate" style="min-width: 15rem">
+                Effective Date
+                <p-sortIcon field="jsEffectiveDate"></p-sortIcon>
+                <p-columnFilter
+                  field="jsEffectiveDate"
+                  type="date"
+                  display="menu"
+                >
+                </p-columnFilter>
+              </th>
+
+              <!-- Clearing Date -->
+              <th pSortableColumn="jsClearingDate" style="min-width: 15rem">
                 Clearing Date <p-sortIcon field="jsClearingDate"></p-sortIcon>
+                <p-columnFilter
+                  field="jsClearingDate"
+                  type="date"
+                  display="menu"
+                >
+                </p-columnFilter>
               </th>
-              <th>Unused Amount</th>
-              <th>Apply Excess to Principal</th>
-              <th>Excess Applied Date</th>
+              <th style="min-width: 15rem">
+                Unused&nbsp;Amount
+                <p-columnFilter
+                  field="jsUnusedAmount"
+                  type="numeric"
+                  display="menu"
+                >
+                </p-columnFilter>
+              </th>
+
+              <!-- Apply Excess to Principal -->
+              <th>Apply&nbsp;Excess&nbsp;to&nbsp;Principal</th>
+              <!-- Excess Applied Date -->
+              <th>Excess&nbsp;Applied&nbsp;Date</th>
               <th>Actions</th>
             </tr>
           </ng-template>
+
           <ng-template pTemplate="body" let-deposit let-rowIndex="rowIndex">
             <tr
               #depositRow
@@ -140,7 +213,9 @@
               </td>
               <td>{{ deposit.jsClearingDate | date: "MM/dd/yyyy" }}</td>
               <td>
-                <span [class.font-semibold]="deposit.jsUnusedAmount > 0">
+                <span
+                  [class.font-semibold]="deposit.unusedAmount.greaterThan(0)"
+                >
                   {{ deposit.jsUnusedAmount | currency }}
                 </span>
               </td>

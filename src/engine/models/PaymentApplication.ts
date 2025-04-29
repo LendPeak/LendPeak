@@ -187,7 +187,7 @@ export class PaymentApplication {
         this.bills.regenerateBillsAfterDate(dateToApply);
 
         deposit.addUsageDetail(usageDetail);
-        deposit.unusedAmount = result.unallocatedAmount;
+        //deposit.unusedAmount = result.unallocatedAmount;
       }
     }
 

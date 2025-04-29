@@ -25,6 +25,7 @@ import { UsageDetail } from 'lendpeak-engine/models/Bill/DepositRecord/UsageDeta
 import { StaticAllocation } from 'lendpeak-engine/models/Bill/DepositRecord/StaticAllocation';
 import { Popover } from 'primeng/popover';
 import { LocalDate, ChronoUnit } from '@js-joda/core';
+import { MessageService } from 'primeng/api';
 
 dayjs.extend(isSameOrBefore);
 dayjs.extend(isBetween);
@@ -33,6 +34,7 @@ dayjs.extend(isBetween);
   selector: 'app-deposits',
   templateUrl: './deposits.component.html',
   styleUrls: ['./deposits.component.css'],
+  providers: [MessageService],
   standalone: false,
 })
 export class DepositsComponent implements OnChanges {
@@ -42,7 +44,10 @@ export class DepositsComponent implements OnChanges {
 
   @Output() depositUpdated = new EventEmitter<void>();
 
-  constructor(private cdr: ChangeDetectorRef) {}
+  constructor(
+    private cdr: ChangeDetectorRef,
+    private messageService: MessageService,
+  ) {}
 
   @ViewChildren('depositRow', { read: ElementRef })
   depositRows!: QueryList<ElementRef>;
@@ -142,8 +147,6 @@ export class DepositsComponent implements OnChanges {
     this.bulkAllocationType = 'default';
     this.showBulkEditDialog = true;
   }
-
- 
 
   dateIsInTheFutureFromSnapshotDate(date: LocalDate): boolean {
     if (!this.snapshotDate) {
@@ -354,9 +357,104 @@ export class DepositsComponent implements OnChanges {
     this.selectedDepositForEdit = null;
   }
 
+  /** Build a CSV string from all deposits (active + inactive, sorted) */
+  private exportDepositsToCSV(): string {
+    if (!this.lendPeak) return '';
+
+    const deposits = this.lendPeak.depositRecords.allSorted;
+    if (deposits.length === 0) return '';
+
+    const cols = [
+      { h: 'ID', v: (d: DepositRecord) => d.id },
+      { h: 'Amount', v: (d: any) => d.amount.getRoundedValue(2) },
+      { h: 'Currency', v: (d: any) => d.currency },
+      { h: 'Effective Date', v: (d: any) => d.effectiveDate.toString() },
+      {
+        h: 'Clearing Date',
+        v: (d: any) => (d.clearingDate ? d.clearingDate.toString() : ''),
+      },
+      { h: 'Unused Amount', v: (d: any) => d.unusedAmount.getRoundedValue(2) },
+      {
+        h: 'Apply Excess To Principal',
+        v: (d: any) => (d.applyExcessToPrincipal ? 'Yes' : 'No'),
+      },
+      {
+        h: 'Excess Applied Date',
+        v: (d: any) =>
+          d.excessAppliedDate ? d.excessAppliedDate.toString() : '',
+      },
+      { h: 'Active', v: (d: any) => (d.active ? 'Yes' : 'No') },
+    ];
+
+    const esc = (s: any) => {
+      let str = String(s);
+      if (str.includes('"')) str = str.replace(/"/g, '""');
+      return /[",\n]/.test(str) ? `"${str}"` : str;
+    };
+
+    const header = cols.map((c) => c.h).join(',');
+    const rows = deposits.map((d) => cols.map((c) => esc(c.v(d))).join(','));
+    return [header, ...rows].join('\n');
+  }
+
+  /* ----------  CSV helpers  ---------- */
+
+  downloadDepositsAsCSV(): void {
+    const csv = this.lendPeak?.depositRecords.exportToCSV() || '';
+    if (!csv) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Warning',
+        detail: 'No deposits to download',
+      });
+      return;
+    }
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'deposits.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+    this.messageService.add({
+      severity: 'success',
+      summary: 'Success',
+      detail: 'Deposits downloaded',
+    });
+  }
+
+  copyDepositsAsCSV(): void {
+    const csv = this.lendPeak?.depositRecords.exportToCSV() || '';
+    if (!csv) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Warning',
+        detail: 'No deposits to copy',
+      });
+      return;
+    }
+    navigator.clipboard
+      .writeText(csv)
+      .then(() =>
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Success',
+          detail: 'Deposits copied to clipboard',
+        }),
+      )
+      .catch((err) => {
+        console.error(err);
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'Failed to copy',
+        });
+      });
+  }
+
   depositActiveUpdated() {
     this.depositUpdated.emit();
-    //  this.cdr.detectChanges();
+    this.cdr.detectChanges();
   }
 
   onApplyExcessToPrincipalChange(event: any) {

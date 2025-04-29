@@ -506,7 +506,7 @@
         </div>
         <div class="col-12 md:col-4 flex align-items-center">
           <span class="font-semibold text-300 mr-1">Unused:</span>
-          <span>{{ deposit.jsUnusedAmount | currency }}</span>
+          <span>{{ deposit.unusedAmount.toNumber() | currency }}</span>
         </div>
         <div class="col-12 md:col-3 flex align-items-center">
           <span class="font-semibold text-300 mr-1">Currency:</span>

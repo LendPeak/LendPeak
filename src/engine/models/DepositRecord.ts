@@ -42,9 +42,6 @@ export class DepositRecord {
   private _systemDate!: LocalDate;
   jsSystemDate!: Date;
 
-  private _unusedAmount: Currency = Currency.of(0);
-  jsUnusedAmount?: number;
-
   private _excessAppliedDate?: LocalDate;
   jsExcessAppliedDate?: Date;
 
@@ -139,7 +136,7 @@ export class DepositRecord {
       this.excessAppliedDate = DateUtil.normalizeDate(params.excessAppliedDate);
     }
     this.usageDetails = params.usageDetails || [];
-    this.unusedAmount = params.unusedAmount ? params.unusedAmount : 0;
+    // this.unusedAmount = params.unusedAmount ? params.unusedAmount : 0;
 
     if (params.staticAllocation) {
       this.staticAllocation = params.staticAllocation;
@@ -233,7 +230,7 @@ export class DepositRecord {
 
   clearHistory(): void {
     this.resetUsageDetails();
-    this.unusedAmount = Currency.Zero();
+    //  this.unusedAmount = Currency.Zero();
     this.versionChanged();
   }
 
@@ -388,10 +385,6 @@ export class DepositRecord {
     return this._usageDetails;
   }
 
-  get unusedAmount(): Currency {
-    return this._unusedAmount;
-  }
-
   get metadata(): DepositMetadata | undefined {
     return this._metadata;
   }
@@ -431,19 +424,20 @@ export class DepositRecord {
     this.versionChanged();
   }
 
-  set unusedAmount(value: Currency | number) {
-    // check type and inflate if necessary
-    if (typeof value === "number") {
-      value = Currency.of(value);
-    }
-    this._unusedAmount = value;
-    this.jsUnusedAmount = value.toNumber();
-    this.versionChanged();
+  get jsUnusedAmount(): number {
+    return this.unusedAmount.toNumber();
   }
 
-  removeStaticAllocation(): void {
-    this._staticAllocation = undefined;
-    this.versionChanged();
+  get unusedAmount(): Currency {
+    /**
+     * The unused portion of the deposit is simply:
+     *   deposit amount – Σ(all allocations recorded in usageDetails)
+     * If allocations ever exceed the deposit (data error), clamp at 0.
+     */
+    const allocated = this.usageDetails.reduce((tot, d) => tot.add(d.allocatedPrincipal).add(d.allocatedInterest).add(d.allocatedFees), Currency.Zero());
+
+    const remainder = this.amount.subtract(allocated);
+    return remainder.isNegative() ? Currency.Zero() : remainder;
   }
 
   updateModelValues(): void {
@@ -460,7 +454,7 @@ export class DepositRecord {
     this.depositLocation = this.jsDepositLocation;
     this.applyExcessToPrincipal = this.jsApplyExcessToPrincipal || false;
     this.excessAppliedDate = this.jsExcessAppliedDate ? DateUtil.normalizeDate(this.jsExcessAppliedDate) : undefined;
-    this.unusedAmount = Currency.of(this.jsUnusedAmount || 0);
+    //  this.unusedAmount = Currency.of(this.jsUnusedAmount || 0);
     if (this.staticAllocation) {
       this.staticAllocation.updateModelValues();
     }
@@ -492,7 +486,6 @@ export class DepositRecord {
     } else {
       this.jsExcessAppliedDate = undefined;
     }
-    this.jsUnusedAmount = this.unusedAmount.toNumber();
     if (this.staticAllocation) {
       this.staticAllocation.updateJsValues();
     }
@@ -503,6 +496,11 @@ export class DepositRecord {
     // Simple unique ID generator (you can replace this with UUID if needed)
     const sequencePrefix = sequence !== undefined ? `${sequence}-` : "";
     return "DEPOSIT-" + sequencePrefix + Math.random().toString(36).substr(2, 9);
+  }
+
+  removeStaticAllocation(): void {
+    this._staticAllocation = undefined;
+    this.versionChanged();
   }
 
   get summary() {
@@ -557,5 +555,27 @@ export class DepositRecord {
       staticAllocation: this.staticAllocation ? this.staticAllocation.json : undefined,
       applyExcessAtTheEndOfThePeriod: this.applyExcessAtTheEndOfThePeriod,
     };
+  }
+
+  toCode() {
+    return `new DepositRecord({
+      id: "${this.id}",
+      amount: ${this.amount.toNumber()},
+      currency: "${this.currency}",
+      createdDate: DateUtil.normalizeDate("${this.createdDate.toString()}"),
+      effectiveDate: DateUtil.normalizeDate("${this.effectiveDate.toString()}"),
+      clearingDate: ${this.clearingDate ? `DateUtil.normalizeDate("${this.clearingDate.toString()}")` : "undefined"},
+      systemDate: DateUtil.normalizeDate("${this.systemDate.toString()}"),
+      paymentMethod: ${this.paymentMethod ? `"${this.paymentMethod}"` : "undefined"},
+      depositor: ${this.depositor ? `"${this.depositor}"` : "undefined"},
+      depositLocation: ${this.depositLocation ? `"${this.depositLocation}"` : "undefined"},
+      applyExcessToPrincipal: ${this.applyExcessToPrincipal},
+      excessAppliedDate: ${this.excessAppliedDate ? `DateUtil.normalizeDate("${this.excessAppliedDate.toString()}")` : "undefined"},
+      unusedAmount: ${this.unusedAmount.toNumber()},
+      metadata: ${JSON.stringify(this.metadata)},
+      active: ${this.active},
+      staticAllocation: ${this.staticAllocation ? this.staticAllocation.toCode() : "undefined"},
+      applyExcessAtTheEndOfThePeriod: ${this.applyExcessAtTheEndOfThePeriod},
+    })`;
   }
 }

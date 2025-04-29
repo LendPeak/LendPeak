@@ -87,6 +87,11 @@ export class Bills {
     }
   }
 
+  get lastSatisfiedBillNo(): number | null {
+    const paidBills = this.all.filter((b) => b.remainingTotal.isZero()).sort((a, b) => a.period - b.period);
+    return paidBills.length ? paidBills[paidBills.length - 1].period + 1 : null;
+  }
+
   get currentDate() {
     return this._currentDate;
   }

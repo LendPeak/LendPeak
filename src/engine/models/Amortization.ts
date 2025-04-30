@@ -958,7 +958,7 @@ export class Amortization {
 
       // 4. Range check
       if (current.termNumber < 0 || current.termNumber > this.term) {
-        console.error("termInterestOverride: termNumber out of range", current.termNumber, this.term);
+        console.warn("termInterestOverride: termNumber out of range", current.termNumber, this.term);
         continue;
         //throw new Error(`Invalid termInterestOverride: termNumber ${current.termNumber} out of range`);
       }

@@ -16,6 +16,8 @@ dayjs.extend(isBetween);
 
 export interface DepositMetadata {
   custom?: { [key: string]: any };
+  systemGenerated?: boolean;
+  type?: "auto_close";
 }
 
 export class DepositRecord {

@@ -48,6 +48,7 @@ export class TermCalendar {
     return {
       termNumber: this.termNumber,
       calendar: this.calendar.calendarType,
+      active: this.active,
     };
   }
 }

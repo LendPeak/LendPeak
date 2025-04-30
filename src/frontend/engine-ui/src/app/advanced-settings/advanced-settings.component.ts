@@ -192,6 +192,7 @@ export class AdvancedSettingsComponent implements OnInit {
     this.lendPeak.amortization.allowRateAbove100 = false;
     this.lendPeak.amortization.flushThreshold = Currency.of(0.01);
     this.lendPeak.amortization.roundingPrecision = 2;
+    this.lendPeak.autoCloseThreshold = Currency.of(10.0);
 
     // Store as original settings
     this.originalSettings = this.getCurrentSettings();
@@ -321,6 +322,7 @@ export class AdvancedSettingsComponent implements OnInit {
       allowRateAbove100: this.lendPeak.amortization.allowRateAbove100,
       flushThreshold: this.lendPeak.amortization.flushThreshold.toNumber(),
       roundingPrecision: this.lendPeak.amortization.roundingPrecision,
+      autoCloseThreshold: this.lendPeak.autoCloseThreshold.toNumber(),
     };
   }
 
@@ -368,6 +370,9 @@ export class AdvancedSettingsComponent implements OnInit {
     this.lendPeak.amortization.roundingPrecision =
       settings.roundingPrecision || 2;
 
+    this.lendPeak.autoCloseThreshold = Currency.of(
+      settings.autoCloseThreshold ?? 10,
+    );
     // Update loaded settings info
     this.loadedSettingName = setting.name;
     this.loadedSettingVersion = setting.version;
@@ -384,7 +389,7 @@ export class AdvancedSettingsComponent implements OnInit {
 
   // Emit changes to the parent component
   emitLoanChange() {
-    // this.loanChange.emit(this.lendPeak.loan);
+    this.loanChange.emit();
     this.loanUpdated.emit();
   }
 

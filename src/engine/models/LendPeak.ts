@@ -52,6 +52,15 @@ export class LendPeak {
 
   _balanceModificationChanged: boolean = false;
 
+  /** -------------------------------------------------
+   *  Auto-close threshold: if the payoffQuote.dueTotal
+   *  is ≤ this amount AND > 0, the engine will create
+   *  a synthetic “Auto Close” payment that zeros-out
+   *  the loan.
+   *  ------------------------------------------------*/
+  private _autoCloseThreshold: Currency = Currency.of(0.1);
+  jsAutoCloseThreshold!: number; // <-- for Angular binding
+
   private payoffQuoteCache?: {
     results: PayoffQuoteResult;
     amortizationVersionId: string;
@@ -71,6 +80,7 @@ export class LendPeak {
     financialOpsVersionManager?: FinancialOpsVersionManager;
     allocationStrategy?: AllocationStrategy | PaymentAllocationStrategyName;
     paymentPriority?: PaymentComponent[];
+    autoCloseThreshold?: Currency | number;
     currentDate?: LocalDate;
   }) {
     this.setAmortization(params.amortization);
@@ -94,9 +104,22 @@ export class LendPeak {
       this.paymentPriority = params.paymentPriority;
     }
 
+    if (typeof params.autoCloseThreshold !== "undefined") {
+      this.autoCloseThreshold = params.autoCloseThreshold;
+    }
+
     if (params.currentDate) {
       this.currentDate = params.currentDate;
     }
+  }
+
+  get autoCloseThreshold(): Currency {
+    return this._autoCloseThreshold;
+  }
+
+  set autoCloseThreshold(v: Currency | number) {
+    this._autoCloseThreshold = v instanceof Currency ? v : Currency.of(v);
+    this.jsAutoCloseThreshold = this._autoCloseThreshold.toNumber();
   }
 
   get balanceModificationChanged(): boolean {
@@ -264,57 +287,82 @@ export class LendPeak {
     this.amortization.balanceModifications = filteredBalanceModifications;
   }
 
-  /*
-  NOTE FOR TOMORROW:
-
-  payment application and re-amortization needs to have a state where every balance modification must add it to amortization, 
-  reamortize the loan with that first modification, regenerate bills, apply payments, and then check if there are any new balance modifications
-  if there are, then reamortize the loan again, regenerate bills, apply payments, and repeat until there are no new balance modifications
-  */
-  applyPayments() {
-    console.log("running apply payments");
-
+  /* ────────────────────────────────────────────────────────────────────────────
+   *  Helper: one “normal” payment run (no auto-close decisions)
+   * ────────────────────────────────────────────────────────────────────────── */
+  private runPaymentPipeline() {
     this.depositRecords.clearHistory();
-
-    // now we will remove system generated balance modifications, since we are clearing the history
     this.amortization.runGarbageCollection();
     this.generateBills();
 
-    const allocationStrategy = this.allocationStrategy;
-    const paymentPriority = this.paymentPriority;
     const paymentApp = new PaymentApplication({
       currentDate: this.currentDate,
       amortization: this.amortization,
       bills: this.bills,
       deposits: this.depositRecords,
       options: {
-        allocationStrategy,
-        paymentPriority,
+        allocationStrategy: this.allocationStrategy,
+        paymentPriority: this.paymentPriority,
       },
     });
+
     this.paymentApplicationResults = paymentApp.processDeposits(this.currentDate);
+  }
 
-    // this.paymentApplicationResults.forEach((result) => {
-    //   result.allocations.forEach((allocation) => {
-    //     const bill = this.bills.all.find((b) => b.id === allocation.billId);
-    //     if (!bill) return;
+  /* ────────────────────────────────────────────────────────────────────────────
+   *  MAIN: applyPayments()  —  with smarter auto-close handling
+   * ────────────────────────────────────────────────────────────────────────── */
+  applyPayments() {
+    /* ----------------------------------------------------------
+     * STEP 0  –  Snapshot any auto-close waivers that exist
+     * -------------------------------------------------------- */
+    const autoDeposits = this.depositRecords._records.filter((d) => d.metadata?.type === "auto_close");
 
-    //     bill.paymentDetails = bill.paymentDetails || [];
-    //     bill.paymentDetails.push(
-    //       new BillPaymentDetail({
-    //         depositId: result.depositId,
-    //         allocatedPrincipal: allocation.allocatedPrincipal,
-    //         allocatedInterest: allocation.allocatedInterest,
-    //         allocatedFees: allocation.allocatedFees,
-    //         date: result.effectiveDate,
-    //       })
-    //     );
-    //   });
-    // });
+    const activeWaiver: DepositRecord | undefined = autoDeposits.find((d) => d.active);
 
-    // for (let balanceModification of this.depositRecords.balanceModifications) {
-    //   this.amortization.balanceModifications.addBalanceModification(balanceModification);
-    // }
+    const activeAmount = activeWaiver?.amount ?? Currency.of(0);
+
+    /* ----------------------------------------------------------
+     * STEP 1  –  Temporarily turn ALL auto-close deposits off
+     *            so we can see the “true” remainder.
+     * -------------------------------------------------------- */
+    autoDeposits.forEach((d) => (d.active = false));
+
+    this.runPaymentPipeline(); // ← first pass (baseline)
+
+    const remainder = this.payoffQuote.dueTotal; // what’s really left
+
+    /* ----------------------------------------------------------
+     * STEP 2  –  Decide what to do about the waiver
+     * -------------------------------------------------------- */
+
+    // 2-A)  No waiver needed at all
+    if (remainder.isZero() || remainder.greaterThan(this.autoCloseThreshold)) {
+      // leave every auto-close deposit inactive; we’re done
+      return;
+    }
+
+    // 2-B)  Existing waiver is still the correct amount → reactivate it
+    if (activeWaiver && activeAmount.equals(remainder)) {
+      activeWaiver.active = true;
+      this.runPaymentPipeline(); // ← final pass
+      return;
+    }
+
+    // 2-C)  Waiver needs to change size  → keep old as history, add new one
+    const newWaiver = new DepositRecord({
+      amount: remainder,
+      currency: "USD",
+      effectiveDate: this.currentDate,
+      paymentMethod: "system",
+      depositor: "Auto Close",
+      metadata: { systemGenerated: true, type: "auto_close" },
+      depositRecords: this.depositRecords,
+    });
+    newWaiver.id = `AUTO_CLOSE_${Date.now()}`;
+    this.depositRecords.addRecord(newWaiver);
+
+    this.runPaymentPipeline(); // ← final pass
   }
 
   addFinancialOpsVersionManager(): LendPeak {
@@ -415,12 +463,14 @@ export class LendPeak {
     this.amortization.updateModelValues();
     this.depositRecords.updateModelValues();
     this.bills.updateModelValues();
+    this.autoCloseThreshold = Currency.of(this.jsAutoCloseThreshold ?? this.autoCloseThreshold);
   }
 
   updateJsValues() {
     this.amortization.updateJsValues();
     this.depositRecords.updateJsValues();
     this.bills.updateJsValues();
+    this.jsAutoCloseThreshold = this.autoCloseThreshold.toNumber();
   }
 
   get json() {
@@ -578,6 +628,7 @@ export class LendPeak {
       financialOpsVersionManager: this.financialOpsVersionManager?.toJSON(),
       allocationStrategy: PaymentApplication.getAllocationStrategyFromClass(this.allocationStrategy),
       paymentPriority: this.paymentPriority,
+      autoCloseThreshold: this.autoCloseThreshold.toNumber(),
     };
   }
 
@@ -594,6 +645,7 @@ export class LendPeak {
       //financialOpsVersionManager: this.financialOpsVersionManager?.toJSON(),
       allocationStrategy: PaymentApplication.getAllocationStrategyFromClass(this.allocationStrategy),
       paymentPriority: this.paymentPriority,
+      autoCloseThreshold: this.autoCloseThreshold.toNumber(),
     };
   }
 

@@ -10,6 +10,7 @@
             (click)="openDepositDialog()"
           />
           <p-button
+            class="ml-2"
             label="Go to Last Deposit"
             icon="pi pi-arrow-down"
             severity="info"
@@ -157,6 +158,15 @@
                     >
                       {{ row.id }}
                     </span>
+
+                    <p-badge
+                      *ngIf="row.metadata?.type === 'auto_close'"
+                      value="Auto Close"
+                      severity="info"
+                      styleClass="mr-2"
+                      pTooltip="System-generated payment that zeros the remaining balance"
+                      tooltipPosition="top"
+                    ></p-badge>
 
                     <!-- -- multiple-bills badge -->
                     <p-badge

@@ -379,6 +379,33 @@
             </p-popover>
           </div>
         </div>
+
+        <!-- Auto-close Threshold -->
+        <div class="field">
+          <label for="autoCloseThreshold">
+            Auto-close Threshold
+            <i
+              class="pi pi-info-circle tooltip-icon"
+              (click)="showTooltip($event, autoCloseTooltip)"
+            ></i>
+          </label>
+          <p-inputNumber
+            id="autoCloseThreshold"
+            [(ngModel)]="lendPeak.jsAutoCloseThreshold"
+            mode="currency"
+            currency="USD"
+            locale="en-US"
+            (ngModelChange)="onInputChange()"
+          >
+          </p-inputNumber>
+          <p-popover #autoCloseTooltip>
+            <ng-template pTemplate="content">
+              When the remaining payoff amount is &lt;= this value, the engine
+              will generate a one-time <em>Auto Close</em> payment to bring the
+              balance to&nbsp;zero.
+            </ng-template>
+          </p-popover>
+        </div>
       </div>
     </p-accordion-content>
   </p-accordion-panel>

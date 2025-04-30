@@ -50,6 +50,10 @@ export class PreBillDaysConfigurations {
     return this._configurations.filter((c) => c.type === "custom" && c.active);
   }
 
+  removeAllCustom() {
+    this._configurations = this._configurations.filter((c) => c.type !== "custom");
+  }
+
   /* activate / deactivate helpers */
   activateAll() {
     this._configurations.forEach((c) => (c.active = true));

@@ -248,7 +248,9 @@
 
                   <ng-container *ngSwitchCase="'jsUnusedAmount'">
                     <span
-                      [class.font-semibold]="row.unusedAmount.greaterThan(0)"
+                      [class.font-semibold]="
+                        row.active && row.unusedAmount.greaterThan(0)
+                      "
                     >
                       {{ row.jsUnusedAmount | currency }}
                     </span>

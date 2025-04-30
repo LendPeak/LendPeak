@@ -1200,6 +1200,14 @@
                 icon="pi pi-refresh"
                 (click)="refreshSortForTermPaymentAmountOverride()"
               ></p-button>
+
+              <p-button
+                severity="danger"
+                label="Remove All"
+                icon="pi pi-trash"
+                (click)="removeAllTermPaymentAmounts()"
+              ></p-button>
+
             </div>
           </div>
         </p-accordion-content>
@@ -1562,6 +1570,13 @@
                 label="Add New Term Row"
                 icon="pi pi-plus"
                 (click)="addPrebillDayTermRow()"
+              ></p-button>
+
+              <p-button
+                severity="danger"
+                label="Remove All"
+                icon="pi pi-trash"
+                (click)="removeAllPreBillDayOverride()"
               ></p-button>
             </div>
           </div>

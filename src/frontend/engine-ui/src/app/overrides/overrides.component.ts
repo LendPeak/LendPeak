@@ -1336,6 +1336,14 @@ export class OverridesComponent implements OnInit {
     this.onInputChange(true);
   }
 
+  removeAllTermPaymentAmounts() {
+    if (!this.lendPeak) {
+      return;
+    }
+    this.lendPeak.amortization.termPaymentAmountOverride.removeAll();
+    this.onInputChange(true);
+  }
+
   removeAllTermCalendarOverride() {
     if (!this.lendPeak) {
       return;
@@ -1343,7 +1351,7 @@ export class OverridesComponent implements OnInit {
     this.lendPeak.amortization.calendars.removeAllCalendars();
     this.onInputChange(true);
   }
-  // Remove a specific termInterestOverride row
+
   removeTermCalendarOverride(index: number) {
     if (!this.lendPeak) {
       return;
@@ -1352,6 +1360,13 @@ export class OverridesComponent implements OnInit {
       this.lendPeak.amortization.calendars.removeCalendarAtIndex(index);
       this.onInputChange(true);
     }
+  }
+  removeAllPreBillDayOverride() {
+    if (!this.lendPeak) {
+      return;
+    }
+    this.lendPeak.amortization.preBillDays.removeAllCustom();
+    this.onInputChange(true);
   }
 
   showTooltip(event: Event, tooltipRef: Popover) {

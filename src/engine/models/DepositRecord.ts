@@ -431,6 +431,9 @@ export class DepositRecord {
   }
 
   get unusedAmount(): Currency {
+    if (this.active === false) {
+      return Currency.Zero();
+    }
     /**
      * The unused portion of the deposit is simply:
      *   deposit amount – Σ(all allocations recorded in usageDetails)

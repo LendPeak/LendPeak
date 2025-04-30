@@ -69,6 +69,10 @@ export class TermPaymentAmounts {
     this._paymentAmounts.splice(idx, 1);
   }
 
+  removeAll() {
+    this._paymentAmounts = [];
+  }
+
   /* ===== look-ups ===== */
   get length(): number {
     return this._paymentAmounts.length;

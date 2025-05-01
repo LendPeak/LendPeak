@@ -33,31 +33,49 @@
   </div>
 
   <!-- ▽  Mongo credentials, shown when Type = Mongo ▽ -->
-<div *ngIf="newConnector.type === 'Mongo'">
-  <div class="field">
-    <label for="mongoUri">Mongo URI</label>
-    <input pInputText class="w-full" id="mongoUri"
-           [(ngModel)]="newConnector.credentials.mongoUri" required />
-  </div>
+  <div *ngIf="newConnector.type === 'Mongo'">
+    <div class="field">
+      <label for="mongoUri">Mongo URI</label>
+      <input
+        pInputText
+        class="w-full"
+        id="mongoUri"
+        [(ngModel)]="newConnector.credentials.mongoUri"
+        required
+      />
+    </div>
 
-  <div class="field">
-    <label for="mongoDb">Database (optional)</label>
-    <input pInputText class="w-full" id="mongoDb"
-           [(ngModel)]="newConnector.credentials.mongoDb" />
-  </div>
+    <div class="field">
+      <label for="mongoDb">Database (optional)</label>
+      <input
+        pInputText
+        class="w-full"
+        id="mongoDb"
+        [(ngModel)]="newConnector.credentials.mongoDb"
+      />
+    </div>
 
-  <div class="field">
-    <label for="mongoUser">Username (optional)</label>
-    <input pInputText class="w-full" id="mongoUser"
-           [(ngModel)]="newConnector.credentials.mongoUser" />
-  </div>
+    <div class="field">
+      <label for="mongoUser">Username (optional)</label>
+      <input
+        pInputText
+        class="w-full"
+        id="mongoUser"
+        [(ngModel)]="newConnector.credentials.mongoUser"
+      />
+    </div>
 
-  <div class="field">
-    <label for="mongoPass">Password (optional)</label>
-    <input pInputText class="w-full" id="mongoPass" type="password"
-           [(ngModel)]="newConnector.credentials.mongoPass" />
+    <div class="field">
+      <label for="mongoPass">Password (optional)</label>
+      <input
+        pInputText
+        class="w-full"
+        id="mongoPass"
+        type="password"
+        [(ngModel)]="newConnector.credentials.mongoPass"
+      />
+    </div>
   </div>
-</div>
 
   <!-- LoanPro Credentials -->
   <div *ngIf="newConnector.type === 'LoanPro'">
@@ -126,10 +144,10 @@
       <td>{{ connector.name }}</td>
       <td>{{ connector.type }}</td>
       <td>
-        <p-inputSwitch
+        <p-toggleswitch
           [ngModel]="connector.isDefault"
           (ngModelChange)="onDefaultToggle($event, connector)"
-        ></p-inputSwitch>
+        ></p-toggleswitch>
       </td>
       <td>
         <!-- Edit Button -->

@@ -46,6 +46,8 @@ import { Calendar, CalendarType } from 'lendpeak-engine/models/Calendar';
 import { DateUtil } from 'lendpeak-engine/utils/DateUtil';
 import { LocalDate, ZoneId } from '@js-joda/core';
 import { RoundingMethod } from 'lendpeak-engine/utils/Currency';
+import { ClsParser } from '../parsers/cls/cls.parser';
+import { ClsToLendPeakMapper } from '../mappers/cls-to-lendpeak.mapper';
 
 @Component({
   selector: 'app-loan-import',
@@ -117,25 +119,31 @@ export class LoanImportComponent implements OnInit, OnDestroy {
     const connector = this.getSelectedConnector();
     if (!connector) return;
 
-    if (connector.type === 'Mongo') {
-      this.isLoading = true;
-      this.importService
-        .importLoan(connector, 'systemId', this.searchValue) // displayId works too
-        .subscribe({
-          next: (mongoRaw: CLSDataResponse) => {
-            this.isLoading = false;
-            console.log('Mongo data', mongoRaw); // ← that’s it for now
-            this.previewLoans = [{ d: mongoRaw.loan }]; // quick ‘preview’ trick
-            this.showPreviewDialog = true;
-          },
-          error: (error) => {
-            this.isLoading = false;
-            console.error('Error fetching loan(s) for preview:', error);
-            this.errorMsg = 'Failed to fetch loan(s). Please check inputs.';
-          },
-        });
-      return;
-    }
+   if (connector.type === 'Mongo') {
+     this.isLoading = true;
+     this.importService
+       .importLoan(connector, 'systemId', this.searchValue) // displayId works too
+       .subscribe({
+         next: (mongoRaw: CLSDataResponse) => {
+           this.isLoading = false;
+
+           /** 🔗 convert raw CLS → LendPeak objects */
+           const parser = new ClsParser(mongoRaw);
+           const { loan } = ClsToLendPeakMapper.map(parser);
+
+           /* Show something meaningful in the preview dialog.
+           (You can style this any way you like in the template) */
+           this.previewLoans = [{ id: loan.id, name: loan.name }];
+           this.showPreviewDialog = true;
+         },
+         error: (error) => {
+           this.isLoading = false;
+           console.error('Error fetching loan(s) for preview:', error);
+           this.errorMsg = 'Failed to fetch loan(s). Please check inputs.';
+         },
+       });
+     return; // <<< keep the early-return
+   }
 
     this.isLoading = true;
     this.errorMsg = '';
@@ -202,27 +210,33 @@ export class LoanImportComponent implements OnInit, OnDestroy {
     const connector = this.getSelectedConnector();
     if (!connector) return;
 
-    if (connector.type === 'Mongo') {
-      this.isLoading = true;
-      this.importService
-        .importLoan(connector, 'systemId', this.searchValue) // displayId works too
-        .subscribe({
-          next: (mongoRaw: CLSDataResponse) => {
-            // mongoRaw is CLSDataResponse
+   if (connector.type === 'Mongo') {
+     this.isLoading = true;
+     this.importService
+       .importLoan(connector, 'systemId', this.searchValue) // displayId works too
+       .subscribe({
+         next: (mongoRaw: CLSDataResponse) => {
+           /** 🔗 Parse & map the CLS payload */
+           const parser = new ClsParser(mongoRaw);
+           const mapped = ClsToLendPeakMapper.map(parser); // { loan, deposits }
 
-            this.isLoading = false;
-            console.log('Mongo data', mongoRaw); // ← that’s it for now
-            this.previewLoans = [{ d: mongoRaw.loan }]; // quick ‘preview’ trick
-            this.showPreviewDialog = true;
-          },
-          error: (error) => {
-            this.isLoading = false;
-            console.error('Error fetching loan(s) for preview:', error);
-            this.errorMsg = 'Failed to fetch loan(s). Please check inputs.';
-          },
-        });
-      return;
-    }
+           this.isLoading = false;
+           /* 🔔 hand off to the existing emitter */
+           this.handleImportedLoans([mapped]);
+         },
+         error: (error) => {
+           this.isLoading = false;
+           console.error('Error importing CLS loan:', error);
+           this.messageService.add({
+             severity: 'error',
+             summary: 'Error',
+             detail: 'Failed to import loan.',
+           });
+         },
+       });
+     return; // <<< keep the early-return
+   }
+
 
     // If NOT systemIdRange => same approach as before (single or multi call).
     if (this.searchType !== 'systemIdRange') {

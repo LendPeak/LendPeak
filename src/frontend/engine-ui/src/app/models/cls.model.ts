@@ -27,51 +27,73 @@ export interface CLSDataResponse {
 /* -----------------------------------------------------------------------
  * 1.  Loan header (one row) – keys taken verbatim from the sample JSON
  * ---------------------------------------------------------------------*/
+/* -----------------------------------------------------------------------
+ * 1.  Loan header (one row) – UPDATED
+ * ---------------------------------------------------------------------*/
 export interface CLSLoan {
   _id: string;
   attributes: SFAttributes;
+  /** Salesforce record Id (18-char) */
   Id: string;
+
+  /** “Name” value shown in the UI – often LAI-xxxxx */
   Name: string;
-  loan__Loan_Amount__c: number;
-  loan__Loan_Status__c: string;
-  loan__Contractual_Interest_Rate__c: number;
-  loan__Interest_Rate__c: number;
+
+  /* ─────── Monetary / rate basics ─────────────────────────────────── */
+  loan__Loan_Amount__c: number; // Principal
+  loan__Contractual_Interest_Rate__c: number; // % as 0–100
+  loan__Interest_Rate__c: number; // Running / promo % (if different)
+  /**  ← convenience alias used in the first-pass mapper */
+  intRatePct?: number; // same value, optional
+
+  /* ─────── Term / period info ─────────────────────────────────────── */
+  loan__Number_of_Installments__c: number; // Planned term length
   loan__Amortization_Term__c: string | number | null;
-  loan__Term_Cur__c: number;
-  loan__Application_Date__c: string;
+  loan__Term_Cur__c: number; // “current term” (runtime)
+
+  /* ─────── Key life-cycle dates ───────────────────────────────────── */
+  loan__Application_Date__c: string; // ISO date
+  loan__Disbursal_Date__c: string;
   loan__Expected_Repayment_Start_Date__c: string;
   loan__Maturity_Date_Current__c: string;
-  loan__Payment_Amount__c: number;
-  loan__Pmt_Amt_Cur__c: number;
+  loan__Closed_Date__c: string | number | null;
+  loan__Last_Accrual_Date__c: string;
+  loan__Accrual_Start_Date__c: string;
+
+  /* ─────── Balances / roll-ups ────────────────────────────────────── */
   loan__Principal_Remaining__c: number;
   loan__Principal_Paid__c: number;
   loan__Interest_Remaining__c: number;
   loan__Interest_Paid__c: number;
-  loan__Number_of_Installments__c: number;
-  loan__Accrual_Start_Date__c: string;
+  loan__Payment_Amount__c: number; // current P&I (may differ from scheduled)
+
+  /* ─────── Status & flags ─────────────────────────────────────────── */
+  loan__Loan_Status__c: string;
+  isMigrated__c: boolean | number;
+  Reschedule_Count__c: number;
+  Payoff_Loan_ID__c: string | null;
+
+  /* ─────── Misc. metrics / compliance ─────────────────────────────── */
+  loan__Number_of_Days_Overdue__c: number;
+  loan__Pre_Bill_Days__c: number;
+  loan__Contractual_Due_Day__c: number;
+  loan__Due_Day__c: number;
+
+  /* ─────── Charged-off & CPD fields ───────────────────────────────── */
   loan__Charged_Off_Date__c: string | number | null;
   loan__Charged_Off_Fees__c: number;
   loan__Charged_Off_Interest__c: number;
   loan__Charged_Off_Principal__c: number;
-  loan__Contractual_Due_Day__c: number;
-  loan__Due_Day__c: number;
-  loan__Disbursal_Date__c: string;
-  loan__Number_of_Days_Overdue__c: number;
-  loan__Pre_Bill_Days__c: number;
-  isMigrated__c: boolean | number;
-  Reschedule_Count__c: number;
-  Payoff_Loan_ID__c: string | number | null;
-  LPT_Count__c: number;
   CPD_Date__c: string | number | null;
   CPD_Expire_Date__c: string | number | null;
-  loan__Closed_Date__c: string | number | null;
-  loan__Last_Accrual_Date__c: string;
-  lead_Guid__c: string | number | null;
-  loan__Account__c: string;
-  /** …any additional custom fields go here, keep the naming verbatim */
-  [key: string]: any; // fallback for rarely-used / new fields
-}
 
+  /* ─────── Relationships ──────────────────────────────────────────── */
+  loan__Account__c: string; // Borrower / account lookup
+  lead_Guid__c: string | number | null;
+
+  /** …catch-all for new / rarely-used custom fields */
+  [key: string]: any;
+}
 /* -----------------------------------------------------------------------
  * 2.  Schedule line (period / bill)
  * ---------------------------------------------------------------------*/
@@ -141,6 +163,7 @@ export interface CLSLPT {
   Principal_without_Reversal__c: number;
   Sum_Principal_Payment_Amount__c: number;
   Posted_Date__c: string;
+  loan__Rejected__c: boolean;
   [key: string]: any;
 }
 

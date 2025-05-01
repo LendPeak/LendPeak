@@ -1801,7 +1801,7 @@ export class Amortization {
    */
   verifySchedulePeriods(): void {
     if (this.periodsSchedule.length !== this.term) {
-      if (!this.payoffDate || !this.earlyRepayment) {
+      if (!this.payoffDate && !this.earlyRepayment) {
         throw new Error("Invalid schedule periods, number of periods must match the term");
       }
     }

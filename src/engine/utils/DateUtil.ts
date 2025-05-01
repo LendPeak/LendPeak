@@ -146,4 +146,33 @@ export class DateUtil {
     const timestamp = parseInt(dateString.replace("/Date(", "").replace(")/", ""), 10);
     return LocalDateTime.ofInstant(Instant.ofEpochSecond(timestamp), ZoneOffset.UTC);
   }
+
+  static monthsBetween(date1: LocalDate, date2: LocalDate): number {
+    // Ensure date1 is the earlier date for calculation simplicity
+    let start = date1;
+    let end = date2;
+    let sign = 1; // 1 if date2 >= date1, -1 if date2 < date1
+
+    // If date1 is actually after date2, swap them and flip the sign
+    if (date1.isAfter(date2)) {
+      start = date2;
+      end = date1;
+      sign = -1;
+    }
+
+    const yearDiff = end.year() - start.year();
+    const monthDiff = end.monthValue() - start.monthValue();
+
+    // Calculate the preliminary total months difference
+    let totalMonths = yearDiff * 12 + monthDiff;
+
+    // Adjustment: If the end day is earlier than the start day,
+    // the last month hasn't fully passed relative to the start day.
+    if (end.dayOfMonth() < start.dayOfMonth()) {
+      totalMonths--;
+    }
+
+    // Apply the sign based on the original order
+    return sign * totalMonths;
+  }
 }

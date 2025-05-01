@@ -54,7 +54,7 @@ import { OverridesComponent } from './overrides/overrides.component';
 import { AdvancedSettingsComponent } from './advanced-settings/advanced-settings.component';
 import { AdvancedSettingsService } from './services/advanced-settings.service';
 import { OverrideSettingsService } from './services/override-settings.service';
-import { LoanProService } from './services/loanpro.service';
+import { ConnectorImportService } from './services/connector-import.service';
 import { SystemSettingsService } from './services/system-settings.service';
 
 import { ToastModule } from 'primeng/toast';
@@ -73,7 +73,7 @@ import { FinancialOpsHistoryComponent } from './financial-ops-history/financial-
 import { ValueRendererComponent } from './value-renderer/value-renderer.component';
 
 import { SystemSettingsComponent } from './system-settings/system-settings.component';
-import { CalculatorDialogComponent  } from './calculator-dialog/calculator-dialog.component';
+import { CalculatorDialogComponent } from './calculator-dialog/calculator-dialog.component';
 
 import { HighlightModule, LineNumbersOptions } from 'ngx-highlightjs';
 import { provideHighlightOptions } from 'ngx-highlightjs';
@@ -169,7 +169,7 @@ import {
     DialogService,
     AdvancedSettingsService,
     OverrideSettingsService,
-    LoanProService,
+    ConnectorImportService,
     SystemSettingsService,
     MessageService,
     ConfirmationService,

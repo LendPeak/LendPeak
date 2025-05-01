@@ -45,6 +45,11 @@ app.use(
       "lendpeak-autopal-instance-id",
       "lendpeak-forward-headers",
       "lendpeak-target-domain",
+      "lendpeak-mongo-uri",
+      "lendpeak-mongo-user",
+      "lendpeak-mongo-pass",
+      "lendpeak-mongo-db",
+      "lendpeak-allocation",
     ],
     allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
   })

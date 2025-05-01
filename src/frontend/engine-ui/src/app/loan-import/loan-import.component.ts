@@ -7,7 +7,7 @@ import {
 } from '@angular/core';
 import { ConnectorService } from '../services/connector.service';
 import { Connector } from '../models/connector.model';
-import { LoanProService } from '../services/loanpro.service';
+import { ConnectorImportService } from '../services/connector-import.service';
 import { MessageService } from 'primeng/api';
 import {
   Amortization,
@@ -27,6 +27,7 @@ import {
 import { ChangePaymentDate } from 'lendpeak-engine/models/ChangePaymentDate';
 import { ChangePaymentDates } from 'lendpeak-engine/models/ChangePaymentDates';
 import { LoanResponse, DueDateChange } from '../models/loanpro.model';
+import { CLSDataResponse } from '../models/cls.model';
 import { DepositRecord } from 'lendpeak-engine/models/DepositRecord';
 import { FeesPerTerm } from 'lendpeak-engine/models/FeesPerTerm';
 import { PeriodSchedules } from 'lendpeak-engine/models/PeriodSchedules';
@@ -63,7 +64,7 @@ export class LoanImportComponent implements OnInit, OnDestroy {
 
   isLoading: boolean = false;
   showPreviewDialog: boolean = false;
-  previewLoans: LoanResponse[] = [];
+  previewLoans: LoanResponse[] | any = [];
   errorMsg: string = '';
 
   @Output() loanImported = new EventEmitter<
@@ -79,7 +80,7 @@ export class LoanImportComponent implements OnInit, OnDestroy {
 
   constructor(
     private connectorService: ConnectorService,
-    private loanProService: LoanProService,
+    private importService: ConnectorImportService,
     private messageService: MessageService,
   ) {}
 
@@ -116,11 +117,31 @@ export class LoanImportComponent implements OnInit, OnDestroy {
     const connector = this.getSelectedConnector();
     if (!connector) return;
 
+    if (connector.type === 'Mongo') {
+      this.isLoading = true;
+      this.importService
+        .importLoan(connector, 'systemId', this.searchValue) // displayId works too
+        .subscribe({
+          next: (mongoRaw: CLSDataResponse) => {
+            this.isLoading = false;
+            console.log('Mongo data', mongoRaw); // ← that’s it for now
+            this.previewLoans = [{ d: mongoRaw.loan }]; // quick ‘preview’ trick
+            this.showPreviewDialog = true;
+          },
+          error: (error) => {
+            this.isLoading = false;
+            console.error('Error fetching loan(s) for preview:', error);
+            this.errorMsg = 'Failed to fetch loan(s). Please check inputs.';
+          },
+        });
+      return;
+    }
+
     this.isLoading = true;
     this.errorMsg = '';
     this.previewLoans = [];
 
-    this.loanProService
+    this.importService
       .importLoan(
         connector,
         this.searchType,
@@ -181,10 +202,32 @@ export class LoanImportComponent implements OnInit, OnDestroy {
     const connector = this.getSelectedConnector();
     if (!connector) return;
 
+    if (connector.type === 'Mongo') {
+      this.isLoading = true;
+      this.importService
+        .importLoan(connector, 'systemId', this.searchValue) // displayId works too
+        .subscribe({
+          next: (mongoRaw: CLSDataResponse) => {
+            // mongoRaw is CLSDataResponse
+
+            this.isLoading = false;
+            console.log('Mongo data', mongoRaw); // ← that’s it for now
+            this.previewLoans = [{ d: mongoRaw.loan }]; // quick ‘preview’ trick
+            this.showPreviewDialog = true;
+          },
+          error: (error) => {
+            this.isLoading = false;
+            console.error('Error fetching loan(s) for preview:', error);
+            this.errorMsg = 'Failed to fetch loan(s). Please check inputs.';
+          },
+        });
+      return;
+    }
+
     // If NOT systemIdRange => same approach as before (single or multi call).
     if (this.searchType !== 'systemIdRange') {
       this.isLoading = true;
-      this.loanProService
+      this.importService
         .importLoan(connector, this.searchType, this.searchValue)
         .subscribe({
           next: (loanData) => {
@@ -234,7 +277,7 @@ export class LoanImportComponent implements OnInit, OnDestroy {
         // You can specify a concurrency limit in mergeMap's 2nd argument, e.g. mergeMap(fn, 5)
         // to fetch 5 at a time. By default, concurrency = Infinity => as many as browser permits.
         mergeMap((id: number) => {
-          return this.loanProService
+          return this.importService
             .importLoan(connector, 'systemId', id.toString())
             .pipe(
               tap((res: LoanResponse | LoanResponse[]) => {

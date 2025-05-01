@@ -4,10 +4,12 @@ import loanRoutes from "./loanRoutes";
 import mainRoutes from "./mainRoutes";
 import xaiRoutes from "./xaiRoutes";
 import openAiRoutes from "./openAiRoutes";
-
+import mongoRoutes from "./mongoRoutes";
 const router = new Router();
 
 router.use("/proxy", proxyRoutes.routes(), proxyRoutes.allowedMethods());
+
+router.use("/mongo", mongoRoutes.routes(), mongoRoutes.allowedMethods());
 
 router.use("/loans", loanRoutes.routes(), loanRoutes.allowedMethods());
 

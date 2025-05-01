@@ -21,7 +21,7 @@ import { Subscription } from 'rxjs';
 export class ConnectorManagementComponent implements OnInit, OnDestroy {
   connectors: Connector[] = [];
   showConnectorDialog: boolean = false;
-  connectorTypes: ConnectorType[] = ['LoanPro']; // Extendable for future connectors
+  connectorTypes: ConnectorType[] = ['LoanPro', 'Mongo']; 
   connectorDialogTitle: string = 'Add New Connector';
 
   newConnector: Connector = this.getEmptyConnector();
@@ -104,6 +104,18 @@ export class ConnectorManagementComponent implements OnInit, OnDestroy {
         return;
       }
     }
+
+     if (this.newConnector.type === 'Mongo') {
+       if (!this.newConnector.credentials.mongoUri) {
+         this.messageService.add({
+           severity: 'warn',
+           summary: 'Validation Error',
+           detail: 'Mongo URI is required.',
+         });
+         return;
+       }
+     }
+     
 
     this.connectorService.saveConnector(this.newConnector);
     this.showConnectorDialog = false;

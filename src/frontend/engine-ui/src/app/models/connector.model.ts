@@ -8,7 +8,7 @@ export interface Connector {
   isDefault?: boolean;
 }
 
-export type ConnectorType = 'LoanPro'; // Extendable for future connectors
+export type ConnectorType = 'LoanPro' | 'Mongo'; // Extendable for future connectors
 
 export interface ConnectorCredentials {
   // For LoanPro
@@ -16,5 +16,9 @@ export interface ConnectorCredentials {
   apiUrl?: string;
   apiToken?: string;
 
-  // Additional fields for other connectors
+  /* Mongo */
+  mongoUri?: string; // mongodb://…     or  mongodb+srv://…
+  mongoUser?: string; // optional
+  mongoPass?: string; // optional
+  mongoDb?: string; // optional (defaults to cls-archive on BE)
 }

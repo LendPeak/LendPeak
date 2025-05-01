@@ -15,14 +15,57 @@ import { map, catchError, switchMap } from 'rxjs/operators';
 import { Connector } from '../models/connector.model';
 import { environment } from '../../environments/environment';
 import { LoanResponse } from '../models/loanpro.model';
+import { CLSDataResponse } from '../models/cls.model';
 
 @Injectable({
   providedIn: 'root',
 })
-export class LoanProService {
+export class ConnectorImportService {
   private proxyUrl = `${environment.apiUrl}/proxy`;
+  private proxyRoot = `${environment.apiUrl}`;
 
   constructor(private http: HttpClient) {}
+
+  /* ----- decide route per connector --------------------------- */
+  importLoan(
+    connector: Connector,
+    searchType: 'displayId' | 'systemId' | 'systemIdRange',
+    searchValue: string,
+    toSystemId?: string,
+  ): Observable<LoanResponse | LoanResponse[] | CLSDataResponse | any> {
+    if (connector.type === 'LoanPro') {
+      return this.importFromLoanPro(
+        connector,
+        searchType,
+        searchValue,
+        toSystemId,
+      );
+    }
+    if (connector.type === 'Mongo') {
+      if (searchType === 'systemIdRange') {
+        return throwError(() => 'Range import not supported for Mongo');
+      }
+      return this.importFromMongo(connector, searchValue);
+    }
+    return throwError(() => 'Unsupported connector type');
+  }
+
+  /* ----- Mongo branch ---------------------------------------- */
+  private importFromMongo(
+    connector: Connector,
+    identifier: string,
+  ): Observable<any> {
+    const url = `${this.proxyRoot}/mongo/loan-account/${encodeURIComponent(identifier)}`;
+
+    const hdrs = new HttpHeaders({
+      'LendPeak-Mongo-Uri': connector.credentials.mongoUri ?? '',
+      'LendPeak-Mongo-User': connector.credentials.mongoUser ?? '',
+      'LendPeak-Mongo-Pass': connector.credentials.mongoPass ?? '',
+      'LendPeak-Mongo-Db': connector.credentials.mongoDb ?? '',
+    });
+
+    return this.http.get(url, { headers: hdrs });
+  }
 
   /**
    * Imports one or more loans based on the search criteria.
@@ -30,12 +73,12 @@ export class LoanProService {
    * - If searchType='systemId', retrieve a single loan by systemId.
    * - If searchType='systemIdRange', retrieve multiple loans by systemId range.
    */
-  importLoan(
+  importFromLoanPro(
     connector: Connector,
     searchType: 'displayId' | 'systemId' | 'systemIdRange',
     searchValue: string,
     toSystemId?: string,
-  ): Observable<LoanResponse | LoanResponse[]> {
+  ): Observable<LoanResponse | LoanResponse[] | CLSDataResponse | any> {
     const headers = this.buildHeaders(connector);
 
     switch (searchType) {

@@ -152,7 +152,7 @@ export class ClsToLendPeakMapper {
 
     activeSchedule.forEach((rsi, termIdx) => {
       const actual = rsi.dueDate!; // never null on active rows
-      const monthsDiff = ChronoUnit.MONTHS.between(prevActual, actual);
+      const monthsDiff = prevActual.until(actual, ChronoUnit.MONTHS);
       const dayChanged = actual.dayOfMonth() !== baseDueDay;
       const gapChanged = monthsDiff !== 1;
 

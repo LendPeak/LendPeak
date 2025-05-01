@@ -56,7 +56,7 @@ export interface CLSLoan {
   loan__Disbursal_Date__c: string;
   loan__Expected_Repayment_Start_Date__c: string;
   loan__Maturity_Date_Current__c: string;
-  loan__Closed_Date__c: string | number | null;
+  loan__Closed_Date__c: string | null;
   loan__Last_Accrual_Date__c: string;
   loan__Accrual_Start_Date__c: string;
 

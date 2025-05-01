@@ -58,6 +58,15 @@ export class ClsToLendPeakMapper {
         DateUtil.today(),
     );
 
+    let isEarlyPayoff = false;
+    if (loan.closedDate) {
+      const lastSchedDate = activeSchedule[activeSchedule.length - 1]?.dueDate;
+
+      const closedDate = DateUtil.normalizeDate(loan.closedDate);
+      isEarlyPayoff =
+        closedDate && lastSchedDate && closedDate.isBefore(lastSchedDate);
+    }
+
     /* ───────────────────────────────────────────────
      * 3.   Build the full Pre-Bill-Days timeline
      *      (baseline -→ every change from history)
@@ -121,6 +130,10 @@ export class ClsToLendPeakMapper {
       term: termPlanned,
       startDate,
       firstPaymentDate,
+      payoffDate: isEarlyPayoff
+        ? // ? DateUtil.normalizeDate(loan.closedDate)
+          DateUtil.normalizeDate(loan.closedDate).minusDays(1)
+        : undefined,
 
       calendars: new TermCalendars({ primary: CalendarType.THIRTY_360_US }),
       equitedMonthlyPayment: loan.paymentAmount,
@@ -198,6 +211,10 @@ export class ClsToLendPeakMapper {
 
     for (let termIdx = 0; termIdx < amort.term; termIdx++) {
       const period = amort.periodsSchedule.atIndex(termIdx);
+      if (!period) {
+        // can happen if we have early payoff
+        break;
+      }
       const valueForTerm = getValueOn(period.startDate);
 
       if (valueForTerm !== defaultPreBill) {

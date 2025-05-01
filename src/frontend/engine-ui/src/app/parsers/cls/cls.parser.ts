@@ -54,6 +54,7 @@ export class ClsLoan {
   readonly maturityDate: string;
   readonly dueDay: number; // = loan__Due_Day__c
   readonly accrualStartDate: string; // = loan__Accrual_Start_Date__c
+  readonly closedDate?: string; // = loan__Closed_Date__c
 
   constructor(raw: CLSLoan) {
     this.id = raw.Name;
@@ -79,6 +80,10 @@ export class ClsLoan {
     this.accrualStartDate = DateUtil.toIsoDateString(
       raw.loan__Accrual_Start_Date__c,
     );
+    if (raw.loan__Closed_Date__c) {
+      this.closedDate = DateUtil.toIsoDateString(raw.loan__Closed_Date__c);
+
+    }
   }
 
   /** 0.06 etc. */

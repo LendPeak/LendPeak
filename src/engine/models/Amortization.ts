@@ -1046,7 +1046,7 @@ export class Amortization {
     return actualEnd.isBefore(plannedEnd);
   }
 
-  get earlyRepayment() {
+  get earlyRepayment(): boolean {
     return this._earlyRepayment;
   }
 
@@ -2476,14 +2476,22 @@ export class Amortization {
           const daysInPeriod = termCalendar.daysBetween(interestRateForPeriod.startDate, interestRateForPeriod.endDate);
           const daysInMonthForCalc = termCalendar.daysInMonth(interestRateForPeriod.startDate);
 
-          const isPayoffSlice = this.payoffDate !== undefined && this.interestAccruesFromDayZero === false && periodEndDate.isEqual(this.payoffDate);
+          let treatEndDateAsNonAccruing = false;
+
+          if (this.interestAccruesFromDayZero === false) {
+            if (this.payoffDate !== undefined && periodEndDate.isEqual(this.payoffDate)) {
+              treatEndDateAsNonAccruing = true;
+            } else if (daysInPeriod === 0) {
+              treatEndDateAsNonAccruing = true;
+            }
+          }
 
           const interestCalculator = new InterestCalculator(
             interestRateForPeriod.annualInterestRate,
             termCalendar.calendarType,
             this.perDiemCalculationType,
             daysInMonthForCalc,
-            /* treatEndDateAsNonAccruing = */ isPayoffSlice
+            /* treatEndDateAsNonAccruing = */ treatEndDateAsNonAccruing
           );
 
           let interestForPeriod: Currency;
@@ -2896,6 +2904,7 @@ export class Amortization {
       calendars: this.calendars.json,
       acceptableRateVariance: this.acceptableRateVariance.toNumber(),
       accrueInterestAfterEndDate: this.accrueInterestAfterEndDate,
+      interestAccruesFromDayZero: this.interestAccruesFromDayZero,
     };
   }
 

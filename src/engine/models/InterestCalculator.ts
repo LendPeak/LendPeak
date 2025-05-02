@@ -238,9 +238,11 @@ export class InterestCalculator {
     }
     let effDays = this.treatEndDateAsNonAccruing ? days - 1 : days;
 
-    if (effDays <= 0) {
-      return Currency.of(0);
+    if (this.treatEndDateAsNonAccruing === false && effDays === 0) {
+      effDays = 1;
     }
+
+    if (effDays <= 0) return Currency.of(0);
 
     const dailyInterestRate = this.calculateDailyInterest(principal, annualRate);
     const interestAmount = dailyInterestRate.multiply(effDays);

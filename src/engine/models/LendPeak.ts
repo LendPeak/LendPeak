@@ -483,6 +483,10 @@ export class LendPeak {
         delete params.amortization.endDate;
       }
 
+      if (!params.amortization.hasCustomEquitedMonthlyPayment) {
+        delete params.amortization.equitedMonthlyPayment;
+      }
+
       // if (!params.amortization.hasCustomPreBillDays) {
       //   delete params.amortization.preBillDays;
       // }
@@ -544,58 +548,47 @@ export class LendPeak {
     return this.recomputePayoffQuote();
   }
 
-  /**
-   * Internal helper that actually does the payoff logic and updates cache.
-   */
+  /** -----------------------------------------------------------------
+   *  Pay-off quote generator
+   * ----------------------------------------------------------------*/
   private recomputePayoffQuote(): PayoffQuoteResult {
-    // -- 2) Gather Bill summary
+    /* ── 1)  Bill-level balances that are already invoiced / due ───────── */
     const billSummary = this.bills.summary;
-    // The summary typically reflects all amounts not yet fully paid:
-    //   remainingPrincipal, remainingInterest, remainingFees, etc.
-    //   plus 'dueInterest', 'dueFees', 'duePrincipal' if the Bill is open/past due, etc.
 
-    let duePrincipal = billSummary.remainingPrincipal; // all leftover principal
-    let dueInterest = billSummary.dueInterest; // all currently-due interest on open Bills
-    let dueFees = billSummary.dueFees; // all due or unpaid fees
+    let duePrincipal = billSummary.remainingPrincipal; // unpaid principal
+    let dueInterest = billSummary.dueInterest; // interest already on Bills
+    let dueFees = billSummary.dueFees; // posted / due fees
     let dueTotal = duePrincipal.add(dueInterest).add(dueFees);
 
-    // -- 3) Check if the "last open" Bill extends beyond the currentDate
+    /* ── 2)  If we’re part-way through the last open Bill,
+            tack on additional accrued interest up to “today” ─────────── */
     const lastOpenBill = this.bills.lastOpenBill;
+
     if (lastOpenBill && this.currentDate.isBefore(lastOpenBill.amortizationEntry.periodEndDate)) {
-      // That means the current date is mid-way through the last open bill’s period,
-      // so we likely owe partial interest from the Bill’s period start up to `currentDate`.
-      // The Bill summary might only include interest up to the Bill’s “period start,”
-      // or up to the last posted date.
+      /* If interest accrues from *day zero*, count the payoff date itself
+       ⇒ use currentDate + 1 day when asking the amortization engine.   */
+      const interestSnapshotDate = this.amortization.interestAccruesFromDayZero ? this.currentDate.plusDays(1) : this.currentDate;
 
-      // For a simple approach, just get the total accrued interest from the original
-      // amortization schedule (loan start -> currentDate). Then subtract the interest
-      // that is already “on the Bills” to avoid double-counting. If your Bill summary
-      // *already* has partial interest, you might skip or adjust this step.
+      const totalAccruedInterest = this.amortization.getAccruedInterestByDate(interestSnapshotDate);
 
-      const extraInterest = this.amortization.getAccruedInterestByDate(this.currentDate);
+      /* How much of that interest is **already** on Bills?                */
+      const interestAlreadyBilled = (billSummary as any).totalInterestBilled ?? billSummary.dueInterest;
 
-      // We also need to know how much interest was already included in 'dueInterest'.
-      // One simple approach is the total interest that was "billed" so far from
-      // the amortization schedule. For demonstration, let’s subtract out
-      // the total *already allocated or posted* to your Bill(s).
-      // If your Bill summary “dueInterest” is purely the unallocated portion,
-      // it might mean we only add the difference:
+      const additionalInterest = totalAccruedInterest.subtract(interestAlreadyBilled);
 
-      // We'll assume for demonstration that `billSummary.dueInterest` only includes interest
-      // up to the last fully posted date. So we add the difference:
-      const additionalInterest = extraInterest.subtract(billSummary.dueInterest);
-
-      // If that difference is positive, add it to dueInterest:
       if (additionalInterest.getValue().greaterThan(0)) {
         dueInterest = dueInterest.add(additionalInterest);
         dueTotal = dueTotal.add(additionalInterest);
       }
     }
 
+    /* ── 3)  Unapplied deposits (they don’t change _due_ figures
+            here, but are reported back to the caller) ────────────────── */
     const unusedAmountFromDeposis = this.depositRecords.unusedAmount;
+    // If you want dueTotal to exclude unused deposits, uncomment:
     // dueTotal = dueTotal.subtract(unusedAmountFromDeposis);
 
-    // -- 4) Build final results
+    /* ── 4)  Assemble result & cache fingerprints ─────────────────────── */
     const payoffResult: PayoffQuoteResult = {
       duePrincipal,
       dueInterest,
@@ -604,13 +597,15 @@ export class LendPeak {
       unusedAmountFromDeposis,
     };
 
-    // -- 5) Store payoff in cache
     this.payoffQuoteCache = {
       results: payoffResult,
+
       amortizationVersionId: this.amortization.versionId,
       amortizationDate: this.amortization.dateChanged,
+
       billsVersionId: this.bills.versionId,
       billsDate: this.bills.dateChanged,
+
       depositRecordsVersionId: this.depositRecords.versionId,
       depositRecordsDate: this.depositRecords.dateChanged,
     };

@@ -218,6 +218,10 @@ export class DepositRecords {
     );
   }
 
+  get hasAutoCloseDeposit(): boolean {
+    return this._records.some((r) => (r.metadata?.type === "auto_close"));
+  }
+
   /**
    * Creates a CSV dump of every deposit record (active + inactive, sorted).
    * You can pass a rounding precision (defaults to 2).

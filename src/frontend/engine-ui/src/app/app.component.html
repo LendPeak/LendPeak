@@ -63,6 +63,7 @@
             >
           </p>
         </div>
+
         <!-- Right Section: Loan Actions -->
         <div class="loan-actions">
           <button
@@ -81,6 +82,111 @@
           ></button>
         </div>
       </div>
+    </div>
+    <div class="loan-highlights">
+      <p-tag
+        *ngIf="lendPeak.summary.highlights.status.isPaidInFull"
+        class="ml-2"
+        severity="success"
+        value="Paid In Full"
+      ></p-tag>
+      <p-tag
+        *ngIf="lendPeak.summary.highlights.status.hasOverpayment"
+        class="ml-2"
+        severity="danger"
+        value="Overpayment Detected"
+      ></p-tag>
+      <p-tag
+        *ngIf="lendPeak.summary.highlights.status.isEarlyPayoff"
+        class="ml-2"
+        severity="info"
+        value="Early Payoff"
+      ></p-tag>
+      <p-tag
+        *ngIf="lendPeak.summary.highlights.payments.hasAutoCloseDeposit"
+        class="ml-2"
+        severity="info"
+        value="Auto-Close Deposit"
+      ></p-tag>
+      <p-tag
+        *ngIf="lendPeak.summary.highlights.status.isPastDue"
+        class="ml-2"
+        severity="danger"
+        value="Past Due"
+      ></p-tag>
+      <p-tag
+        *ngIf="lendPeak.summary.highlights.billing.hasOpenBills"
+        class="ml-2"
+        severity="warn"
+        value="Open Bills"
+      ></p-tag>
+      <p-tag
+        *ngIf="lendPeak.summary.highlights.modifications.hasPayoffDate"
+        class="ml-2"
+        severity="warn"
+        value="Payoff Date Set"
+      ></p-tag>
+      <p-tag
+        *ngIf="lendPeak.summary.highlights.modifications.hasCustomEndDate"
+        class="ml-2"
+        severity="warn"
+        value="Custom End Date"
+      ></p-tag>
+
+      <p-tag
+        *ngIf="
+          lendPeak.summary.highlights.modifications.hasCustomFirstPaymentDate
+        "
+        class="ml-2"
+        severity="info"
+        value="Custom First Payment Date"
+      ></p-tag>
+
+      <p-tag
+        *ngIf="
+          lendPeak.summary.highlights.modifications
+            .hasCustomEquitedMonthlyPayment
+        "
+        class="ml-2"
+        severity="warn"
+        value="Custom Monthly Payment"
+      ></p-tag>
+
+      <p-tag
+        *ngIf="
+          lendPeak.summary.highlights.modifications.hasTermPaymentAmountOverride
+        "
+        class="ml-2"
+        severity="warn"
+        value="Term Payment Amount Override"
+      ></p-tag>
+
+      <p-tag
+        *ngIf="
+          lendPeak.summary.highlights.modifications.hasTermInterestAmountOverride
+        "
+        class="ml-2"
+        severity="warn"
+        value="Term Interest Amount Override"
+      ></p-tag>
+
+      <p-tag
+        *ngIf="
+          lendPeak.summary.highlights.modifications.hasCustomCalendars
+        "
+        class="ml-2"
+        severity="warn"
+        value="Custom Calendars"
+      ></p-tag>
+
+      <p-tag
+        *ngIf="
+          lendPeak.summary.highlights.modifications.hasBalanceModifications
+        "
+        class="ml-2"
+        severity="info"
+        value="Balance Modifications"
+      ></p-tag>
     </div>
   </div>
   <!-- Loan Header Section -->

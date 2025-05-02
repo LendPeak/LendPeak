@@ -38,6 +38,10 @@ export class TermCalendars {
     return this._calendars;
   }
 
+  get hasCustomCalendars(): boolean{
+    return this._calendars.length > 0;
+  }
+
   getCalendarForTerm(term: number, includeInactive = false): Calendar {
     const calendar = this._calendars.find((c) => c.termNumber === term && (c.active === true || includeInactive));
     if (calendar) {

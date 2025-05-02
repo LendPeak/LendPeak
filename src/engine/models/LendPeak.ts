@@ -20,15 +20,11 @@ import { PaymentAllocationStrategyName, PaymentComponent } from "./PaymentApplic
 import { LocalDate, ZoneId, ChronoUnit } from "@js-joda/core";
 
 import Decimal from "decimal.js";
-import dayjs, { Dayjs } from "dayjs";
 import isSameOrAfter from "dayjs/plugin/isSameOrAfter";
 import isSameOrBefore from "dayjs/plugin/isSameOrBefore";
 import isBetween from "dayjs/plugin/isBetween";
 import { AllocationStrategy } from "./PaymentApplication/AllocationStrategy";
 import { DateUtil } from "../utils/DateUtil";
-dayjs.extend(isBetween);
-dayjs.extend(isSameOrAfter);
-dayjs.extend(isSameOrBefore);
 
 export interface PayoffQuoteResult {
   duePrincipal: Currency;
@@ -190,7 +186,7 @@ export class LendPeak {
   }
 
   get currentDate(): LocalDate {
-    return this._currentDate || dayjs();
+    return this._currentDate || DateUtil.today();
   }
 
   set currentDate(value: LocalDate | Date | string) {
@@ -654,5 +650,46 @@ export class LendPeak {
   toCode() {
     // we will return toCode from amortization and from deposits for now
     return this.depositRecords.toCode();
+  }
+
+  get summary() {
+    const toReturn = {
+      highlights: {
+        status: {
+          isPaidInFull: this.isPaidInFull,
+          hasOverpayment: this.hasOverpayment,
+          isEarlyPayoff: this.isEarlyPayoff,
+          isPastDue: this.bills.pastDue.length > 0,
+        },
+        payments: {
+          monthlyPayment: this.amortization.equitedMonthlyPayment,
+          totalPayments: this.paymentApplicationResults.length,
+          totalDeposits: this.depositRecords.all.length,
+          totalBills: this.bills.all.length,
+          unusedAmountFromDeposits: this.depositRecords.unusedAmount,
+          hasAutoCloseDeposit: this.depositRecords.hasAutoCloseDeposit,
+        },
+        billing: {
+          hasOpenBills: this.bills.openBills.length > 0,
+        },
+        modifications: {
+          hasBalanceModifications: this.amortization.balanceModifications.all.length > 0,
+          hasPayoffDate: this.amortization.payoffDate !== undefined,
+          hasCustomEndDate: this.amortization.hasCustomEndDate,
+          hasCustomFirstPaymentDate: this.amortization.hasCustomFirstPaymentDate,
+          hasCustomEquitedMonthlyPayment: this.amortization.hasCustomEquitedMonthlyPayment,
+          hasCustomPreBillDays: this.amortization.hasCustomPreBillDays,
+          hasCustomBillDueDays: this.amortization.hasCustomBillDueDays,
+          hasTermPaymentAmountOverride: this.amortization.termPaymentAmountOverride.length > 0,
+          hasChangePaymentDates: this.amortization.changePaymentDates.length > 0,
+          hasTermInterestAmountOverride: this.amortization.termInterestAmountOverride.length > 0,
+          hasTermInterestRateOverride: this.amortization.termInterestRateOverride.length > 0,
+          hasCustomCalendars: this.amortization.calendars.hasCustomCalendars,
+        },
+        setup: {},
+      },
+    };
+
+    return toReturn;
   }
 }

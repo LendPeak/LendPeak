@@ -93,7 +93,7 @@ describe("Functional Test - Early Payoff - one payment", () => {
   });
   it("verify bills", () => {
     // we should have 3 bil
-    expect(lendPeak.bills.length).toBe(4);
+    expect(lendPeak.bills.length).toBe(3);
     // first bill
   });
 });
@@ -161,7 +161,7 @@ describe("Functional Test - Early Payoff - two payment", () => {
   });
   it("verify bills", () => {
     // we should have 3 bil
-    expect(lendPeak.bills.length).toBe(4);
+    expect(lendPeak.bills.length).toBe(3);
     // first bill
   });
 });

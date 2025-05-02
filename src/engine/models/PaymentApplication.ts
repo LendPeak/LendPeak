@@ -140,9 +140,11 @@ export class PaymentApplication {
       let excessAmount = Currency.of(result.unallocatedAmount);
       // excess amount cannot exceed total owed principal amount so lets get that from bills object first
       const summary = this.bills.summary;
+      let earlyPayoffDetected = false;
       if (excessAmount.greaterThan(summary.remainingPrincipal)) {
         excessAmount = summary.remainingPrincipal;
         result.unallocatedAmount = result.unallocatedAmount.subtract(excessAmount);
+        earlyPayoffDetected = true;
       } else {
         result.unallocatedAmount = Currency.Zero();
       }
@@ -161,6 +163,7 @@ export class PaymentApplication {
           description: `Excess funds applied to principal from deposit ${deposit.id}`,
           metadata: {
             depositId: deposit.id,
+            earlyPayoff: earlyPayoffDetected,
           },
         });
 
@@ -176,6 +179,10 @@ export class PaymentApplication {
           date: dateToApply,
           balanceModification: balanceModification,
         });
+
+        if (earlyPayoffDetected) {
+          this.amortization.payoffDate = dateToApply;
+        }
 
         this.amortization.balanceModifications.addBalanceModification(balanceModification);
         // with every balance modification we need to recalculate the amortization plan

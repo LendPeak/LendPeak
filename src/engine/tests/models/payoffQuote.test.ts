@@ -418,7 +418,7 @@ describe("LendPeak payoffQuote() Tests", () => {
 
   it("Scenario #12: Last open Bill ended in the past, no future bills => payoff includes extra daily interest from Bill-end -> currentDate (single-term)", () => {
     // 1) Create a 1-term loan starting 30 days ago => Bill ends today (day 30)
-    const start = DateUtil.normalizeDate("2025-04-29").minusDays(30);
+    const start = DateUtil.normalizeDate('2025-04-29').minusDays(30);
     const lendPeak = new LendPeak({
       amortization: new Amortization({
         loanAmount: 1000,

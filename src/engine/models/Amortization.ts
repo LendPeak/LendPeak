@@ -1040,6 +1040,10 @@ export class Amortization {
   get wasPaidEarly(): boolean {
     if (!this.repaymentSchedule || this.repaymentSchedule.length === 0) return false;
 
+    if (this.payoffDate && this.payoffDate.isBefore(this.endDate)) {
+      return true;
+    }
+
     const actualEnd = this.repaymentSchedule.lastEntry.periodEndDate;
     const plannedEnd = this.periodsSchedule.lastPeriod.endDate;
 

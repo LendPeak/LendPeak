@@ -426,12 +426,12 @@ export class LendPeak {
 
   /** Contractual maturity from the **period plan** */
   get expectedMaturity(): LocalDate {
-    return this.amortization.periodsSchedule.lastPeriod.endDate;
+    return this.amortization.endDate;
   }
 
   /** Last entry in the **repayment** schedule (actual pay-off) */
   get actualPayoff(): LocalDate {
-    return this.amortization.repaymentSchedule.lastEntry.periodEndDate;
+    return this.amortization.payoffDate || this.amortization.repaymentSchedule.lastEntry.periodEndDate;
   }
 
   /** How many whole terms were skipped thanks to the early pay-off */

@@ -193,6 +193,7 @@ export class AdvancedSettingsComponent implements OnInit {
     this.lendPeak.amortization.flushThreshold = Currency.of(0.01);
     this.lendPeak.amortization.roundingPrecision = 2;
     this.lendPeak.autoCloseThreshold = Currency.of(10.0);
+    this.lendPeak.amortization.interestAccruesFromDayZero = false;
 
     // Store as original settings
     this.originalSettings = this.getCurrentSettings();
@@ -323,6 +324,8 @@ export class AdvancedSettingsComponent implements OnInit {
       flushThreshold: this.lendPeak.amortization.flushThreshold.toNumber(),
       roundingPrecision: this.lendPeak.amortization.roundingPrecision,
       autoCloseThreshold: this.lendPeak.autoCloseThreshold.toNumber(),
+      interestAccruesFromDayZero:
+        this.lendPeak.amortization.interestAccruesFromDayZero,
     };
   }
 
@@ -369,6 +372,8 @@ export class AdvancedSettingsComponent implements OnInit {
     this.lendPeak.amortization.flushThreshold = settings.flushThreshold || 0.01;
     this.lendPeak.amortization.roundingPrecision =
       settings.roundingPrecision || 2;
+    this.lendPeak.amortization.interestAccruesFromDayZero =
+      settings.interestAccruesFromDayZero ?? false;
 
     this.lendPeak.autoCloseThreshold = Currency.of(
       settings.autoCloseThreshold ?? 10,

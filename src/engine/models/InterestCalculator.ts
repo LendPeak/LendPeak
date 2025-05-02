@@ -36,12 +36,21 @@ export class InterestCalculator {
   private perDiemCalculationType: PerDiemCalculationType;
   private daysInAMonth?: number;
   private _perDiem?: Currency;
-  
+  private treatEndDateAsNonAccruing: boolean;
 
-  constructor(annualInterestRate: Decimal, calendarType: CalendarType = CalendarType.ACTUAL_ACTUAL, perDiemCalculationType: PerDiemCalculationType = "AnnualRateDividedByDaysInYear", daysInAMonth?: number) {
+  constructor(
+    annualInterestRate: Decimal,
+    calendarType: CalendarType = CalendarType.ACTUAL_ACTUAL,
+    perDiemCalculationType: PerDiemCalculationType = "AnnualRateDividedByDaysInYear",
+    daysInAMonth?: number,
+    /** When true, the **last** day in the passed range is *excluded* */
+    treatEndDateAsNonAccruing: boolean = false
+  ) {
     this.annualInterestRate = annualInterestRate;
     this.calendar = new Calendar(calendarType);
     this.perDiemCalculationType = perDiemCalculationType;
+
+    this.treatEndDateAsNonAccruing = treatEndDateAsNonAccruing;
 
     if (this.perDiemCalculationType === "MonthlyRateDividedByDaysInMonth") {
       if (daysInAMonth === undefined) {
@@ -227,8 +236,14 @@ export class InterestCalculator {
     if (annualRate.isZero()) {
       return Currency.of(0);
     }
+    let effDays = this.treatEndDateAsNonAccruing ? days - 1 : days;
+
+    if (effDays <= 0) {
+      return Currency.of(0);
+    }
+
     const dailyInterestRate = this.calculateDailyInterest(principal, annualRate);
-    const interestAmount = dailyInterestRate.multiply(days);
+    const interestAmount = dailyInterestRate.multiply(effDays);
     return interestAmount;
   }
 

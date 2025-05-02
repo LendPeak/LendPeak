@@ -471,7 +471,6 @@
           </p-popover>
         </div>
 
-        <!-- Allow Rates Above 100% -->
         <div class="field-checkbox">
           <p-checkbox
             [(ngModel)]="lendPeak.amortization.accrueInterestAfterEndDate"
@@ -491,6 +490,38 @@
             <ng-template pTemplate="content">
               If Bill remains unpaid after the end date, interest will continue
               to accrue on owed principal
+            </ng-template>
+          </p-popover>
+        </div>
+
+        <div class="field-checkbox">
+          <p-checkbox
+            [(ngModel)]="lendPeak.amortization.interestAccruesFromDayZero"
+            name="interestAccruesFromDayZero"
+            binary="true"
+            (ngModelChange)="onInputChange()"
+          ></p-checkbox>
+          <label for="interestAccruesFromDayZero">
+            Accrue Interest&nbsp;From&nbsp;Day&nbsp;0
+            <i
+              class="pi pi-info-circle tooltip-icon"
+              (click)="showTooltip($event, interestAccruesFromDayZeroTooltip)"
+            ></i>
+          </label>
+
+          <!-- Pop-over tooltip -->
+          <p-popover #interestAccruesFromDayZeroTooltip>
+            <ng-template pTemplate="content">
+              <p>
+                When enabled, interest for a given day is recognised
+                <strong>at the very start of the day</strong> (“day-0”).&nbsp;
+                When disabled (default), interest is not due until the first
+                second of the <em>next</em> day (“day-1” behaviour).
+              </p>
+              <p class="p-mt-1">
+                The flag only affects partial-period pay-offs and snapshot
+                accruals; it does not change your regular term interest.
+              </p>
             </ng-template>
           </p-popover>
         </div>

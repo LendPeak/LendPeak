@@ -105,6 +105,17 @@ export interface AmortizationParams {
   termInterestRateOverride?: TermInterestRateOverrides;
   acceptableRateVariance?: number | Decimal; // if not set  is used
   accrueInterestAfterEndDate?: boolean;
+
+  /**
+   * If **true** → interest begins accruing at the very start of a day
+   * (“day 0” behaviour).
+   * If **false** or omitted → interest for a given day is not due until
+   * the first second **of the next day** (“day 1” – current default).
+   *
+   * This only makes a difference on partial-period pay-offs and
+   * snapshot accrual calculations.
+   */
+  interestAccruesFromDayZero?: boolean;
 }
 
 export type BillingModel = "amortized" | "dailySimpleInterest";
@@ -236,6 +247,8 @@ export class Amortization {
   private _versionId: string = uuidv4();
   private _dateChanged: LocalDate = LocalDate.now();
   private _accrueInterestAfterEndDate: boolean = false;
+
+  private _interestAccruesFromDayZero: boolean = false;
 
   constructor(params: AmortizationParams) {
     this._inputParams = cloneDeep(params);
@@ -387,6 +400,9 @@ export class Amortization {
       this.accrueInterestAfterEndDate = params.accrueInterestAfterEndDate;
     }
 
+    if (params.interestAccruesFromDayZero !== undefined) {
+      this.interestAccruesFromDayZero = params.interestAccruesFromDayZero;
+    }
     // validate the schedule periods and rates
 
     this.calculateAmortizationPlan();
@@ -848,6 +864,15 @@ export class Amortization {
       }
     }
     this.generateDueBillDays();
+  }
+
+  get interestAccruesFromDayZero(): boolean {
+    return this._interestAccruesFromDayZero;
+  }
+
+  set interestAccruesFromDayZero(value: boolean) {
+    this.modifiedSinceLastCalculation = true;
+    this._interestAccruesFromDayZero = value;
   }
 
   get defaultPreBillDaysConfiguration() {
@@ -2451,7 +2476,15 @@ export class Amortization {
           const daysInPeriod = termCalendar.daysBetween(interestRateForPeriod.startDate, interestRateForPeriod.endDate);
           const daysInMonthForCalc = termCalendar.daysInMonth(interestRateForPeriod.startDate);
 
-          const interestCalculator = new InterestCalculator(interestRateForPeriod.annualInterestRate, termCalendar.calendarType, this.perDiemCalculationType, daysInMonthForCalc);
+          const isPayoffSlice = this.payoffDate !== undefined && this.interestAccruesFromDayZero === false && periodEndDate.isEqual(this.payoffDate);
+
+          const interestCalculator = new InterestCalculator(
+            interestRateForPeriod.annualInterestRate,
+            termCalendar.calendarType,
+            this.perDiemCalculationType,
+            daysInMonthForCalc,
+            /* treatEndDateAsNonAccruing = */ isPayoffSlice
+          );
 
           let interestForPeriod: Currency;
           if (interestRateForPeriod.annualInterestRate.isZero()) {

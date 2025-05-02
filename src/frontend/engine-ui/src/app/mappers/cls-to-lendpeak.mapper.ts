@@ -132,7 +132,7 @@ export class ClsToLendPeakMapper {
       firstPaymentDate,
       payoffDate: isEarlyPayoff
         ? // ? DateUtil.normalizeDate(loan.closedDate)
-          DateUtil.normalizeDate(loan.closedDate).minusDays(1)
+          DateUtil.normalizeDate(loan.closedDate)
         : undefined,
 
       calendars: new TermCalendars({ primary: CalendarType.THIRTY_360_US }),

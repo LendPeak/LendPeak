@@ -142,6 +142,7 @@ export class ClsPaymentTxn {
   readonly id: string;
   readonly receiptDate: LocalDate | null;
   readonly clearingDate: LocalDate | null;
+  readonly transactionDate: LocalDate;
   readonly amount: Currency;
   readonly principal: Currency;
   readonly interest: Currency;
@@ -154,6 +155,7 @@ export class ClsPaymentTxn {
     this.cleared = !!raw.loan__Cleared__c;
     this.receiptDate = toDate(raw.loan__Receipt_Date__c);
     this.clearingDate = toDate(raw.loan__Clearing_Date__c);
+    this.transactionDate = toDate(raw.loan__Transaction_Date__c);
     this.amount = toCurr(raw.loan__Transaction_Amount__c);
     this.principal = toCurr(raw.loan__Principal__c);
     this.interest = toCurr(raw.loan__Interest__c);

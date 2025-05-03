@@ -113,6 +113,9 @@ export class AppComponent implements OnChanges {
   actualLoanSummary?: ActualLoanSummary;
   pastDueSummary?: PastDueSummary;
 
+  showRawImportDialogVisible: boolean = false;
+  rawImportJSON: any = {};
+
   showCodeDialogVisible: boolean = false;
   generatedCode: string = ''; // Use SafeHtml to safely bind HTML content
 
@@ -151,6 +154,7 @@ export class AppComponent implements OnChanges {
     loanData: {
       loan: Amortization;
       deposits: DepositRecords;
+      rawImportData?: string;
     }[],
   ) {
     if (loanData.length > 1) {
@@ -235,6 +239,7 @@ export class AppComponent implements OnChanges {
   private async saveAndLoadLoan(loanData: {
     loan: Amortization;
     deposits: DepositRecords;
+    rawImportData?: string;
   }) {
     this.lendPeak = await this.saveLoanWithoutLoading(loanData);
     await this.executeLoadLoan(this.lendPeak.amortization.name);
@@ -243,11 +248,13 @@ export class AppComponent implements OnChanges {
   private async saveLoanWithoutLoading(loanData: {
     loan: Amortization;
     deposits: DepositRecords;
+    rawImportData?: string;
   }) {
     try {
       const lendPeak = new LendPeak({
         amortization: loanData.loan,
         depositRecords: loanData.deposits,
+        rawImportData: loanData.rawImportData,
       })
         .addAmortizationVersionManager()
         .addFinancialOpsVersionManager();
@@ -738,6 +745,11 @@ export class AppComponent implements OnChanges {
           icon: 'pi pi-code',
           command: () => this.openCodeDialog(),
         },
+        {
+          label: 'Show Raw Import',
+          icon: 'pi pi-code',
+          command: () => this.openRawImportDialog(),
+        },
 
         {
           label: 'Current Release Notes',
@@ -788,6 +800,202 @@ export class AppComponent implements OnChanges {
         '\n' +
         this.lendPeak.depositRecords.toCode();
       this.showCodeDialogVisible = true;
+    } else {
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Error',
+        detail: 'No loan data to generate code',
+      });
+    }
+  }
+
+  scheduleShow: string[] = [
+    'loan__Due_Date__c',
+    'loan__Total_Installment__c',
+    'loan__isPaid__c',
+  ];
+  lptShow: string[] = []; // empty = show all
+  historyShow: string[] = ['CreatedDate', 'Field', 'OldValue', 'NewValue'];
+
+  copyRawImportScheduleAsCSV() {
+    // we will create CSV from the schedule data this.rawImportJSON.schedule
+    // and add it to copy buffer aka clipboard
+    const csvData = this.rawImportJSON.schedule
+      .map((row: any) => {
+        return Object.values(row)
+          .map((value: any) => (typeof value === 'string' ? value : ''))
+          .join(',');
+      })
+      .join('\n');
+    navigator.clipboard
+      .writeText(csvData)
+      .then(() => {
+        // Show success toast
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Success',
+          detail: 'Repayment plan copied to clipboard',
+        });
+      })
+      .catch((err) => {
+        // Show error toast
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'Failed to copy repayment plan to clipboard',
+        });
+        console.error('Failed to copy text: ', err);
+      });
+  }
+
+  copyRawImportPaymentsAsCSV() {
+    // we will create CSV from the schedule data this.rawImportJSON.schedule
+    // and add it to copy buffer aka clipboard
+    const csvData = this.rawImportJSON.lpts
+      .map((row: any) => {
+        return Object.values(row)
+          .map((value: any) => (typeof value === 'string' ? value : ''))
+          .join(',');
+      })
+      .join('\n');
+    navigator.clipboard
+      .writeText(csvData)
+      .then(() => {
+        // Show success toast
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Success',
+          detail: 'Payments copied to clipboard',
+        });
+      })
+      .catch((err) => {
+        // Show error toast
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'Failed to copy Payments to clipboard',
+        });
+        console.error('Failed to copy text: ', err);
+      });
+  }
+
+  copyRawImportHistoryAsCSV() {
+    // we will create CSV from the schedule data this.rawImportJSON.schedule
+    // and add it to copy buffer aka clipboard
+    const csvData = this.rawImportJSON.history
+      .map((row: any) => {
+        return Object.values(row)
+          .map((value: any) => (typeof value === 'string' ? value : ''))
+          .join(',');
+      })
+      .join('\n');
+    navigator.clipboard
+      .writeText(csvData)
+      .then(() => {
+        // Show success toast
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Success',
+          detail: 'History copied to clipboard',
+        });
+      })
+      .catch((err) => {
+        // Show error toast
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'Failed to copy History to clipboard',
+        });
+        console.error('Failed to copy text: ', err);
+      });
+  }
+
+  copyRawImportScheduleHideArchived = true;
+
+  openRawImportDialog() {
+    if (this.lendPeak) {
+      if (this.lendPeak.rawImportData) {
+        this.rawImportJSON = JSON.parse(this.lendPeak.rawImportData);
+      } else {
+        this.rawImportJSON = {};
+      }
+
+      // from this.rawImportJSON.loan i want to remove
+      // all keys where value is null or undefined
+
+      // remove from rawImportJSON.loan all keys where value is null or undefined
+      this.rawImportJSON.loan = Object.fromEntries(
+        Object.entries(this.rawImportJSON.loan).filter(
+          ([_, value]) => value !== null && value !== undefined,
+        ),
+      );
+
+      // remove from rawImportJSON.lpts array keys _id, Id, attributes, loan_Is_Migrated__c, loan__Automated_Payment_Setup__c, , loan__Loan_Account__c, loan__Other_Charges_Interest__c, loan__Total_Charges_Interest__c, loan__Total_Charges_Principal__c,
+      this.rawImportJSON.lpts = this.rawImportJSON.lpts.map((lpt: any) => {
+        return {
+          Name: lpt.Name,
+          loan__Transaction_Date__c: lpt.loan__Transaction_Date__c,
+          loan__Clearing_Date__c: lpt.loan__Clearing_Date__c,
+          loan__Transaction_Amount__c: lpt.loan__Transaction_Amount__c,
+          loan__Interest__c: lpt.loan__Interest__c,
+          loan__Principal__c: lpt.loan__Principal__c,
+          loan__Excess__c: lpt.loan__Excess__c,
+          loan__Archived__c: lpt.loan__Archived__c,
+          loan__Reversed__c: lpt.loan__Reversed__c,
+          loan__Rejected__c: lpt.loan__Rejected__c,
+        };
+      });
+
+      // sort lpts by loan__Transaction_Date__c
+      this.rawImportJSON.lpts.sort((a: any, b: any) => {
+        const dateA = DateUtil.normalizeDate(a.loan__Transaction_Date__c);
+        const dateB = DateUtil.normalizeDate(b.loan__Transaction_Date__c);
+        return dateA.isAfter(dateB) ? 1 : -1;
+      });
+
+      this.rawImportJSON.schedule = this.rawImportJSON.schedule.map(
+        (rsi: any) => {
+          return {
+            Name: rsi.Name,
+            loan__Balance__c: rsi.loan__Balance__c,
+            loan__Due_Interest__c: rsi.loan__Due_Interest__c,
+            loan__Due_Principal__c: rsi.loan__Due_Principal__c,
+            loan__Interest_Rounding_Error__c:
+              rsi.loan__Interest_Rounding_Error__c,
+            loan__Total_Installment__c: rsi.loan__Total_Installment__c,
+            loan__Due_Date__c: rsi.loan__Due_Date__c,
+            loan__Is_Archived__c: rsi.loan__Is_Archived__c,
+          };
+        },
+      );
+
+      // now we will sort schedule by loan__Due_Date__c
+      this.rawImportJSON.schedule.sort((a: any, b: any) => {
+        const dateA = DateUtil.normalizeDate(a.loan__Due_Date__c);
+        const dateB = DateUtil.normalizeDate(b.loan__Due_Date__c);
+        return dateA.isAfter(dateB) ? 1 : -1;
+      });
+
+      this.rawImportJSON.history = this.rawImportJSON.history.map(
+        (hist: any) => {
+          return {
+            CreatedDate: hist.CreatedDate,
+            Field: hist.Field,
+            OldValue: hist.OldValue,
+            NewValue: hist.NewValue,
+          };
+        },
+      );
+
+      // now we will sort history by CreatedDate
+      this.rawImportJSON.history.sort((a: any, b: any) => {
+        const dateA = DateUtil.normalizeDate(a.CreatedDate);
+        const dateB = DateUtil.normalizeDate(b.CreatedDate);
+        return dateA.isAfter(dateB) ? 1 : -1;
+      });
+
+      console.log(this.rawImportJSON);
+      this.showRawImportDialogVisible = true;
     } else {
       this.messageService.add({
         severity: 'error',

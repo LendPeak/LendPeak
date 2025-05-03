@@ -30,6 +30,7 @@ export class ClsToLendPeakMapper {
   static map(parser: ClsParser): {
     loan: Amortization;
     deposits: DepositRecords;
+    rawImportData: string;
   } {
     /* ── shorthand handles ── */
     const loan = parser.loan; // ClsLoan instance
@@ -239,7 +240,7 @@ export class ClsToLendPeakMapper {
      * ───────────────────────────────────────────── */
     const deposits = ClsToLendPeakMapper.mapPayments(payments);
 
-    return { loan: amort, deposits };
+    return { loan: amort, deposits, rawImportData: parser.rawImportData };
   }
 
   /* ======================================================================

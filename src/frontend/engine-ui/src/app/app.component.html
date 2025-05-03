@@ -83,6 +83,7 @@
         </div>
       </div>
     </div>
+    <hr />
     <div class="loan-highlights">
       <p-tag
         *ngIf="lendPeak.summary.highlights.status.isPaidInFull"
@@ -163,7 +164,8 @@
 
       <p-tag
         *ngIf="
-          lendPeak.summary.highlights.modifications.hasTermInterestAmountOverride
+          lendPeak.summary.highlights.modifications
+            .hasTermInterestAmountOverride
         "
         class="ml-2"
         severity="warn"
@@ -171,12 +173,27 @@
       ></p-tag>
 
       <p-tag
-        *ngIf="
-          lendPeak.summary.highlights.modifications.hasCustomCalendars
-        "
+        *ngIf="lendPeak.summary.highlights.modifications.hasCustomCalendars"
         class="ml-2"
         severity="warn"
         value="Custom Calendars"
+      ></p-tag>
+
+      <p-tag
+        *ngIf="lendPeak.summary.highlights.modifications.hasChangePaymentDates"
+        class="ml-2"
+        [severity]="
+          lendPeak.summary.highlights.modifications.hasChangePaymentDates > 5
+            ? 'danger'
+            : lendPeak.summary.highlights.modifications.hasChangePaymentDates >
+                2
+              ? 'warn'
+              : 'info'
+        "
+        [value]="
+          'Change Payment Dates ' +
+          lendPeak.summary.highlights.modifications.hasChangePaymentDates
+        "
       ></p-tag>
 
       <p-tag
@@ -1265,6 +1282,184 @@
       pButton
       label="Close"
       (click)="showCodeDialogVisible = false"
+    ></button>
+  </div>
+</p-dialog>
+
+<!-- raw import -->
+<p-dialog
+  header="Raw Import Data"
+  [(visible)]="showRawImportDialogVisible"
+  [modal]="true"
+  [style]="{ width: '80%' }"
+  [maximizable]="true"
+  [closable]="true"
+>
+  <!-- =========== Loan (simple object) =========== -->
+  <p-card header="Loan Details" class="mb-3" *ngIf="rawImportJSON?.loan">
+    <p-table
+      [value]="rawImportJSON.loan | keyvalue"
+      responsiveLayout="scroll"
+      [scrollable]="true"
+      scrollHeight="300px"
+    >
+      <ng-template pTemplate="header">
+        <tr>
+          <th>Key</th>
+          <th>Value</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-row>
+        <tr>
+          <td>{{ row.key }}</td>
+          <td style="word-break: break-all">{{ row.value }}</td>
+        </tr>
+      </ng-template>
+    </p-table>
+  </p-card>
+
+  <!-- =========== Arrays in tabs =========== -->
+  <div class="card">
+    <!-- the selected tab; 0 = first tab -->
+    <p-tabs value="0">
+      <!-- ------- Tab headers ------- -->
+      <p-tablist>
+        <p-tab value="0">Repayment Schedule</p-tab>
+        <p-tab value="1">Payments</p-tab>
+        <p-tab value="2">History</p-tab>
+      </p-tablist>
+
+      <!-- ------- Tab panels ------- -->
+      <p-tabpanels>
+        <!-- ===== Repayment Schedule ===== -->
+        <p-tabpanel value="0">
+          <p-button
+            icon="pi pi-refresh"
+            label="Copy Schedule as CSV"
+            (click)="copyRawImportScheduleAsCSV()"
+            class="p-button-secondary"
+          />
+
+          <p-button
+            icon="pi pi-refresh"
+            [label]="
+              copyRawImportScheduleHideArchived
+                ? 'Show Archived'
+                : 'Hide Archived'
+            "
+            (click)="
+              copyRawImportScheduleHideArchived =
+                !copyRawImportScheduleHideArchived
+            "
+            class="p-button-secondary"
+          />
+
+          <p-table
+            #dtSchedule
+            *ngIf="rawImportJSON?.schedule?.length"
+            [value]="rawImportJSON.schedule"
+            dataKey="Name"
+          >
+            <ng-template pTemplate="header">
+              <tr>
+                <th *ngFor="let col of rawImportJSON.schedule[0] | keyvalue">
+                  {{ col.key }}
+                </th>
+              </tr>
+            </ng-template>
+
+            <ng-template pTemplate="body" let-row>
+              <tr
+                *ngIf="
+                  !copyRawImportScheduleHideArchived ||
+                  row.loan__Is_Archived__c === false
+                "
+              >
+                <td *ngFor="let col of rawImportJSON.schedule[0] | keyvalue">
+                  {{ $any($any(row))[$any(col).key] }}
+                </td>
+              </tr>
+            </ng-template>
+          </p-table>
+        </p-tabpanel>
+
+        <!-- ===== Payments (LPTs) ===== -->
+        <p-tabpanel value="1">
+          <p-button
+            icon="pi pi-refresh"
+            label="Copy Payments as CSV"
+            (click)="copyRawImportPaymentsAsCSV()"
+            class="p-button-secondary"
+          />
+
+          <p-table
+            *ngIf="rawImportJSON?.lpts?.length"
+            [value]="rawImportJSON.lpts"
+            dataKey="_id"
+            responsiveLayout="scroll"
+            [scrollable]="true"
+            scrollHeight="400px"
+          >
+            <ng-template pTemplate="header">
+              <tr>
+                <th *ngFor="let col of rawImportJSON.lpts[0] | keyvalue">
+                  {{ col.key }}
+                </th>
+              </tr>
+            </ng-template>
+
+            <ng-template pTemplate="body" let-row>
+              <tr>
+                <td *ngFor="let col of rawImportJSON.lpts[0] | keyvalue">
+                  {{ $any($any(row))[$any(col).key] }}
+                </td>
+              </tr>
+            </ng-template>
+          </p-table>
+        </p-tabpanel>
+
+        <!-- ===== History ===== -->
+        <p-tabpanel value="2">
+          <p-button
+            icon="pi pi-refresh"
+            label="Copy History as CSV"
+            (click)="copyRawImportHistoryAsCSV()"
+            class="p-button-secondary"
+          />
+          <p-table
+            *ngIf="rawImportJSON?.history?.length"
+            [value]="rawImportJSON.history"
+            dataKey="_id"
+            responsiveLayout="scroll"
+            [scrollable]="true"
+            scrollHeight="400px"
+          >
+            <ng-template pTemplate="header">
+              <tr>
+                <th *ngFor="let col of rawImportJSON.history[0] | keyvalue">
+                  {{ col.key }}
+                </th>
+              </tr>
+            </ng-template>
+
+            <ng-template pTemplate="body" let-row>
+              <tr>
+                <td *ngFor="let col of rawImportJSON.history[0] | keyvalue">
+                  {{ $any($any(row))[$any(col).key] }}
+                </td>
+              </tr>
+            </ng-template>
+          </p-table>
+        </p-tabpanel>
+      </p-tabpanels>
+    </p-tabs>
+  </div>
+
+  <div class="flex justify-content-end gap-2">
+    <button
+      pButton
+      label="Close"
+      (click)="showRawImportDialogVisible = false"
     ></button>
   </div>
 </p-dialog>

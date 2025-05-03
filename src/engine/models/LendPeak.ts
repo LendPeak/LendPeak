@@ -48,6 +48,8 @@ export class LendPeak {
 
   _balanceModificationChanged: boolean = false;
 
+  rawImportData?: string;
+
   /** -------------------------------------------------
    *  Auto-close threshold: if the payoffQuote.dueTotal
    *  is ≤ this amount AND > 0, the engine will create
@@ -78,7 +80,9 @@ export class LendPeak {
     paymentPriority?: PaymentComponent[];
     autoCloseThreshold?: Currency | number;
     currentDate?: LocalDate;
+    rawImportData?: string;
   }) {
+    this.rawImportData = params.rawImportData;
     this.setAmortization(params.amortization);
 
     this.setDepositRecords(params.depositRecords);
@@ -620,6 +624,7 @@ export class LendPeak {
       allocationStrategy: PaymentApplication.getAllocationStrategyFromClass(this.allocationStrategy),
       paymentPriority: this.paymentPriority,
       autoCloseThreshold: this.autoCloseThreshold.toNumber(),
+      rawImportData: this.rawImportData ,
     };
   }
 
@@ -681,7 +686,7 @@ export class LendPeak {
           hasCustomPreBillDays: this.amortization.hasCustomPreBillDays,
           hasCustomBillDueDays: this.amortization.hasCustomBillDueDays,
           hasTermPaymentAmountOverride: this.amortization.termPaymentAmountOverride.length > 0,
-          hasChangePaymentDates: this.amortization.changePaymentDates.length > 0,
+          hasChangePaymentDates: this.amortization.changePaymentDates.length,
           hasTermInterestAmountOverride: this.amortization.termInterestAmountOverride.length > 0,
           hasTermInterestRateOverride: this.amortization.termInterestRateOverride.length > 0,
           hasCustomCalendars: this.amortization.calendars.hasCustomCalendars,

@@ -82,7 +82,6 @@ export class ClsLoan {
     );
     if (raw.loan__Closed_Date__c) {
       this.closedDate = DateUtil.toIsoDateString(raw.loan__Closed_Date__c);
-
     }
   }
 
@@ -199,8 +198,10 @@ export class ClsParser {
   readonly schedule: ClsScheduleLine[];
   readonly payments: ClsPaymentTxn[];
   readonly history: ClsHistory[];
+  readonly rawImportData: string;
 
   constructor(raw: CLSDataResponse) {
+    this.rawImportData = JSON.stringify(raw);
     this.loan = new ClsLoan(raw.loan);
 
     // make sure schedule is ordered

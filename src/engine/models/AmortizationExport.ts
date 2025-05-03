@@ -3,7 +3,7 @@ import { AmortizationEntry, AmortizationScheduleMetadata } from "./Amortization/
 import { Currency, RoundingMethod } from "../utils/Currency";
 import { Decimal } from "decimal.js";
 import { CalendarType } from "./Calendar";
-import { BalanceModification } from "./Amortization/BalanceModification";
+import { BalanceModifications } from "./Amortization/BalanceModifications";
 
 import dayjs, { Dayjs } from "dayjs";
 import isSameOrAfter from "dayjs/plugin/isSameOrAfter";
@@ -216,7 +216,7 @@ export class AmortizationExport {
     const serializeParams = (params: AmortizationParams): string => {
       const lines = [];
 
-      for (const [key, value] of Object.entries(params)) {
+      for (let [key, value] of Object.entries(params)) {
         if (value === undefined || value === null) {
           continue; // Skip undefined or null values
         }
@@ -256,17 +256,10 @@ export class AmortizationExport {
             break;
 
           case "balanceModifications":
-            // check if values are array of BalanceModification objects, if not
-            // inflate it into an object
-            for (let v of value) {
-              if (!(v instanceof BalanceModification)) {
-                v = new BalanceModification(v);
-              }
+            if (!(value instanceof BalanceModifications)) {
+              value = new BalanceModifications(value);
             }
-            serializedValue = serializeArray(value as BalanceModification[], (mod) => {
-              // print instance type for mod
-              return mod.toCode();
-            });
+            serializedValue = value.toCode();
             break;
 
           // Handle other complex types as needed

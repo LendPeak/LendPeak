@@ -119,31 +119,31 @@ export class LoanImportComponent implements OnInit, OnDestroy {
     const connector = this.getSelectedConnector();
     if (!connector) return;
 
-   if (connector.type === 'Mongo') {
-     this.isLoading = true;
-     this.importService
-       .importLoan(connector, 'systemId', this.searchValue) // displayId works too
-       .subscribe({
-         next: (mongoRaw: CLSDataResponse) => {
-           this.isLoading = false;
+    if (connector.type === 'Mongo') {
+      this.isLoading = true;
+      this.importService
+        .importLoan(connector, 'systemId', this.searchValue) // displayId works too
+        .subscribe({
+          next: (mongoRaw: CLSDataResponse) => {
+            this.isLoading = false;
 
-           /** 🔗 convert raw CLS → LendPeak objects */
-           const parser = new ClsParser(mongoRaw);
-           const { loan } = ClsToLendPeakMapper.map(parser);
+            /** 🔗 convert raw CLS → LendPeak objects */
+            const parser = new ClsParser(mongoRaw);
+            const { loan } = ClsToLendPeakMapper.map(parser);
 
-           /* Show something meaningful in the preview dialog.
+            /* Show something meaningful in the preview dialog.
            (You can style this any way you like in the template) */
-           this.previewLoans = [{ id: loan.id, name: loan.name }];
-           this.showPreviewDialog = true;
-         },
-         error: (error) => {
-           this.isLoading = false;
-           console.error('Error fetching loan(s) for preview:', error);
-           this.errorMsg = 'Failed to fetch loan(s). Please check inputs.';
-         },
-       });
-     return; // <<< keep the early-return
-   }
+            this.previewLoans = [{ id: loan.id, name: loan.name }];
+            this.showPreviewDialog = true;
+          },
+          error: (error) => {
+            this.isLoading = false;
+            console.error('Error fetching loan(s) for preview:', error);
+            this.errorMsg = 'Failed to fetch loan(s). Please check inputs.';
+          },
+        });
+      return; // <<< keep the early-return
+    }
 
     this.isLoading = true;
     this.errorMsg = '';
@@ -210,33 +210,32 @@ export class LoanImportComponent implements OnInit, OnDestroy {
     const connector = this.getSelectedConnector();
     if (!connector) return;
 
-   if (connector.type === 'Mongo') {
-     this.isLoading = true;
-     this.importService
-       .importLoan(connector, 'systemId', this.searchValue) // displayId works too
-       .subscribe({
-         next: (mongoRaw: CLSDataResponse) => {
-           /** 🔗 Parse & map the CLS payload */
-           const parser = new ClsParser(mongoRaw);
-           const mapped = ClsToLendPeakMapper.map(parser); // { loan, deposits }
+    if (connector.type === 'Mongo') {
+      this.isLoading = true;
+      this.importService
+        .importLoan(connector, 'systemId', this.searchValue) // displayId works too
+        .subscribe({
+          next: (mongoRaw: CLSDataResponse) => {
+            /** 🔗 Parse & map the CLS payload */
+            const parser = new ClsParser(mongoRaw);
+            const mapped = ClsToLendPeakMapper.map(parser); // { loan, deposits }
 
-           this.isLoading = false;
-           /* 🔔 hand off to the existing emitter */
-           this.handleImportedLoans([mapped]);
-         },
-         error: (error) => {
-           this.isLoading = false;
-           console.error('Error importing CLS loan:', error);
-           this.messageService.add({
-             severity: 'error',
-             summary: 'Error',
-             detail: 'Failed to import loan.',
-           });
-         },
-       });
-     return; // <<< keep the early-return
-   }
-
+            this.isLoading = false;
+            /* 🔔 hand off to the existing emitter */
+            this.handleImportedLoans([mapped]);
+          },
+          error: (error) => {
+            this.isLoading = false;
+            console.error('Error importing CLS loan:', error);
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Error',
+              detail: 'Failed to import loan.',
+            });
+          },
+        });
+      return; // <<< keep the early-return
+    }
 
     // If NOT systemIdRange => same approach as before (single or multi call).
     if (this.searchType !== 'systemIdRange') {
@@ -350,7 +349,11 @@ export class LoanImportComponent implements OnInit, OnDestroy {
    * "imported" logic => i.e. filter empty, convert to UI objects, and emit.
    */
   private async handleImportedLoans(
-    loanData: { loan: Amortization; deposits: DepositRecords }[],
+    loanData: {
+      loan: Amortization;
+      deposits: DepositRecords;
+      rawImportData: string;
+    }[],
   ) {
     try {
       await this.loanImported.emit(loanData);
@@ -479,6 +482,7 @@ export class LoanImportComponent implements OnInit, OnDestroy {
   private mapToUILoan(loanData: LoanResponse): {
     loan: Amortization;
     deposits: DepositRecords;
+    rawImportData: string;
   } {
     let perDiemCalculationType: PerDiemCalculationType =
       'AnnualRateDividedByDaysInYear';
@@ -685,7 +689,11 @@ export class LoanImportComponent implements OnInit, OnDestroy {
       );
     }
 
-    return { loan: amortization, deposits: deposits };
+    return {
+      loan: amortization,
+      deposits: deposits,
+      rawImportData: JSON.stringify(loanData),
+    };
   }
 
   private mapDeposits(loanData: LoanResponse): DepositRecords {

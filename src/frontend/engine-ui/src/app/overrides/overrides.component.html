@@ -1207,7 +1207,6 @@
                 icon="pi pi-trash"
                 (click)="removeAllTermPaymentAmounts()"
               ></p-button>
-
             </div>
           </div>
         </p-accordion-content>
@@ -1252,6 +1251,7 @@
                   <th>Period Start</th>
                   <th>Period End</th>
                   <th>Term&nbsp;#</th>
+                  <th>Old&nbsp;Date</th>
                   <th>New&nbsp;Date</th>
                   <th style="width: 9rem">Actions</th>
                 </tr>
@@ -1307,6 +1307,11 @@
                         ></p-inputNumber>
                       </ng-template>
                     </p-cellEditor>
+                  </td>
+
+                  <!-- Old Date (editable) -->
+                  <td>
+                    {{ row.originalEndDate.toString() | date: "MM/dd/yyyy" }}
                   </td>
 
                   <!-- New Date (editable) -->

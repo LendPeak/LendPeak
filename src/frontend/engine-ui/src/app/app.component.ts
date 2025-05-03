@@ -820,13 +820,18 @@ export class AppComponent implements OnChanges {
   copyRawImportScheduleAsCSV() {
     // we will create CSV from the schedule data this.rawImportJSON.schedule
     // and add it to copy buffer aka clipboard
-    const csvData = this.rawImportJSON.schedule
+    let csvData = this.rawImportJSON.schedule
       .map((row: any) => {
         return Object.values(row)
-          .map((value: any) => (typeof value === 'string' ? value : ''))
+          .map((value: any) => value)
           .join(',');
       })
       .join('\n');
+    // Add headers to the CSV data
+    const headers = Object.keys(this.rawImportJSON.schedule[0])
+      .map((key) => key)
+      .join(',');
+    csvData = headers + '\n' + csvData;
     navigator.clipboard
       .writeText(csvData)
       .then(() => {
@@ -851,13 +856,17 @@ export class AppComponent implements OnChanges {
   copyRawImportPaymentsAsCSV() {
     // we will create CSV from the schedule data this.rawImportJSON.schedule
     // and add it to copy buffer aka clipboard
-    const csvData = this.rawImportJSON.lpts
+    let csvData = this.rawImportJSON.lpts
       .map((row: any) => {
         return Object.values(row)
           .map((value: any) => (typeof value === 'string' ? value : ''))
           .join(',');
       })
       .join('\n');
+    const headers = Object.keys(this.rawImportJSON.lpts[0])
+      .map((key) => key)
+      .join(',');
+    csvData = headers + '\n' + csvData;
     navigator.clipboard
       .writeText(csvData)
       .then(() => {
@@ -882,13 +891,19 @@ export class AppComponent implements OnChanges {
   copyRawImportHistoryAsCSV() {
     // we will create CSV from the schedule data this.rawImportJSON.schedule
     // and add it to copy buffer aka clipboard
-    const csvData = this.rawImportJSON.history
+    let csvData = this.rawImportJSON.history
       .map((row: any) => {
         return Object.values(row)
           .map((value: any) => (typeof value === 'string' ? value : ''))
           .join(',');
       })
       .join('\n');
+
+    const headers = Object.keys(this.rawImportJSON.lpts[0])
+      .map((key) => key)
+      .join(',');
+    csvData = headers + '\n' + csvData;
+
     navigator.clipboard
       .writeText(csvData)
       .then(() => {

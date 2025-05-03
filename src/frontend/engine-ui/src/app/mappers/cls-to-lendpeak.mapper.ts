@@ -52,12 +52,7 @@ export class ClsToLendPeakMapper {
       loan.termPlanned > 0 ? loan.termPlanned : activeSchedule.length;
 
     const firstPaymentDate = activeSchedule[0]?.dueDate;
-    const startDate = DateUtil.normalizeDate(
-      loan.applicationDate ||
-        loan.disbursalDate ||
-        firstPaymentDate ||
-        DateUtil.today(),
-    );
+    const startDate = DateUtil.normalizeDate(loan.accrualStartDate);
 
     let isEarlyPayoff = false;
     if (loan.closedDate) {
@@ -157,25 +152,38 @@ export class ClsToLendPeakMapper {
      *         – months between previous & actual ≠ 1
      *   Each CPD becomes a ChangePaymentDate(termIdx,…)
      * ───────────────────────────────────────────── */
-    const baseDueDay = Number(loan.dueDay); // loan__Due_Day__c
-    const accrualStart = DateUtil.normalizeDate(loan.accrualStartDate);
+    /**
+     * 5-B-1.  Determine the “regular” due-day (mode of all RSIs).
+     *         – if several tie, the very first RSI wins
+     */
+    const dueDayCounts = new Map<number, number>();
+    activeSchedule.forEach((r) => {
+      const d = r.dueDate!.dayOfMonth();
+      dueDayCounts.set(d, (dueDayCounts.get(d) ?? 0) + 1);
+    });
+    let baseDueDay = firstPaymentDate!.dayOfMonth();
+    dueDayCounts.forEach((cnt, day) => {
+      if (cnt > (dueDayCounts.get(baseDueDay) ?? 0)) baseDueDay = day;
+    });
 
+    /**
+     * 5-B-2.  Walk through the schedule and compare
+     */
+    const accrualStart = DateUtil.normalizeDate(loan.accrualStartDate);
     const changePaymentDates = new ChangePaymentDates();
 
-    let prevActual = accrualStart; // “RSI 0”
+    let prevActual = accrualStart; // “RSI 0” anchor
 
     activeSchedule.forEach((rsi, termIdx) => {
       const actual = rsi.dueDate!; // never null on active rows
-      const monthsDiff = DateUtil.monthsBetween(prevActual, actual);
-      const dayChanged = actual.dayOfMonth() !== baseDueDay;
-      const gapChanged = monthsDiff !== 1;
 
-      if (dayChanged || gapChanged) {
-        /* expected date = prevActual + 1 month, forced to baseDueDay */
-        let expected = prevActual.plusMonths(1);
-        const lastDom = expected.lengthOfMonth();
-        expected = expected.withDayOfMonth(Math.min(baseDueDay, lastDom));
+      /* expected = prevActual + 1 month @ baseDueDay (clamped to month-end) */
+      const rawExpected = prevActual.plusMonths(1);
+      const dom = Math.min(baseDueDay, rawExpected.lengthOfMonth());
+      const expected = rawExpected.withDayOfMonth(dom);
 
+      /** If actual≠expected  →  CPD */
+      if (!actual.equals(expected)) {
         changePaymentDates.addChangePaymentDate(
           new ChangePaymentDate({
             termNumber: termIdx,
@@ -188,8 +196,9 @@ export class ClsToLendPeakMapper {
       prevActual = actual;
     });
 
+    /* 5-B-3.  Attach to Amortization params (only if needed) */
     if (changePaymentDates.length > 0) {
-      aParams.changePaymentDates = changePaymentDates; // before we build Amortization
+      aParams.changePaymentDates = changePaymentDates;
     }
 
     const amort = new Amortization(aParams);

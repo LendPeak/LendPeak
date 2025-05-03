@@ -70,18 +70,13 @@ export class ClsLoan {
     this.dueDay = Number(raw.loan__Due_Day__c ?? 0);
 
     /* dates normalised to YYYY-MM-DD */
-    this.disbursalDate = DateUtil.toIsoDateString(raw.loan__Disbursal_Date__c);
-    this.applicationDate = DateUtil.toIsoDateString(
-      raw.loan__Application_Date__c,
-    );
-    this.maturityDate = DateUtil.toIsoDateString(
-      raw.loan__Maturity_Date_Current__c,
-    );
-    this.accrualStartDate = DateUtil.toIsoDateString(
-      raw.loan__Accrual_Start_Date__c,
-    );
+    this.disbursalDate = raw.loan__Disbursal_Date__c;
+    this.applicationDate = raw.loan__Application_Date__c;
+    this.maturityDate = raw.loan__Maturity_Date_Current__c;
+    this.accrualStartDate = raw.loan__Accrual_Start_Date__c;
+
     if (raw.loan__Closed_Date__c) {
-      this.closedDate = DateUtil.toIsoDateString(raw.loan__Closed_Date__c);
+      this.closedDate = raw.loan__Closed_Date__c;
     }
   }
 

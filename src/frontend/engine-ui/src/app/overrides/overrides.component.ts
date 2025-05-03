@@ -874,7 +874,9 @@ export class OverridesComponent implements OnInit {
       return DateUtil.today();
     }
     const term =
-      this.lendPeak.amortization.repaymentSchedule.getEntryByTerm(termNumber);
+      this.lendPeak.amortization.repaymentSchedule.getBillableEntryByTerm(
+        termNumber,
+      );
     if (term) {
       return term.periodEndDate;
     }
@@ -891,7 +893,9 @@ export class OverridesComponent implements OnInit {
       return DateUtil.today();
     }
     const term =
-      this.lendPeak.amortization.repaymentSchedule.getEntryByTerm(termNumber);
+      this.lendPeak.amortization.repaymentSchedule.getBillableEntryByTerm(
+        termNumber,
+      );
     if (term) {
       return term.periodStartDate;
     } else {

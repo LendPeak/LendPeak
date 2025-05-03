@@ -60,6 +60,10 @@ export class AmortizationEntries {
     return this.entries[0];
   }
 
+  getBillableEntryByTerm(term: number): AmortizationEntry | undefined {
+    return this.entries.find((entry) => entry.billablePeriod === true && entry.term === term);
+  }
+
   getEntryByTerm(term: number): AmortizationEntry | undefined {
     return this.entries.find((entry) => entry.term === term);
   }

@@ -1,3 +1,5 @@
+<p-confirmPopup></p-confirmPopup>
+
 <div class="grid" *ngIf="lendPeak">
   <div class="col-12">
     <p-card header="Manage Deposits">
@@ -23,6 +25,15 @@
             class="ml-2 p-button-warning"
             (click)="openBulkEditDialog()"
             [disabled]="lendPeak.depositRecords.length === 0"
+          />
+
+          <p-button
+            label="Delete Selected"
+            icon="pi pi-trash"
+            severity="danger"
+            class="ml-2"
+            (click)="confirmDeleteSelected($event)"
+            [disabled]="selectedDeposits.length === 0"
           />
         </ng-template>
 
@@ -342,11 +353,20 @@
                   ></p-button>
 
                   <p-button
+                    icon="pi pi-undo"
+                    severity="secondary"
+                    rounded
+                    styleClass="mr-1"
+                    (click)="openRefundDialog(row)"
+                    pTooltip="Refund / Adjust"
+                  ></p-button>
+
+                  <p-button
                     icon="pi pi-trash"
                     severity="danger"
                     rounded
                     styleClass="mr-1"
-                    (click)="removeDeposit(row)"
+                    (click)="confirmDelete($event, row)"
                     pTooltip="Remove"
                   ></p-button>
 
@@ -368,15 +388,6 @@
                     (click)="openRefundsManager(row)"
                     pTooltip="View / manage refunds"
                   />
-
-                  <p-button
-                    icon="pi pi-undo"
-                    severity="secondary"
-                    rounded
-                    styleClass="mr-1"
-                    (click)="openRefundDialog(row)"
-                    pTooltip="Refund / Adjust"
-                  ></p-button>
                 </div>
               </td>
             </tr>

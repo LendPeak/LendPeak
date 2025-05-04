@@ -36,6 +36,7 @@ import {
 import { RefundDialogComponent } from '../refund-dialog/refund-dialog.component';
 import { RefundRecord } from 'lendpeak-engine/models/RefundRecord';
 import { RefundsListDialogComponent } from '../refunds-list-dialog/refunds-list-dialog.component';
+import { ConfirmationService } from 'primeng/api';
 
 dayjs.extend(isSameOrBefore);
 dayjs.extend(isBetween);
@@ -67,6 +68,7 @@ export class DepositsComponent implements OnChanges {
     private messageService: MessageService,
     private dialogSvc: DialogService,
     private systemSettingsService: SystemSettingsService,
+    private confirmation: ConfirmationService,
   ) {}
 
   @ViewChildren('depositRow', { read: ElementRef })
@@ -196,6 +198,46 @@ export class DepositsComponent implements OnChanges {
   showBillCardDialog = false;
   bulkDepositEditAllocationType = false;
   bulkDepositEditApplyExccessToPrincipal = false;
+
+  confirmDelete(ev: Event, d: DepositRecord): void {
+    this.confirmation.confirm({
+      target: ev.target as HTMLElement,
+      message: `Delete deposit ${d.id}?`,
+      icon: 'pi pi-exclamation-triangle',
+      acceptLabel: 'Yes',
+      rejectLabel: 'No',
+      acceptButtonStyleClass: 'p-button-danger',
+      accept: () => this.removeDeposit(d), // existing remover
+    });
+  }
+
+  /** Ask for confirmation before deleting all checked rows */
+confirmDeleteSelected(ev: Event): void {
+  if (this.selectedDeposits.length === 0) return;
+
+  const n = this.selectedDeposits.length;
+  this.confirmation.confirm({
+    target: ev.target as HTMLElement,
+    message: `Delete ${n} selected deposit${n > 1 ? 's' : ''}?`,
+    icon: 'pi pi-exclamation-triangle',
+    acceptLabel: 'Yes',
+    rejectLabel: 'No',
+    acceptButtonStyleClass: 'p-button-danger',
+    accept: () => this.deleteSelected(),
+  });
+}
+
+  private deleteSelected(): void {
+    if (!this.lendPeak) return;
+
+    this.selectedDeposits.forEach((d) =>
+      this.lendPeak!.depositRecords.removeRecordById(d.id),
+    );
+
+    this.selectedDeposits = [];
+    this.depositUpdated.emit();
+    this.cdr.detectChanges();
+  }
 
   currencySort(event: SortEvent) {
     const field = event.field as keyof DepositRecord;

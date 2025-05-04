@@ -116,7 +116,7 @@ export class DepositsComponent implements OnChanges {
     },
     {
       field: 'jsActiveRefundAmount',
-      header: 'Refunded (Active)',
+      header: 'Refunded',
       default: false,
       filter: 'numeric',
       sortable: true,

@@ -1,0 +1,63 @@
+<p-dialog
+  header="{{ existingRefund ? 'Edit Refund' : 'Create Refund' }}"
+  [(visible)]="visible"
+  [modal]="true"
+  [closable]="false"
+  appendTo="body"
+  [style]="{ width: '30%' }"
+>
+  <!-- Amount -->
+  <div class="field">
+    <label for="r-amount">Amount</label>
+    <p-inputgroup>
+      <p-inputgroup-addon>$</p-inputgroup-addon>
+      <p-inputNumber
+        id="r-amount"
+        [(ngModel)]="jsAmount"
+        mode="decimal"
+        minFractionDigits="2"
+        maxFractionDigits="2"
+        [min]="0"
+        class="w-full"
+        inputStyleClass="w-full"
+      ></p-inputNumber>
+    </p-inputgroup>
+  </div>
+
+  <!-- Effective date -->
+  <div class="field">
+    <label for="r-date">Effective Date</label>
+    <p-datepicker
+      id="r-date"
+      [(ngModel)]="jsDate"
+      dateFormat="mm/dd/yy"
+      appendTo="body"
+      showIcon
+      inputStyleClass="w-full"
+      class="w-full"
+    ></p-datepicker>
+  </div>
+
+  <!-- Reason -->
+  <div class="field">
+    <label for="r-reason">Reason (optional)</label>
+    <input
+      id="r-reason"
+      pInputText
+      type="text"
+      [(ngModel)]="reason"
+      class="w-full"
+    />
+  </div>
+
+  <!-- Buttons -->
+  <ng-template pTemplate="footer">
+    <p-button label="Save" icon="pi pi-check" (click)="save()" />
+    <p-button
+      label="Close"
+      icon="pi pi-times"
+      class="p-button-text"
+      (click)="close()"
+    />
+  </ng-template>
+</p-dialog>

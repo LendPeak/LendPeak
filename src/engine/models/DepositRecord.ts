@@ -5,6 +5,7 @@ import { v4 as uuidv4 } from "uuid";
 import { DateUtil } from "../utils/DateUtil";
 import { DepositRecords } from "./DepositRecords";
 import { LocalDate, ZoneId, ChronoUnit } from "@js-joda/core";
+import { RefundRecord } from "./RefundRecord";
 
 import dayjs, { Dayjs } from "dayjs";
 import utc from "dayjs/plugin/utc";
@@ -72,6 +73,7 @@ export class DepositRecord {
 
   _metadata?: DepositMetadata;
   _usageDetails: UsageDetail[] = [];
+  _refunds: RefundRecord[] = [];
 
   _staticAllocation?: StaticAllocation;
 
@@ -96,6 +98,7 @@ export class DepositRecord {
     active?: boolean;
     staticAllocation?: StaticAllocation | JsStaticAllocation;
     depositRecords?: DepositRecords;
+    refunds?: RefundRecord[];
   }) {
     // console.log("params in deposit record", params);
     if (params.id) {
@@ -151,6 +154,8 @@ export class DepositRecord {
     if (params.depositRecords) {
       this.depositRecords = params.depositRecords;
     }
+
+    this.refunds = params.refunds ?? [];
 
     this.updateJsValues();
     this.initialized = true;
@@ -234,6 +239,15 @@ export class DepositRecord {
     this.resetUsageDetails();
     //  this.unusedAmount = Currency.Zero();
     this.versionChanged();
+  }
+
+  removeRefund(refund: RefundRecord) {
+    const idx = this._refunds.indexOf(refund);
+    if (idx >= 0) {
+      this._refunds.splice(idx, 1);
+      this.amount = this.amount.add(refund.amount); // give cash back
+      this.versionChanged();
+    }
   }
 
   get staticAllocation(): StaticAllocation | undefined {
@@ -431,18 +445,57 @@ export class DepositRecord {
   }
 
   get unusedAmount(): Currency {
-    if (this.active === false) {
-      return Currency.Zero();
-    }
-    /**
-     * The unused portion of the deposit is simply:
-     *   deposit amount – Σ(all allocations recorded in usageDetails)
-     * If allocations ever exceed the deposit (data error), clamp at 0.
-     */
-    const allocated = this.usageDetails.reduce((tot, d) => tot.add(d.allocatedPrincipal).add(d.allocatedInterest).add(d.allocatedFees), Currency.Zero());
+    if (!this.active) return Currency.Zero();
 
+    const allocated = this.usageDetails.reduce((tot, d) => tot.add(d.allocatedPrincipal).add(d.allocatedInterest).add(d.allocatedFees), Currency.Zero());
     const remainder = this.amount.subtract(allocated);
     return remainder.isNegative() ? Currency.Zero() : remainder;
+  }
+
+  /* ------------------------------------------------------------------ */
+  /*  Refund helpers                                                    */
+  /* ------------------------------------------------------------------ */
+  get refunds(): RefundRecord[] {
+    /* inflate if deserialized */
+    this._refunds = this._refunds.map((r) => (r instanceof RefundRecord ? r : new RefundRecord(r)));
+    return this._refunds;
+  }
+  set refunds(value: RefundRecord[]) {
+    /* same “inflate + sort” pattern as other collections */
+    this._refunds = value.map((r) => (r instanceof RefundRecord ? r : new RefundRecord(r)));
+    this._refunds.forEach((r) => (r.depositRecord = this));
+    this.versionChanged();
+  }
+
+  /** Total refunded so far (active refunds only). */
+  get refundedAmount(): Currency {
+    return this._refunds.reduce((sum, r) => (r.active ? sum.add(r.amount) : sum), Currency.Zero());
+  }
+
+  /** Primary API — create a refund and auto-adjust deposit. */
+  addRefund(refund: RefundRecord): void {
+    if (refund.currency !== this.currency) {
+      console.warn(`Refund currency (${refund.currency}) != deposit currency (${this.currency}). Proceeding anyway.`);
+    }
+    refund.depositRecord = this;
+    this._refunds.push(refund);
+
+    /* ↓↓↓ core business rule ↓↓↓
+       Refunds *reduce* the deposit’s available cash. */
+    this.amount = this.amount.subtract(refund.amount);
+
+    this.versionChanged();
+  }
+
+  /** Remove by index (for UI edits) */
+  removeRefundAt(index: number): void {
+    if (index < 0 || index >= this._refunds.length) return;
+    const refund = this._refunds[index];
+    this._refunds.splice(index, 1);
+
+    /* Re-inflate deposit amount so net stays consistent */
+    this.amount = this.amount.add(refund.amount);
+    this.versionChanged();
   }
 
   updateModelValues(): void {
@@ -464,6 +517,7 @@ export class DepositRecord {
       this.staticAllocation.updateModelValues();
     }
     this.applyExcessAtTheEndOfThePeriod = this.jsApplyExcessAtTheEndOfThePeriod || false;
+    this.refunds.forEach((r) => r.updateModelValues());
   }
 
   get balanceModifications(): BalanceModification[] {
@@ -495,6 +549,7 @@ export class DepositRecord {
       this.staticAllocation.updateJsValues();
     }
     this.jsApplyExcessAtTheEndOfThePeriod = this.applyExcessAtTheEndOfThePeriod;
+    this.refunds.forEach((r) => r.updateJsValues());
   }
 
   static generateUniqueId(sequence?: number): string {
@@ -549,7 +604,7 @@ export class DepositRecord {
   }
 
   get json() {
-    return {
+    const toReturn: any = {
       id: this.id,
       amount: this.amount.toNumber(),
       currency: this.currency,
@@ -574,6 +629,11 @@ export class DepositRecord {
       staticAllocation: this.staticAllocation ? this.staticAllocation.json : undefined,
       applyExcessAtTheEndOfThePeriod: this.applyExcessAtTheEndOfThePeriod,
     };
+
+    if (this.refunds) {
+      toReturn.refunds = this.refunds.map((r) => r.json);
+    }
+    return toReturn;
   }
 
   toCode() {
@@ -595,6 +655,9 @@ export class DepositRecord {
       active: ${this.active},
       staticAllocation: ${this.staticAllocation ? this.staticAllocation.toCode() : "undefined"},
       applyExcessAtTheEndOfThePeriod: ${this.applyExcessAtTheEndOfThePeriod},
+      refunds: [
+    ${this.refunds.map((r) => r.toCode()).join(",\n    ")}
+  ],
     })`;
   }
 }

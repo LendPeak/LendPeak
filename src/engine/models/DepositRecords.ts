@@ -194,6 +194,29 @@ export class DepositRecords {
     return this.allActiveSorted[this.active.length - 1];
   }
 
+  /** how many refund rows exist (active + disabled) across ALL deposits */
+  get totalRefunds(): number {
+    return this._records.reduce((sum, d) => sum + ((d as any).refunds?.length ?? 0), 0);
+  }
+
+  /** only the refunds whose `active` flag is true */
+  get activeRefunds(): number {
+    return this._records.reduce((sum, d) => sum + ((d as any).refunds?.filter((r: any) => r.active).length ?? 0), 0);
+  }
+
+  /** quick helper */
+get hasRefunds(): boolean {
+  return this.totalRefunds > 0;
+}
+
+/** both values at once, if you prefer */
+get refundStats() {
+  return {
+    totalRefunds:  this.totalRefunds,
+    activeRefunds: this.activeRefunds,
+  };
+}
+
   printToConsole() {
     console.log("Deposit Records");
     const summary = this.summary;
@@ -219,7 +242,7 @@ export class DepositRecords {
   }
 
   get hasAutoCloseDeposit(): boolean {
-    return this._records.some((r) => (r.metadata?.type === "auto_close"));
+    return this._records.some((r) => r.metadata?.type === "auto_close");
   }
 
   /**

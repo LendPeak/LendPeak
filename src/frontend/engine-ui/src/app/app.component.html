@@ -116,6 +116,23 @@
         value="Past Due"
       ></p-tag>
       <p-tag
+        *ngIf="lendPeak.summary.highlights.payments.hasRefunds"
+        class="ml-2"
+        [severity]="
+          lendPeak.summary.highlights.payments.activeRefunds > 0
+            ? 'contrast'
+            : 'secondary'
+        "
+        [value]="
+          lendPeak.summary.highlights.payments.activeRefunds +
+          '/' +
+          lendPeak.summary.highlights.payments.totalRefunds +
+          ' Refunds'
+        "
+        pTooltip="Active / Total refund records"
+        tooltipPosition="top"
+      />
+      <p-tag
         *ngIf="lendPeak.summary.highlights.billing.hasOpenBills"
         class="ml-2"
         severity="warn"

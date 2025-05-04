@@ -160,6 +160,22 @@
                     </span>
 
                     <p-badge
+                      *ngIf="totalRefunds(row) > 0"
+                      [value]="
+                        activeRefunds(row) +
+                        '/' +
+                        totalRefunds(row) +
+                        ' Refunds'
+                      "
+                      [severity]="
+                        activeRefunds(row) > 0 ? 'contrast' : 'secondary'
+                      "
+                      styleClass="mr-2"
+                      pTooltip="Active / Total refunds"
+                      tooltipPosition="top"
+                    />
+
+                    <p-badge
                       *ngIf="row.metadata?.type === 'auto_close'"
                       value="Auto Close"
                       severity="info"
@@ -337,6 +353,25 @@
                     [disabled]="!row.usageDetails?.length"
                     (click)="viewDepositUsageDetails(row)"
                     pTooltip="View Usage"
+                  ></p-button>
+
+                  <p-button
+                    *ngIf="totalRefunds(row) > 0"
+                    icon="pi pi-list"
+                    severity="contrast"
+                    rounded
+                    styleClass="mr-1"
+                    (click)="openRefundsManager(row)"
+                    pTooltip="View / manage refunds"
+                  />
+
+                  <p-button
+                    icon="pi pi-undo"
+                    severity="secondary"
+                    rounded
+                    styleClass="mr-1"
+                    (click)="openRefundDialog(row)"
+                    pTooltip="Refund / Adjust"
                   ></p-button>
                 </div>
               </td>

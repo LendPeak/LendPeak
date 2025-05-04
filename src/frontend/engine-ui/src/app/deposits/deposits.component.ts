@@ -33,6 +33,9 @@ import {
   SystemSettingsService,
   DeveloperModeType,
 } from '../services/system-settings.service';
+import { RefundDialogComponent } from '../refund-dialog/refund-dialog.component';
+import { RefundRecord } from 'lendpeak-engine/models/RefundRecord';
+import { RefundsListDialogComponent } from '../refunds-list-dialog/refunds-list-dialog.component';
 
 dayjs.extend(isSameOrBefore);
 dayjs.extend(isBetween);
@@ -204,6 +207,22 @@ export class DepositsComponent implements OnChanges {
     return value.toNumber() === numFilter;
   }
 
+  openRefundsManager(deposit: DepositRecord) {
+    const ref = this.dialogSvc.open(RefundsListDialogComponent, {
+      header: 'Refunds',
+      width: '45%',
+      dismissableMask: true,
+      data: { deposit },
+    });
+
+    ref.onClose.subscribe((changed: boolean) => {
+      if (changed) {
+        this.depositUpdated.emit();
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
   /** Opens calculator, patches the originating control when user hits “Use result”. */
   openCalc(ctrl: NgModel) {
     const ref: DynamicDialogRef = this.dialogSvc.open(
@@ -222,6 +241,32 @@ export class DepositsComponent implements OnChanges {
       }
     });
   }
+
+  openRefundDialog(deposit: DepositRecord) {
+    const ref = this.dialogSvc.open(RefundDialogComponent, {
+      header: 'Create Refund',
+      dismissableMask: true,
+      data: { deposit },
+      width: '30%',
+    });
+
+    ref.onClose.subscribe(() => {
+      this.depositUpdated.emit(); // bubble change to parent
+      this.cdr.detectChanges();
+    });
+  }
+
+
+  /** Active-only count (what you already had) */
+  activeRefunds(d: DepositRecord): number {
+    return d.refunds?.filter((r) => r.active).length ?? 0;
+  }
+
+  /** Total (active + inactive) refunds on this deposit */
+  totalRefunds(d: DepositRecord): number {
+    return d.refunds?.length ?? 0;
+  }
+
 
   viewBillCard(billId: string) {
     if (!this.lendPeak) {

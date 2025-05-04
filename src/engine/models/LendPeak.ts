@@ -673,6 +673,9 @@ export class LendPeak {
           totalBills: this.bills.all.length,
           unusedAmountFromDeposits: this.depositRecords.unusedAmount,
           hasAutoCloseDeposit: this.depositRecords.hasAutoCloseDeposit,
+          totalRefunds: this.depositRecords.totalRefunds,
+          activeRefunds: this.depositRecords.activeRefunds,
+          hasRefunds: this.depositRecords.hasRefunds,
         },
         billing: {
           hasOpenBills: this.bills.openBills.length > 0,

@@ -93,6 +93,7 @@ export class ChangePaymentDate {
     this._originalEndDate = DateUtil.normalizeDate(v);
     this.jsOriginalEndDate = DateUtil.normalizeDateToJsDate(this._originalEndDate);
   }
+  
   get originalEndDate(): LocalDate | undefined {
     return this._originalEndDate;
   }

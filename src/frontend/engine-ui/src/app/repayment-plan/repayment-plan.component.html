@@ -368,6 +368,7 @@
                 {{ rowData.periodEndDate.toString() | date: "MM/dd/yyyy" }}
                 <p-badge
                   *ngIf="
+                    rowData.billablePeriod &&
                     lendPeak.amortization.changePaymentDates.getChangePaymentDate(
                       rowData.term
                     )

@@ -23,6 +23,8 @@ import { ChangePaymentDate } from 'lendpeak-engine/models/ChangePaymentDate';
 
 import { LocalDate, ChronoUnit } from '@js-joda/core';
 
+import { ClsScheduleLine } from '../parsers/cls/cls.parser';
+
 /* ──────────────────────────────────────────────────────────────────────────
  *  CLS →  LendPeak   (Amortization  +  DepositRecords  +  Pre-Bill overrides)
  * ──────────────────────────────────────────────────────────────────────── */
@@ -140,63 +142,15 @@ export class ClsToLendPeakMapper {
       defaultPreBillDaysConfiguration: defaultPreBill,
     };
 
-    /* ───────────────────────────────────────────────
-     * 5-B.  Change-Payment-Date overrides
-     *
-     *   Rules (no history used):
-     *     • Expected pattern = previous due-date + 1 month
-     *       (or Accrual-Start-Date → first RSI)
-     *       AND day-of-month = loan__Due_Day__c
-     *     • A CPD is recorded when
-     *         – actual day-of-month ≠ expected day,  OR
-     *         – months between previous & actual ≠ 1
-     *   Each CPD becomes a ChangePaymentDate(termIdx,…)
-     * ───────────────────────────────────────────── */
-    /**
-     * 5-B-1.  Determine the “regular” due-day (mode of all RSIs).
-     *         – if several tie, the very first RSI wins
-     */
-    const dueDayCounts = new Map<number, number>();
-    activeSchedule.forEach((r) => {
-      const d = r.dueDate!.dayOfMonth();
-      dueDayCounts.set(d, (dueDayCounts.get(d) ?? 0) + 1);
-    });
-    let baseDueDay = firstPaymentDate!.dayOfMonth();
-    dueDayCounts.forEach((cnt, day) => {
-      if (cnt > (dueDayCounts.get(baseDueDay) ?? 0)) baseDueDay = day;
-    });
-
-    /**
-     * 5-B-2.  Walk through the schedule and compare
-     */
+    /* ----------------------------------------------------------
+     * Change-Payment-Dates
+     * -------------------------------------------------------- */
     const accrualStart = DateUtil.normalizeDate(loan.accrualStartDate);
-    const changePaymentDates = new ChangePaymentDates();
+    const changePaymentDates = ClsToLendPeakMapper.deriveChangePaymentDates(
+      activeSchedule,
+      accrualStart,
+    );
 
-    let prevActual = accrualStart; // “RSI 0” anchor
-
-    activeSchedule.forEach((rsi, termIdx) => {
-      const actual = rsi.dueDate!; // never null on active rows
-
-      /* expected = prevActual + 1 month @ baseDueDay (clamped to month-end) */
-      const rawExpected = prevActual.plusMonths(1);
-      const dom = Math.min(baseDueDay, rawExpected.lengthOfMonth());
-      const expected = rawExpected.withDayOfMonth(dom);
-
-      /** If actual≠expected  →  CPD */
-      if (!actual.equals(expected)) {
-        changePaymentDates.addChangePaymentDate(
-          new ChangePaymentDate({
-            termNumber: termIdx,
-            originalDate: expected,
-            newDate: actual,
-          }),
-        );
-      }
-
-      prevActual = actual;
-    });
-
-    /* 5-B-3.  Attach to Amortization params (only if needed) */
     if (changePaymentDates.length > 0) {
       aParams.changePaymentDates = changePaymentDates;
     }
@@ -307,5 +261,55 @@ export class ClsToLendPeakMapper {
       });
 
     return new DepositRecords(depositList);
+  }
+
+  /* =====================================================================
+   * deriveChangePaymentDates(...)
+   *   • Works only from the schedule + accrualStart anchor
+   *   • Baseline day-of-month = first active RSI
+   * =================================================================== */
+  private static deriveChangePaymentDates(
+    schedule: ClsScheduleLine[],
+    accrualStart: LocalDate,
+  ): ChangePaymentDates {
+    const cpd = new ChangePaymentDates();
+    if (schedule.length === 0) return cpd;
+
+    /* ------------------------------------------------------------
+     * 1.  Establish the initial cadence — day of 1st active RSI
+     * ---------------------------------------------------------- */
+    let regularDueDay = schedule[0].dueDate!.dayOfMonth();
+
+    /* ------------------------------------------------------------
+     * 2.  Walk the schedule and flag deviations
+     * ---------------------------------------------------------- */
+    let prevActual = accrualStart; // anchor “term 0”
+
+    schedule.forEach((rsi, termIdx) => {
+      const actual = rsi.dueDate!; // never null for active lines
+
+      // expected = prevActual + 1 month, clamped to month-end
+      const tmp = prevActual.plusMonths(1);
+      const expected = tmp.withDayOfMonth(
+        Math.min(regularDueDay, tmp.lengthOfMonth()),
+      );
+
+      if (!actual.equals(expected)) {
+        cpd.addChangePaymentDate(
+          new ChangePaymentDate({
+            termNumber: termIdx,
+            originalDate: expected,
+            newDate: actual,
+          }),
+        );
+
+        /* Cadence just changed – adopt the new day */
+        regularDueDay = actual.dayOfMonth();
+      }
+
+      prevActual = actual;
+    });
+
+    return cpd;
   }
 }

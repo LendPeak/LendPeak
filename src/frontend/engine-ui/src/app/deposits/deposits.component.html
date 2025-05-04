@@ -250,6 +250,10 @@
                     {{ row.allocatedTotal.toNumber() | currency }}
                   </ng-container>
 
+                  <ng-container *ngSwitchCase="'jsActiveRefundAmount'">
+                    {{ row.jsActiveRefundAmount | currency }}
+                  </ng-container>
+
                   <ng-container *ngSwitchCase="'allocatedPrincipal'">
                     {{ row.allocatedPrincipal.toNumber() | currency }}
                   </ng-container>

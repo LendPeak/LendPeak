@@ -115,6 +115,13 @@ export class DepositsComponent implements OnChanges {
       default: true,
     },
     {
+      field: 'jsActiveRefundAmount',
+      header: 'Refunded (Active)',
+      default: false,
+      filter: 'numeric',
+      sortable: true,
+    },
+    {
       field: 'allocatedPrincipal',
       header: 'Allocated Principal',
       sortable: true,
@@ -256,7 +263,6 @@ export class DepositsComponent implements OnChanges {
     });
   }
 
-
   /** Active-only count (what you already had) */
   activeRefunds(d: DepositRecord): number {
     return d.refunds?.filter((r) => r.active).length ?? 0;
@@ -266,7 +272,6 @@ export class DepositsComponent implements OnChanges {
   totalRefunds(d: DepositRecord): number {
     return d.refunds?.length ?? 0;
   }
-
 
   viewBillCard(billId: string) {
     if (!this.lendPeak) {

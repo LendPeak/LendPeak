@@ -36,6 +36,8 @@ export class DepositRecords {
     return this._dateChanged;
   }
 
+
+
   get balanceModifications(): BalanceModification[] {
     let balanceModifications: BalanceModification[] = [];
     this._records.forEach((deposit) => {
@@ -205,17 +207,17 @@ export class DepositRecords {
   }
 
   /** quick helper */
-get hasRefunds(): boolean {
-  return this.totalRefunds > 0;
-}
+  get hasRefunds(): boolean {
+    return this.totalRefunds > 0;
+  }
 
-/** both values at once, if you prefer */
-get refundStats() {
-  return {
-    totalRefunds:  this.totalRefunds,
-    activeRefunds: this.activeRefunds,
-  };
-}
+  /** both values at once, if you prefer */
+  get refundStats() {
+    return {
+      totalRefunds: this.totalRefunds,
+      activeRefunds: this.activeRefunds,
+    };
+  }
 
   printToConsole() {
     console.log("Deposit Records");

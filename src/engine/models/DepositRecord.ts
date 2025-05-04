@@ -250,6 +250,17 @@ export class DepositRecord {
     }
   }
 
+  /** Sum of amounts on all _active_ refund rows */
+  get activeRefundAmount(): Currency {
+    if (!this.refunds?.length) return Currency.Zero();
+    return this.refunds.filter((r) => r.active).reduce((acc, r) => acc.add(r.amount), Currency.Zero());
+  }
+
+  /** convenience for Angular tables */
+  get jsActiveRefundAmount(): number {
+    return this.activeRefundAmount.toNumber();
+  }
+
   get staticAllocation(): StaticAllocation | undefined {
     return this._staticAllocation;
   }

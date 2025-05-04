@@ -132,7 +132,7 @@ export class Bills {
   }
 
   get openBills(): Bill[] {
-    const openBills = this._bills.filter((bill) => bill.isOpen(this.currentDate));
+    const openBills = this._bills.filter((bill) => !bill.isPaid() && bill.isOpen(this.currentDate));
     return openBills;
   }
 

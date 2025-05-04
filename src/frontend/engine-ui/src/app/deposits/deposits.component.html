@@ -362,13 +362,14 @@
                   ></p-button>
 
                   <p-button
-                    icon="pi pi-trash"
-                    severity="danger"
+                    *ngIf="totalRefunds(row) > 0"
+                    icon="pi pi-list"
+                    severity="contrast"
                     rounded
                     styleClass="mr-1"
-                    (click)="confirmDelete($event, row)"
-                    pTooltip="Remove"
-                  ></p-button>
+                    (click)="openRefundsManager(row)"
+                    pTooltip="View / manage refunds"
+                  />
 
                   <p-button
                     icon="pi pi-eye"
@@ -380,14 +381,13 @@
                   ></p-button>
 
                   <p-button
-                    *ngIf="totalRefunds(row) > 0"
-                    icon="pi pi-list"
-                    severity="contrast"
+                    icon="pi pi-trash"
+                    severity="danger"
                     rounded
                     styleClass="mr-1"
-                    (click)="openRefundsManager(row)"
-                    pTooltip="View / manage refunds"
-                  />
+                    (click)="confirmDelete($event, row)"
+                    pTooltip="Remove"
+                  ></p-button>
                 </div>
               </td>
             </tr>

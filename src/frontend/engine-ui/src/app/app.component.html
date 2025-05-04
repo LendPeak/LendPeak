@@ -1318,6 +1318,8 @@
     </p-table>
   </p-card>
 
+  <hr />
+
   <!-- =========== Arrays in tabs =========== -->
   <div class="card">
     <!-- the selected tab; 0 = first tab -->
@@ -1334,14 +1336,14 @@
         <!-- ===== Repayment Schedule ===== -->
         <p-tabpanel value="0">
           <p-button
-            icon="pi pi-refresh"
+            icon="pi pi-clipboard"
             label="Copy Schedule as CSV"
             (click)="copyRawImportScheduleAsCSV()"
             class="p-button-secondary"
           />
 
           <p-button
-            icon="pi pi-refresh"
+            icon="pi pi-eye-slash"
             [label]="
               copyRawImportScheduleHideArchived
                 ? 'Show Archived'
@@ -1386,7 +1388,7 @@
         <!-- ===== Payments (LPTs) ===== -->
         <p-tabpanel value="1">
           <p-button
-            icon="pi pi-refresh"
+            icon="pi pi-clipboard"
             label="Copy Payments as CSV"
             (click)="copyRawImportPaymentsAsCSV()"
             class="p-button-secondary"
@@ -1421,7 +1423,7 @@
         <!-- ===== History ===== -->
         <p-tabpanel value="2">
           <p-button
-            icon="pi pi-refresh"
+            icon="pi pi-clipboard"
             label="Copy History as CSV"
             (click)="copyRawImportHistoryAsCSV()"
             class="p-button-secondary"

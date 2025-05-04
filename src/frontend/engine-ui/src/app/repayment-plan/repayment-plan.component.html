@@ -336,6 +336,7 @@
 
                 <i
                   *ngIf="
+                    rowData.billablePeriod &&
                     rowData.metadata &&
                     rowData.metadata.equivalentAnnualRateVarianceExceeded
                   "
@@ -445,7 +446,7 @@
   </p-table>
   <!-- Truth in Lending Disclosure Statement Button -->
   <p-divider></p-divider>
-  <div class="p-mt-3 p-text-center">
+  <!-- <div class="p-mt-3 p-text-center">
     <p-button
       label="Truth in Lending Disclosure Statement"
       icon="pi pi-file"
@@ -453,7 +454,7 @@
       pTooltip="View the Truth in Lending Disclosure Statement."
       tooltipPosition="top"
     ></p-button>
-  </div>
+  </div> -->
 </p-card>
 
 <!-- Truth in Lending Disclosure Statement Dialog -->

@@ -18,7 +18,7 @@ export class ClsMongoRepo {
   /** flexible lookup by Id / Name / Payoff_Id */
   async findLoan(identifier: string) {
     return this.colLoan.findOne({
-      $or: [{ Id: identifier }, { Name: identifier }, { Payoff_Loan_ID__c: identifier }],
+      $or: [{ Id: identifier }, { Name: identifier }, { Payoff_Loan_ID__c: identifier }, { Payoff_Loan_ID__c: identifier.toUpperCase() }],
     });
   }
 

@@ -28,6 +28,13 @@
           />
 
           <p-button
+            label="Add Ad-hoc Refund"
+            icon="pi pi-undo"
+            class="ml-2 p-button-warning"
+            (click)="openAdhocDialog()"
+          />
+
+          <p-button
             label="Delete Selected"
             icon="pi pi-trash"
             severity="danger"
@@ -146,7 +153,12 @@
           </ng-template>
           <!-- dynamic body -->
           <ng-template #body let-row let-columns="columns">
-            <tr [class.selected-row]="isDepositHighlighted(row)">
+            <tr
+              [ngClass]="{
+                'selected-row': isDepositHighlighted(row),
+                'bg-yellow-50': row.metadata?.type === 'adhoc_refund',
+              }"
+            >
               <td style="width: 3rem"><p-tableCheckbox [value]="row" /></td>
 
               <!-- iterate chosen cols -->
@@ -203,6 +215,14 @@
                       styleClass="mr-2"
                       pTooltip="This deposit covers multiple bills"
                       tooltipPosition="top"
+                    ></p-badge>
+
+                    <p-badge
+                      *ngIf="row.metadata?.type === 'adhoc_refund'"
+                      value="Ad-hoc Refund"
+                      severity="warn"
+                      styleClass="mr-2"
+                      pTooltip="This is a manually-entered refund record"
                     ></p-badge>
 
                     <!-- -- future badge -->
@@ -343,51 +363,75 @@
               <!-- actions col (static) -->
               <td>
                 <div class="action-buttons">
-                  <p-button
-                    icon="pi pi-pencil"
-                    severity="warn"
-                    rounded
-                    styleClass="mr-1"
-                    (click)="openDepositDialog(row)"
-                    pTooltip="Edit"
-                  ></p-button>
+                  <ng-container *ngIf="!row.isAdhocRefund; else adhocBtns">
+                    <p-button
+                      icon="pi pi-pencil"
+                      severity="warn"
+                      rounded
+                      styleClass="mr-1"
+                      (click)="openDepositDialog(row)"
+                      pTooltip="Edit"
+                    ></p-button>
 
-                  <p-button
-                    icon="pi pi-undo"
-                    severity="secondary"
-                    rounded
-                    styleClass="mr-1"
-                    (click)="openRefundDialog(row)"
-                    pTooltip="Refund / Adjust"
-                  ></p-button>
+                    <p-button
+                      icon="pi pi-undo"
+                      severity="secondary"
+                      rounded
+                      styleClass="mr-1"
+                      (click)="openRefundDialog(row)"
+                      pTooltip="Refund / Adjust"
+                    ></p-button>
 
-                  <p-button
-                    *ngIf="totalRefunds(row) > 0"
-                    icon="pi pi-list"
-                    severity="contrast"
-                    rounded
-                    styleClass="mr-1"
-                    (click)="openRefundsManager(row)"
-                    pTooltip="View / manage refunds"
-                  />
+                    <p-button
+                      *ngIf="totalRefunds(row) > 0"
+                      icon="pi pi-list"
+                      severity="contrast"
+                      rounded
+                      styleClass="mr-1"
+                      (click)="openRefundsManager(row)"
+                      pTooltip="View / manage refunds" />
 
-                  <p-button
-                    icon="pi pi-eye"
-                    severity="info"
-                    rounded
-                    [disabled]="!row.usageDetails?.length"
-                    (click)="viewDepositUsageDetails(row)"
-                    pTooltip="View Usage"
-                  ></p-button>
+                    <p-button
+                      icon="pi pi-eye"
+                      severity="info"
+                      rounded
+                      [disabled]="!row.usageDetails?.length"
+                      (click)="viewDepositUsageDetails(row)"
+                      pTooltip="View Usage"
+                    ></p-button>
 
-                  <p-button
-                    icon="pi pi-trash"
-                    severity="danger"
-                    rounded
-                    styleClass="mr-1"
-                    (click)="confirmDelete($event, row)"
-                    pTooltip="Remove"
-                  ></p-button>
+                    <p-button
+                      icon="pi pi-trash"
+                      severity="danger"
+                      rounded
+                      styleClass="mr-1"
+                      (click)="confirmDelete($event, row)"
+                      pTooltip="Remove"
+                    ></p-button
+                  ></ng-container>
+
+                  <!-- Buttons that show **only** on Ad-hoc refunds -->
+                  <ng-template #adhocBtns>
+                    <p-button
+                      icon="pi pi-pencil"
+                      severity="warn"
+                      rounded
+                      styleClass="mr-1"
+                      (click)="openAdhocRefundDialog(row)"
+                      pTooltip="Edit Ad-hoc Refund"
+                    >
+                    </p-button>
+
+                    <p-button
+                      icon="pi pi-trash"
+                      severity="danger"
+                      rounded
+                      styleClass="mr-1"
+                      (click)="confirmDelete($event, row)"
+                      pTooltip="Delete"
+                    >
+                    </p-button>
+                  </ng-template>
                 </div>
               </td>
             </tr>
@@ -1294,4 +1338,55 @@
       </p-table>
     </div>
   </ng-container>
+</p-dialog>
+
+<!-- Ad-hoc Refund dialog -->
+<p-dialog
+  header="Ad-hoc Refund"
+  [(visible)]="showAdhocDialog"
+  [modal]="true"
+  [style]="{ width: '26rem' }"
+  [closable]="true"
+>
+  <div class="p-fluid">
+    <div class="field">
+      <label>Amount</label>
+      <p-inputNumber
+        [(ngModel)]="adhocForm.amount"
+        mode="decimal"
+        minFractionDigits="2"
+        maxFractionDigits="2"
+        class="w-full"
+      ></p-inputNumber>
+    </div>
+
+    <div class="field">
+      <label>Effective Date</label>
+      <p-datepicker
+        [(ngModel)]="adhocForm.jsEffectiveDate"
+        dateFormat="mm/dd/yy"
+        showIcon
+        appendTo="body"
+        class="w-full"
+      ></p-datepicker>
+    </div>
+
+    <div class="field">
+      <p-checkbox
+        binary="true"
+        [(ngModel)]="adhocForm.balanceImpacting"
+        inputId="balImpact"
+      ></p-checkbox>
+      <label for="balImpact" class="ml-2">Increase principal balance</label>
+    </div>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <p-button
+      label="Cancel"
+      severity="secondary"
+      (click)="showAdhocDialog = false"
+    ></p-button>
+    <p-button label="Save" (click)="saveAdhocRefund()"></p-button>
+  </ng-template>
 </p-dialog>

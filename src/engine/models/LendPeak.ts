@@ -3,9 +3,10 @@ import { FinancialOpsVersionManager } from "./FinancialOpsVersionManager";
 
 import { Amortization, AmortizationParams } from "./Amortization";
 import { BalanceModifications } from "./Amortization/BalanceModifications";
+import { BalanceModification } from "./Amortization/BalanceModification";
 
 import { DepositRecords } from "./DepositRecords";
-import { DepositRecord } from "./DepositRecord";
+import { DepositRecord, AdhocRefundMeta } from "./DepositRecord";
 
 import { InterestCalculator, PerDiemCalculationType } from "./InterestCalculator";
 
@@ -25,6 +26,7 @@ import isSameOrBefore from "dayjs/plugin/isSameOrBefore";
 import isBetween from "dayjs/plugin/isBetween";
 import { AllocationStrategy } from "./PaymentApplication/AllocationStrategy";
 import { DateUtil } from "../utils/DateUtil";
+import { UsageDetail } from "./Bill/DepositRecord/UsageDetail";
 
 export interface PayoffQuoteResult {
   duePrincipal: Currency;
@@ -249,42 +251,96 @@ export class LendPeak {
     this.applyPayments();
   }
 
+  /* ────────────────────────────────────────────────────────────────────────────
+   *  Remove or synchronise BalanceModifications that have gone “stale”.
+   *  – handles deposits, auto-close rows AND ad-hoc refunds.
+   * ────────────────────────────────────────────────────────────────────────── */
   cleanupBalanceModifications() {
-    // remove any existing balance modifications that were associated with deposits
-    // but deposits are no longer present
-    const filteredBalanceModifications: BalanceModifications = new BalanceModifications();
+    const filtered = new BalanceModifications();
 
-    this.amortization.balanceModifications.all.forEach((balanceModification) => {
-      if (balanceModification.metadata?.depositId) {
-        const deposit = this.depositRecords.getById(balanceModification.metadata.depositId);
-        if (!deposit) {
-          // Deposit not found; remove this balance modification
-          // console.log('Removing balance modification', balanceModification);
-
-          this.balanceModificationChanged = true;
-          return;
+    /*  Pass 1 – normal BMs tied to deposits / auto-close rows
+      (logic unchanged except the ad-hoc branch is off-loaded)               */
+    for (const bm of this.amortization.balanceModifications.all) {
+      const depId = bm.metadata?.depositId;
+      if (!depId) {
+        // ← ordinary manual BM
+        if (bm) {
+          filtered.addBalanceModification(bm);
         }
-
-        if (deposit.active !== true) {
-          // Deposit is not active; remove this balance modification
-          // console.log('Removing balance modification', balanceModification);
-          this.balanceModificationChanged = true;
-
-          return;
-        }
-
-        if (deposit.effectiveDate.isAfter(this.currentDate)) {
-          // Deposit is before snapshot date; remove this balance modification
-          // console.log('Removing balance modification', balanceModification);
-          this.balanceModificationChanged = true;
-
-          return;
-        }
+        continue;
       }
-      filteredBalanceModifications.addBalanceModification(balanceModification);
-    });
 
-    this.amortization.balanceModifications = filteredBalanceModifications;
+      const dep = this.depositRecords.getById(depId);
+      if (!dep) {
+        // deposit was removed
+        this.balanceModificationChanged = true;
+        continue;
+      }
+
+      /* ad-hoc refunds handled later */
+      if (dep.isAdhocRefund) continue;
+
+      if (!dep.active) {
+        // inactive deposit ⇒ drop BM
+        this.balanceModificationChanged = true;
+        continue;
+      }
+      if (dep.effectiveDate.isAfter(this.currentDate)) {
+        this.balanceModificationChanged = true;
+        continue;
+      }
+
+      filtered.addBalanceModification(bm); // still valid
+    }
+
+    /*  Pass 2 – ad-hoc refunds:
+      make sure each *active & balance-impacting* refund has
+      exactly one matching BM with the right amount & date                */
+    for (const dep of this.depositRecords.adhocRefunds) {
+      const meta = dep.metadata as AdhocRefundMeta;
+
+      // 2-a  : if refund is no longer balance-impacting OR inactive → purge BM
+      if (!meta.balanceImpacting || !dep.active) {
+        if (meta.balanceModificationId) {
+          this.amortization.balanceModifications.removeBalanceModificationByDepositId(dep.id);
+          delete meta.balanceModificationId;
+          this.balanceModificationChanged = true;
+        }
+        continue;
+      }
+
+      // 2-b  : refund *is* balance-impacting – ensure BM exists & is in sync
+      const wantAmount = dep.amount.abs();
+      const wantDate = dep.effectiveDate;
+      let bm: BalanceModification | undefined = meta.balanceModificationId ? this.amortization.balanceModifications.getById(meta.balanceModificationId) : undefined;
+
+      const needsNew = !bm || !bm.amount.equals(wantAmount) || !bm.date.isEqual(wantDate);
+
+      if (needsNew) {
+        if (bm) this.amortization.balanceModifications.removeBalanceModification(bm);
+
+        bm = new BalanceModification({
+          id: `ADHOC_REFUND_BM_${dep.id}`,
+          amount: wantAmount,
+          date: wantDate,
+          type: "increase",
+          description: `Ad-hoc refund ${dep.id}`,
+          isSystemModification: true,
+          metadata: { depositId: dep.id },
+        });
+
+        this.amortization.balanceModifications.addBalanceModification(bm);
+        meta.balanceModificationId = bm.id;
+        this.balanceModificationChanged = true;
+      }
+
+      if (bm) {
+        filtered.addBalanceModification(bm);
+      }
+    }
+
+    /* swap the collection in one shot so version-tracking works */
+    this.amortization.balanceModifications = filtered;
   }
 
   /* ────────────────────────────────────────────────────────────────────────────
@@ -310,59 +366,109 @@ export class LendPeak {
   }
 
   /* ────────────────────────────────────────────────────────────────────────────
-   *  MAIN: applyPayments()  —  with smarter auto-close handling
+   *  MAIN: applyPayments()
+   *         • handles ad-hoc refunds   (balance-impacting ↑ principal)
+   *         • handles auto-close rows  (synthetic “waiver” deposits)
+   *         • finally runs the payment engine
    * ────────────────────────────────────────────────────────────────────────── */
-  applyPayments() {
-    /* ----------------------------------------------------------
-     * STEP 0  –  Snapshot any auto-close waivers that exist
-     * -------------------------------------------------------- */
-    const autoDeposits = this.depositRecords._records.filter((d) => d.metadata?.type === "auto_close");
+  applyPayments(): void {
+    /* =========================================================
+     *  0)  AD-HOC REFUNDS  → create / update Balance Modifications
+     * =======================================================*/
+    const refundsTouched: DepositRecord[] = [];
 
-    const activeWaiver: DepositRecord | undefined = autoDeposits.find((d) => d.active);
+    for (const d of this.depositRecords.adhocRefunds) {
+      const meta = d.metadata as AdhocRefundMeta;
 
-    const activeAmount = activeWaiver?.amount ?? Currency.of(0);
+      /* we only create a BM once – afterwards the id is memoised */
+      if (meta.balanceImpacting && !meta.balanceModificationId) {
+        const bm = new BalanceModification({
+          id: `ADHOC_REFUND_BM_${d.id}`,
+          amount: d.amount.abs(), // principal ↑
+          date: d.effectiveDate,
+          type: "increase",
+          description: `Ad-hoc refund ${d.id}`,
+          isSystemModification: true, // <-- user cannot delete
+          metadata: { depositId: d.id },
+        });
 
-    /* ----------------------------------------------------------
-     * STEP 1  –  Temporarily turn ALL auto-close deposits off
-     *            so we can see the “true” remainder.
-     * -------------------------------------------------------- */
+        this.amortization.balanceModifications.addBalanceModification(bm);
+        this.amortization.calculateAmortizationPlan();
+        this.bills.regenerateBillsAfterDate(bm.date);
+
+        meta.balanceModificationId = bm.id;
+        refundsTouched.push(d); // remember – we’ll re-attach usage rows
+      }
+    }
+
+    /* =========================================================
+     *  1)  AUTO-CLOSE DEPOSITS
+     * =======================================================*/
+    const autoDeposits = this.depositRecords.all.filter((d) => d.isAutoClose);
+    const activeWaiver = autoDeposits.find((d) => d.active);
+    const activeAmount = activeWaiver?.amount ?? Currency.Zero();
+
+    /* disable all auto-close rows → get the true remainder */
     autoDeposits.forEach((d) => (d.active = false));
 
-    this.runPaymentPipeline(); // ← first pass (baseline)
+    /* ── first pass ──────────────────────────────────────── */
+    this.runPaymentPipeline();
+    const remainder = this.payoffQuote.dueTotal;
 
-    const remainder = this.payoffQuote.dueTotal; // what’s really left
+    let needsSecondRun = false;
 
-    /* ----------------------------------------------------------
-     * STEP 2  –  Decide what to do about the waiver
-     * -------------------------------------------------------- */
-
-    // 2-A)  No waiver needed at all
     if (remainder.isZero() || remainder.greaterThan(this.autoCloseThreshold)) {
-      // leave every auto-close deposit inactive; we’re done
-      return;
-    }
-
-    // 2-B)  Existing waiver is still the correct amount → reactivate it
-    if (activeWaiver && activeAmount.equals(remainder)) {
+      /* no waiver needed – leave rows inactive */
+    } else if (activeWaiver && activeAmount.equals(remainder)) {
+      /* existing waiver still correct → just reactivate */
       activeWaiver.active = true;
-      this.runPaymentPipeline(); // ← final pass
-      return;
+      needsSecondRun = true;
+    } else {
+      /* need a new waiver amount */
+      const newWaiver = new DepositRecord({
+        amount: remainder,
+        currency: "USD",
+        effectiveDate: this.currentDate,
+        paymentMethod: "system",
+        depositor: "Auto Close",
+        metadata: { type: "auto_close", systemGenerated: true },
+        depositRecords: this.depositRecords,
+      });
+      newWaiver.id = `AUTO_CLOSE_${Date.now()}`;
+      this.depositRecords.addRecord(newWaiver);
+      needsSecondRun = true;
     }
 
-    // 2-C)  Waiver needs to change size  → keep old as history, add new one
-    const newWaiver = new DepositRecord({
-      amount: remainder,
-      currency: "USD",
-      effectiveDate: this.currentDate,
-      paymentMethod: "system",
-      depositor: "Auto Close",
-      metadata: { systemGenerated: true, type: "auto_close" },
-      depositRecords: this.depositRecords,
-    });
-    newWaiver.id = `AUTO_CLOSE_${Date.now()}`;
-    this.depositRecords.addRecord(newWaiver);
+    /* ── second pass if required ─────────────────────────── */
+    if (needsSecondRun) this.runPaymentPipeline();
 
-    this.runPaymentPipeline(); // ← final pass
+    /* =========================================================
+     *  2)  RE-ATTACH helper UsageDetail rows for the refunds
+     *      (run *after* the final payment pipeline so they
+     *       don’t get wiped by clearHistory())
+     * =======================================================*/
+    for (const d of refundsTouched) {
+      const meta = d.metadata as AdhocRefundMeta;
+      const bm = this.amortization.balanceModifications.getById(meta.balanceModificationId!);
+      if (!bm) continue;
+
+      /* avoid duplicates if applyPayments() runs twice */
+      const already = d.usageDetails.some((u) => u.balanceModification?.id === bm.id);
+      if (already) continue;
+
+      d.addUsageDetail(
+        new UsageDetail({
+          billId: "Ad-hoc Refund",
+          period: 0,
+          billDueDate: d.effectiveDate,
+          allocatedPrincipal: bm.amount,
+          allocatedInterest: 0,
+          allocatedFees: 0,
+          date: d.effectiveDate,
+          balanceModification: bm,
+        })
+      );
+    }
   }
 
   addFinancialOpsVersionManager(): LendPeak {
@@ -624,7 +730,7 @@ export class LendPeak {
       allocationStrategy: PaymentApplication.getAllocationStrategyFromClass(this.allocationStrategy),
       paymentPriority: this.paymentPriority,
       autoCloseThreshold: this.autoCloseThreshold.toNumber(),
-      rawImportData: this.rawImportData ,
+      rawImportData: this.rawImportData,
     };
   }
 
@@ -676,6 +782,8 @@ export class LendPeak {
           totalRefunds: this.depositRecords.totalRefunds,
           activeRefunds: this.depositRecords.activeRefunds,
           hasRefunds: this.depositRecords.hasRefunds,
+          totalAdhocRefunds: this.depositRecords.totalAdhocRefunds,
+          hasAdhocRefunds: this.depositRecords.hasAdhocRefunds,
         },
         billing: {
           hasOpenBills: this.bills.openBills.length > 0,

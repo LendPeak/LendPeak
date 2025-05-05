@@ -15,11 +15,27 @@ import isBetween from "dayjs/plugin/isBetween";
 import { BalanceModification } from "./Amortization/BalanceModification";
 dayjs.extend(isBetween);
 
-export interface DepositMetadata {
-  custom?: { [key: string]: any };
-  systemGenerated?: boolean;
-  type?: "auto_close";
+/** Existing waiver */
+export interface AutoCloseMeta {
+  type: "auto_close";
+  systemGenerated?: true;
 }
+
+/** ad-hoc refund */
+export interface AdhocRefundMeta {
+  type: "adhoc_refund";
+  /** Should the principal balance be increased? */
+  balanceImpacting: boolean;
+  /** Filled once a BalanceModification is created so we don’t duplicate */
+  balanceModificationId?: string;
+}
+
+/** Default (normal cash-in) deposit – optional to keep payloads tiny */
+export interface StandardMeta {
+  type?: undefined;
+}
+
+export type DepositMetadata = StandardMeta | AutoCloseMeta | AdhocRefundMeta;
 
 export class DepositRecord {
   id: string;
@@ -104,7 +120,13 @@ export class DepositRecord {
     if (params.id) {
       this.id = params.id;
     } else {
-      this.id = DepositRecord.generateUniqueId(params.sequence);
+      if (params.metadata?.type === "auto_close") {
+        this.id = DepositRecord.generateUniqueId(params.sequence, "AUTO_CLOSE");
+      } else if (params.metadata?.type === "adhoc_refund") {
+        this.id = DepositRecord.generateUniqueId(params.sequence, "ADHOC_REFUND");
+      } else {
+        this.id = DepositRecord.generateUniqueId(params.sequence);
+      }
     }
 
     if (params.active !== undefined) {
@@ -133,7 +155,7 @@ export class DepositRecord {
     this.paymentMethod = params.paymentMethod;
     this.depositor = params.depositor;
     this.depositLocation = params.depositLocation;
-    this.metadata = params.metadata || {};
+    this.metadata = params.metadata;
     this.applyExcessToPrincipal = params.applyExcessToPrincipal || false;
     if (this.applyExcessToPrincipal && !params.excessAppliedDate) {
       this.excessAppliedDate = this.effectiveDate;
@@ -159,6 +181,16 @@ export class DepositRecord {
 
     this.updateJsValues();
     this.initialized = true;
+  }
+
+  get isAutoClose(): boolean {
+    return this.metadata?.type === "auto_close";
+  }
+  get isAdhocRefund(): boolean {
+    return this.metadata?.type === "adhoc_refund";
+  }
+  get adhocBalanceImpacting(): boolean {
+    return (this.metadata as AdhocRefundMeta | undefined)?.balanceImpacting ?? false;
   }
 
   get versionId(): string {
@@ -457,6 +489,7 @@ export class DepositRecord {
 
   get unusedAmount(): Currency {
     if (!this.active) return Currency.Zero();
+    if (this.isAdhocRefund) return Currency.Zero();
 
     const allocated = this.usageDetails.reduce((tot, d) => tot.add(d.allocatedPrincipal).add(d.allocatedInterest).add(d.allocatedFees), Currency.Zero());
     const remainder = this.amount.subtract(allocated);
@@ -563,10 +596,10 @@ export class DepositRecord {
     this.refunds.forEach((r) => r.updateJsValues());
   }
 
-  static generateUniqueId(sequence?: number): string {
+  static generateUniqueId(sequence?: number, prefix: string = "DEPOSIT"): string {
     // Simple unique ID generator (you can replace this with UUID if needed)
     const sequencePrefix = sequence !== undefined ? `${sequence}-` : "";
-    return "DEPOSIT-" + sequencePrefix + Math.random().toString(36).substr(2, 9);
+    return `${prefix}-` + sequencePrefix + Math.random().toString(36).substr(2, 9);
   }
 
   removeStaticAllocation(): void {

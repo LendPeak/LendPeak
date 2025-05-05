@@ -212,20 +212,20 @@ export class DepositsComponent implements OnChanges {
   }
 
   /** Ask for confirmation before deleting all checked rows */
-confirmDeleteSelected(ev: Event): void {
-  if (this.selectedDeposits.length === 0) return;
+  confirmDeleteSelected(ev: Event): void {
+    if (this.selectedDeposits.length === 0) return;
 
-  const n = this.selectedDeposits.length;
-  this.confirmation.confirm({
-    target: ev.target as HTMLElement,
-    message: `Delete ${n} selected deposit${n > 1 ? 's' : ''}?`,
-    icon: 'pi pi-exclamation-triangle',
-    acceptLabel: 'Yes',
-    rejectLabel: 'No',
-    acceptButtonStyleClass: 'p-button-danger',
-    accept: () => this.deleteSelected(),
-  });
-}
+    const n = this.selectedDeposits.length;
+    this.confirmation.confirm({
+      target: ev.target as HTMLElement,
+      message: `Delete ${n} selected deposit${n > 1 ? 's' : ''}?`,
+      icon: 'pi pi-exclamation-triangle',
+      acceptLabel: 'Yes',
+      rejectLabel: 'No',
+      acceptButtonStyleClass: 'p-button-danger',
+      accept: () => this.deleteSelected(),
+    });
+  }
 
   private deleteSelected(): void {
     if (!this.lendPeak) return;
@@ -618,6 +618,60 @@ confirmDeleteSelected(ev: Event): void {
     this.selectedDepositForEdit = null;
   }
 
+
+  editingAdhoc?: DepositRecord;
+  showAdhocDialog = false;
+
+  /* Open dialog (new or edit) */
+  openAdhocRefundDialog(d?: DepositRecord) {
+    this.editingAdhoc = d;
+
+    this.adhocForm = d
+      ? {
+          amount: d.jsAmount,
+          jsEffectiveDate: d.jsEffectiveDate!,
+          balanceImpacting: d.adhocBalanceImpacting,
+        }
+      : { amount: 0, jsEffectiveDate: new Date(), balanceImpacting: false };
+
+    this.showAdhocDialog = true;
+  }
+
+  /* Save (creates when new, patches when editing) */
+  saveAdhocRefund() {
+    if (!this.lendPeak) return;
+
+    const rec =
+      this.editingAdhoc ??
+      new DepositRecord({
+        amount: this.adhocForm.amount,
+        currency: 'USD',
+        effectiveDate: this.adhocForm.jsEffectiveDate,
+        depositor: 'Ad-hoc Refund',
+        paymentMethod: 'manual',
+        metadata: {
+          type: 'adhoc_refund',
+          balanceImpacting: this.adhocForm.balanceImpacting,
+        },
+      });
+
+    /* if we’re editing, update existing fields */
+    rec.amount = Currency.of(this.adhocForm.amount);
+    rec.effectiveDate = this.adhocForm.jsEffectiveDate;
+    rec.metadata = {
+      type: 'adhoc_refund',
+      balanceImpacting: this.adhocForm.balanceImpacting,
+    };
+
+    if (!this.editingAdhoc) this.lendPeak.depositRecords.addRecord(rec);
+
+    // close + bubble change
+    this.showAdhocDialog = false;
+    this.editingAdhoc = undefined;
+    this.depositUpdated.emit();
+    this.cdr.detectChanges();
+  }
+
   /** Build a CSV string from all deposits (active + inactive, sorted) */
   private exportDepositsToCSV(): string {
     if (!this.lendPeak) return '';
@@ -805,5 +859,25 @@ confirmDeleteSelected(ev: Event): void {
 
   showTooltip(event: Event, tooltipRef: Popover) {
     tooltipRef.toggle(event);
+  }
+
+  adhocForm = {
+    amount: 0,
+    jsEffectiveDate: new Date(),
+    balanceImpacting: false,
+  };
+
+  /* ── ② helpers -------------------------------------------------------------- */
+  openAdhocDialog(): void {
+    this.resetAdhocForm();
+    this.showAdhocDialog = true;
+  }
+
+  resetAdhocForm(): void {
+    this.adhocForm = {
+      amount: 0,
+      jsEffectiveDate: new Date(),
+      balanceImpacting: true,
+    };
   }
 }

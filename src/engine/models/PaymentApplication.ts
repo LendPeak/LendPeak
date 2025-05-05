@@ -107,6 +107,9 @@ export class PaymentApplication {
         // console.debug(`Skipping deposit ${deposit.id} because it is not active`);
         continue;
       }
+      if (deposit.isAdhocRefund) {
+        continue;
+      }  
       // if effective date is after the current date, skip the deposit
       if (deposit.effectiveDate.isAfter(currentDate)) {
         // console.debug(`Skipping deposit ${deposit.id} because its effective date is after the current date`);

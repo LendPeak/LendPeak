@@ -18,17 +18,14 @@ export class BalanceModifications {
   }
 
   set balanceModifications(value: BalanceModification[]) {
-    // console.trace("setting balance modification", value);
     this._balanceModifications = value
-      .map((bm) => {
-        if (bm instanceof BalanceModification) {
-          return bm;
-        } else {
-          return new BalanceModification(bm);
-        }
-      })
-      .filter((bm) => bm.amount.greaterThan(0) && bm.isSystemModification !== true)
+      .map((bm) => (bm instanceof BalanceModification ? bm : new BalanceModification(bm)))
+      .filter((bm) => bm.amount.greaterThan(0))
       .sort((a, b) => ChronoUnit.DAYS.between(a.date, b.date));
+  }
+
+  getById(id: string): BalanceModification | undefined {
+    return this._balanceModifications.find((bm) => bm.id === id);
   }
 
   get lastModification(): BalanceModification | undefined {

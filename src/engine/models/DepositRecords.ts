@@ -36,8 +36,6 @@ export class DepositRecords {
     return this._dateChanged;
   }
 
-
-
   get balanceModifications(): BalanceModification[] {
     let balanceModifications: BalanceModification[] = [];
     this._records.forEach((deposit) => {
@@ -219,6 +217,10 @@ export class DepositRecords {
     };
   }
 
+  get adhocRefunds(): DepositRecord[] {
+    return this._records.filter((r) => r.isAdhocRefund);
+  }
+
   printToConsole() {
     console.log("Deposit Records");
     const summary = this.summary;
@@ -245,6 +247,14 @@ export class DepositRecords {
 
   get hasAutoCloseDeposit(): boolean {
     return this._records.some((r) => r.metadata?.type === "auto_close");
+  }
+
+  /** quick counters */
+  get totalAdhocRefunds(): number {
+    return this.adhocRefunds.length;
+  }
+  get hasAdhocRefunds(): boolean {
+    return this.totalAdhocRefunds > 0;
   }
 
   /**

@@ -672,21 +672,23 @@ export class LoanImportComponent implements OnInit, OnDestroy {
 
     // get last term of the override and backtrack from that to add calendar overrides to 30/360
     const lastTerm = amortization.termInterestAmountOverride.all.slice(-1)[0];
-    const lastTermNumber = lastTerm.termNumber;
-    for (let i = 0; i <= lastTermNumber; i++) {
-      amortization.calendars.addCalendar(
-        new TermCalendar({
-          termNumber: i,
-          calendar: new Calendar(CalendarType.THIRTY_360_US),
-        }),
-      );
+    if (lastTerm) {
+      const lastTermNumber = lastTerm.termNumber;
+      for (let i = 0; i <= lastTermNumber; i++) {
+        amortization.calendars.addCalendar(
+          new TermCalendar({
+            termNumber: i,
+            calendar: new Calendar(CalendarType.THIRTY_360_US),
+          }),
+        );
 
-      amortization.preBillDays.addConfiguration(
-        new PreBillDaysConfiguration({
-          termNumber: i,
-          preBillDays: 28,
-        }),
-      );
+        amortization.preBillDays.addConfiguration(
+          new PreBillDaysConfiguration({
+            termNumber: i,
+            preBillDays: 28,
+          }),
+        );
+      }
     }
 
     return {

@@ -4,6 +4,7 @@
   [modal]="true"
   appendTo="body"
   [style]="{ width: '45%' }"
+  (onHide)="close()"
 >
   <p-table
     [value]="deposit.refunds"

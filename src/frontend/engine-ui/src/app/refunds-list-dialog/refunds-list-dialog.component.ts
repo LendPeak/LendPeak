@@ -38,7 +38,7 @@ export class RefundsListDialogComponent implements OnInit {
     this.dlg.open(RefundDialogComponent, {
       header: 'Edit Refund',
       width: '30%',
-      data: { deposit: this.deposit, refund }, 
+      data: { deposit: this.deposit, refund },
     });
   }
 
@@ -49,8 +49,8 @@ export class RefundsListDialogComponent implements OnInit {
     this.deposit.versionChanged();
   }
 
-  close() {
-    this.visible = false;
-    this.ref.close(true);
+  close(changed = true) {
+    this.visible = false; // hides inner p-dialog
+    this.ref.close(changed); // closes the outer dynamic dialog
   }
 }

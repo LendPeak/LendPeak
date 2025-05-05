@@ -1,25 +1,72 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <title>LendPeak Engine Demo</title>
-    <base href="/" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <link rel="icon" type="image/x-icon" href="favicon.ico" />
-    <script
-      async
-      src="https://www.googletagmanager.com/gtag/js?id=G-1BMY92G86G"
-    ></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag() {
-        dataLayer.push(arguments);
-      }
-      gtag("js", new Date());
-      gtag("config", "G-1BMY92G86G");
-    </script>
-  </head>
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+
+  <!-- Primary page title & description -->
+  <title>LendPeak Engine Demo – open-source loan-servicing & amortization sandbox</title>
+  <meta name="description"
+        content="Interactive demo of the LendPeak Engine – an open-source lending core that calculates amortization, repayments and payoff quotes in real time. Try it in your browser and explore the full source code on GitHub." />
+  <meta name="robots" content="index,follow" />
+
+  <!-- Canonical & author links -->
+  <link rel="canonical" href="https://demo.lendpeak.io/" />
+  <link rel="author"   href="https://github.com/LendPeak/LendPeak" />
+
+  <!-- Open Graph -->
+  <meta property="og:type"        content="website" />
+  <meta property="og:url"         content="https://demo.lendpeak.io/" />
+  <meta property="og:title"       content="LendPeak Engine Demo" />
+  <meta property="og:description" content="Explore the open-source LendPeak Engine. Simulate loans, run payoff quotes and inspect amortization schedules—all in the browser." />
+  <meta property="og:image"       content="https://demo.lendpeak.io/assets/og/lendpeak-og.png" />
+  <meta property="og:see_also"    content="https://github.com/LendPeak/LendPeak" />
+  <meta property="og:see_also"    content="https://www.facebook.com/lendpeak" />
+  <meta property="og:see_also"    content="https://x.com/lendpeak" />
+
+  <!-- Twitter card -->
+  <meta name="twitter:card"        content="summary_large_image" />
+  <meta name="twitter:title"       content="LendPeak Engine Demo" />
+  <meta name="twitter:description" content="Try the LendPeak Engine sandbox and see how open-source lending tech works." />
+  <meta name="twitter:image"       content="https://demo.lendpeak.io/assets/og/lendpeak-og.png" />
+
+  <!-- Structured data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "LendPeak Engine Demo",
+    "description": "Interactive sandbox for the open-source LendPeak lending engine. Calculate amortization, payment allocations and payoff quotes directly in the browser.",
+    "applicationCategory": "FinanceApplication",
+    "operatingSystem": "Web",
+    "url": "https://demo.lendpeak.io/",
+    "repository": "https://github.com/LendPeak/LendPeak",
+    "sameAs": [
+      "https://github.com/LendPeak/LendPeak",
+      "https://www.facebook.com/lendpeak"
+      "https://x.com/lendpeak"
+    ],
+    "author": {
+      "@type": "Organization",
+      "name": "LendPeak"
+    }
+  }
+  </script>
+
+  <!-- Mobile / PWA basics -->
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="icon" type="image/x-icon" href="favicon.ico" />
+
+  <!-- Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-1BMY92G86G"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-1BMY92G86G');
+  </script>
+</head>
+
   <body>
     <app-root></app-root>
   </body>

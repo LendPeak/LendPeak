@@ -1177,8 +1177,38 @@
 </div>
 
 <!-- Footer -->
-<footer>
-  <p>Version: {{ currentVersion }}</p>
+<footer class="app-footer">
+  <div class="social-icons">
+    <a
+      href="https://github.com/LendPeak/LendPeak"
+      aria-label="GitHub repository"
+      target="_blank"
+      rel="noopener"
+    >
+      <i class="pi pi-github"></i>
+    </a>
+
+    <a
+      href="https://www.facebook.com/lendpeak/"
+      aria-label="LendPeak Facebook page"
+      target="_blank"
+      rel="noopener"
+    >
+      <i class="pi pi-facebook"></i>
+    </a>
+
+    <!-- X -->
+    <a
+      href="https://x.com/lendpeak/"
+      aria-label="LendPeak X page"
+      target="_blank"
+      rel="noopener"
+    >
+      <i class="pi pi-twitter text-2xl"></i>
+    </a>
+  </div>
+
+  <span class="app-version">Version: {{ currentVersion }}</span>
 </footer>
 
 <p-dialog

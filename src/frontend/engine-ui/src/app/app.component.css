@@ -332,3 +332,48 @@ footer p {
     margin-top: 1rem;
 }
 
+/* footer layout */
+.app-footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    padding: 0.5em 2em;
+    display: flex;
+    justify-content: space-between;
+    /* icons ↔ version */
+    align-items: center;
+    background-color: #f7f7f7;
+    border-top: 1px solid #ddd;
+}
+
+/* icon row */
+.social-icons a {
+    margin-right: 1rem;
+    text-decoration: none;
+}
+
+.social-icons a:last-child {
+    margin-right: 0;
+}
+
+/* force monochrome icons */
+.social-icons .pi {
+    font-size: 1.8rem;
+    color: #000;
+    /* black */
+    filter: grayscale(100%);
+    transition: opacity .2s;
+}
+
+.social-icons .pi:hover {
+    opacity: 0.6;
+    /* subtle hover feedback */
+}
+
+/* version text */
+.app-version {
+    margin: 0;
+    color: #888;
+    white-space: nowrap;
+}

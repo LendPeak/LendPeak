@@ -224,14 +224,7 @@ export class ClsToLendPeakMapper {
       .map((t) => {
         const r = t.raw;
 
-        const feeTotal =
-          (r.loan__Fees__c ?? 0) +
-          (r.loan__Late_Charge_Interest__c ?? 0) +
-          (r.loan__Late_Charge_Principal__c ?? 0) +
-          (r.loan__Other_Charges_Interest__c ?? 0) +
-          (r.loan__Other_Charges_Principal__c ?? 0) +
-          (r.loan__Total_Charges_Interest__c ?? 0) +
-          (r.loan__Total_Charges_Principal__c ?? 0);
+        const feeTotal = r.loan__Fees__c ?? 0;
 
         // const staticAlloc: StaticAllocation = {
         //   principal: t.principal.toNumber(),

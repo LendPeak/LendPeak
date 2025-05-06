@@ -190,8 +190,7 @@ export class PaymentApplication {
         metadata: { depositId: deposit.id, isPayoff },
       });
       this.amortization.balanceModifications.addBalanceModification(bm);
-        bmChanged = true;
-
+      bmChanged = true;
     }
 
     result.balanceModification = bm;
@@ -220,7 +219,13 @@ export class PaymentApplication {
 
     /* ── step 5  Refresh amortisation & bills, then return ─────────────── */
     if (isPayoff) {
-      this.amortization.payoffDate = dateToApply;
+      if (!this.amortization.payoffDate) {
+        this.amortization.payoffDate = dateToApply;
+      } else if (this.amortization.payoffDate.isBefore(dateToApply)) {
+        this.amortization.payoffDate = dateToApply;
+      } else {
+        // do nothing
+      }
     }
     this.amortization.calculateAmortizationPlan();
     this.bills.regenerateBillsAfterDate(dateToApply);

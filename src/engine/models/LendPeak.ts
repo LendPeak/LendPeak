@@ -241,6 +241,7 @@ export class LendPeak {
   calc() {
     let previousVersion = ""; // empty → always enters the loop once
     let guard = 0; // safety to avoid infinite loops
+    this.updateModelValues();
 
     do {
       console.log("LendPeak.calc()", guard, previousVersion, this.amortization.versionId);
@@ -248,7 +249,7 @@ export class LendPeak {
       this.cleanupBalanceModifications();
 
       // 2️⃣  build schedule + bills from the current BM set
-      this.amortization.jsGenerateSchedule();
+      this.amortization.calculateAmortizationPlan();
       this.generateBills();
 
       // remember schedule fingerprint
@@ -257,6 +258,8 @@ export class LendPeak {
       // 3️⃣  run the full payment pipeline
       this.applyPayments();
     } while (previousVersion !== this.amortization.versionId && ++guard < 4);
+
+    this.updateJsValues();
   }
 
   /**
@@ -267,12 +270,13 @@ export class LendPeak {
   cleanupBalanceModifications() {
     const filtered = new BalanceModifications();
     const seen = new Map<string, BalanceModification>(); // depositId → BM
+    let changed = false;
 
-    /* ── PASS 1 : normal & auto-close balance mods ─────────────────────── */
+    /* ── PASS 1 : normal & auto-close balance mods ───────────────────────── */
     for (const bm of this.amortization.balanceModifications.all) {
       const depId = bm.metadata?.depositId;
 
-      /* ── 1-a  Unlinked manual BM – keep as-is ────────────────────────── */
+      /* 1-a  Unlinked manual BM – keep as-is */
       if (!depId) {
         filtered.addBalanceModification(bm);
         continue;
@@ -282,28 +286,31 @@ export class LendPeak {
 
       /* deposit was deleted / inactive / in the future → drop BM */
       if (!dep || !dep.active || dep.effectiveDate.isAfter(this.currentDate)) {
+        changed = true;
         this.balanceModificationChanged = true;
         continue;
       }
 
-      /* ── 1-b  De-duplicate normal BMs (keep the *latest* one) ────────── */
+      /* 1-b  De-duplicate normal BMs (keep the *latest* one) */
       const already = seen.get(depId);
       if (already) {
         // later BM wins → replace
         filtered.removeBalanceModification(already);
+        changed = true;
         this.balanceModificationChanged = true;
       }
       seen.set(depId, bm);
       filtered.addBalanceModification(bm);
     }
 
-    /* ── PASS 2 : balance-impacting ad-hoc refunds (unchanged logic) ────── */
+    /* ── PASS 2 : balance-impacting ad-hoc refunds ───────────────────────── */
     for (const dep of this.depositRecords.adhocRefunds) {
       const meta = dep.metadata as AdhocRefundMeta;
       if (!meta.balanceImpacting || !dep.active) {
         if (meta.balanceModificationId) {
           this.amortization.balanceModifications.removeBalanceModificationByDepositId(dep.id);
           delete meta.balanceModificationId;
+          changed = true;
           this.balanceModificationChanged = true;
         }
         continue;
@@ -330,14 +337,17 @@ export class LendPeak {
 
         this.amortization.balanceModifications.addBalanceModification(bm);
         meta.balanceModificationId = bm.id;
+        changed = true;
         this.balanceModificationChanged = true;
       }
 
       if (bm) filtered.addBalanceModification(bm);
     }
 
-    /* ── Swap ⇒ keeps version tracking happy ───────────────────────────── */
-    this.amortization.balanceModifications = filtered;
+    /* ── Swap only if something actually changed ─────────────────────────── */
+    if (changed) {
+      this.amortization.balanceModifications = filtered;
+    }
   }
 
   /* ────────────────────────────────────────────────────────────────────────────

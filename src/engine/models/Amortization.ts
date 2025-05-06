@@ -596,8 +596,11 @@ export class Amortization {
   }
 
   set modifiedSinceLastCalculation(value: boolean) {
+    if (value === true) {
+      this._modificationCount++;
+      //console.trace("modified since last calculation set to: ", value, this._modificationCount);
+    }
     this._modifiedSinceLastCalculation = value;
-    this._modificationCount++;
     //  console.trace("modified since last calculation set to: ", value, this._modificationCount);
   }
 
@@ -1050,12 +1053,12 @@ export class Amortization {
     return actualEnd.isBefore(plannedEnd);
   }
 
-  get earlyRepayment(): boolean {
+  private get earlyRepayment(): boolean {
     return this._earlyRepayment;
   }
 
-  set earlyRepayment(value: boolean) {
-    this.modifiedSinceLastCalculation = true;
+  private set earlyRepayment(value: boolean) {
+    // this.modifiedSinceLastCalculation = true;
 
     this._earlyRepayment = value;
   }
@@ -1070,11 +1073,13 @@ export class Amortization {
   set balanceModifications(balanceModifications: BalanceModifications) {
     this.modifiedSinceLastCalculation = true;
 
-    if (balanceModifications instanceof BalanceModifications) {
-      this._balanceModifications = balanceModifications;
-    } else {
-      this._balanceModifications = new BalanceModifications(balanceModifications);
+
+    if (!(balanceModifications instanceof BalanceModifications)) {
+      balanceModifications = new BalanceModifications(balanceModifications);
     }
+    
+
+     this._balanceModifications = balanceModifications;
   }
 
   get repaymentSchedule(): AmortizationEntries {
@@ -1605,9 +1610,19 @@ export class Amortization {
       } else if (typeof value === "string") {
         value = DateUtil.normalizeDate(value);
       }
+    }
+
+    if (value && this._payoffDate && !this._payoffDate.isEqual(value)) {
+      this.modifiedSinceLastCalculation = true;
+      this._payoffDate = value;
+    } else if (this._payoffDate && !value) {
+      this.modifiedSinceLastCalculation = true;
+      this._payoffDate = value;
+    } else if (!this._payoffDate && value) {
+      this.modifiedSinceLastCalculation = true;
       this._payoffDate = value;
     } else {
-      this._payoffDate = undefined;
+      // nothing to
     }
   }
 
@@ -2201,13 +2216,6 @@ export class Amortization {
     return slices;
   }
 
-  public jsGenerateSchedule(): AmortizationEntries {
-    this.updateModelValues();
-    const newSchedule = this.calculateAmortizationPlan();
-    this.updateJsValues();
-    return newSchedule;
-  }
-
   private resetUsageDetails(): void {
     this.unbilledInterestDueToRounding = Currency.zero;
     this.unbilledDeferredInterest = Currency.zero;
@@ -2225,6 +2233,7 @@ export class Amortization {
    * @returns An array of AmortizationSchedule entries.
    */
   public calculateAmortizationPlan(): AmortizationEntries {
+    const hadRealChanges = this.modifiedSinceLastCalculation;
     this.balanceModifications.resetUsedAmounts();
     this.resetUsageDetails();
 
@@ -2757,7 +2766,9 @@ export class Amortization {
 
     this.repaymentSchedule = schedule;
     this.modifiedSinceLastCalculation = false;
-    this.versionChanged();
+    // this.versionChanged();
+    if (hadRealChanges) this.versionChanged();
+
     return schedule;
   }
 

@@ -108,7 +108,7 @@ export class BillDueDaysConfigurations {
   }
 
   get json() {
-    return this._configurations.map((c) => c.json);
+    return this.allCustom.map((c) => c.json);
   }
 
   toJSON() {

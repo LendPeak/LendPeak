@@ -239,67 +239,66 @@ export class LendPeak {
   }
 
   calc() {
-    this.cleanupBalanceModifications();
+    let previousVersion = ""; // empty → always enters the loop once
+    let guard = 0; // safety to avoid infinite loops
 
-    try {
+    do {
+      // 1️⃣  tidy up anything stale
+      this.cleanupBalanceModifications();
+
+      // 2️⃣  build schedule + bills from the current BM set
       this.amortization.jsGenerateSchedule();
-    } catch (error) {
-      console.error("Error creating Amortization:", error);
-      throw error;
-    }
+      this.generateBills();
 
-    this.applyPayments();
+      // remember schedule fingerprint
+      previousVersion = this.amortization.versionId;
+
+      // 3️⃣  run the full payment pipeline
+      this.applyPayments();
+    } while (previousVersion !== this.amortization.versionId && ++guard < 50);
   }
 
-  /* ────────────────────────────────────────────────────────────────────────────
-   *  Remove or synchronise BalanceModifications that have gone “stale”.
-   *  – handles deposits, auto-close rows AND ad-hoc refunds.
-   * ────────────────────────────────────────────────────────────────────────── */
+  /**
+   *  Remove or synchronise BalanceModifications that have gone “stale”
+   *  *and* collapse accidental duplicates so that **each deposit produces
+   *  at most one BM**.
+   */
   cleanupBalanceModifications() {
     const filtered = new BalanceModifications();
+    const seen = new Map<string, BalanceModification>(); // depositId → BM
 
-    /*  Pass 1 – normal BMs tied to deposits / auto-close rows
-      (logic unchanged except the ad-hoc branch is off-loaded)               */
+    /* ── PASS 1 : normal & auto-close balance mods ─────────────────────── */
     for (const bm of this.amortization.balanceModifications.all) {
       const depId = bm.metadata?.depositId;
+
+      /* ── 1-a  Unlinked manual BM – keep as-is ────────────────────────── */
       if (!depId) {
-        // ← ordinary manual BM
-        if (bm) {
-          filtered.addBalanceModification(bm);
-        }
+        filtered.addBalanceModification(bm);
         continue;
       }
 
       const dep = this.depositRecords.getById(depId);
-      if (!dep) {
-        // deposit was removed
+
+      /* deposit was deleted / inactive / in the future → drop BM */
+      if (!dep || !dep.active || dep.effectiveDate.isAfter(this.currentDate)) {
         this.balanceModificationChanged = true;
         continue;
       }
 
-      /* ad-hoc refunds handled later */
-      if (dep.isAdhocRefund) continue;
-
-      if (!dep.active) {
-        // inactive deposit ⇒ drop BM
+      /* ── 1-b  De-duplicate normal BMs (keep the *latest* one) ────────── */
+      const already = seen.get(depId);
+      if (already) {
+        // later BM wins → replace
+        filtered.removeBalanceModification(already);
         this.balanceModificationChanged = true;
-        continue;
       }
-      if (dep.effectiveDate.isAfter(this.currentDate)) {
-        this.balanceModificationChanged = true;
-        continue;
-      }
-
-      filtered.addBalanceModification(bm); // still valid
+      seen.set(depId, bm);
+      filtered.addBalanceModification(bm);
     }
 
-    /*  Pass 2 – ad-hoc refunds:
-      make sure each *active & balance-impacting* refund has
-      exactly one matching BM with the right amount & date                */
+    /* ── PASS 2 : balance-impacting ad-hoc refunds (unchanged logic) ────── */
     for (const dep of this.depositRecords.adhocRefunds) {
       const meta = dep.metadata as AdhocRefundMeta;
-
-      // 2-a  : if refund is no longer balance-impacting OR inactive → purge BM
       if (!meta.balanceImpacting || !dep.active) {
         if (meta.balanceModificationId) {
           this.amortization.balanceModifications.removeBalanceModificationByDepositId(dep.id);
@@ -309,10 +308,9 @@ export class LendPeak {
         continue;
       }
 
-      // 2-b  : refund *is* balance-impacting – ensure BM exists & is in sync
       const wantAmount = dep.amount.abs();
       const wantDate = dep.effectiveDate;
-      let bm: BalanceModification | undefined = meta.balanceModificationId ? this.amortization.balanceModifications.getById(meta.balanceModificationId) : undefined;
+      let bm = meta.balanceModificationId ? this.amortization.balanceModifications.getById(meta.balanceModificationId) : undefined;
 
       const needsNew = !bm || !bm.amount.equals(wantAmount) || !bm.date.isEqual(wantDate);
 
@@ -334,12 +332,10 @@ export class LendPeak {
         this.balanceModificationChanged = true;
       }
 
-      if (bm) {
-        filtered.addBalanceModification(bm);
-      }
+      if (bm) filtered.addBalanceModification(bm);
     }
 
-    /* swap the collection in one shot so version-tracking works */
+    /* ── Swap ⇒ keeps version tracking happy ───────────────────────────── */
     this.amortization.balanceModifications = filtered;
   }
 
@@ -606,7 +602,10 @@ export class LendPeak {
       ...params,
       currentDate: params.currentDate ? LocalDate.parse(params.currentDate) : LocalDate.now(),
     });
+
     lendPeak.calc();
+    // running second calc fixes some issue that i dont understand yet
+    //   lendPeak.calc();
     return lendPeak;
   }
 

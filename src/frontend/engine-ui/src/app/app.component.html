@@ -1388,6 +1388,7 @@
         <p-tab value="0">Repayment Schedule</p-tab>
         <p-tab value="1">Payments</p-tab>
         <p-tab value="2">History</p-tab>
+        <p-tab value="3">Bills</p-tab>
       </p-tablist>
 
       <!-- ------- Tab panels ------- -->
@@ -1500,6 +1501,54 @@
             <ng-template pTemplate="body" let-row>
               <tr>
                 <td *ngFor="let col of rawImportJSON.history[0] | keyvalue">
+                  {{ $any($any(row))[$any(col).key] }}
+                </td>
+              </tr>
+            </ng-template>
+          </p-table>
+        </p-tabpanel>
+
+        <!-- ===== Bills ===== -->
+        <p-tabpanel value="3">
+          <p-button
+            icon="pi pi-clipboard"
+            label="Copy Bills as CSV"
+            (click)="copyRawImportBillsAsCSV()"
+            class="p-button-secondary"
+          />
+
+          <p-button
+            icon="pi pi-eye-slash"
+            [label]="
+              copyRawImportBillsHideArchived ? 'Show Archived' : 'Hide Archived'
+            "
+            (click)="
+              copyRawImportBillsHideArchived = !copyRawImportBillsHideArchived
+            "
+            class="p-button-secondary"
+          />
+
+          <p-table
+            *ngIf="rawImportJSON?.bills?.length"
+            [value]="rawImportJSON.bills"
+            dataKey="Id"
+          >
+            <ng-template pTemplate="header">
+              <tr>
+                <th *ngFor="let col of rawImportJSON.bills[0] | keyvalue">
+                  {{ col.key }}
+                </th>
+              </tr>
+            </ng-template>
+
+            <ng-template pTemplate="body" let-row>
+              <tr
+                *ngIf="
+                  !copyRawImportBillsHideArchived ||
+                  row.loan__Archived__c === false
+                "
+              >
+                <td *ngFor="let col of rawImportJSON.bills[0] | keyvalue">
                   {{ $any($any(row))[$any(col).key] }}
                 </td>
               </tr>

@@ -5,6 +5,7 @@ export class ClsMongoRepo {
   private readonly colRsi: Collection<any>;
   private readonly colLpt: Collection<any>;
   private readonly colLoanHistory: Collection<any>;
+  private readonly colBills: Collection<any>;
 
   constructor(private client: MongoClient, dbName: string) {
     const db: Db = this.client.db(dbName);
@@ -13,6 +14,7 @@ export class ClsMongoRepo {
     this.colRsi = db.collection("loan__Repayment_Schedule__c");
     this.colLpt = db.collection("loan__Loan_Payment_Transaction__c");
     this.colLoanHistory = db.collection("loan__Loan_Account__History");
+    this.colBills = db.collection("loan__Loan_account_Due_Details__c");
   }
 
   /** flexible lookup by Id / Name / Payoff_Id */
@@ -28,6 +30,16 @@ export class ClsMongoRepo {
 
   async getLoanPaymentTransactions(loanId: string) {
     return this.colLpt.find({ loan__Loan_Account__c: loanId }).sort({ loan__Clearing_Date__c: 1 }).toArray();
+  }
+
+  async getDueDetails(loanId: string) {
+    return this.colBills
+      .find({
+        loan__Loan_Account__c: loanId,
+        loan__Archived__c: { $ne: true }, // skip archived rows
+      })
+      .sort({ loan__Due_Date__c: 1 }) // chronological order
+      .toArray();
   }
 
   async getLoanAccountHistory(loanId: string) {
@@ -67,12 +79,13 @@ export class ClsMongoRepo {
     const loan = await this.findLoan(identifier);
     if (!loan) throw new Error(`Loan account '${identifier}' not found`);
 
-    const [schedule, lpts, history] = await Promise.all([
-      this.getRepaymentSchedule(loan.Id), // use SF-Id for children
-      this.getLoanPaymentTransactions(loan.Id),
-      this.getLoanAccountHistory(loan.Id),
+    const [schedule, lpts, bills, history] = await Promise.all([
+      this.getRepaymentSchedule(loan.Id), // RSIs
+      this.getLoanPaymentTransactions(loan.Id), // LPTs
+      this.getDueDetails(loan.Id), // PCNs
+      this.getLoanAccountHistory(loan.Id), // field history
     ]);
 
-    return { loan, schedule, lpts, history };
+    return { loan, schedule, lpts, bills, history };
   }
 }

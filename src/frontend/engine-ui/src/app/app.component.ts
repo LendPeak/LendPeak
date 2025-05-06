@@ -888,6 +888,34 @@ export class AppComponent implements OnChanges {
       });
   }
 
+  /** ---- Bills grid helpers ---- */
+  copyRawImportBillsHideArchived = true;
+
+  copyRawImportBillsAsCSV(): void {
+    if (!this.rawImportJSON?.bills?.length) return;
+
+    const rows = this.rawImportJSON.bills
+      .filter((b: any) =>
+        this.copyRawImportBillsHideArchived ? !b.loan__Archived__c : true,
+      )
+      .map((obj: any) =>
+        Object.values(obj)
+          .map((v) => `"${String(v).replace(/"/g, '""')}"`)
+          .join(','),
+      );
+
+    const header = Object.keys(this.rawImportJSON.bills[0])
+      .map((h) => `"${h.replace(/"/g, '""')}"`)
+      .join(',');
+
+    navigator.clipboard.writeText([header, ...rows].join('\n'));
+    this.messageService.add({
+      severity: 'success',
+      summary: 'Copied',
+      detail: 'Bills CSV copied to clipboard',
+    });
+  }
+
   copyRawImportHistoryAsCSV() {
     // we will create CSV from the schedule data this.rawImportJSON.schedule
     // and add it to copy buffer aka clipboard
@@ -983,6 +1011,35 @@ export class AppComponent implements OnChanges {
           };
         },
       );
+
+      this.rawImportJSON.bills = this.rawImportJSON.bills.map((bill: any) => {
+        return {
+          Name: bill.Name,
+          loan__Due_Date__c: bill.loan__Due_Date__c,
+          loan__Balance_Amount__c: bill.loan__Balance_Amount__c,
+          loan__Compounding_Interest_Billed__c:
+            bill.loan__Compounding_Interest_Billed__c,
+          loan__Due_Amt__c: bill.loan__Due_Amt__c,
+          // loan__Due_Type_Description__c: bill.loan__Due_Type_Description__c,
+          // loan__Due_Type__c: bill.loan__Due_Type__c,
+          loan__Interest_Billed__c: bill.loan__Interest_Billed__c,
+          loan__Interest_Paid__c: bill.loan__Interest_Paid__c,
+          // loan__Late_Charge_Applied__c: bill.loan__Late_Charge_Applied__c,
+          loan__Payment_Amt__c: bill.loan__Payment_Amt__c,
+          loan__Payment_Date__c: bill.loan__Payment_Date__c,
+          loan__Payment_Satisfied__c: bill.loan__Payment_Satisfied__c,
+          loan__Principal_Billed__c: bill.loan__Principal_Billed__c,
+          loan__Principal_Paid__c: bill.loan__Principal_Paid__c,
+          loan__Rescheduled_flag__c: bill.loan__Rescheduled_flag__c,
+          loan__Transaction_Date__c: bill.loan__Transaction_Date__c,
+          loan__Archived__c: bill.loan__Archived__c,
+          loan__Balance__c: bill.loan__Balance__c,
+          loan__Payoff_Balance__c: bill.loan__Payoff_Balance__c,
+          loan__DD_Primary_Flag__c: bill.loan__DD_Primary_Flag__c,
+          CreatedDate: bill.CreatedDate,
+          LastModifiedDate: bill.LastModifiedDate,
+        };
+      });
 
       // now we will sort schedule by loan__Due_Date__c
       this.rawImportJSON.schedule.sort((a: any, b: any) => {

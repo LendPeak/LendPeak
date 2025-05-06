@@ -53,7 +53,7 @@ export class BillGenerator {
 
   static generateId(sequence?: number): string {
     //    return uuidv4();
-    const sequencePrefix = sequence ? `${sequence}-` : "";
+    const sequencePrefix = sequence !== undefined ? `${sequence}-` : "";
     return "BILL-" + sequencePrefix + Math.random().toString(36).substr(2, 9);
   }
 }

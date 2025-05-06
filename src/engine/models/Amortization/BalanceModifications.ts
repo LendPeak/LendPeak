@@ -28,6 +28,11 @@ export class BalanceModifications {
     return this._balanceModifications.find((bm) => bm.id === id);
   }
 
+  /** Return the first BalanceModification that came from this depositId. */
+  getByDepositId(depositId: string): BalanceModification | undefined {
+    return this.all.find((m) => m.metadata?.depositId === depositId);
+  }
+
   get lastModification(): BalanceModification | undefined {
     return this._balanceModifications[this._balanceModifications.length - 1];
   }
@@ -74,6 +79,7 @@ export class BalanceModifications {
   removeBalanceModificationAtIndex(index: number) {
     this._balanceModifications.splice(index, 1);
   }
+
 
   getBalanceModificationById(id: string): BalanceModification | undefined {
     return this._balanceModifications.find((bm) => bm.id === id);

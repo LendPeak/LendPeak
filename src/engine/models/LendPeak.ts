@@ -243,6 +243,7 @@ export class LendPeak {
     let guard = 0; // safety to avoid infinite loops
 
     do {
+      console.log("LendPeak.calc()", guard, previousVersion, this.amortization.versionId);
       // 1️⃣  tidy up anything stale
       this.cleanupBalanceModifications();
 
@@ -255,7 +256,7 @@ export class LendPeak {
 
       // 3️⃣  run the full payment pipeline
       this.applyPayments();
-    } while (previousVersion !== this.amortization.versionId && ++guard < 50);
+    } while (previousVersion !== this.amortization.versionId && ++guard < 4);
   }
 
   /**
@@ -604,8 +605,6 @@ export class LendPeak {
     });
 
     lendPeak.calc();
-    // running second calc fixes some issue that i dont understand yet
-    //   lendPeak.calc();
     return lendPeak;
   }
 

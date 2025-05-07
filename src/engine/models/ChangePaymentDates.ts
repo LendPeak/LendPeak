@@ -1,5 +1,5 @@
 /* ChangePaymentDates.ts */
-import { ChangePaymentDate, ChangePaymentDateParams } from "./ChangePaymentDate";
+import { ChangePaymentDate, ChangePaymentDateParams, CPDType } from "./ChangePaymentDate";
 
 export class ChangePaymentDates {
   private _changePaymentDates: ChangePaymentDate[] = [];

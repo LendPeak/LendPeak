@@ -2,6 +2,12 @@
 import { DateUtil } from "../utils/DateUtil";
 import { LocalDate } from "@js-joda/core";
 
+/** ──────────── NEW ──────────── */
+export enum CPDType {
+  REGULAR = "regular", // manual CPD / borrower request
+  DSI_SYSTEM = "dsi", // auto-generated for DSI rollover
+}
+
 export interface ChangePaymentDateParams {
   /** `termNumber < 0` means “date-based” override */
   termNumber?: number;
@@ -10,6 +16,8 @@ export interface ChangePaymentDateParams {
   originalEndDate?: LocalDate | Date | string;
   /** optional – defaults to true */
   active?: boolean;
+  /** NEW — defaults to CPDType.REGULAR */
+  type?: CPDType;
 }
 
 export class ChangePaymentDate {
@@ -20,6 +28,7 @@ export class ChangePaymentDate {
   private _originalDate?: LocalDate;
   private _originalEndDate?: LocalDate;
   private _active: boolean = true;
+  private _type: CPDType = CPDType.REGULAR; // NEW
 
   /* ────────────────────────── JS / binding ───────────────────────── */
   jsTermNumber!: number;
@@ -28,6 +37,7 @@ export class ChangePaymentDate {
   jsOriginalDate?: Date;
   jsOriginalEndDate?: Date;
   jsActive!: boolean;
+  jsType!: CPDType; // NEW
 
   /* ───────────────────────────────────────────────────────────────── */
   constructor(params: ChangePaymentDateParams) {
@@ -36,6 +46,7 @@ export class ChangePaymentDate {
     if (params.originalDate) this.originalDate = params.originalDate;
     if (params.originalEndDate) this.originalEndDate = params.originalEndDate;
     this.active = params.active ?? true;
+    this.type = params.type ?? CPDType.REGULAR; // NEW
   }
 
   /* ===== enable / disable ===== */
@@ -45,6 +56,15 @@ export class ChangePaymentDate {
   set active(v: boolean) {
     this._active = v;
     this.jsActive = v;
+  }
+
+  /* ===== type ===== */ // NEW
+  get type(): CPDType {
+    return this._type;
+  }
+  set type(v: CPDType) {
+    this._type = v;
+    this.jsType = v;
   }
 
   /* ===== term ===== */
@@ -73,8 +93,7 @@ export class ChangePaymentDate {
 
   set originalDate(v: LocalDate | Date | string | undefined) {
     if (v === undefined) {
-      this._originalDate = undefined;
-      this.jsOriginalDate = undefined;
+      this._originalDate = this.jsOriginalDate = undefined;
       return;
     }
     this._originalDate = DateUtil.normalizeDate(v);
@@ -86,14 +105,12 @@ export class ChangePaymentDate {
 
   set originalEndDate(v: LocalDate | Date | string | undefined) {
     if (v === undefined) {
-      this._originalEndDate = undefined;
-      this.jsOriginalEndDate = undefined;
+      this._originalEndDate = this.jsOriginalEndDate = undefined;
       return;
     }
     this._originalEndDate = DateUtil.normalizeDate(v);
     this.jsOriginalEndDate = DateUtil.normalizeDateToJsDate(this._originalEndDate);
   }
-  
   get originalEndDate(): LocalDate | undefined {
     return this._originalEndDate;
   }
@@ -106,13 +123,16 @@ export class ChangePaymentDate {
     this.jsOriginalDate = this.originalDate ? DateUtil.normalizeDateToJsDate(this.originalDate) : undefined;
     this.jsOriginalEndDate = this.originalEndDate ? DateUtil.normalizeDateToJsDate(this.originalEndDate) : undefined;
     this.jsActive = this.active;
+    this.jsType = this.type; // NEW
   }
+
   updateModelValues(): void {
     this.termNumber = this.jsTermNumber;
     this.newDate = this.jsNewDate;
     if (this.jsOriginalDate) this.originalDate = this.jsOriginalDate;
     if (this.jsOriginalEndDate) this.originalEndDate = this.jsOriginalEndDate;
     this.active = this.jsActive;
+    this.type = this.jsType; // NEW
   }
 
   /* ===== serialization ===== */
@@ -123,6 +143,7 @@ export class ChangePaymentDate {
       originalDate: this.originalDate?.toString(),
       originalEndDate: this.originalEndDate?.toString(),
       active: this.active,
+      type: this.type, // NEW
     };
   }
   toJSON() {

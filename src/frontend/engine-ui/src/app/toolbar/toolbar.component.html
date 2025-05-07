@@ -13,7 +13,7 @@
     "
   >
     <span class="text-lg font-bold"
-      >Time Travel Mode Active — {{ snapshotDate.toString() | date: "YYYY-MM-DD" }}</span
+      >Time Travel Mode Active — {{ snapshotDate.toString() | date: "YYYY-MM-dd" }}</span
     >
   </div>
   <!-- spacer -->
@@ -49,7 +49,7 @@
         inputId="snapshotDate"
         [(ngModel)]="snapshotDate"
         [showIcon]="true"
-        dateFormat="YYYY-MM-DD"
+        dateFormat="yy-mm-dd"
         [showButtonBar]="true"
         [numberOfMonths]="3"
         (ngModelChange)="onSnapshotDateChange($event)"

@@ -354,7 +354,7 @@
                         <td>
                           <p-datepicker
                             [(ngModel)]="plan.startDate"
-                            dateFormat="YYYY-MM-DD"
+                            dateFormat="yy-mm-dd"
                             name="periodStartDate-{{ i }}"
                             showIcon
                             (onSelect)="submitLoan()"
@@ -365,7 +365,7 @@
                         <td>
                           <p-datepicker
                             [(ngModel)]="plan.endDate"
-                            dateFormat="YYYY-MM-DD"
+                            dateFormat="yy-mm-dd"
                             name="periodEndDate-{{ i }}"
                             showIcon
                             (onSelect)="repaymentPlanEndDateChange(i)"
@@ -511,7 +511,7 @@
               </div>
             </ng-template>
             <p class="m-0 text-300 font-semibold text-3xl text-center">
-              {{ lendPeak.expectedMaturity.toString() | date: "YYYY-MM-DD" }}
+              {{ lendPeak.expectedMaturity.toString() | date: "YYYY-MM-dd" }}
             </p>
           </p-card>
         </div>
@@ -525,7 +525,7 @@
               </div>
             </ng-template>
             <p class="m-0 text-300 font-semibold text-3xl text-center">
-              {{ lendPeak.actualPayoff.toString() | date: "YYYY-MM-DD" }}
+              {{ lendPeak.actualPayoff.toString() | date: "YYYY-MM-dd" }}
             </p>
           </p-card>
         </div>
@@ -657,7 +657,7 @@
               </div>
             </ng-template>
             <p class="m-0 text-300 font-semibold text-3xl text-center">
-              {{ lendPeak.expectedMaturity.toString() | date: "YYYY-MM-DD" }}
+              {{ lendPeak.expectedMaturity.toString() | date: "YYYY-MM-dd" }}
             </p>
           </p-card>
         </div>
@@ -671,7 +671,7 @@
               </div>
             </ng-template>
             <p class="m-0 text-300 font-semibold text-3xl text-center">
-              {{ lendPeak.actualPayoff.toString() | date: "YYYY-MM-DD" }}
+              {{ lendPeak.actualPayoff.toString() | date: "YYYY-MM-dd" }}
             </p>
           </p-card>
         </div>
@@ -867,7 +867,7 @@
               {{
                 lendPeak.bills.nextUpcomingBill
                   ? (lendPeak.bills.nextUpcomingBill.dueDate.toString()
-                    | date: "YYYY-MM-DD")
+                    | date: "YYYY-MM-dd")
                   : "No more bills left"
               }}
             </p>
@@ -933,7 +933,7 @@
               {{
                 lendPeak.depositRecords.lastActive
                   ? (lendPeak.depositRecords.lastActive.effectiveDate.toString()
-                    | date: "YYYY-MM-DD")
+                    | date: "YYYY-MM-dd")
                   : "None"
               }}
             </p>
@@ -1602,8 +1602,8 @@
         <td>{{ loan.id }}</td>
         <td>{{ loan.name }}</td>
         <td>{{ loan.description }}</td>
-        <td>{{ loan.startDate | date: "YYYY-MM-DD" }}</td>
-        <td>{{ loan.endDate | date: "YYYY-MM-DD" }}</td>
+        <td>{{ loan.startDate | date: "YYYY-MM-dd" }}</td>
+        <td>{{ loan.endDate | date: "YYYY-MM-dd" }}</td>
         <td>{{ loan.loanAmount | currency }}</td>
         <td>{{ loan.annualInterestRate }}%</td>
         <td>

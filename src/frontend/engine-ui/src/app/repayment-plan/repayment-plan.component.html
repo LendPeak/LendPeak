@@ -363,10 +363,10 @@
 
               <!-- Date fields -->
               <ng-container *ngSwitchCase="'periodStartDate'">
-                {{ rowData.periodStartDate.toString() | date: "YYYY-MM-DD" }}
+                {{ rowData.periodStartDate.toString() | date: "YYYY-MM-dd" }}
               </ng-container>
               <ng-container *ngSwitchCase="'periodEndDate'">
-                {{ rowData.periodEndDate.toString() | date: "YYYY-MM-DD" }}
+                {{ rowData.periodEndDate.toString() | date: "YYYY-MM-dd" }}
                 <p-badge
                   *ngIf="
                     rowData.billablePeriod &&
@@ -396,7 +396,7 @@
                 </span>
                 <span *ngIf="rowData.billablePeriod">
                   {{
-                    rowData.periodBillOpenDate.toString() | date: "YYYY-MM-DD"
+                    rowData.periodBillOpenDate.toString() | date: "YYYY-MM-dd"
                   }}
                 </span>
               </ng-container>
@@ -406,7 +406,7 @@
                 </span>
                 <span *ngIf="rowData.billablePeriod">
                   {{
-                    rowData.periodBillDueDate.toString() | date: "YYYY-MM-DD"
+                    rowData.periodBillDueDate.toString() | date: "YYYY-MM-dd"
                   }}
                 </span>
               </ng-container>

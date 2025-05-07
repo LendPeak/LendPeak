@@ -236,7 +236,7 @@
                     <p-datepicker
                       [(ngModel)]="rate.jsStartDate"
                       name="overrideStartDate-{{ i }}"
-                      dateFormat="YYYY-MM-DD"
+                      dateFormat="yy-mm-dd"
                       showIcon
                       (ngModelChange)="onInputChange($event)"
                       appendTo="body"
@@ -268,7 +268,7 @@
                       appendTo="body"
                       [(ngModel)]="rate.jsEndDate"
                       name="overrideEndDate-{{ i }}"
-                      dateFormat="YYYY-MM-DD"
+                      dateFormat="yy-mm-dd"
                       showIcon
                       (ngModelChange)="onInputChange($event)"
                     >
@@ -399,13 +399,13 @@
                   <td>
                     {{
                       getStartDateForTerm(row.jsTermNumber).toString()
-                        | date: "YYYY-MM-DD"
+                        | date: "YYYY-MM-dd"
                     }}
                   </td>
                   <td>
                     {{
                       getEndDateForTerm(row.jsTermNumber).toString()
-                        | date: "YYYY-MM-DD"
+                        | date: "YYYY-MM-dd"
                     }}
                   </td>
 
@@ -599,13 +599,13 @@
                   <td>
                     {{
                       getStartDateForTerm(row.jsTermNumber).toString()
-                        | date: "YYYY-MM-DD"
+                        | date: "YYYY-MM-dd"
                     }}
                   </td>
                   <td>
                     {{
                       getEndDateForTerm(row.jsTermNumber).toString()
-                        | date: "YYYY-MM-DD"
+                        | date: "YYYY-MM-dd"
                     }}
                   </td>
 
@@ -917,7 +917,7 @@
               <p-datepicker
                 [(ngModel)]="lendPeak.amortization.jsPayoffDate"
                 inputId="payoffDate"
-                dateFormat="YYYY-MM-DD"
+                dateFormat="yy-mm-dd"
                 showIcon
                 [showButtonBar]="true"
                 appendTo="body"
@@ -1087,13 +1087,13 @@
                   <td>
                     {{
                       getStartDateForTerm(row.jsTermNumber).toString()
-                        | date: "YYYY-MM-DD"
+                        | date: "YYYY-MM-dd"
                     }}
                   </td>
                   <td>
                     {{
                       getEndDateForTerm(row.jsTermNumber).toString()
-                        | date: "YYYY-MM-DD"
+                        | date: "YYYY-MM-dd"
                     }}
                   </td>
 
@@ -1287,13 +1287,13 @@
                   <td>
                     {{
                       getStartDateForTerm(row.termNumber).toString()
-                        | date: "YYYY-MM-DD"
+                        | date: "YYYY-MM-dd"
                     }}
                   </td>
                   <td>
                     {{
                       getEndDateForTerm(row.termNumber).toString()
-                        | date: "YYYY-MM-DD"
+                        | date: "YYYY-MM-dd"
                     }}
                   </td>
 
@@ -1312,7 +1312,7 @@
                   <!-- Old Date (editable) -->
                   <td>
                     <ng-container *ngIf="row.originalEndDate; else noDate">
-                      {{ row.originalEndDate.toString() | date: "YYYY-MM-DD" }}
+                      {{ row.originalEndDate.toString() | date: "YYYY-MM-dd" }}
                     </ng-container>
                     <ng-template #noDate> N/A </ng-template>
                   </td>
@@ -1321,12 +1321,12 @@
                   <td pEditableColumn>
                     <p-cellEditor>
                       <ng-template #output>
-                        {{ row.jsNewDate | date: "YYYY-MM-DD" }}
+                        {{ row.jsNewDate | date: "YYYY-MM-dd" }}
                       </ng-template>
                       <ng-template #input>
                         <p-datepicker
                           [(ngModel)]="row.jsNewDate"
-                          dateFormat="YYYY-MM-DD"
+                          dateFormat="yy-mm-dd"
                           showIcon
                           appendTo="body"
                         >
@@ -1480,13 +1480,13 @@
                   <td>
                     {{
                       getStartDateForTerm(row.termNumber).toString()
-                        | date: "YYYY-MM-DD"
+                        | date: "YYYY-MM-dd"
                     }}
                   </td>
                   <td>
                     {{
                       getEndDateForTerm(row.termNumber).toString()
-                        | date: "YYYY-MM-DD"
+                        | date: "YYYY-MM-dd"
                     }}
                   </td>
 
@@ -1666,13 +1666,13 @@
                   <td>
                     {{
                       getStartDateForTerm(row.termNumber).toString()
-                        | date: "YYYY-MM-DD"
+                        | date: "YYYY-MM-dd"
                     }}
                   </td>
                   <td>
                     {{
                       getEndDateForTerm(row.termNumber).toString()
-                        | date: "YYYY-MM-DD"
+                        | date: "YYYY-MM-dd"
                     }}
                   </td>
 
@@ -1822,7 +1822,7 @@
                     <td>
                       <p-datepicker
                         [(ngModel)]="balanceModification.jsDate"
-                        dateFormat="YYYY-MM-DD"
+                        dateFormat="yy-mm-dd"
                         inputId="balanceModificationDate-{{ i }}"
                         showIcon
                         (ngModelChange)="balanceModificationChanged()"

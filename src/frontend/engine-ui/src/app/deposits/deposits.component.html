@@ -270,7 +270,7 @@
                   }}</ng-container>
 
                   <ng-container *ngSwitchCase="'jsEffectiveDate'">
-                    {{ row.jsEffectiveDate | date: "YYYY-MM-DD" }}
+                    {{ row.jsEffectiveDate | date: "YYYY-MM-dd" }}
                   </ng-container>
 
                   <ng-container *ngSwitchCase="'jsSystemDate'">
@@ -278,7 +278,7 @@
                   </ng-container>
 
                   <ng-container *ngSwitchCase="'jsClearingDate'">
-                    {{ row.jsClearingDate | date: "YYYY-MM-DD" }}
+                    {{ row.jsClearingDate | date: "YYYY-MM-dd" }}
                   </ng-container>
 
                   <ng-container *ngSwitchCase="'allocatedTotal'">
@@ -487,7 +487,7 @@
           inputId="effectiveDate-{{ depositData.id }}"
           [(ngModel)]="depositData.jsEffectiveDate"
           (ngModelChange)="onDataChange($event)"
-          dateFormat="YYYY-MM-DD"
+          dateFormat="yy-mm-dd"
           [showClear]="false"
           [showButtonBar]="true"
           showIcon
@@ -528,7 +528,7 @@
           [(ngModel)]="depositData.jsClearingDate"
           (ngModelChange)="onDataChange($event)"
           [minDate]="depositData.jsEffectiveDate"
-          dateFormat="YYYY-MM-DD"
+          dateFormat="yy-mm-dd"
           appendTo="body"
           [showButtonBar]="true"
           showIcon
@@ -584,7 +584,7 @@
           [(ngModel)]="depositData.jsExcessAppliedDate"
           (ngModelChange)="onDataChange($event)"
           name="excessAppliedDate"
-          dateFormat="YYYY-MM-DD"
+          dateFormat="yy-mm-dd"
           [showButtonBar]="true"
           [minDate]="depositData.jsEffectiveDate"
           [required]="depositData.applyExcessToPrincipal"
@@ -897,7 +897,7 @@
     <ng-template pTemplate="body" let-detail>
       <tr>
         <td>{{ detail.period }}</td>
-        <td>{{ detail.billDueDate.toString() | date: "YYYY-MM-DD" }}</td>
+        <td>{{ detail.billDueDate.toString() | date: "YYYY-MM-dd" }}</td>
         <td>
           <!-- Bill ID + button to open Bill Card -->
           <p-button
@@ -988,7 +988,7 @@
         <td>{{ detail.allocatedPrincipal.toNumber() | currency }}</td>
         <td>{{ detail.allocatedInterest.toNumber() | currency }}</td>
         <td>{{ detail.allocatedFees.toNumber() | currency }}</td>
-        <td>{{ detail.date.toString() | date: "YYYY-MM-DD" }}</td>
+        <td>{{ detail.date.toString() | date: "YYYY-MM-dd" }}</td>
       </tr>
     </ng-template>
 
@@ -1219,7 +1219,7 @@
 
         <div class="col-12 md:col-5 flex align-items-center">
           <span class="font-semibold text-300 mr-1">Due Date:</span>
-          <span>{{ bill.jsDueDate | date: "YYYY-MM-DD" }}</span>
+          <span>{{ bill.jsDueDate | date: "YYYY-MM-dd" }}</span>
         </div>
       </div>
 
@@ -1255,7 +1255,7 @@
         <div class="col-12 md:col-6 flex align-items-center">
           <span class="font-semibold text-300 mr-1">Satisfied On:</span>
           <span>{{
-            bill.dateFullySatisfied.toString() | date: "YYYY-MM-DD"
+            bill.dateFullySatisfied.toString() | date: "YYYY-MM-dd"
           }}</span>
         </div>
       </div>
@@ -1286,7 +1286,7 @@
             <td>{{ payment.jsAllocatedPrincipal | currency }}</td>
             <td>{{ payment.jsAllocatedInterest | currency }}</td>
             <td>{{ payment.jsAllocatedFees | currency }}</td>
-            <td>{{ payment.jsDate | date: "YYYY-MM-DD" }}</td>
+            <td>{{ payment.jsDate | date: "YYYY-MM-dd" }}</td>
           </tr>
         </ng-template>
 
@@ -1368,7 +1368,7 @@
       <label>Effective Date</label>
       <p-datepicker
         [(ngModel)]="adhocForm.jsEffectiveDate"
-        dateFormat="YYYY-MM-DD"
+        dateFormat="yy-mm-dd"
         showIcon
         appendTo="body"
         class="w-full"

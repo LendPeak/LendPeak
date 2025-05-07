@@ -236,7 +236,7 @@
                     <p-datepicker
                       [(ngModel)]="rate.jsStartDate"
                       name="overrideStartDate-{{ i }}"
-                      dateFormat="mm/dd/yy"
+                      dateFormat="YYYY-MM-DD"
                       showIcon
                       (ngModelChange)="onInputChange($event)"
                       appendTo="body"
@@ -268,7 +268,7 @@
                       appendTo="body"
                       [(ngModel)]="rate.jsEndDate"
                       name="overrideEndDate-{{ i }}"
-                      dateFormat="mm/dd/yy"
+                      dateFormat="YYYY-MM-DD"
                       showIcon
                       (ngModelChange)="onInputChange($event)"
                     >
@@ -917,7 +917,7 @@
               <p-datepicker
                 [(ngModel)]="lendPeak.amortization.jsPayoffDate"
                 inputId="payoffDate"
-                dateFormat="mm/dd/yy"
+                dateFormat="YYYY-MM-DD"
                 showIcon
                 [showButtonBar]="true"
                 appendTo="body"
@@ -1326,7 +1326,7 @@
                       <ng-template #input>
                         <p-datepicker
                           [(ngModel)]="row.jsNewDate"
-                          dateFormat="mm/dd/yy"
+                          dateFormat="YYYY-MM-DD"
                           showIcon
                           appendTo="body"
                         >
@@ -1822,7 +1822,7 @@
                     <td>
                       <p-datepicker
                         [(ngModel)]="balanceModification.jsDate"
-                        dateFormat="mm/dd/yy"
+                        dateFormat="YYYY-MM-DD"
                         inputId="balanceModificationDate-{{ i }}"
                         showIcon
                         (ngModelChange)="balanceModificationChanged()"

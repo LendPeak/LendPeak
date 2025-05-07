@@ -487,7 +487,7 @@
           inputId="effectiveDate-{{ depositData.id }}"
           [(ngModel)]="depositData.jsEffectiveDate"
           (ngModelChange)="onDataChange($event)"
-          dateFormat="mm/dd/yy"
+          dateFormat="YYYY-MM-DD"
           [showClear]="false"
           [showButtonBar]="true"
           showIcon
@@ -528,7 +528,7 @@
           [(ngModel)]="depositData.jsClearingDate"
           (ngModelChange)="onDataChange($event)"
           [minDate]="depositData.jsEffectiveDate"
-          dateFormat="mm/dd/yy"
+          dateFormat="YYYY-MM-DD"
           appendTo="body"
           [showButtonBar]="true"
           showIcon
@@ -584,7 +584,7 @@
           [(ngModel)]="depositData.jsExcessAppliedDate"
           (ngModelChange)="onDataChange($event)"
           name="excessAppliedDate"
-          dateFormat="mm/dd/yy"
+          dateFormat="YYYY-MM-DD"
           [showButtonBar]="true"
           [minDate]="depositData.jsEffectiveDate"
           [required]="depositData.applyExcessToPrincipal"
@@ -1368,7 +1368,7 @@
       <label>Effective Date</label>
       <p-datepicker
         [(ngModel)]="adhocForm.jsEffectiveDate"
-        dateFormat="mm/dd/yy"
+        dateFormat="YYYY-MM-DD"
         showIcon
         appendTo="body"
         class="w-full"

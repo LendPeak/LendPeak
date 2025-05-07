@@ -399,13 +399,13 @@
                   <td>
                     {{
                       getStartDateForTerm(row.jsTermNumber).toString()
-                        | date: "MM/dd/yyyy"
+                        | date: "YYYY-MM-DD"
                     }}
                   </td>
                   <td>
                     {{
                       getEndDateForTerm(row.jsTermNumber).toString()
-                        | date: "MM/dd/yyyy"
+                        | date: "YYYY-MM-DD"
                     }}
                   </td>
 
@@ -599,13 +599,13 @@
                   <td>
                     {{
                       getStartDateForTerm(row.jsTermNumber).toString()
-                        | date: "MM/dd/yyyy"
+                        | date: "YYYY-MM-DD"
                     }}
                   </td>
                   <td>
                     {{
                       getEndDateForTerm(row.jsTermNumber).toString()
-                        | date: "MM/dd/yyyy"
+                        | date: "YYYY-MM-DD"
                     }}
                   </td>
 
@@ -1087,13 +1087,13 @@
                   <td>
                     {{
                       getStartDateForTerm(row.jsTermNumber).toString()
-                        | date: "MM/dd/yyyy"
+                        | date: "YYYY-MM-DD"
                     }}
                   </td>
                   <td>
                     {{
                       getEndDateForTerm(row.jsTermNumber).toString()
-                        | date: "MM/dd/yyyy"
+                        | date: "YYYY-MM-DD"
                     }}
                   </td>
 
@@ -1287,13 +1287,13 @@
                   <td>
                     {{
                       getStartDateForTerm(row.termNumber).toString()
-                        | date: "MM/dd/yyyy"
+                        | date: "YYYY-MM-DD"
                     }}
                   </td>
                   <td>
                     {{
                       getEndDateForTerm(row.termNumber).toString()
-                        | date: "MM/dd/yyyy"
+                        | date: "YYYY-MM-DD"
                     }}
                   </td>
 
@@ -1312,7 +1312,7 @@
                   <!-- Old Date (editable) -->
                   <td>
                     <ng-container *ngIf="row.originalEndDate; else noDate">
-                      {{ row.originalEndDate.toString() | date: "MM/dd/yyyy" }}
+                      {{ row.originalEndDate.toString() | date: "YYYY-MM-DD" }}
                     </ng-container>
                     <ng-template #noDate> N/A </ng-template>
                   </td>
@@ -1321,7 +1321,7 @@
                   <td pEditableColumn>
                     <p-cellEditor>
                       <ng-template #output>
-                        {{ row.jsNewDate | date: "MM/dd/yyyy" }}
+                        {{ row.jsNewDate | date: "YYYY-MM-DD" }}
                       </ng-template>
                       <ng-template #input>
                         <p-datepicker
@@ -1480,13 +1480,13 @@
                   <td>
                     {{
                       getStartDateForTerm(row.termNumber).toString()
-                        | date: "MM/dd/yyyy"
+                        | date: "YYYY-MM-DD"
                     }}
                   </td>
                   <td>
                     {{
                       getEndDateForTerm(row.termNumber).toString()
-                        | date: "MM/dd/yyyy"
+                        | date: "YYYY-MM-DD"
                     }}
                   </td>
 
@@ -1666,13 +1666,13 @@
                   <td>
                     {{
                       getStartDateForTerm(row.termNumber).toString()
-                        | date: "MM/dd/yyyy"
+                        | date: "YYYY-MM-DD"
                     }}
                   </td>
                   <td>
                     {{
                       getEndDateForTerm(row.termNumber).toString()
-                        | date: "MM/dd/yyyy"
+                        | date: "YYYY-MM-DD"
                     }}
                   </td>
 

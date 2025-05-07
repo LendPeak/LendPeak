@@ -511,7 +511,7 @@
               </div>
             </ng-template>
             <p class="m-0 text-300 font-semibold text-3xl text-center">
-              {{ lendPeak.expectedMaturity.toString() | date: "MM/dd/yyyy" }}
+              {{ lendPeak.expectedMaturity.toString() | date: "YYYY-MM-DD" }}
             </p>
           </p-card>
         </div>
@@ -525,7 +525,7 @@
               </div>
             </ng-template>
             <p class="m-0 text-300 font-semibold text-3xl text-center">
-              {{ lendPeak.actualPayoff.toString() | date: "MM/dd/yyyy" }}
+              {{ lendPeak.actualPayoff.toString() | date: "YYYY-MM-DD" }}
             </p>
           </p-card>
         </div>
@@ -657,7 +657,7 @@
               </div>
             </ng-template>
             <p class="m-0 text-300 font-semibold text-3xl text-center">
-              {{ lendPeak.expectedMaturity.toString() | date: "MM/dd/yyyy" }}
+              {{ lendPeak.expectedMaturity.toString() | date: "YYYY-MM-DD" }}
             </p>
           </p-card>
         </div>
@@ -671,7 +671,7 @@
               </div>
             </ng-template>
             <p class="m-0 text-300 font-semibold text-3xl text-center">
-              {{ lendPeak.actualPayoff.toString() | date: "MM/dd/yyyy" }}
+              {{ lendPeak.actualPayoff.toString() | date: "YYYY-MM-DD" }}
             </p>
           </p-card>
         </div>
@@ -867,7 +867,7 @@
               {{
                 lendPeak.bills.nextUpcomingBill
                   ? (lendPeak.bills.nextUpcomingBill.dueDate.toString()
-                    | date: "MM/dd/yyyy")
+                    | date: "YYYY-MM-DD")
                   : "No more bills left"
               }}
             </p>
@@ -933,7 +933,7 @@
               {{
                 lendPeak.depositRecords.lastActive
                   ? (lendPeak.depositRecords.lastActive.effectiveDate.toString()
-                    | date: "MM/dd/yyyy")
+                    | date: "YYYY-MM-DD")
                   : "None"
               }}
             </p>
@@ -1602,8 +1602,8 @@
         <td>{{ loan.id }}</td>
         <td>{{ loan.name }}</td>
         <td>{{ loan.description }}</td>
-        <td>{{ loan.startDate | date: "MM/dd/yyyy" }}</td>
-        <td>{{ loan.endDate | date: "MM/dd/yyyy" }}</td>
+        <td>{{ loan.startDate | date: "YYYY-MM-DD" }}</td>
+        <td>{{ loan.endDate | date: "YYYY-MM-DD" }}</td>
         <td>{{ loan.loanAmount | currency }}</td>
         <td>{{ loan.annualInterestRate }}%</td>
         <td>

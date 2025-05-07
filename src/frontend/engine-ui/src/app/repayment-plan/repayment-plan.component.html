@@ -363,10 +363,10 @@
 
               <!-- Date fields -->
               <ng-container *ngSwitchCase="'periodStartDate'">
-                {{ rowData.periodStartDate.toString() | date: "MM/dd/yyyy" }}
+                {{ rowData.periodStartDate.toString() | date: "YYYY-MM-DD" }}
               </ng-container>
               <ng-container *ngSwitchCase="'periodEndDate'">
-                {{ rowData.periodEndDate.toString() | date: "MM/dd/yyyy" }}
+                {{ rowData.periodEndDate.toString() | date: "YYYY-MM-DD" }}
                 <p-badge
                   *ngIf="
                     rowData.billablePeriod &&
@@ -380,11 +380,11 @@
                   pTooltip="Change Payment Date from {{
                     lendPeak.amortization.changePaymentDates.getChangePaymentDate(
                       rowData.term
-                    )?.jsOriginalEndDate | date: 'MM/dd/yyyy'
+                    )?.jsOriginalEndDate | date: 'YYYY-MM-DD'
                   }} to {{
                     lendPeak.amortization.changePaymentDates.getChangePaymentDate(
                       rowData.term
-                    )?.jsNewDate | date: 'MM/dd/yyyy'
+                    )?.jsNewDate | date: 'YYYY-MM-DD'
                   }}"
                   tooltipPosition="top"
                   tooltipStyleClass="wide-tooltip"
@@ -396,7 +396,7 @@
                 </span>
                 <span *ngIf="rowData.billablePeriod">
                   {{
-                    rowData.periodBillOpenDate.toString() | date: "MM/dd/yyyy"
+                    rowData.periodBillOpenDate.toString() | date: "YYYY-MM-DD"
                   }}
                 </span>
               </ng-container>
@@ -406,7 +406,7 @@
                 </span>
                 <span *ngIf="rowData.billablePeriod">
                   {{
-                    rowData.periodBillDueDate.toString() | date: "MM/dd/yyyy"
+                    rowData.periodBillDueDate.toString() | date: "YYYY-MM-DD"
                   }}
                 </span>
               </ng-container>

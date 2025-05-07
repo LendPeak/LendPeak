@@ -143,7 +143,7 @@
         </div>
         <div class="col-6 mt-2">
           <strong>Start Date:</strong>
-          {{ previewLoans[0].d.LoanSetup.contractDate | date: "MM/dd/yyyy" }}
+          {{ previewLoans[0].d.LoanSetup.contractDate | date: "YYYY-MM-DD" }}
         </div>
         <div class="col-6 mt-2">
           <strong>Rate:</strong> {{ previewLoans[0].d.LoanSetup.loanRate }}%
@@ -165,7 +165,7 @@
         </ng-template>
         <ng-template pTemplate="body" let-payment>
           <tr>
-            <td>{{ payment.date | date: "MM/dd/yyyy" }}</td>
+            <td>{{ payment.date | date: "YYYY-MM-DD" }}</td>
             <td>{{ payment.amount }}</td>
             <td>{{ payment.info }}</td>
           </tr>
@@ -191,7 +191,7 @@
             <td>{{ l.d.id }}</td>
             <td>{{ l.d.displayId }}</td>
             <td>{{ l.d.LoanSetup.tilLoanAmount }}</td>
-            <td>{{ l.d.LoanSetup.contractDate | date: "MM/dd/yyyy" }}</td>
+            <td>{{ l.d.LoanSetup.contractDate | date: "YYYY-MM-DD" }}</td>
             <td>{{ l.d.LoanSetup.loanRate }}%</td>
           </tr>
         </ng-template>

@@ -270,15 +270,15 @@
                   }}</ng-container>
 
                   <ng-container *ngSwitchCase="'jsEffectiveDate'">
-                    {{ row.jsEffectiveDate | date: "MM/dd/yyyy" }}
+                    {{ row.jsEffectiveDate | date: "YYYY-MM-DD" }}
                   </ng-container>
 
                   <ng-container *ngSwitchCase="'jsSystemDate'">
-                    {{ row.jsSystemDate | date: "MM/dd/yyyy hh:mm:ss" }}
+                    {{ row.jsSystemDate | date: "YYYY-MM-DD hh:mm:ss" }}
                   </ng-container>
 
                   <ng-container *ngSwitchCase="'jsClearingDate'">
-                    {{ row.jsClearingDate | date: "MM/dd/yyyy" }}
+                    {{ row.jsClearingDate | date: "YYYY-MM-DD" }}
                   </ng-container>
 
                   <ng-container *ngSwitchCase="'allocatedTotal'">
@@ -897,7 +897,7 @@
     <ng-template pTemplate="body" let-detail>
       <tr>
         <td>{{ detail.period }}</td>
-        <td>{{ detail.billDueDate.toString() | date: "MM/dd/yyyy" }}</td>
+        <td>{{ detail.billDueDate.toString() | date: "YYYY-MM-DD" }}</td>
         <td>
           <!-- Bill ID + button to open Bill Card -->
           <p-button
@@ -988,7 +988,7 @@
         <td>{{ detail.allocatedPrincipal.toNumber() | currency }}</td>
         <td>{{ detail.allocatedInterest.toNumber() | currency }}</td>
         <td>{{ detail.allocatedFees.toNumber() | currency }}</td>
-        <td>{{ detail.date.toString() | date: "MM/dd/yyyy" }}</td>
+        <td>{{ detail.date.toString() | date: "YYYY-MM-DD" }}</td>
       </tr>
     </ng-template>
 
@@ -1219,7 +1219,7 @@
 
         <div class="col-12 md:col-5 flex align-items-center">
           <span class="font-semibold text-300 mr-1">Due Date:</span>
-          <span>{{ bill.jsDueDate | date: "MM/dd/yyyy" }}</span>
+          <span>{{ bill.jsDueDate | date: "YYYY-MM-DD" }}</span>
         </div>
       </div>
 
@@ -1255,7 +1255,7 @@
         <div class="col-12 md:col-6 flex align-items-center">
           <span class="font-semibold text-300 mr-1">Satisfied On:</span>
           <span>{{
-            bill.dateFullySatisfied.toString() | date: "MM/dd/yyyy"
+            bill.dateFullySatisfied.toString() | date: "YYYY-MM-DD"
           }}</span>
         </div>
       </div>
@@ -1286,7 +1286,7 @@
             <td>{{ payment.jsAllocatedPrincipal | currency }}</td>
             <td>{{ payment.jsAllocatedInterest | currency }}</td>
             <td>{{ payment.jsAllocatedFees | currency }}</td>
-            <td>{{ payment.jsDate | date: "MM/dd/yyyy" }}</td>
+            <td>{{ payment.jsDate | date: "YYYY-MM-DD" }}</td>
           </tr>
         </ng-template>
 

@@ -66,7 +66,7 @@
               <p-tag
                 value="{{ bill.amortizationEntry.jsPrebillDaysConfiguration }}"
                 pTooltip="Days before period's end when the bill is due {{
-                  bill.jsOpenDate | date: 'MM/dd/yyyy'
+                  bill.jsOpenDate | date: 'YYYY-MM-DD'
                 }}"
                 tooltipPosition="top"
                 severity="secondary"
@@ -82,13 +82,13 @@
                     .jsBillDueDaysAfterPeriodEndConfiguration
                 }}"
                 pTooltip="Days after period's end when the bill is due {{
-                  bill.jsDueDate | date: 'MM/dd/yyyy'
+                  bill.jsDueDate | date: 'YYYY-MM-DD'
                 }}"
                 tooltipPosition="top"
                 severity="secondary"
                 styleClass="mr-2"
               ></p-tag>
-              {{ bill.jsDueDate | date: "MM/dd/yyyy" }}
+              {{ bill.jsDueDate | date: "YYYY-MM-DD" }}
             </td>
 
             <td>
@@ -176,7 +176,7 @@
               <ng-container *ngIf="bill.isPaid() && bill.dateFullySatisfied">
                 <!-- Display date satisfied -->
                 <span class="mr-3">{{
-                  bill.jsDateFullySatisfied | date: "MM/dd/yyyy"
+                  bill.jsDateFullySatisfied | date: "YYYY-MM-DD"
                 }}</span>
 
                 <!-- Show how many days late/early in a p-tag -->
@@ -408,7 +408,7 @@
               | currency
           }}
         </td>
-        <td>{{ detail.jsDate | date: "MM/dd/yyyy" }}</td>
+        <td>{{ detail.jsDate | date: "YYYY-MM-DD" }}</td>
         <td>{{ detail.jsAllocatedTotal | currency }}</td>
         <td>{{ detail.jsAllocatedPrincipal | currency }}</td>
         <td>{{ detail.jsAllocatedInterest | currency }}</td>
@@ -518,15 +518,15 @@
       <div class="grid text-sm gap-2 mt-2">
         <div class="col-12 md:col-4 flex align-items-center">
           <span class="font-semibold text-300 mr-1">Effective Date:</span>
-          <span>{{ deposit.jsEffectiveDate | date: "MM/dd/yyyy" }}</span>
+          <span>{{ deposit.jsEffectiveDate | date: "YYYY-MM-DD" }}</span>
         </div>
         <div class="col-12 md:col-4 flex align-items-center">
           <span class="font-semibold text-300 mr-1">Clearing Date:</span>
-          <span>{{ deposit.jsClearingDate | date: "MM/dd/yyyy" }}</span>
+          <span>{{ deposit.jsClearingDate | date: "YYYY-MM-DD" }}</span>
         </div>
         <div class="col-12 md:col-3 flex align-items-center">
           <span class="font-semibold text-300 mr-1">Excess Applied:</span>
-          <span>{{ deposit.jsExcessAppliedDate | date: "MM/dd/yyyy" }}</span>
+          <span>{{ deposit.jsExcessAppliedDate | date: "YYYY-MM-DD" }}</span>
         </div>
       </div>
 
@@ -597,7 +597,7 @@
             <td>{{ usage.allocatedPrincipal.toNumber() | currency }}</td>
             <td>{{ usage.allocatedInterest.toNumber() | currency }}</td>
             <td>{{ usage.allocatedFees.toNumber() | currency }}</td>
-            <td>{{ usage.date.toString() | date: "MM/dd/yyyy" }}</td>
+            <td>{{ usage.date.toString() | date: "YYYY-MM-DD" }}</td>
           </tr>
         </ng-template>
       </p-table>

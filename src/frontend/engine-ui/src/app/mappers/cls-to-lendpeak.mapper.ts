@@ -10,7 +10,7 @@ import { CalendarType } from 'lendpeak-engine/models/Calendar';
 import { Currency } from 'lendpeak-engine/utils/Currency';
 import { DateUtil } from 'lendpeak-engine/utils/DateUtil';
 import { Decimal } from 'decimal.js';
-
+import dayjs from 'dayjs';
 import { DepositRecords } from 'lendpeak-engine/models/DepositRecords';
 import { DepositRecord } from 'lendpeak-engine/models/DepositRecord';
 import { StaticAllocation } from 'lendpeak-engine/models/Bill/DepositRecord/StaticAllocation';
@@ -59,10 +59,18 @@ export class ClsToLendPeakMapper {
     let isEarlyPayoff = false;
     if (loan.closedDate) {
       const lastSchedDate = activeSchedule[activeSchedule.length - 1]?.dueDate;
+      const lastInstallmentDate = DateUtil.normalizeDate(
+        loan.lastInstallmentDate,
+      );
+      const lastDateToCompare = lastInstallmentDate.isAfter(lastSchedDate)
+        ? lastInstallmentDate
+        : lastSchedDate;
 
       const closedDate = DateUtil.normalizeDate(loan.closedDate);
       isEarlyPayoff =
-        closedDate && lastSchedDate && closedDate.isBefore(lastSchedDate);
+        closedDate &&
+        lastDateToCompare &&
+        closedDate.isBefore(lastDateToCompare);
     }
 
     /* ───────────────────────────────────────────────
@@ -241,7 +249,7 @@ export class ClsToLendPeakMapper {
 
           effectiveDate: t.clearingDate ?? DateUtil.today(),
           clearingDate: t.clearingDate ?? undefined,
-          systemDate: t.receiptDate ?? DateUtil.today(),
+          systemDate: t.receiptDate ?? DateUtil.todayWithTime(),
 
           paymentMethod: r.loan__Payment_Type__c ?? undefined,
           depositor: r.loan__Receipt_ID__c ?? undefined,

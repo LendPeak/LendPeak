@@ -10,7 +10,7 @@ import {
 } from '../../models/cls.model';
 import { DateUtil } from 'lendpeak-engine/utils/DateUtil';
 import { Currency } from 'lendpeak-engine/utils/Currency';
-import { LocalDate } from '@js-joda/core';
+import { LocalDate, LocalDateTime } from '@js-joda/core';
 
 /* ------------------------------------------------------------------ */
 /* 1. tiny helpers                                                    */
@@ -18,6 +18,11 @@ import { LocalDate } from '@js-joda/core';
 function toDate(val: string | number | null): LocalDate {
   if (val === null || val === undefined || val === '') return DateUtil.today();
   return DateUtil.normalizeDate(val);
+}
+
+function toDateTime(val: string | number | null): LocalDateTime {
+  if (val === null || val === undefined || val === '') return DateUtil.todayWithTime();
+  return DateUtil.normalizeDateTime(val);
 }
 
 function toCurr(val: any): Currency {
@@ -55,6 +60,7 @@ export class ClsLoan {
   readonly dueDay: number; // = loan__Due_Day__c
   readonly accrualStartDate: string; // = loan__Accrual_Start_Date__c
   readonly closedDate?: string; // = loan__Closed_Date__c
+  readonly lastInstallmentDate: string; // = loan__Last_Installment_Date__c
 
   constructor(raw: CLSLoan) {
     this.id = raw.Name;
@@ -74,6 +80,7 @@ export class ClsLoan {
     this.applicationDate = raw.loan__Application_Date__c;
     this.maturityDate = raw.loan__Maturity_Date_Current__c;
     this.accrualStartDate = raw.loan__Accrual_Start_Date__c;
+    this.lastInstallmentDate = raw.loan__Last_Installment_Date__c;
 
     if (raw.loan__Closed_Date__c) {
       this.closedDate = raw.loan__Closed_Date__c;
@@ -134,7 +141,8 @@ export class ClsScheduleLine {
 export class ClsPaymentTxn {
   readonly raw: CLSLPT;
   readonly id: string;
-  readonly receiptDate: LocalDate | null;
+  //readonly postedDate: 
+  readonly receiptDate: LocalDateTime | null;
   readonly clearingDate: LocalDate | null;
   readonly transactionDate: LocalDate;
   readonly amount: Currency;
@@ -147,7 +155,7 @@ export class ClsPaymentTxn {
     this.raw = raw;
     this.id = raw.Id;
     this.cleared = !!raw.loan__Cleared__c;
-    this.receiptDate = toDate(raw.loan__Receipt_Date__c);
+    this.receiptDate = toDateTime(raw.loan__Receipt_Date__c);
     this.clearingDate = toDate(raw.loan__Clearing_Date__c);
     this.transactionDate = toDate(raw.loan__Transaction_Date__c);
     this.amount = toCurr(raw.loan__Transaction_Amount__c);

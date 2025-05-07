@@ -59,6 +59,7 @@ export interface CLSLoan {
   loan__Closed_Date__c: string | null;
   loan__Last_Accrual_Date__c: string;
   loan__Accrual_Start_Date__c: string;
+  loan__Last_Installment_Date__c: string;
 
   /* ─────── Balances / roll-ups ────────────────────────────────────── */
   loan__Principal_Remaining__c: number;

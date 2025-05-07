@@ -11,6 +11,7 @@ dayjs.extend(isSameOrBefore);
 dayjs.extend(isBetween);
 
 export type DateUtilNormalizeDateParams = LocalDate | Date | string | number | null | undefined | { day: number; month: number; year: number };
+export type DateUtilNormalizeDateTimeParams = LocalDateTime | Date | string | number | null | undefined | { day: number; month: number; year: number };
 
 export class DateUtil {
   static now(): LocalDate {
@@ -59,6 +60,53 @@ export class DateUtil {
 
       if (typeof date === "object" && date !== null && "day" in date && "month" in date && "year" in date) {
         return LocalDate.of(date.year, date.month + 1, date.day);
+      }
+    } catch (e) {
+      console.error("Error normalizing date, passed date:", date, "error:", e);
+      throw new Error("Invalid date format");
+    }
+
+    console.error("DateUtil received unknown type for date normalization", date);
+    throw new Error("Invalid date format");
+  }
+
+  static normalizeDateTime(date: DateUtilNormalizeDateTimeParams): LocalDateTime {
+    if (date === null || date === undefined || date === "") {
+      console.error("DateUtil received null or undefined date");
+      throw new Error("DateUtil received null or undefined date");
+    }
+
+    try {
+      if (date instanceof LocalDateTime) {
+        return date;
+      }
+
+      if (date instanceof Date) {
+        return LocalDateTime.of(date.getUTCFullYear(), date.getUTCMonth() + 1, date.getUTCDate(), date.getUTCHours(), date.getUTCMinutes(), date.getUTCSeconds());
+      }
+
+      if (typeof date === "number") {
+        const jsDate = new Date(date);
+        return LocalDateTime.of(jsDate.getUTCFullYear(), jsDate.getUTCMonth() + 1, jsDate.getUTCDate(), jsDate.getUTCHours(), jsDate.getUTCMinutes(), jsDate.getUTCSeconds());
+      }
+
+      if (typeof date === "string") {
+        // Try parsing as ISO string with time, fallback to date only
+        try {
+          return LocalDateTime.parse(date);
+        } catch {
+          // fallback to date only, set time to 00:00:00
+          const localDate = LocalDate.parse(date.substring(0, 10));
+          return localDate.atTime(0, 0, 0);
+        }
+      }
+
+      if (typeof date === "object" && date !== null && "day" in date && "month" in date && "year" in date) {
+        // Optionally support hour/minute/second fields
+        const hour = "hour" in date ? date.hour : 0;
+        const minute = "minute" in date ? date.minute : 0;
+        const second = "second" in date ? date.second : 0;
+        return LocalDateTime.of(date.year, date.month + 1, date.day, hour as number, minute as number, second as number);
       }
     } catch (e) {
       console.error("Error normalizing date, passed date:", date, "error:", e);
@@ -136,6 +184,10 @@ export class DateUtil {
       console.error("Error parsing LoanPro date", e);
       throw new Error("Invalid LoanPro date format");
     }
+  }
+
+  static todayWithTime(): LocalDateTime {
+    return LocalDateTime.now(ZoneOffset.UTC);
   }
 
   /**

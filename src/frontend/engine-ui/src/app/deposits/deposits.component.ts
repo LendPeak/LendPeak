@@ -87,6 +87,13 @@ export class DepositsComponent implements OnChanges {
       sortable: true,
     },
     {
+      field: 'jsSystemDate',
+      header: 'System Date',
+      default: false,
+      filter: 'date',
+      sortable: true,
+    },
+    {
       field: 'jsEffectiveDate',
       header: 'Effective Date',
       default: true,
@@ -617,7 +624,6 @@ export class DepositsComponent implements OnChanges {
     this.showDepositDialog = false;
     this.selectedDepositForEdit = null;
   }
-
 
   editingAdhoc?: DepositRecord;
   showAdhocDialog = false;

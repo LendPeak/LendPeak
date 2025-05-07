@@ -126,27 +126,35 @@ export class DepositRecords {
     this.modified = true;
     record.depositRecords = this;
     this._records.push(record);
-    this._records = this._records.sort((a, b) => {
-      return a.effectiveDate.isBefore(b.effectiveDate) ? -1 : 1;
-    });
+    this.reSort();
     this.versionChanged();
   }
 
   removeRecordAtIndex(index: number) {
     this.modified = true;
     this._records.splice(index, 1);
-    this._records = this._records.sort((a, b) => {
-      return a.effectiveDate.isBefore(b.effectiveDate) ? -1 : 1;
-    });
+    this.reSort();
+
     this.versionChanged();
   }
 
+  reSort() {
+    this._records = this._records.sort((a, b) => {
+      if (a.effectiveDate.isBefore(b.effectiveDate)) return -1;
+      if (a.effectiveDate.isAfter(b.effectiveDate)) return 1;
+      // effectiveDate is the same, sort by systemDate
+      if (a.systemDate && b.systemDate) {
+        if (a.systemDate.isBefore(b.systemDate)) return -1;
+        if (a.systemDate.isAfter(b.systemDate)) return 1;
+      }
+      return 0;
+    });
+  }
   removeRecordById(id: string) {
     this.modified = true;
     this._records = this._records.filter((record) => record.id !== id);
-    this._records = this._records.sort((a, b) => {
-      return a.effectiveDate.isBefore(b.effectiveDate) ? -1 : 1;
-    });
+    this.reSort();
+
     this.versionChanged();
   }
 
@@ -156,19 +164,40 @@ export class DepositRecords {
 
   get allSorted(): DepositRecord[] {
     return this._records.sort((a, b) => {
-      return a.effectiveDate.isBefore(b.effectiveDate) ? -1 : 1;
+      if (a.effectiveDate.isBefore(b.effectiveDate)) return -1;
+      if (a.effectiveDate.isAfter(b.effectiveDate)) return 1;
+      // effectiveDate is the same, sort by systemDate
+      if (a.systemDate && b.systemDate) {
+        if (a.systemDate.isBefore(b.systemDate)) return -1;
+        if (a.systemDate.isAfter(b.systemDate)) return 1;
+      }
+      return 0;
     });
   }
 
   get allActiveSorted(): DepositRecord[] {
     return this.active.sort((a, b) => {
-      return a.effectiveDate.isBefore(b.effectiveDate) ? -1 : 1;
+      if (a.effectiveDate.isBefore(b.effectiveDate)) return -1;
+      if (a.effectiveDate.isAfter(b.effectiveDate)) return 1;
+      // effectiveDate is the same, sort by systemDate
+      if (a.systemDate && b.systemDate) {
+        if (a.systemDate.isBefore(b.systemDate)) return -1;
+        if (a.systemDate.isAfter(b.systemDate)) return 1;
+      }
+      return 0;
     });
   }
 
   sortByEffectiveDate() {
     this._records = this._records.sort((a, b) => {
-      return a.effectiveDate.isBefore(b.effectiveDate) ? -1 : 1;
+      if (a.effectiveDate.isBefore(b.effectiveDate)) return -1;
+      if (a.effectiveDate.isAfter(b.effectiveDate)) return 1;
+      // effectiveDate is the same, sort by systemDate
+      if (a.systemDate && b.systemDate) {
+        if (a.systemDate.isBefore(b.systemDate)) return -1;
+        if (a.systemDate.isAfter(b.systemDate)) return 1;
+      }
+      return 0;
     });
   }
 

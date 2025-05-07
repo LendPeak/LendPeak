@@ -273,6 +273,10 @@
                     {{ row.jsEffectiveDate | date: "MM/dd/yyyy" }}
                   </ng-container>
 
+                  <ng-container *ngSwitchCase="'jsSystemDate'">
+                    {{ row.jsSystemDate | date: "MM/dd/yyyy hh:mm:ss" }}
+                  </ng-container>
+
                   <ng-container *ngSwitchCase="'jsClearingDate'">
                     {{ row.jsClearingDate | date: "MM/dd/yyyy" }}
                   </ng-container>

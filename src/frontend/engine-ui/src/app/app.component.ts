@@ -977,6 +977,7 @@ export class AppComponent implements OnChanges {
       this.rawImportJSON.lpts = this.rawImportJSON.lpts.map((lpt: any) => {
         return {
           Name: lpt.Name,
+          loan__Payment_Type__c: lpt.loan__Payment_Type__c,
           loan__Transaction_Date__c: lpt.loan__Transaction_Date__c,
           loan__Clearing_Date__c: lpt.loan__Clearing_Date__c,
           loan__Transaction_Amount__c: lpt.loan__Transaction_Amount__c,

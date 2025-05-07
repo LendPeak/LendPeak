@@ -710,7 +710,7 @@ export class LoanImportComponent implements OnInit, OnDestroy {
           currency: 'USD',
           effectiveDate: DateUtil.parseLoanProDateToLocalDate(payment.date),
           clearingDate: DateUtil.parseLoanProDateToLocalDate(payment.date),
-          systemDate: DateUtil.parseLoanProDateToLocalDate(payment.created),
+          systemDate: DateUtil.parseLoanProDateToLocalDateTime(payment.created),
           id: `(${payment.id}) ${payment.info}`,
           // LPTs had excess applied to principal
           applyExcessToPrincipal: payment.info.includes('LPT') ? true : false,

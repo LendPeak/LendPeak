@@ -247,7 +247,7 @@ export class ClsToLendPeakMapper {
           name = `${name} (${t.paymentType})`;
         }
         return new DepositRecord({
-          id: r.Name || r.Id,
+          id: name,
 
           amount: t.amount,
           currency: 'USD',

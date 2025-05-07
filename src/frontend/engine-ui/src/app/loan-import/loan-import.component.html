@@ -81,17 +81,13 @@
     </div>
   </div>
 
-  
-
   <!-- Progress bar & tracker: only relevant for systemIdRange while loading -->
 
   <div class="field" *ngIf="isLoading && searchType === 'systemIdRange'">
     <p-progressbar [value]="progressValue" [showValue]="true">
       <ng-template #content let-value>
         <span>
-          {{ progressValue }}% ({{ loansLoaded }} /{{
-            totalLoans
-          }}) 
+          {{ progressValue }}% ({{ loansLoaded }} /{{ totalLoans }})
         </span>
       </ng-template>
     </p-progressbar>
@@ -120,6 +116,9 @@
   header="Loan(s) Preview"
   [(visible)]="showPreviewDialog"
   [modal]="true"
+  appendTo="body"
+  resizable="true"
+  maximizable="true"
   [style]="{ width: '80%', minHeight: '50vh' }"
   (onHide)="showPreviewDialog = false"
 >

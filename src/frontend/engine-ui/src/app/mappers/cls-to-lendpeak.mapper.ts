@@ -229,7 +229,7 @@ export class ClsToLendPeakMapper {
         const r = t.raw;
         return t.cleared && !r.loan__Reversed__c && !r.loan__Archived__c;
       })
-      .map((t) => {
+      .map((t: ClsPaymentTxn) => {
         const r = t.raw;
 
         const feeTotal = r.loan__Fees__c ?? 0;
@@ -243,8 +243,8 @@ export class ClsToLendPeakMapper {
 
         let name = r.Name || r.Id;
 
-        if (r.loan__Payment_Type__c) {
-          name = `${name} (${r.loan__Payment_Type__c})`;
+        if (t.paymentType) {
+          name = `${name} (${t.paymentType})`;
         }
         return new DepositRecord({
           id: r.Name || r.Id,

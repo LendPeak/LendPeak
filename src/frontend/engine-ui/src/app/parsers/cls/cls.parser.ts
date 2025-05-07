@@ -21,7 +21,8 @@ function toDate(val: string | number | null): LocalDate {
 }
 
 function toDateTime(val: string | number | null): LocalDateTime {
-  if (val === null || val === undefined || val === '') return DateUtil.todayWithTime();
+  if (val === null || val === undefined || val === '')
+    return DateUtil.todayWithTime();
   return DateUtil.normalizeDateTime(val);
 }
 
@@ -141,7 +142,7 @@ export class ClsScheduleLine {
 export class ClsPaymentTxn {
   readonly raw: CLSLPT;
   readonly id: string;
-  //readonly postedDate: 
+  //readonly postedDate:
   readonly receiptDate: LocalDateTime | null;
   readonly clearingDate: LocalDate | null;
   readonly transactionDate: LocalDate;
@@ -150,6 +151,7 @@ export class ClsPaymentTxn {
   readonly interest: Currency;
   readonly cleared: boolean;
   readonly active: boolean;
+  readonly paymentType: string;
 
   constructor(raw: CLSLPT) {
     this.raw = raw;
@@ -161,6 +163,7 @@ export class ClsPaymentTxn {
     this.amount = toCurr(raw.loan__Transaction_Amount__c);
     this.principal = toCurr(raw.loan__Principal__c);
     this.interest = toCurr(raw.loan__Interest__c);
+    this.paymentType = raw.loan__Payment_Type__c;
     this.active =
       !raw.loan__Reversed__c &&
       !raw.loan__Archived__c &&

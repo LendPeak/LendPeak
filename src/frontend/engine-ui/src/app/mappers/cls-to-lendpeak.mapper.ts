@@ -241,6 +241,11 @@ export class ClsToLendPeakMapper {
         //   prepayment: 0,
         // };
 
+        let name = r.Name || r.Id;
+
+        if (r.loan__Payment_Type__c) {
+          name = `${name} (${r.loan__Payment_Type__c})`;
+        }
         return new DepositRecord({
           id: r.Name || r.Id,
 

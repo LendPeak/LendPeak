@@ -135,7 +135,7 @@ export class AmortizationEntry {
 
   private _calendar!: Calendar;
 
-  private _metadata!: AmortizationScheduleMetadata;
+  private _metadata: AmortizationScheduleMetadata = {};
 
   //
   // =========== PUBLIC "js*" PROPERTIES FOR UI BINDING ===========

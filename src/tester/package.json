@@ -51,6 +51,7 @@
         "dotenv": "^16.5.0",
         "lendpeak-engine": "file:../engine",
         "mongodb": "^6.16.0",
+        "p-limit": "^6.2.0",
         "uuid": "^10.0.0"
     }
 }

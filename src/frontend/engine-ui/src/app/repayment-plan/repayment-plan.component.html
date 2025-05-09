@@ -363,10 +363,10 @@
 
               <!-- Date fields -->
               <ng-container *ngSwitchCase="'periodStartDate'">
-                {{ rowData.periodStartDate.toString() | date: "YYYY-MM-dd" }}
+                {{ rowData.periodStartDate.toString() |  date: "yyyy-MM-dd" }}
               </ng-container>
               <ng-container *ngSwitchCase="'periodEndDate'">
-                {{ rowData.periodEndDate.toString() | date: "YYYY-MM-dd" }}
+                {{ rowData.periodEndDate.toString() |  date: "yyyy-MM-dd" }}
                 <p-badge
                   *ngIf="
                     rowData.billablePeriod &&
@@ -380,11 +380,11 @@
                   pTooltip="Change Payment Date from {{
                     lendPeak.amortization.changePaymentDates.getChangePaymentDate(
                       rowData.term
-                    )?.jsOriginalEndDate | date: 'YYYY-MM-dd'
+                    )?.jsOriginalEndDate |   date: 'yyyy-MM-dd'
                   }} to {{
                     lendPeak.amortization.changePaymentDates.getChangePaymentDate(
                       rowData.term
-                    )?.jsNewDate | date: 'YYYY-MM-dd'
+                    )?.jsNewDate |   date: 'yyyy-MM-dd'
                   }}"
                   tooltipPosition="top"
                   tooltipStyleClass="wide-tooltip"
@@ -396,7 +396,7 @@
                 </span>
                 <span *ngIf="rowData.billablePeriod">
                   {{
-                    rowData.periodBillOpenDate.toString() | date: "YYYY-MM-dd"
+                    rowData.periodBillOpenDate.toString() |  date: "yyyy-MM-dd"
                   }}
                 </span>
               </ng-container>
@@ -406,7 +406,7 @@
                 </span>
                 <span *ngIf="rowData.billablePeriod">
                   {{
-                    rowData.periodBillDueDate.toString() | date: "YYYY-MM-dd"
+                    rowData.periodBillDueDate.toString() |  date: "yyyy-MM-dd"
                   }}
                 </span>
               </ng-container>

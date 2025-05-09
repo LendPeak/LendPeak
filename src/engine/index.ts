@@ -1,5 +1,6 @@
 export * from "./models/LendPeak";
 export * from "./models/Amortization";
+export * from "./models/DepositRecord";
 export * from "./models/DepositRecords";
 export * from "./models/Bills";
 export * from "./models/AmortizationVersionManager";
@@ -7,3 +8,14 @@ export * from "./models/FinancialOpsVersionManager";
 export * from "./models/PaymentApplication";
 export * from "./models/PaymentApplication/AllocationStrategy";
 export * from "./models/PaymentApplication/PaymentApplicationResult";
+export * from "./models/TermCalendars";
+export * from "./models/TermCalendar";
+export * from "./models/Calendar";
+export * from "./models/ChangePaymentDates";
+export * from "./models/ChangePaymentDate";
+export * from "./models/PreBillDaysConfigurations";
+export * from "./models/PreBillDaysConfiguration";
+export * from "./models/Bill/DepositRecord/StaticAllocation";
+
+export * from "./utils/Currency";
+export * from "./utils/DateUtil";

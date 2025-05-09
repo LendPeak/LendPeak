@@ -1,0 +1,56 @@
+{
+    "name": "tester",
+    "version": "1.0.0",
+    "main": "./dist/index.js",
+    "module": "./dist/esm/index.js",
+    "exports": {
+        ".": {
+            "require": "./dist/commonjs/index.js",
+            "import": "./dist/esm/index.js",
+            "types": "./dist/index.d.ts"
+        },
+        "./*": {
+            "require": "./dist/commonjs/*.js",
+            "import": "./dist/esm/*.js",
+            "types": "./dist/*.d.ts"
+        }
+    },
+    "types": "./dist/index.d.ts",
+    "files": [
+        "dist"
+    ],
+    "description": "LendPeak - Open-source lending engine",
+    "scripts": {
+        "test": "jest",
+        "build": "npm run build:esm && npm run build:cjs",
+        "build:esm": "tsc --project tsconfig.esm.json",
+        "build:cjs": "tsc --project tsconfig.commonjs.json",
+        "build:all": "npm run build:esm && npm run build:cjs",
+        "watch:esm": "tsc --project tsconfig.esm.json --watch",
+        "watch:cjs": "tsc --project tsconfig.commonjs.json --watch",
+        "watch:all": "npm-run-all --parallel watch:esm watch:cjs"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "MPL-2.0",
+    "devDependencies": {
+        "@types/jest": "^29.5.12",
+        "@types/node": "^22.4.2",
+        "@types/uuid": "^10.0.0",
+        "jest": "^29.7.0",
+        "npm-run-all": "^4.1.5",
+        "ts-jest": "^29.2.4",
+        "ts-node": "^10.9.2",
+        "typescript": "^5.6.2"
+    },
+    "dependencies": {
+        "@js-joda/core": "^5.6.5",
+        "cls-mapper": "file:../mappers/cls-mapper",
+        "dayjs": "^1.11.13",
+        "decimal.js": "^10.4.3",
+        "dotenv": "^16.5.0",
+        "lendpeak-engine": "file:../engine",
+        "mongodb": "^6.16.0",
+        "uuid": "^10.0.0"
+    }
+}

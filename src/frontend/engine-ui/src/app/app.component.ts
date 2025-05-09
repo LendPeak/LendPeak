@@ -859,7 +859,7 @@ export class AppComponent implements OnChanges {
     let csvData = this.rawImportJSON.lpts
       .map((row: any) => {
         return Object.values(row)
-          .map((value: any) => (typeof value === 'string' ? value : ''))
+          .map((value: any) => value)
           .join(',');
       })
       .join('\n');

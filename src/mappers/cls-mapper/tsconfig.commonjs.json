@@ -1,0 +1,27 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",                          // Modern JavaScript
+    "module": "commonjs",                        // CommonJS for Node.js
+    "moduleResolution": "node",                  // Node-style resolution
+    "outDir": "./dist/commonjs",                 // Output directory for CommonJS build
+    "rootDir": "./src",                             // Root directory of your source files
+    "baseUrl": "./",                             // Base directory for module resolution
+    "allowSyntheticDefaultImports": true,        // Allow default imports from modules with no default export
+    "paths": {
+      "@models/*": ["models/*"],
+      "@services/*": ["services/*"],
+      "@utils/*": ["utils/*"],
+      "@calculators/*": ["calculators/*"],
+      "@core/*": ["core/*"],
+      "*": ["./node_modules/*"]
+    },
+    "declaration": true,
+  "declarationDir": "./dist",
+    "esModuleInterop": true,                     // Support for CommonJS/ES module interop
+    "forceConsistentCasingInFileNames": true,    // Ensure correct casing in file names
+    "skipLibCheck": true,                        // Skip type checking for libraries
+    "strict": true                               // Enable strict type-checking
+  },
+  "include": ["./**/*.ts"],                      // Include all TypeScript files
+  "exclude": ["node_modules", "dist"]            // Exclude node_modules and dist
+}

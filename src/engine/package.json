@@ -4,9 +4,15 @@
   "main": "./dist/index.js",
   "module": "./dist/esm/index.js",
   "exports": {
-    "./models/Amortization": {
-      "require": "./dist/commonjs/models/Amortization.js",
-      "import": "./dist/esm/models/Amortization.js"
+    ".": {
+      "require": "./dist/commonjs/index.js",
+      "import": "./dist/esm/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./*": {
+      "require": "./dist/commonjs/*.js",
+      "import": "./dist/esm/*.js",
+      "types": "./dist/*.d.ts"
     }
   },
   "types": "./dist/index.d.ts",

@@ -252,7 +252,7 @@ export class ClsToLendPeakMapper {
           amount: t.amount,
           currency: 'USD',
 
-          effectiveDate: t.clearingDate ?? DateUtil.today(),
+          effectiveDate: t.transactionDate ?? DateUtil.today(),
           clearingDate: t.clearingDate ?? undefined,
           systemDate: t.receiptDate ?? DateUtil.todayWithTime(),
 

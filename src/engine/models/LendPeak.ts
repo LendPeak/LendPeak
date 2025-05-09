@@ -244,7 +244,7 @@ export class LendPeak {
     this.updateModelValues();
 
     do {
-      console.log("LendPeak.calc()", guard, previousVersion, this.amortization.versionId);
+      //console.log("LendPeak.calc()", guard, previousVersion, this.amortization.versionId);
       // 1️⃣  tidy up anything stale
       this.cleanupBalanceModifications();
 

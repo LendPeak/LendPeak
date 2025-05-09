@@ -265,6 +265,8 @@ export class DepositRecords {
         return {
           id: r.id,
           amount: r.amount.toNumber(),
+          principal: r.allocatedPrincipal.toNumber(),
+          interest: r.allocatedInterest.toNumber(),
           unusedAmount: r.unusedAmount.toNumber(),
           effectiveDate: r.effectiveDate.toString(),
           excessAppliedDate: r.excessAppliedDate ? r.excessAppliedDate.toString() : "",

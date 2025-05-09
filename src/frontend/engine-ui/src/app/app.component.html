@@ -113,7 +113,7 @@
         *ngIf="lendPeak.summary.highlights.status.isPastDue"
         class="ml-2"
         severity="danger"
-        value="Past Due"
+        value="Past Due {{ lendPeak.bills.summary.daysPastDue }} Days"
       ></p-tag>
       <p-badge
         *ngIf="lendPeak.summary.highlights.payments.hasAdhocRefunds"
@@ -154,7 +154,9 @@
         *ngIf="lendPeak.summary.highlights.modifications.hasPayoffDate"
         class="ml-2"
         severity="info"
-        value="Payoff Date Set"
+        value="Payoff Date Set {{
+          lendPeak.amortization.payoffDate?.toString() | date: 'YYYY-MM-dd'
+        }}"
       ></p-tag>
       <p-tag
         *ngIf="lendPeak.summary.highlights.modifications.hasCustomEndDate"

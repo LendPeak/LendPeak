@@ -4,6 +4,7 @@ import { MenuItem } from 'primeng/api';
 import dayjs from 'dayjs';
 import { LocalDate, ChronoUnit } from '@js-joda/core';
 import { DateUtil } from 'lendpeak-engine/utils/DateUtil';
+import { sequence } from '@angular/animations';
 
 @Component({
   selector: 'app-toolbar',
@@ -18,7 +19,12 @@ export class ToolbarComponent {
   @Input() toolbarActions: MenuItem[] = [];
 
   isToday(date: Date): boolean {
-    return DateUtil.normalizeDate(date).isEqual(DateUtil.today());
+    const normalizeDate = DateUtil.normalizeDate(
+      `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`,
+    );
+    const today = DateUtil.today();
+    //  console.log(`isToday: ${date} | ${normalizeDate} === ${today}`);
+    return normalizeDate.isEqual(today);
   }
 
   onSnapshotDateChange(date: Date) {

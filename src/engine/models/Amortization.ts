@@ -2741,7 +2741,7 @@ export class Amortization {
       }
       lastPayment.endBalance = Currency.of(0);
       // const daysInMonthForCalc = termCalendar.daysInMonth(termCalendar.addMonths(this.startDate, this.term));
-      const daysInMonthForCalc = termCalendar.daysInMonth(termCalendar.addMonths(this.startDate, this.term));
+      const daysInMonthForCalc = lastPayment.daysInPeriod;
       lastPayment.perDiem = daysInMonthForCalc > 0 ? lastPayment.accruedInterestForPeriod.divide(daysInMonthForCalc) : Currency.zero;
       lastPayment.metadata.finalAdjustment = true;
     }

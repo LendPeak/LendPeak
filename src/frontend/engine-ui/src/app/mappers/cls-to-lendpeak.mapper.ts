@@ -4,6 +4,7 @@ import { ClsParser, ClsPaymentTxn } from '../parsers/cls/cls.parser';
 import {
   Amortization,
   AmortizationParams,
+  FlushUnbilledInterestDueToRoundingErrorType
 } from 'lendpeak-engine/models/Amortization';
 import { TermCalendars } from 'lendpeak-engine/models/TermCalendars';
 import { CalendarType } from 'lendpeak-engine/models/Calendar';
@@ -142,9 +143,10 @@ export class ClsToLendPeakMapper {
         : undefined,
 
       calendars: new TermCalendars({ primary: CalendarType.THIRTY_360_US }),
-      equitedMonthlyPayment: loan.paymentAmount,
+      // equitedMonthlyPayment: loan.paymentAmount,
 
       billingModel: 'amortized',
+      flushUnbilledInterestRoundingErrorMethod: FlushUnbilledInterestDueToRoundingErrorType.AT_END,
 
       /** ← default Pre-Bill days */
       defaultPreBillDaysConfiguration: defaultPreBill,

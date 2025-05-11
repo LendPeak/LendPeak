@@ -242,11 +242,11 @@ export class LendPeak {
     let previousVersion = ""; // empty → always enters the loop once
     let guard = 0; // safety to avoid infinite loops
     this.updateModelValues();
+    this.cleanupBalanceModifications();
 
     do {
-      //console.log("LendPeak.calc()", guard, previousVersion, this.amortization.versionId);
+      console.log("LendPeak.calc()", guard, previousVersion, this.amortization.versionId);
       // 1️⃣  tidy up anything stale
-      this.cleanupBalanceModifications();
 
       // 2️⃣  build schedule + bills from the current BM set
       this.amortization.calculateAmortizationPlan();
@@ -262,72 +262,94 @@ export class LendPeak {
     this.updateJsValues();
   }
 
-  /**
-   *  Remove or synchronise BalanceModifications that have gone “stale”
-   *  *and* collapse accidental duplicates so that **each deposit produces
-   *  at most one BM**.
-   */
+  /** ------------------------------------------------------------------
+   *  Remove every *system* balance-modification before the first
+   *  amortisation pass, then tidy up any remaining manual BMs and
+   *  rebuild ad-hoc-refund BMs that are still relevant.
+   * -----------------------------------------------------------------*/
   cleanupBalanceModifications() {
-    const filtered = new BalanceModifications();
-    const seen = new Map<string, BalanceModification>(); // depositId → BM
-    let changed = false;
+    /** 0️⃣  Start by stripping out every system BM we can’t trust */
+    const removedSystemBmIds = new Set<string>();
+    const survivorManualBMs = new BalanceModifications();
 
-    /* ── PASS 1 : normal & auto-close balance mods ───────────────────────── */
     for (const bm of this.amortization.balanceModifications.all) {
+      if (bm.isSystemModification) {
+        removedSystemBmIds.add(bm.id!);
+      } else {
+        survivorManualBMs.addBalanceModification(bm);
+      }
+    }
+
+    /* Detach those removed BMs from any deposits that referenced them */
+    if (removedSystemBmIds.size) {
+      for (const dep of this.depositRecords.all) {
+        /* drop usage-detail rows that pointed at a deleted BM */
+        if (dep.usageDetails?.length) {
+          dep.usageDetails = dep.usageDetails.filter((u) => !removedSystemBmIds.has(u.balanceModification?.id as string));
+        }
+
+        /* clear the memoised id on ad-hoc refund metadata */
+        const meta: any = dep.metadata ?? {};
+        if (meta.balanceModificationId && removedSystemBmIds.has(meta.balanceModificationId)) {
+          delete meta.balanceModificationId;
+        }
+      }
+    }
+
+    /** 1️⃣  De-dup & prune the remaining *manual* BMs */
+    const seen = new Map<string, BalanceModification>(); // depositId → BM
+    let changed = removedSystemBmIds.size > 0;
+
+    for (const bm of [...survivorManualBMs.all]) {
+      // iterate on copy
       const depId = bm.metadata?.depositId;
 
-      /* 1-a  Unlinked manual BM – keep as-is */
-      if (!depId) {
-        filtered.addBalanceModification(bm);
-        continue;
-      }
+      /* un-linked manual BM → keep */
+      if (!depId) continue;
 
       const dep = this.depositRecords.getById(depId);
 
-      /* deposit was deleted / inactive / in the future → drop BM */
+      /* deposit deleted / inactive / future → drop */
       if (!dep || !dep.active || dep.effectiveDate.isAfter(this.currentDate)) {
+        survivorManualBMs.removeBalanceModification(bm);
         changed = true;
-        this.balanceModificationChanged = true;
         continue;
       }
 
-      /* 1-b  De-duplicate normal BMs (keep the *latest* one) */
+      /* de-duplicate (keep the *latest*) */
       const already = seen.get(depId);
       if (already) {
-        // later BM wins → replace
-        filtered.removeBalanceModification(already);
+        survivorManualBMs.removeBalanceModification(already);
         changed = true;
-        this.balanceModificationChanged = true;
       }
       seen.set(depId, bm);
-      filtered.addBalanceModification(bm);
     }
 
-    /* ── PASS 2 : balance-impacting ad-hoc refunds ───────────────────────── */
+    /** 2️⃣  Re-create (or update) balance-impacting *ad-hoc refunds* */
     for (const dep of this.depositRecords.adhocRefunds) {
       const meta = dep.metadata as AdhocRefundMeta;
+
       if (!meta.balanceImpacting || !dep.active) {
         if (meta.balanceModificationId) {
-          this.amortization.balanceModifications.removeBalanceModificationByDepositId(dep.id);
+          survivorManualBMs.removeBalanceModificationByDepositId(dep.id);
           delete meta.balanceModificationId;
           changed = true;
-          this.balanceModificationChanged = true;
         }
         continue;
       }
 
-      const wantAmount = dep.amount.abs();
+      const wantAmt = dep.amount.abs();
       const wantDate = dep.effectiveDate;
-      let bm = meta.balanceModificationId ? this.amortization.balanceModifications.getById(meta.balanceModificationId) : undefined;
+      let bm = meta.balanceModificationId ? survivorManualBMs.getById(meta.balanceModificationId) : undefined;
 
-      const needsNew = !bm || !bm.amount.equals(wantAmount) || !bm.date.isEqual(wantDate);
+      const needsNew = !bm || !bm.amount.equals(wantAmt) || !bm.date.isEqual(wantDate);
 
       if (needsNew) {
-        if (bm) this.amortization.balanceModifications.removeBalanceModification(bm);
+        if (bm) survivorManualBMs.removeBalanceModification(bm);
 
         bm = new BalanceModification({
           id: `ADHOC_REFUND_BM_${dep.id}`,
-          amount: wantAmount,
+          amount: wantAmt,
           date: wantDate,
           type: "increase",
           description: `Ad-hoc refund ${dep.id}`,
@@ -335,21 +357,18 @@ export class LendPeak {
           metadata: { depositId: dep.id },
         });
 
-        this.amortization.balanceModifications.addBalanceModification(bm);
+        survivorManualBMs.addBalanceModification(bm);
         meta.balanceModificationId = bm.id;
         changed = true;
-        this.balanceModificationChanged = true;
       }
-
-      if (bm) filtered.addBalanceModification(bm);
     }
 
-    /* ── Swap only if something actually changed ─────────────────────────── */
+    /** 3️⃣  Swap in the cleaned-up set only if something changed */
     if (changed) {
-      this.amortization.balanceModifications = filtered;
+      this.amortization.balanceModifications = survivorManualBMs;
+      this.balanceModificationChanged = true;
     }
   }
-
   /* ────────────────────────────────────────────────────────────────────────────
    *  Helper: one “normal” payment run (no auto-close decisions)
    * ────────────────────────────────────────────────────────────────────────── */

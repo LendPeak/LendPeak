@@ -121,6 +121,7 @@ export class ClsToLendPeakMapper {
 
       billingModel: "amortized",
 
+      //interestAccruesFromDayZero: true,
       /** ← default Pre-Bill days */
       defaultPreBillDaysConfiguration: defaultPreBill,
     };

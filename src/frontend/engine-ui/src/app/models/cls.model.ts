@@ -69,7 +69,14 @@ export interface CLSLoan {
   loan__Payment_Amount__c: number; // current P&I (may differ from scheduled)
 
   /* ─────── Status & flags ─────────────────────────────────────────── */
-  loan__Loan_Status__c: string;
+  loan__Loan_Status__c:
+    | 'Closed - Obligations met'
+    | 'Closed- Written Off'
+    | 'Active - Bad Standing'
+    | 'Active - Good Standing'
+    | 'Canceled'
+    | 'Closed - Obligations met';
+
   isMigrated__c: boolean | number;
   Reschedule_Count__c: number;
   Payoff_Loan_ID__c: string | null;

@@ -53,8 +53,13 @@ export class ClsLoan {
   readonly termPlanned: number; // = loan__Number_of_Installments__c
   readonly prebillDays: number; // = loan__Pre_Bill_Days__c
 
-  readonly status: string;
-
+  readonly status:
+    | 'Closed - Obligations met'
+    | 'Closed- Written Off'
+    | 'Active - Bad Standing'
+    | 'Active - Good Standing'
+    | 'Canceled'
+    | 'Closed - Obligations met';
   readonly disbursalDate: string; // ISO
   readonly applicationDate: string; // ISO  (NEW)
   readonly maturityDate: string;

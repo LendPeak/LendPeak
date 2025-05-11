@@ -26,8 +26,7 @@ export class RefundRecord {
   jsEffectiveDate?: Date;
 
   private _metadata?: RefundMetadata;
-  active: boolean = true;
-
+  private _active = true;
   /** audit / versioning */
   private _versionId: string = uuidv4();
   private _dateChanged: LocalDate = LocalDate.now();
@@ -39,7 +38,9 @@ export class RefundRecord {
   /* ------------------------------------------------------------------ */
   constructor(params: { id?: string; amount: Currency | number; currency: string; createdDate?: LocalDate | Date; effectiveDate: LocalDate | Date; metadata?: RefundMetadata; active?: boolean }) {
     this.id = params.id ?? RefundRecord.generateUniqueId();
-    if (params.active !== undefined) this.active = params.active;
+    if (params.active !== undefined) {
+      this.active = params.active;
+    }
 
     this.amount = Currency.of(params.amount);
     this.currency = params.currency;
@@ -75,6 +76,25 @@ export class RefundRecord {
   /* ------------------------------------------------------------------ */
   /*  Core properties                                                    */
   /* ------------------------------------------------------------------ */
+
+  /** True → refund reduces deposit.balance;  
+   *  False → cash is “given back”, so deposit.balance increases. */
+  get active(): boolean {
+    return this._active;
+  }
+  set active(value: boolean) {
+    if (value === this._active) return;          // no change
+
+    /* when we already belong to a deposit, move the cash in/out */
+    if (this.depositRecord) {
+      const delta = value ? this.amount.negated() : this.amount; // on ⇢ –amount, off ⇢ +amount
+      this.depositRecord.amount = this.depositRecord.amount.add(delta);
+    }
+
+    this._active = value;
+    this.versionChanged();                       // bump version + bubble up
+  }
+
   get amount(): Currency {
     return this._amount;
   }

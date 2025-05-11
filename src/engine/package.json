@@ -6,13 +6,11 @@
   "exports": {
     ".": {
       "require": "./dist/commonjs/index.js",
-      "import": "./dist/esm/index.js",
-      "types": "./dist/index.d.ts"
+      "import": "./dist/esm/index.js"
     },
     "./*": {
       "require": "./dist/commonjs/*.js",
-      "import": "./dist/esm/*.js",
-      "types": "./dist/*.d.ts"
+      "import": "./dist/esm/*.js"
     }
   },
   "types": "./dist/index.d.ts",

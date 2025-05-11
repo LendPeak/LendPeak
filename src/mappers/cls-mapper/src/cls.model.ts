@@ -69,7 +69,7 @@ export interface CLSLoan {
   loan__Payment_Amount__c: number; // current P&I (may differ from scheduled)
 
   /* ─────── Status & flags ─────────────────────────────────────────── */
-  loan__Loan_Status__c: string;
+  loan__Loan_Status__c: "Closed - Obligations met" | "Closed- Written Off" | "Active - Bad Standing" | "Active - Good Standing" | "Canceled" | "Closed - Obligations met";
   isMigrated__c: boolean | number;
   Reschedule_Count__c: number;
   Payoff_Loan_ID__c: string | null;
@@ -159,7 +159,7 @@ export interface CLSLPT {
   loan__Payoff_Balance__c: number;
   loan__Installment_Date__c: string;
   loan__Installment_Payment__c: number;
-  loan__Payment_Type__c: string;
+  loan__Payment_Type__c: "Closure-Tolerance" | "Regular";
   loan__Transaction_Creation_Date__c: string;
   Principal_without_Reversal__c: number;
   Sum_Principal_Payment_Amount__c: number;

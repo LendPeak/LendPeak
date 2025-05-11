@@ -44,7 +44,7 @@ export class ClsLoan {
   readonly termPlanned: number; // = loan__Number_of_Installments__c
   readonly prebillDays: number; // = loan__Pre_Bill_Days__c
 
-  readonly status: string;
+  readonly status: "Closed - Obligations met" | "Closed- Written Off" | "Active - Bad Standing" | "Active - Good Standing" | "Canceled" | "Closed - Obligations met";
 
   readonly disbursalDate: string; // ISO
   readonly applicationDate: string; // ISO  (NEW)
@@ -141,8 +141,8 @@ export class ClsPaymentTxn {
   readonly interest: Currency;
   readonly cleared: boolean;
   readonly active: boolean;
-  readonly paymentType: string;
-
+  readonly paymentType: "Closure-Tolerance" | "Regular";
+  
   constructor(raw: CLSLPT) {
     this.raw = raw;
     this.id = raw.Id;

@@ -270,7 +270,7 @@
                   }}</ng-container>
 
                   <ng-container *ngSwitchCase="'jsEffectiveDate'">
-                    {{ row.jsEffectiveDate |  date: "yyyy-MM-dd" }}
+                    {{ row.jsEffectiveDate | date: "yyyy-MM-dd" }}
                   </ng-container>
 
                   <ng-container *ngSwitchCase="'jsSystemDate'">
@@ -278,7 +278,7 @@
                   </ng-container>
 
                   <ng-container *ngSwitchCase="'jsClearingDate'">
-                    {{ row.jsClearingDate |  date: "yyyy-MM-dd" }}
+                    {{ row.jsClearingDate | date: "yyyy-MM-dd" }}
                   </ng-container>
 
                   <ng-container *ngSwitchCase="'allocatedTotal'">
@@ -438,6 +438,49 @@
                   </ng-template>
                 </div>
               </td>
+            </tr>
+          </ng-template>
+
+          <ng-template #footer let-columns>
+            <tr>
+              <!-- selection-checkbox column → leave empty -->
+              <td class="bg-blue-50"></td>
+
+              <!-- iterate through the same dynamic columns so everything lines up -->
+              <ng-container *ngFor="let c of columns; let i = index">
+                <td class="bg-blue-50 font-bold" [ngSwitch]="c.field">
+                  <!-- put the label in the first non-checkbox cell -->
+                  <ng-container *ngSwitchDefault>
+                    <span *ngIf="i === 0">Totals:</span>
+                  </ng-container>
+
+                  <!-- dollar-value columns -->
+                  <ng-container *ngSwitchCase="'amount'">
+                    {{ totalAmount | currency }}
+                  </ng-container>
+                  <ng-container *ngSwitchCase="'jsUnusedAmount'">
+                    {{ totalUnusedAmount | currency }}
+                  </ng-container>
+                  <ng-container *ngSwitchCase="'jsActiveRefundAmount'">
+                    {{ totalRefunded | currency }}
+                  </ng-container>
+                  <ng-container *ngSwitchCase="'allocatedTotal'">
+                    {{ totalAllocatedTotal | currency }}
+                  </ng-container>
+                  <ng-container *ngSwitchCase="'allocatedPrincipal'">
+                    {{ totalAllocatedPrincipal | currency }}
+                  </ng-container>
+                  <ng-container *ngSwitchCase="'allocatedInterest'">
+                    {{ totalAllocatedInterest | currency }}
+                  </ng-container>
+                  <ng-container *ngSwitchCase="'allocatedFees'">
+                    {{ totalAllocatedFees | currency }}
+                  </ng-container>
+                </td>
+              </ng-container>
+
+              <!-- actions column → leave empty -->
+              <td class="bg-blue-50"></td>
             </tr>
           </ng-template>
         </p-table>
@@ -897,7 +940,7 @@
     <ng-template pTemplate="body" let-detail>
       <tr>
         <td>{{ detail.period }}</td>
-        <td>{{ detail.billDueDate.toString() |  date: "yyyy-MM-dd" }}</td>
+        <td>{{ detail.billDueDate.toString() | date: "yyyy-MM-dd" }}</td>
         <td>
           <!-- Bill ID + button to open Bill Card -->
           <p-button
@@ -988,7 +1031,7 @@
         <td>{{ detail.allocatedPrincipal.toNumber() | currency }}</td>
         <td>{{ detail.allocatedInterest.toNumber() | currency }}</td>
         <td>{{ detail.allocatedFees.toNumber() | currency }}</td>
-        <td>{{ detail.date.toString() |  date: "yyyy-MM-dd" }}</td>
+        <td>{{ detail.date.toString() | date: "yyyy-MM-dd" }}</td>
       </tr>
     </ng-template>
 
@@ -1219,7 +1262,7 @@
 
         <div class="col-12 md:col-5 flex align-items-center">
           <span class="font-semibold text-300 mr-1">Due Date:</span>
-          <span>{{ bill.jsDueDate |  date: "yyyy-MM-dd" }}</span>
+          <span>{{ bill.jsDueDate | date: "yyyy-MM-dd" }}</span>
         </div>
       </div>
 
@@ -1255,7 +1298,7 @@
         <div class="col-12 md:col-6 flex align-items-center">
           <span class="font-semibold text-300 mr-1">Satisfied On:</span>
           <span>{{
-            bill.dateFullySatisfied.toString() |  date: "yyyy-MM-dd"
+            bill.dateFullySatisfied.toString() | date: "yyyy-MM-dd"
           }}</span>
         </div>
       </div>
@@ -1286,7 +1329,7 @@
             <td>{{ payment.jsAllocatedPrincipal | currency }}</td>
             <td>{{ payment.jsAllocatedInterest | currency }}</td>
             <td>{{ payment.jsAllocatedFees | currency }}</td>
-            <td>{{ payment.jsDate |  date: "yyyy-MM-dd" }}</td>
+            <td>{{ payment.jsDate | date: "yyyy-MM-dd" }}</td>
           </tr>
         </ng-template>
 

@@ -886,4 +886,54 @@ export class DepositsComponent implements OnChanges {
       balanceImpacting: true,
     };
   }
+
+  private get activeDeposits(): DepositRecord[] {
+    return (
+      this.lendPeak?.depositRecords?._records.filter((d) => d.active) ?? []
+    );
+  }
+
+  /* ── totals for ACTIVE deposits only ───────────────────── */
+  get totalAmount(): number {
+    return this.activeDeposits.reduce((sum, d) => sum + d.jsAmount, 0);
+  }
+
+  get totalUnusedAmount(): number {
+    return this.activeDeposits.reduce((sum, d) => sum + d.jsUnusedAmount, 0);
+  }
+
+  get totalRefunded(): number {
+    return this.activeDeposits.reduce(
+      (sum, d) => sum + d.jsActiveRefundAmount,
+      0,
+    );
+  }
+
+  get totalAllocatedTotal(): number {
+    return this.activeDeposits.reduce(
+      (sum, d) => sum + d.allocatedTotal.toNumber(),
+      0,
+    );
+  }
+
+  get totalAllocatedPrincipal(): number {
+    return this.activeDeposits.reduce(
+      (sum, d) => sum + d.allocatedPrincipal.toNumber(),
+      0,
+    );
+  }
+
+  get totalAllocatedInterest(): number {
+    return this.activeDeposits.reduce(
+      (sum, d) => sum + d.allocatedInterest.toNumber(),
+      0,
+    );
+  }
+
+  get totalAllocatedFees(): number {
+    return this.activeDeposits.reduce(
+      (sum, d) => sum + d.allocatedFees.toNumber(),
+      0,
+    );
+  }
 }

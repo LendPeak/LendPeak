@@ -4,7 +4,7 @@ import { ClsParser, ClsPaymentTxn } from '../parsers/cls/cls.parser';
 import {
   Amortization,
   AmortizationParams,
-  FlushUnbilledInterestDueToRoundingErrorType
+  FlushUnbilledInterestDueToRoundingErrorType,
 } from 'lendpeak-engine/models/Amortization';
 import { TermCalendars } from 'lendpeak-engine/models/TermCalendars';
 import { CalendarType } from 'lendpeak-engine/models/Calendar';
@@ -146,7 +146,8 @@ export class ClsToLendPeakMapper {
       // equitedMonthlyPayment: loan.paymentAmount,
 
       billingModel: 'amortized',
-      flushUnbilledInterestRoundingErrorMethod: FlushUnbilledInterestDueToRoundingErrorType.AT_END,
+      flushUnbilledInterestRoundingErrorMethod:
+        FlushUnbilledInterestDueToRoundingErrorType.AT_END,
 
       /** ← default Pre-Bill days */
       defaultPreBillDaysConfiguration: defaultPreBill,
@@ -211,7 +212,7 @@ export class ClsToLendPeakMapper {
     /* ───────────────────────────────────────────────
      * 6.   Map CLS LPTs → LendPeak DepositRecord(s)
      * ───────────────────────────────────────────── */
-    const deposits = ClsToLendPeakMapper.mapPayments(payments);
+    const deposits = ClsToLendPeakMapper.mapPayments(payments, accrualStart);
 
     return { loan: amort, deposits, rawImportData: parser.rawImportData };
   }
@@ -225,38 +226,39 @@ export class ClsToLendPeakMapper {
    * – keeps only cleared, non-archived, non-reversed txns
    * – builds a static allocation (principal / interest / fees)
    */
-  private static mapPayments(txns: ClsPaymentTxn[]): DepositRecords {
+  private static mapPayments(
+    txns: ClsPaymentTxn[],
+    accrualStart: LocalDate,
+  ): DepositRecords {
+    const adjust = (d?: LocalDate): LocalDate =>
+      !d || d.isBefore(accrualStart) ? accrualStart : d;
+
     const depositList: DepositRecord[] = txns
       .filter((t) => {
         const r = t.raw;
         return t.cleared && !r.loan__Reversed__c && !r.loan__Archived__c;
       })
-      .map((t: ClsPaymentTxn) => {
+      .map((t) => {
         const r = t.raw;
 
-        const feeTotal = r.loan__Fees__c ?? 0;
+        /* ▸ normalise the core dates ------------------------------------ */
+        const txnDate = adjust(t.transactionDate);
+        const clearingDate = t.clearingDate
+          ? adjust(t.clearingDate)
+          : undefined;
+        const systemDate = t.receiptDate
+          ? t.receiptDate
+          : DateUtil.todayWithTime();
 
-        // const staticAlloc: StaticAllocation = {
-        //   principal: t.principal.toNumber(),
-        //   interest: t.interest.toNumber(),
-        //   fees: feeTotal,
-        //   prepayment: 0,
-        // };
-
-        let name = r.Name || r.Id;
-
-        if (t.paymentType) {
-          name = `${name} (${t.paymentType})`;
-        }
+        /* ▸ build DepositRecord ----------------------------------------- */
         return new DepositRecord({
-          id: name,
-
+          id: r.Name || r.Id,
           amount: t.amount,
           currency: 'USD',
 
-          effectiveDate: t.transactionDate ?? DateUtil.today(),
-          clearingDate: t.clearingDate ?? undefined,
-          systemDate: t.receiptDate ?? DateUtil.todayWithTime(),
+          effectiveDate: txnDate,
+          clearingDate,
+          systemDate,
 
           paymentMethod: r.loan__Payment_Type__c ?? undefined,
           depositor: r.loan__Receipt_ID__c ?? undefined,
@@ -264,7 +266,6 @@ export class ClsToLendPeakMapper {
           active: true,
           applyExcessToPrincipal: true,
           applyExcessAtTheEndOfThePeriod: true,
-          // staticAllocation: staticAlloc,
         });
       });
 

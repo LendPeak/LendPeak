@@ -604,6 +604,7 @@ export class LoanImportComponent implements OnInit, OnDestroy {
         flushUnbilledInterestRoundingErrorMethod,
       flushThreshold: 0.01,
       ratesSchedule: new RateSchedules(),
+      interestAccruesFromDayZero: true,
       termPaymentAmountOverride: new TermPaymentAmounts(
         loanData.d.Transactions.filter(
           (tr) =>

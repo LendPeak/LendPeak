@@ -250,9 +250,14 @@ export class ClsToLendPeakMapper {
           ? t.receiptDate
           : DateUtil.todayWithTime();
 
+        let name = r.Name || r.Id;
+        if (t.paymentType) {
+          name = `${name} (${t.paymentType})`;
+        }
         /* ▸ build DepositRecord ----------------------------------------- */
         return new DepositRecord({
-          id: r.Name || r.Id,
+          id: name,
+
           amount: t.amount,
           currency: 'USD',
 

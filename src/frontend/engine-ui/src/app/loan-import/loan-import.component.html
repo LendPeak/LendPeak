@@ -7,12 +7,13 @@
       optionLabel="name"
       optionValue="id"
       [(ngModel)]="selectedConnectorId"
+      (ngModelChange)="onConnectorChange()"
       placeholder="Select a Connector"
       class="w-full"
     ></p-select>
   </div>
 
-  <div class="field">
+  <div class="field" *ngIf="!isMongoSelected">
     <label for="searchType">Search By</label>
     <p-select
       inputId="searchType"
@@ -143,7 +144,7 @@
         </div>
         <div class="col-6 mt-2">
           <strong>Start Date:</strong>
-          {{ previewLoans[0].d.LoanSetup.contractDate |  date: "yyyy-MM-dd" }}
+          {{ previewLoans[0].d.LoanSetup.contractDate | date: "yyyy-MM-dd" }}
         </div>
         <div class="col-6 mt-2">
           <strong>Rate:</strong> {{ previewLoans[0].d.LoanSetup.loanRate }}%
@@ -165,7 +166,7 @@
         </ng-template>
         <ng-template pTemplate="body" let-payment>
           <tr>
-            <td>{{ payment.date |  date: "yyyy-MM-dd" }}</td>
+            <td>{{ payment.date | date: "yyyy-MM-dd" }}</td>
             <td>{{ payment.amount }}</td>
             <td>{{ payment.info }}</td>
           </tr>
@@ -191,7 +192,7 @@
             <td>{{ l.d.id }}</td>
             <td>{{ l.d.displayId }}</td>
             <td>{{ l.d.LoanSetup.tilLoanAmount }}</td>
-            <td>{{ l.d.LoanSetup.contractDate |  date: "yyyy-MM-dd" }}</td>
+            <td>{{ l.d.LoanSetup.contractDate | date: "yyyy-MM-dd" }}</td>
             <td>{{ l.d.LoanSetup.loanRate }}%</td>
           </tr>
         </ng-template>

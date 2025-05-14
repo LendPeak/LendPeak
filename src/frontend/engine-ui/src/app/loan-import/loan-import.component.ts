@@ -699,6 +699,25 @@ export class LoanImportComponent implements OnInit, OnDestroy {
     };
   }
 
+  /** true when the currently-selected connector is MongoDB */
+  get isMongoSelected(): boolean {
+    return (
+      this.connectors.find((c) => c.id === this.selectedConnectorId)?.type ===
+      'Mongo'
+    );
+  }
+
+  /** adjust searchType whenever the connector changes */
+  onConnectorChange(): void {
+    const connector = this.getSelectedConnector();
+    if (connector?.type === 'Mongo') {
+      // force System-ID search & clear any range inputs
+      this.searchType = 'systemId';
+      this.fromSystemId = '';
+      this.toSystemId = '';
+    }
+  }
+
   private mapDeposits(loanData: LoanResponse): DepositRecords {
     return new DepositRecords(
       loanData.d.Payments.filter(

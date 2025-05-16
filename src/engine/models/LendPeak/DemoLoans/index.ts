@@ -2,3 +2,5 @@ export * from "./demo-c1";
 export * from "./demo-c2";
 export * from "./demo-c3";
 export * from "./demo-c4";
+export * from "./demo-c5";
+export * from "./demo-c6";

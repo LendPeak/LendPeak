@@ -1,11 +1,11 @@
 import { Decimal } from "decimal.js";
-import { TermInterestRateOverride } from "./TermInterestRateOverride";
+import { TermInterestRateOverride, TermInterestRateOverrideParams } from "./TermInterestRateOverride";
 
 export class TermInterestRateOverrides {
   private _overrides: TermInterestRateOverride[] = [];
 
-  constructor(overrides: TermInterestRateOverride[] = []) {
-    this.overrides = overrides;
+  constructor(overrides: (TermInterestRateOverride | TermInterestRateOverrideParams)[] = []) {
+    this.overrides = overrides as TermInterestRateOverride[];
     this.updateJsValues();
   }
 
@@ -18,7 +18,7 @@ export class TermInterestRateOverrides {
   }
 
   get overrides(): TermInterestRateOverride[] {
-    return this._overrides;
+    return this._overrides || [];
   }
 
   set overrides(value: TermInterestRateOverride[]) {
@@ -35,6 +35,18 @@ export class TermInterestRateOverrides {
 
   get all(): TermInterestRateOverride[] {
     return this._overrides;
+  }
+  get active(): TermInterestRateOverride[] {
+    return this._overrides.filter((o) => o.active);
+  }
+
+  /* ── bulk toggles (UI header switch uses these) ─────────────── */
+
+  deactivateAll() {
+    this._overrides.forEach((o) => (o.active = false));
+  }
+  activateAll() {
+    this._overrides.forEach((o) => (o.active = true));
   }
 
   addOverride(override: TermInterestRateOverride) {
@@ -76,7 +88,7 @@ export class TermInterestRateOverrides {
   }
 
   isDuplicateTermNumber(termNumber: number): boolean {
-    return this._overrides.some((override) => override.termNumber === termNumber);
+    return this._overrides.filter((override) => override.termNumber === termNumber).length > 1;
   }
 
   reSort() {

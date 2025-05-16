@@ -453,6 +453,7 @@ export class Amortization {
     this.termPaymentAmountOverride.updateJsValues();
     this.changePaymentDates.updateJsValues();
     this.termInterestAmountOverride.updateJsValues();
+    this.termInterestRateOverride.updateJsValues();
     this.balanceModifications.updateJsValues();
     this.periodsSchedule.updateJsValues();
     this.preBillDays.updateJsValues();
@@ -535,6 +536,7 @@ export class Amortization {
     this.termPaymentAmountOverride.updateModelValues();
     this.changePaymentDates.updateModelValues();
     this.termInterestAmountOverride.updateModelValues();
+    this.termInterestRateOverride.updateModelValues();
     this.balanceModifications.updateModelValues();
     this.periodsSchedule.updateModelValues();
     this.rateSchedules.updateModelValues();
@@ -904,6 +906,11 @@ export class Amortization {
   set termInterestRateOverride(value: TermInterestRateOverrides) {
     this.modifiedSinceLastCalculation = true;
 
+    // Make sure 'value' is a TermInterestAmountOverrides instance
+    if (!(value instanceof TermInterestRateOverrides)) {
+      value = new TermInterestRateOverrides(value);
+    }
+
     this._termInterestRateOverride = new TermInterestRateOverrides();
 
     for (const override of value.all) {
@@ -1073,13 +1080,11 @@ export class Amortization {
   set balanceModifications(balanceModifications: BalanceModifications) {
     this.modifiedSinceLastCalculation = true;
 
-
     if (!(balanceModifications instanceof BalanceModifications)) {
       balanceModifications = new BalanceModifications(balanceModifications);
     }
-    
 
-     this._balanceModifications = balanceModifications;
+    this._balanceModifications = balanceModifications;
   }
 
   get repaymentSchedule(): AmortizationEntries {
@@ -2454,7 +2459,7 @@ export class Amortization {
         }
         currentBalanceIndex++;
 
-        const termInterestRateOverride = this.termInterestRateOverride.all.find((override) => override.termNumber === termIndex)?.interestRate;
+        const termInterestRateOverride = this.termInterestRateOverride.active.find((override) => override.termNumber === termIndex)?.interestRate;
 
         let periodRates: RateSchedule[];
         if (termInterestRateOverride) {
@@ -2859,6 +2864,7 @@ export class Amortization {
       allowRateAbove100: this.allowRateAbove100,
       termPaymentAmountOverride: this.termPaymentAmountOverride.json,
       termInterestAmountOverride: this.termInterestAmountOverride.json,
+      termInterestRateOverride: this.termInterestRateOverride.json,
       termPeriodDefinition: this.termPeriodDefinition,
       changePaymentDates: this.changePaymentDates.json,
       balanceModifications: this.balanceModifications.json,
@@ -2908,6 +2914,7 @@ export class Amortization {
       allowRateAbove100: this.allowRateAbove100,
       termPaymentAmountOverride: this.termPaymentAmountOverride.json,
       termInterestAmountOverride: this.termInterestAmountOverride.json,
+      termInterestRateOverride: this.termInterestRateOverride.json,
       termPeriodDefinition: this.termPeriodDefinition,
       changePaymentDates: this.changePaymentDates.json,
       balanceModifications: this.balanceModifications.json,

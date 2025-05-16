@@ -1386,4 +1386,47 @@ export class OverridesComponent implements OnInit {
     this.loanUpdated.emit();
     // this.refreshOpenTabs();
   }
+
+  /* deep snapshots keyed by term # */
+  private tiroSnapshots: Record<number, any> = {};
+
+  /* master-toggle helper */
+  get tiroMasterActive(): boolean {
+    if (!this.lendPeak) return true;
+    return this.lendPeak.amortization.termInterestRateOverride.all.every(
+      (o) => o.active,
+    );
+  }
+  set tiroMasterActive(val: boolean) {
+    this.toggleAllTiro(val);
+  }
+
+  /* header switch uses this */
+  toggleAllTiro(enable: boolean) {
+    if (!this.lendPeak) return;
+    const tio = this.lendPeak.amortization.termInterestRateOverride;
+    enable ? tio.activateAll() : tio.deactivateAll();
+    this.isModified = true;
+    this.emitLoanChange();
+  }
+
+  /* row edit lifecycle */
+  onTiroEditInit(row: TermInterestRateOverride) {
+    this.tiroSnapshots[row.jsTermNumber] = row.json;
+  }
+
+  onTiroEditSave(row: TermInterestRateOverride) {
+    delete this.tiroSnapshots[row.jsTermNumber];
+    this.lendPeak!.amortization.termInterestRateOverride.reSort();
+    this.isModified = true;
+    // this.emitLoanChange();
+    this.onInputChange(true);
+  }
+
+  onTiroEditCancel(row: TermInterestRateOverride, ri: number) {
+    const saved = this.tiroSnapshots[row.jsTermNumber];
+    if (!saved) return;
+    Object.assign(row, new TermInterestRateOverride(saved));
+    delete this.tiroSnapshots[row.jsTermNumber];
+  }
 }

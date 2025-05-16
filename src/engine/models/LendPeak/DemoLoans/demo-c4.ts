@@ -95,13 +95,7 @@ export class DemoC4 {
           currency: "USD",
         }),
         new DepositRecord({
-          amount: 1_791.51,
-          effectiveDate: today.minus(1, ChronoUnit.MONTHS),
-          id: "DEPOSIT-C04-12",
-          currency: "USD",
-        }),
-        new DepositRecord({
-          amount: 2_000,
+          amount: 1_800.0,
           effectiveDate: today.minus(1, ChronoUnit.MONTHS),
           id: "DEPOSIT-C04-12",
           currency: "USD",

@@ -43,11 +43,15 @@ import { PeriodSchedule } from 'lendpeak-engine/models/PeriodSchedule';
 import { TermCalendars } from 'lendpeak-engine/models/TermCalendars';
 import { TermCalendar } from 'lendpeak-engine/models/TermCalendar';
 import { Calendar, CalendarType } from 'lendpeak-engine/models/Calendar';
+import { LendPeak } from 'lendpeak-engine/models/LendPeak';
 import { DateUtil } from 'lendpeak-engine/utils/DateUtil';
 import { LocalDate, ZoneId } from '@js-joda/core';
 import { RoundingMethod } from 'lendpeak-engine/utils/Currency';
 import { ClsParser } from '../parsers/cls/cls.parser';
 import { ClsToLendPeakMapper } from '../mappers/cls-to-lendpeak.mapper';
+import { DEMO_LOANS, DemoLoanDescriptor } from './demo-loan.catalogue';
+import { TreeNode } from 'primeng/api';
+import { DemoLoanFactory } from './demo-loan.factory';
 
 @Component({
   selector: 'app-loan-import',
@@ -69,6 +73,10 @@ export class LoanImportComponent implements OnInit, OnDestroy {
   previewLoans: LoanResponse[] | any = [];
   errorMsg: string = '';
 
+  demoLoanTree: TreeNode[] = [];
+  selectedTreeNode?: TreeNode; // bound to <p-tree> selection
+  selectedDemoLoan?: DemoLoanDescriptor;
+
   @Output() loanImported = new EventEmitter<
     { loan: Amortization; deposits: DepositRecords }[]
   >();
@@ -88,6 +96,43 @@ export class LoanImportComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.loadConnectors();
+    this.buildDemoTree();
+  }
+
+  /** Build PrimeNG Tree structure from DEMO_LOANS */
+  private buildDemoTree(): void {
+    const toNode = (d: DemoLoanDescriptor): TreeNode => ({
+      label: d.name,
+      key: d.id,
+      data: {
+        ...d,
+        factory: DemoLoanFactory[d.id], //  ← inject pointer right here
+      },
+      icon: 'pi pi-file',
+    });
+    this.demoLoanTree = [
+      {
+        label: 'Common',
+        key: 'root-common',
+        expanded: true,
+        icon: 'pi pi-folder',
+        children: DEMO_LOANS.filter((l) => l.category === 'common').map(toNode),
+      },
+      {
+        label: 'Advanced',
+        key: 'root-advanced',
+        expanded: true,
+        icon: 'pi pi-folder',
+        children: DEMO_LOANS.filter((l) => l.category === 'advanced').map(
+          toNode,
+        ),
+      },
+    ];
+  }
+
+  /** Helper: true when Demo connector chosen */
+  get isDemoSelected(): boolean {
+    return this.getSelectedConnector()?.type === 'Demo';
   }
 
   ngOnDestroy(): void {
@@ -196,6 +241,42 @@ export class LoanImportComponent implements OnInit, OnDestroy {
           this.errorMsg = 'Failed to fetch loan(s). Please check inputs.';
         },
       });
+  }
+
+  /**
+   * Import the loan chosen in the Demo-Loans tree.
+   * Assumes each leaf node’s data object exposes a `factory()` that
+   * yields { loan: Amortization, deposits: DepositRecords }.
+   */
+
+  importDemoLoan(): void {
+    const node = this.selectedTreeNode;
+    const demoId = node?.key ?? '';
+
+    const factory = DemoLoanFactory[demoId];
+    if (!factory) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'No loan selected',
+        detail: 'Please choose a demo loan in the tree first.',
+      });
+      return;
+    }
+
+    this.isLoading = true;
+    try {
+      const built = factory(); // { loan, deposits }
+      this.handleImportedLoans([{ ...built, rawImportData: `demo:${demoId}` }]);
+    } catch (err) {
+      console.error('Failed to load demo loan:', err);
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Import Error',
+        detail: `Demo loan ${demoId} is not available yet.`,
+      });
+    } finally {
+      this.isLoading = false;
+    }
   }
 
   /**
@@ -373,6 +454,18 @@ export class LoanImportComponent implements OnInit, OnDestroy {
   }
 
   private validateInputs(): boolean {
+    if (this.isDemoSelected) {
+      if (!this.selectedDemoLoan) {
+        this.messageService.add({
+          severity: 'warn',
+          summary: 'Warning',
+          detail: 'Please pick a demo loan in the tree.',
+        });
+        return false;
+      }
+      return true;
+    }
+
     if (!this.selectedConnectorId) {
       this.messageService.add({
         severity: 'warn',

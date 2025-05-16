@@ -1,18 +1,38 @@
-<div class="p-fluid">
+<!-- ──────────────────── Connector picker (always visible) ─────────────────── -->
+<div class="p-fluid mb-4">
   <div class="field">
     <label for="connector">Select Connector</label>
     <p-select
       inputId="connector"
+      class="w-full"
+      appendTo="body"
       [options]="connectors"
       optionLabel="name"
       optionValue="id"
       [(ngModel)]="selectedConnectorId"
       (ngModelChange)="onConnectorChange()"
-      placeholder="Select a Connector"
-      class="w-full"
+      placeholder="Choose a connector"
     ></p-select>
   </div>
+</div>
 
+<!-- ───────────────────── Demo-loan browser ────────────────────── -->
+<div *ngIf="isDemoSelected" class="mb-4">
+  <label class="mb-2">Browse Demo Loans</label>
+  <p-tree
+    [value]="demoLoanTree"
+    selectionMode="single"
+    [(selection)]="selectedTreeNode"
+    filter
+    filterMode="lenient"
+    filterPlaceholder="Filter by name or tag"
+    class="demo-tree"
+  ></p-tree>
+</div>
+
+<!-- ───────────────────── Regular connector search UI ────────────────────── -->
+<div *ngIf="!isDemoSelected" class="p-fluid">
+  <!-- search-type picker -->
   <div class="field" *ngIf="!isMongoSelected">
     <label for="searchType">Search By</label>
     <p-select
@@ -28,7 +48,7 @@
     ></p-select>
   </div>
 
-  <!-- Conditional Inputs for Search -->
+  <!-- single-value search -->
   <div
     class="field"
     *ngIf="searchType === 'displayId' || searchType === 'systemId'"
@@ -37,64 +57,71 @@
     <input
       *ngIf="searchType === 'displayId'"
       id="searchValue"
-      name="searchValue"
-      type="text"
       pInputText
-      [(ngModel)]="searchValue"
       class="w-full"
       placeholder="Enter a Display ID"
+      [(ngModel)]="searchValue"
     />
     <p-inputnumber
       *ngIf="searchType === 'systemId'"
-      [(ngModel)]="searchValue"
-      mode="decimal"
       inputId="searchValue"
-      [useGrouping]="false"
       class="w-full"
+      [useGrouping]="false"
+      mode="decimal"
       placeholder="Enter a System ID"
-    />
+      [(ngModel)]="searchValue"
+    ></p-inputnumber>
   </div>
 
+  <!-- range search -->
   <div class="formgrid grid" *ngIf="searchType === 'systemIdRange'">
     <div class="field col">
       <label for="fromSystemId">From System ID</label>
       <input
         id="fromSystemId"
-        name="fromSystemId"
-        type="text"
-        class="w-full"
         pInputText
-        [(ngModel)]="fromSystemId"
+        class="w-full"
         placeholder="Enter starting System ID"
+        [(ngModel)]="fromSystemId"
       />
     </div>
     <div class="field col">
       <label for="toSystemId">To System ID</label>
       <input
         id="toSystemId"
-        name="toSystemId"
-        class="w-full"
-        type="text"
         pInputText
-        [(ngModel)]="toSystemId"
+        class="w-full"
         placeholder="Enter ending System ID"
+        [(ngModel)]="toSystemId"
       />
     </div>
   </div>
 
-  <!-- Progress bar & tracker: only relevant for systemIdRange while loading -->
-
+  <!-- progress indicator (range mode only) -->
   <div class="field" *ngIf="isLoading && searchType === 'systemIdRange'">
-    <p-progressbar [value]="progressValue" [showValue]="true">
-      <ng-template #content let-value>
-        <span>
-          {{ progressValue }}% ({{ loansLoaded }} /{{ totalLoans }})
-        </span>
+    <p-progressbar [value]="progressValue" showValue="true">
+      <ng-template #content>
+        {{ progressValue }}% ({{ loansLoaded }} / {{ totalLoans }})
       </ng-template>
     </p-progressbar>
   </div>
+</div>
 
-  <div class="flex gap-2 mt-4 justify-content-end">
+<!-- ───────────────────── Action buttons (always visible) ─────────────────── -->
+<div class="flex gap-2 mt-4 justify-content-end">
+  <!-- Demo mode: single import button -->
+  <p-button
+    *ngIf="isDemoSelected"
+    label="Import Selected Loan"
+    icon="pi pi-cloud-download"
+    [disabled]="!selectedTreeNode"
+    (click)="importDemoLoan()"
+    [loading]="isLoading"
+    severity="success"
+  ></p-button>
+
+  <!-- Non-demo mode: preview + import -->
+  <ng-container *ngIf="!isDemoSelected">
     <p-button
       label="Preview"
       icon="pi pi-eye"
@@ -109,7 +136,7 @@
       (click)="importLoan()"
       [loading]="isLoading"
     ></p-button>
-  </div>
+  </ng-container>
 </div>
 
 <!-- Preview Dialog -->

@@ -8,7 +8,7 @@ export interface Connector {
   isDefault?: boolean;
 }
 
-export type ConnectorType = 'LoanPro' | 'Mongo'; // Extendable for future connectors
+export type ConnectorType = 'LoanPro' | 'Mongo' | 'Demo'; // Extendable for future connectors
 
 export interface ConnectorCredentials {
   // For LoanPro

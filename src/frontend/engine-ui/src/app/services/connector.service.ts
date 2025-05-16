@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { Connector } from '../models/connector.model';
+import { Connector, ConnectorType } from '../models/connector.model';
 import { BehaviorSubject } from 'rxjs';
 
 @Injectable({
@@ -10,8 +10,31 @@ export class ConnectorService {
   public connectors$ = this.connectorsSubject.asObservable();
 
   constructor() {
-    const initialConnectors = this.loadConnectorsFromStorage();
-    this.connectorsSubject.next(initialConnectors);
+    const fromStorage = this.loadConnectorsFromStorage();
+    const withDemo = this.ensureDemoConnector(fromStorage);
+
+    this.connectorsSubject.next(withDemo);
+    this.saveConnectorsToStorage(withDemo); // persist baseline
+  }
+
+  /** Guarantees exactly **one** Demo connector with empty credentials. */
+  private ensureDemoConnector(list: Connector[]): Connector[] {
+    const hasDemo = list.some((c) => c.type === 'Demo');
+    if (hasDemo) {
+      // Ensure the stored Demo connector has credentials = {}
+      return list.map((c) =>
+        c.type === 'Demo' ? { ...c, credentials: c.credentials ?? {} } : c,
+      );
+    }
+
+    const demo: Connector = {
+      id: 'demo-connector',
+      name: 'Demo Loans',
+      type: 'Demo' as ConnectorType,
+      credentials: {},
+      isDefault: list.every((c) => !c.isDefault), // make default only if none exists
+    };
+    return [...list, demo];
   }
 
   setAsDefault(connectorId: string) {

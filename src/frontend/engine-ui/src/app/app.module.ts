@@ -16,6 +16,7 @@ import { TabsModule } from 'primeng/tabs';
 import { MenubarModule } from 'primeng/menubar';
 
 import { TableModule } from 'primeng/table';
+import { TreeModule } from 'primeng/tree';
 import { FieldsetModule } from 'primeng/fieldset';
 import { CardModule } from 'primeng/card';
 import { InputGroupModule } from 'primeng/inputgroup';
@@ -151,6 +152,7 @@ import {
     DialogModule,
     PanelModule,
     TabsModule,
+    TreeModule,
     AccordionModule,
     InputNumberModule,
     OverlayPanelModule,

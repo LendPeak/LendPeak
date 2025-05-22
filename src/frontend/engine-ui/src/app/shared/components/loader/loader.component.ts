@@ -16,9 +16,7 @@ import {
   styleUrls: ['./loader.component.css'],
   standalone: false,
 })
-export class LoaderComponent
-  implements OnInit, OnDestroy, OnChanges, AfterViewInit
-{
+export class LoaderComponent implements OnInit, OnDestroy, OnChanges, AfterViewInit {
   @Input() text: string = 'Loading...';
   @Input() minDisplayTime: number = 0; // ms
   @Input() visible: boolean = false;
@@ -57,11 +55,7 @@ export class LoaderComponent
 
   ngAfterViewInit() {
     this.viewInitialized = true;
-    console.log(
-      'LoaderComponent ngAfterViewInit',
-      this.visible,
-      !!this.particleCanvasRef?.nativeElement,
-    );
+    console.log('LoaderComponent ngAfterViewInit', this.visible, !!this.particleCanvasRef?.nativeElement);
     if (this.visible && this.particleCanvasRef?.nativeElement) {
       this.startTime = Date.now();
       console.log('Calling startAnimation from ngAfterViewInit');
@@ -90,9 +84,7 @@ export class LoaderComponent
           console.log('Calling startAnimation from ngOnChanges');
           this.startAnimation();
         } else {
-          console.log(
-            'ngOnChanges: Canvas not ready yet, setting pendingStart',
-          );
+          console.log('ngOnChanges: Canvas not ready yet, setting pendingStart');
           this.pendingStart = true;
         }
       } else {

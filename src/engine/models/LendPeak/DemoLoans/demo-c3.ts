@@ -1,22 +1,22 @@
-import { LendPeak } from "../../LendPeak";
-import { Amortization } from "../../Amortization";
-import { DepositRecords } from "../../DepositRecords";
-import { DepositRecord } from "../../DepositRecord";
-import { DateUtil } from "../../../utils/DateUtil";
-import { LocalDate, ChronoUnit, TemporalAdjusters } from "@js-joda/core";
-import { TermCalendars } from "../../TermCalendars";
-import { Calendar, CalendarType } from "../../Calendar";
+import { LendPeak } from '../../LendPeak';
+import { Amortization } from '../../Amortization';
+import { DepositRecords } from '../../DepositRecords';
+import { DepositRecord } from '../../DepositRecord';
+import { DateUtil } from '../../../utils/DateUtil';
+import { LocalDate, ChronoUnit, TemporalAdjusters } from '@js-joda/core';
+import { TermCalendars } from '../../TermCalendars';
+import { Calendar, CalendarType } from '../../Calendar';
 
-const today = LocalDate.now().minus(20, ChronoUnit.DAYS);
+const today = LocalDate.now().minus(1, ChronoUnit.MONTHS);
 
 export class DemoC3 {
   static LendPeakObject(): LendPeak {
     return new LendPeak({
       amortization: new Amortization({
-        id: "DEMO-C03",
-        name: "DEMO-C03",
-        description: "20 days old, no pays",
-        startDate: today,
+        id: 'DEMO-C03',
+        name: 'DEMO-C03',
+        description: '20 days delinquent, no pays',
+        startDate: today.plus(20, ChronoUnit.DAYS),
         originationFee: 600,
         loanAmount: 19_900,
         interestAccruesFromDayZero: true,

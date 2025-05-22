@@ -1,18 +1,9 @@
-import {
-  Component,
-  OnInit,
-  OnDestroy,
-  Output,
-  EventEmitter,
-} from '@angular/core';
+import { Component, OnInit, OnDestroy, Output, EventEmitter } from '@angular/core';
 import { ConnectorService } from '../services/connector.service';
 import { Connector } from '../models/connector.model';
 import { ConnectorImportService } from '../services/connector-import.service';
 import { MessageService } from 'primeng/api';
-import {
-  Amortization,
-  AmortizationParams,
-} from 'lendpeak-engine/models/Amortization';
+import { Amortization, AmortizationParams } from 'lendpeak-engine/models/Amortization';
 import { TermInterestAmountOverride } from 'lendpeak-engine/models/TermInterestAmountOverride';
 import { TermInterestAmountOverrides } from 'lendpeak-engine/models/TermInterestAmountOverrides';
 import { Payment } from '../models/loanpro.model';
@@ -20,10 +11,7 @@ import dayjs from 'dayjs';
 import { Subscription, from } from 'rxjs';
 import { mergeMap, tap, finalize, first } from 'rxjs/operators';
 import { PerDiemCalculationType } from 'lendpeak-engine/models/InterestCalculator';
-import {
-  FlushUnbilledInterestDueToRoundingErrorType,
-  BillingModel,
-} from 'lendpeak-engine/models/Amortization';
+import { FlushUnbilledInterestDueToRoundingErrorType, BillingModel } from 'lendpeak-engine/models/Amortization';
 import { ChangePaymentDate } from 'lendpeak-engine/models/ChangePaymentDate';
 import { ChangePaymentDates } from 'lendpeak-engine/models/ChangePaymentDates';
 import { LoanResponse, DueDateChange } from '../models/loanpro.model';
@@ -77,9 +65,7 @@ export class LoanImportComponent implements OnInit, OnDestroy {
   selectedTreeNode?: TreeNode; // bound to <p-tree> selection
   selectedDemoLoan?: DemoLoanDescriptor;
 
-  @Output() loanImported = new EventEmitter<
-    { loan: Amortization; deposits: DepositRecords }[]
-  >();
+  @Output() loanImported = new EventEmitter<{ loan: Amortization; deposits: DepositRecords }[]>();
 
   private connectorsSubscription!: Subscription;
 
@@ -90,6 +76,9 @@ export class LoanImportComponent implements OnInit, OnDestroy {
 
   // Track last connector type to avoid clearing searchValue unnecessarily
   private lastConnectorType: string | null = null;
+
+  // Store a separate searchValue for MongoDB
+  private mongoSearchValue: string = '';
 
   constructor(
     private connectorService: ConnectorService,
@@ -113,19 +102,17 @@ export class LoanImportComponent implements OnInit, OnDestroy {
   }
 
   loadConnectors() {
-    this.connectorsSubscription = this.connectorService.connectors$.subscribe(
-      (connectors: Connector[]) => {
-        this.connectors = connectors;
+    this.connectorsSubscription = this.connectorService.connectors$.subscribe((connectors: Connector[]) => {
+      this.connectors = connectors;
 
-        // If no connector is currently selected, auto-select the default (if any)
-        if (!this.selectedConnectorId) {
-          const defaultConnector = connectors.find((c) => c.isDefault);
-          if (defaultConnector) {
-            this.selectedConnectorId = defaultConnector.id;
-          }
+      // If no connector is currently selected, auto-select the default (if any)
+      if (!this.selectedConnectorId) {
+        const defaultConnector = connectors.find((c) => c.isDefault);
+        if (defaultConnector) {
+          this.selectedConnectorId = defaultConnector.id;
         }
-      },
-    );
+      }
+    });
   }
 
   onPreview() {
@@ -169,9 +156,7 @@ export class LoanImportComponent implements OnInit, OnDestroy {
       .importLoan(
         connector,
         this.searchType,
-        this.searchType === 'systemIdRange'
-          ? this.fromSystemId
-          : this.searchValue,
+        this.searchType === 'systemIdRange' ? this.fromSystemId : this.searchValue,
         this.searchType === 'systemIdRange' ? this.toSystemId : undefined,
       )
       .subscribe({
@@ -183,21 +168,14 @@ export class LoanImportComponent implements OnInit, OnDestroy {
 
           for (let loan of previewLoans) {
             // convert payment dates
-            loan.d.Payments.filter((payment: any) => payment.active === 1).map(
-              (payment: any) => {
-                payment.date = DateUtil.parseLoanProDateToLocalDate(
-                  payment.date,
-                );
-                payment.created = DateUtil.parseLoanProDateToLocalDate(
-                  payment.created,
-                );
-              },
-            );
+            loan.d.Payments.filter((payment: any) => payment.active === 1).map((payment: any) => {
+              payment.date = DateUtil.parseLoanProDateToLocalDate(payment.date);
+              payment.created = DateUtil.parseLoanProDateToLocalDate(payment.created);
+            });
             // convert contractDate to string for display
-            loan.d.LoanSetup.contractDate =
-              DateUtil.parseLoanProDateToLocalDate(
-                loan.d.LoanSetup.contractDate,
-              ).toString();
+            loan.d.LoanSetup.contractDate = DateUtil.parseLoanProDateToLocalDate(
+              loan.d.LoanSetup.contractDate,
+            ).toString();
           }
 
           this.previewLoans = previewLoans;
@@ -292,26 +270,22 @@ export class LoanImportComponent implements OnInit, OnDestroy {
     // If NOT systemIdRange => same approach as before (single or multi call).
     if (this.searchType !== 'systemIdRange') {
       this.isLoading = true;
-      this.importService
-        .importLoan(connector, this.searchType, this.searchValue)
-        .subscribe({
-          next: (loanData) => {
-            this.isLoading = false;
+      this.importService.importLoan(connector, this.searchType, this.searchValue).subscribe({
+        next: (loanData) => {
+          this.isLoading = false;
 
-            this.handleImportedLoans([
-              this.mapToUILoan(loanData as LoanResponse),
-            ]);
-          },
-          error: (error) => {
-            this.isLoading = false;
-            console.error('Error importing loan(s):', error);
-            this.messageService.add({
-              severity: 'error',
-              summary: 'Error',
-              detail: 'Failed to import loan(s).',
-            });
-          },
-        });
+          this.handleImportedLoans([this.mapToUILoan(loanData as LoanResponse)]);
+        },
+        error: (error) => {
+          this.isLoading = false;
+          console.error('Error importing loan(s):', error);
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Error',
+            detail: 'Failed to import loan(s).',
+          });
+        },
+      });
 
       return;
     }
@@ -328,10 +302,7 @@ export class LoanImportComponent implements OnInit, OnDestroy {
     let loadedLoans: LoanResponse[] = [];
 
     // Make an array of all system IDs in the range
-    const systemIds = Array.from(
-      { length: this.totalLoans },
-      (_, i) => start + i,
-    );
+    const systemIds = Array.from({ length: this.totalLoans }, (_, i) => start + i);
 
     this.isLoading = true;
     this.errorMsg = '';
@@ -342,22 +313,18 @@ export class LoanImportComponent implements OnInit, OnDestroy {
         // You can specify a concurrency limit in mergeMap's 2nd argument, e.g. mergeMap(fn, 5)
         // to fetch 5 at a time. By default, concurrency = Infinity => as many as browser permits.
         mergeMap((id: number) => {
-          return this.importService
-            .importLoan(connector, 'systemId', id.toString())
-            .pipe(
-              tap((res: LoanResponse | LoanResponse[]) => {
-                this.loansLoaded++;
-                this.progressValue = Math.floor(
-                  (this.loansLoaded / this.totalLoans) * 100,
-                );
-                // console.log('Progress:', this.progressValue, this.loansLoaded);
-                if (Array.isArray(res)) {
-                  loadedLoans.push(...res);
-                } else {
-                  loadedLoans.push(res);
-                }
-              }),
-            );
+          return this.importService.importLoan(connector, 'systemId', id.toString()).pipe(
+            tap((res: LoanResponse | LoanResponse[]) => {
+              this.loansLoaded++;
+              this.progressValue = Math.floor((this.loansLoaded / this.totalLoans) * 100);
+              // console.log('Progress:', this.progressValue, this.loansLoaded);
+              if (Array.isArray(res)) {
+                loadedLoans.push(...res);
+              } else {
+                loadedLoans.push(res);
+              }
+            }),
+          );
         }),
         finalize(() => {
           // Called once everything completes or errors
@@ -492,9 +459,7 @@ export class LoanImportComponent implements OnInit, OnDestroy {
       }
       if (currentDate.monthValue() === 2 && currentDate.dayOfMonth() < 28) {
         const patched = currentDate.plusDays(1);
-        console.log(
-          `Adding one day because it's before Feb 28. Changing ${currentDate} to ${patched}`,
-        );
+        console.log(`Adding one day because it's before Feb 28. Changing ${currentDate} to ${patched}`);
         overrides[i].date = patched;
       }
     }
@@ -523,17 +488,13 @@ export class LoanImportComponent implements OnInit, OnDestroy {
 
       if (isPrev28 && isCurr27 && isNextMonth) {
         const fixedDate = currDate.withDayOfMonth(28);
-        console.log(
-          `Patching interest override date from ${currDate} to ${fixedDate}`,
-        );
+        console.log(`Patching interest override date from ${currDate} to ${fixedDate}`);
         overrides[i].date = fixedDate;
       }
     }
   }
   private getSelectedConnector(): Connector | null {
-    const connector = this.connectorService.getConnectorById(
-      this.selectedConnectorId,
-    );
+    const connector = this.connectorService.getConnectorById(this.selectedConnectorId);
     if (!connector) {
       this.messageService.add({
         severity: 'error',
@@ -550,8 +511,7 @@ export class LoanImportComponent implements OnInit, OnDestroy {
     deposits: DepositRecords;
     rawImportData: string;
   } {
-    let perDiemCalculationType: PerDiemCalculationType =
-      'AnnualRateDividedByDaysInYear';
+    let perDiemCalculationType: PerDiemCalculationType = 'AnnualRateDividedByDaysInYear';
     // if (loanData.d.LoanSetup.calcType === 'loan.calcType.simpleInterest') {
     //   perDiemCalculationType = 'MonthlyRateDividedByDaysInMonth';
     // }
@@ -569,14 +529,8 @@ export class LoanImportComponent implements OnInit, OnDestroy {
     console.log('loanData', loanData);
 
     // 1. Filter duplicates
-    const rawInterestAdjustments = loanData.d.Transactions.filter(
-      (tr) => tr.type === 'intAdjustment',
-    ).filter(
-      (tr, index, self) =>
-        index ===
-        self.findIndex(
-          (t) => t.date === tr.date && t.infoDetails === tr.infoDetails,
-        ),
+    const rawInterestAdjustments = loanData.d.Transactions.filter((tr) => tr.type === 'intAdjustment').filter(
+      (tr, index, self) => index === self.findIndex((t) => t.date === tr.date && t.infoDetails === tr.infoDetails),
     );
 
     // 2. Convert them
@@ -599,9 +553,9 @@ export class LoanImportComponent implements OnInit, OnDestroy {
 
     // find all scheduled periods by looking at Transactions and getting entries matching title that starts with "Scheduled Payment"
     // and sort it by period from 0 to n
-    const scheduledPayments = loanData.d.Transactions.filter(
-      (tr) => tr.type === 'scheduledPayment',
-    ).sort((a, b) => a.period - b.period);
+    const scheduledPayments = loanData.d.Transactions.filter((tr) => tr.type === 'scheduledPayment').sort(
+      (a, b) => a.period - b.period,
+    );
     const lastScheduledPeriod = scheduledPayments[scheduledPayments.length - 1];
     let endDate: LocalDate | undefined = undefined;
     if (lastScheduledPeriod) {
@@ -612,32 +566,25 @@ export class LoanImportComponent implements OnInit, OnDestroy {
       // const lastScheduledPeriodEndDate = DateUtil.normalizeDate(
       //   parseODataDate(lastScheduledPeriod.periodEnd, true),
       // ).plusDays(1);
-      const lastScheduledPeriodEndDate = DateUtil.parseLoanProDateToLocalDate(
-        lastScheduledPeriod.periodEnd,
-      ).plusDays(1);
+      const lastScheduledPeriodEndDate = DateUtil.parseLoanProDateToLocalDate(lastScheduledPeriod.periodEnd).plusDays(
+        1,
+      );
       endDate = lastScheduledPeriodEndDate;
     }
 
     // check if there is a payoff transaction, in that instance that becomes end date
     const payoffTransaction = loanData.d.Transactions.find(
-      (tr) =>
-        tr.type === 'payment' &&
-        tr.title.toLocaleLowerCase().includes('payoff'),
+      (tr) => tr.type === 'payment' && tr.title.toLocaleLowerCase().includes('payoff'),
     );
     if (payoffTransaction) {
       endDate = DateUtil.parseLoanProDateToLocalDate(payoffTransaction.date);
     }
 
-    const firstPaymentDate = DateUtil.parseLoanProDateToLocalDate(
-      loanData.d.LoanSetup.firstPaymentDate,
-    );
-    const startDate = DateUtil.parseLoanProDateToLocalDate(
-      loanData.d.LoanSetup.contractDate,
-    );
+    const firstPaymentDate = DateUtil.parseLoanProDateToLocalDate(loanData.d.LoanSetup.firstPaymentDate);
+    const startDate = DateUtil.parseLoanProDateToLocalDate(loanData.d.LoanSetup.contractDate);
 
     // if first payment due day is not the same as start date day, we need to set hasCustomFirstPaymentDate to true
-    const hasCustomFirstPaymentDate =
-      firstPaymentDate.dayOfMonth() !== startDate.dayOfMonth();
+    const hasCustomFirstPaymentDate = firstPaymentDate.dayOfMonth() !== startDate.dayOfMonth();
     const uiLoan: AmortizationParams = {
       // objectVersion: 9,
       id: loanData.d.id.toString(),
@@ -652,30 +599,23 @@ export class LoanImportComponent implements OnInit, OnDestroy {
       //   feesForAllTerms: [],
       feesPerTerm: FeesPerTerm.empty(),
       startDate: startDate,
-      firstPaymentDate: DateUtil.parseLoanProDateToLocalDate(
-        loanData.d.LoanSetup.firstPaymentDate,
-      ),
+      firstPaymentDate: DateUtil.parseLoanProDateToLocalDate(loanData.d.LoanSetup.firstPaymentDate),
       hasCustomFirstPaymentDate: hasCustomFirstPaymentDate,
       // endDate: parseODataDate(loanData.d.LoanSetup.origFinalPaymentDate, true),
       endDate: endDate,
-      payoffDate: payoffTransaction
-        ? DateUtil.parseLoanProDateToLocalDate(payoffTransaction.date)
-        : undefined,
+      payoffDate: payoffTransaction ? DateUtil.parseLoanProDateToLocalDate(payoffTransaction.date) : undefined,
       calendars: new TermCalendars({ primary: calendarType }),
       roundingMethod: RoundingMethod.ROUND_HALF_EVEN,
       billingModel: billingModel,
       perDiemCalculationType: perDiemCalculationType,
       roundingPrecision: 2,
-      flushUnbilledInterestRoundingErrorMethod:
-        flushUnbilledInterestRoundingErrorMethod,
+      flushUnbilledInterestRoundingErrorMethod: flushUnbilledInterestRoundingErrorMethod,
       flushThreshold: 0.01,
       ratesSchedule: new RateSchedules(),
       interestAccruesFromDayZero: true,
       termPaymentAmountOverride: new TermPaymentAmounts(
         loanData.d.Transactions.filter(
-          (tr) =>
-            tr.type === 'scheduledPayment' &&
-            tr.chargeAmount !== loanData.d.LoanSetup.payment,
+          (tr) => tr.type === 'scheduledPayment' && tr.chargeAmount !== loanData.d.LoanSetup.payment,
         ).map((row) => {
           return new TermPaymentAmount({
             termNumber: row.period,
@@ -689,9 +629,7 @@ export class LoanImportComponent implements OnInit, OnDestroy {
       defaultPreBillDaysConfiguration: 0,
       allowRateAbove100: false,
       periodsSchedule: new PeriodSchedules(),
-      termInterestAmountOverride: new TermInterestAmountOverrides(
-        interestOverrides,
-      ),
+      termInterestAmountOverride: new TermInterestAmountOverrides(interestOverrides),
       changePaymentDates: new ChangePaymentDates(
         loanData.d.DueDateChanges.map((change: DueDateChange) => {
           // console.log('native change', change);
@@ -702,9 +640,7 @@ export class LoanImportComponent implements OnInit, OnDestroy {
           // });
           return new ChangePaymentDate({
             termNumber: -1,
-            originalDate: DateUtil.parseLoanProDateToLocalDate(
-              change.changedDate,
-            ),
+            originalDate: DateUtil.parseLoanProDateToLocalDate(change.changedDate),
             newDate: DateUtil.parseLoanProDateToLocalDate(change.newDate),
           });
         }),
@@ -767,10 +703,7 @@ export class LoanImportComponent implements OnInit, OnDestroy {
 
   /** true when the currently-selected connector is MongoDB */
   get isMongoSelected(): boolean {
-    return (
-      this.connectors.find((c) => c.id === this.selectedConnectorId)?.type ===
-      'Mongo'
-    );
+    return this.connectors.find((c) => c.id === this.selectedConnectorId)?.type === 'Mongo';
   }
 
   /** adjust searchType whenever the connector changes */
@@ -778,25 +711,38 @@ export class LoanImportComponent implements OnInit, OnDestroy {
     const connector = this.getSelectedConnector();
     if (!connector) return;
 
-    // Only clear if the connector type actually changes
-    if (this.lastConnectorType && this.lastConnectorType !== connector.type) {
-      this.searchValue = '';
+    if (connector.type === 'Mongo') {
+      // Always use 'displayId' for MongoDB
+      // Save the current non-Mongo searchValue before switching
+      if (this.lastConnectorType && this.lastConnectorType !== 'Mongo') {
+        // Save the current searchValue for the previous connector type
+        (this as any)[`${this.lastConnectorType}SearchValue`] = this.searchValue;
+      }
+      this.searchType = 'displayId';
+      // Restore MongoDB search value if available
+      this.searchValue = this.mongoSearchValue || '';
       this.fromSystemId = '';
       this.toSystemId = '';
-    } else if (connector.type === 'Mongo') {
-      // Only clear range fields, not searchValue
-      this.searchType = 'systemId';
-      this.fromSystemId = '';
-      this.toSystemId = '';
+    } else {
+      // Save the MongoDB search value before switching away
+      if (this.lastConnectorType === 'Mongo') {
+        this.mongoSearchValue = this.searchValue;
+      }
+      // Restore previous search value for this connector type if available
+      const prevType = connector.type;
+      this.searchValue = (this as any)[`${prevType}SearchValue`] || '';
+      // Don't clear range fields unless type actually changes
+      if (this.lastConnectorType && this.lastConnectorType !== connector.type) {
+        this.fromSystemId = '';
+        this.toSystemId = '';
+      }
     }
     this.lastConnectorType = connector.type;
   }
 
   private mapDeposits(loanData: LoanResponse): DepositRecords {
     return new DepositRecords(
-      loanData.d.Payments.filter(
-        (payment: any) => payment.childId === null,
-      ).map((payment: any) => {
+      loanData.d.Payments.filter((payment: any) => payment.childId === null).map((payment: any) => {
         console.log('adding payment', payment);
         const depositRecord = new DepositRecord({
           amount: parseFloat(payment.amount),
@@ -808,9 +754,7 @@ export class LoanImportComponent implements OnInit, OnDestroy {
           id: `(${payment.id}) ${payment.info}`,
           // LPTs had excess applied to principal
           applyExcessToPrincipal: payment.info.includes('LPT') ? true : false,
-          applyExcessAtTheEndOfThePeriod: payment.info.includes('LPT')
-            ? true
-            : false,
+          applyExcessAtTheEndOfThePeriod: payment.info.includes('LPT') ? true : false,
           excessAppliedDate: payment.info.includes('LPT')
             ? DateUtil.parseLoanProDateToLocalDate(payment.date)
             : undefined,
@@ -836,18 +780,10 @@ export class LoanImportComponent implements OnInit, OnDestroy {
               prepayment: 0,
             };
           } catch (e) {
-            console.error(
-              'unable to deserialize customApplication string',
-              payment.customApplication,
-              e,
-            );
+            console.error('unable to deserialize customApplication string', payment.customApplication, e);
           }
         }
-        if (
-          payment.info
-            .toLowerCase()
-            .includes('remediation principal adjustment')
-        ) {
+        if (payment.info.toLowerCase().includes('remediation principal adjustment')) {
           // switch to manual allocation and apply all of the payment as a pre-payment
           depositRecord.staticAllocation = {
             principal: 0,
@@ -856,8 +792,7 @@ export class LoanImportComponent implements OnInit, OnDestroy {
             prepayment: depositRecord.amount,
           };
           depositRecord.applyExcessToPrincipal = true;
-          depositRecord.excessAppliedDate =
-            depositRecord.effectiveDate.plusDays(1);
+          depositRecord.excessAppliedDate = depositRecord.effectiveDate.plusDays(1);
         }
         return depositRecord;
       }),

@@ -22,10 +22,7 @@ import {
   OnDestroy,
 } from '@angular/core';
 
-import {
-  DropDownOptionString,
-  DropDownOptionNumber,
-} from './models/common.model';
+import { DropDownOptionString, DropDownOptionNumber } from './models/common.model';
 
 import { IndexedDbService } from './services/indexed-db.service';
 
@@ -37,20 +34,14 @@ import { LendPeak } from 'lendpeak-engine/models/LendPeak';
 import { AmortizationVersionManager } from 'lendpeak-engine/models/AmortizationVersionManager';
 import { DepositRecord } from 'lendpeak-engine/models/DepositRecord';
 import { DepositRecords } from 'lendpeak-engine/models/DepositRecords';
-import {
-  PaymentAllocationStrategyName,
-  PaymentComponent,
-} from 'lendpeak-engine/models/PaymentApplication/Types';
+import { PaymentAllocationStrategyName, PaymentComponent } from 'lendpeak-engine/models/PaymentApplication/Types';
 
 import { Bills } from 'lendpeak-engine/models/Bills';
 import { Currency } from 'lendpeak-engine/utils/Currency';
 import Decimal from 'decimal.js';
 import { XaiSummarizeService } from './services/xai-summarize-service';
 import { OpenAiChatService } from './services/openai-summarize-service';
-import {
-  SystemSettingsService,
-  DeveloperModeType,
-} from './services/system-settings.service';
+import { SystemSettingsService, DeveloperModeType } from './services/system-settings.service';
 import { FinancialOpsVersionManager } from 'lendpeak-engine/models/FinancialOpsVersionManager';
 import { MarkdownService } from 'ngx-markdown';
 
@@ -63,10 +54,7 @@ dayjs.extend(isSameOrAfter);
 dayjs.extend(isSameOrBefore);
 
 import { v4 as uuidv4 } from 'uuid';
-import {
-  PastDueSummary,
-  ActualLoanSummary,
-} from 'lendpeak-engine/models/UIInterfaces';
+import { PastDueSummary, ActualLoanSummary } from 'lendpeak-engine/models/UIInterfaces';
 import { DemoLoanFactory } from './loan-import/demo-loan.factory';
 import { LoaderService } from './shared/components/loader/loader.service';
 
@@ -79,9 +67,7 @@ declare let gtag: Function;
   providers: [MessageService, ConfirmationService, MarkdownService],
   standalone: false,
 })
-export class AppComponent
-  implements OnChanges, AfterViewInit, OnInit, OnDestroy
-{
+export class AppComponent implements OnChanges, AfterViewInit, OnInit, OnDestroy {
   @ViewChild('confirmPopup') confirmPopup!: ConfirmPopup;
   @ViewChild('repaymentPlanTable', { static: false })
   repaymentPlanTableRef!: ElementRef;
@@ -121,9 +107,7 @@ export class AppComponent
     }
   }
 
-  lendPeak: LendPeak = new LendPeak({})
-    .addAmortizationVersionManager()
-    .addFinancialOpsVersionManager();
+  lendPeak: LendPeak = new LendPeak({}).addAmortizationVersionManager().addFinancialOpsVersionManager();
 
   actualLoanSummary?: ActualLoanSummary;
   pastDueSummary?: PastDueSummary;
@@ -223,8 +207,7 @@ export class AppComponent
 
     const aiAssistant = this.systemSettingsService.getAiAssistant();
     console.log('assistant used in summary', aiAssistant);
-    const aiChangeSummaryService =
-      aiAssistant === 'xAI' ? this.xaiService : this.openaiService;
+    const aiChangeSummaryService = aiAssistant === 'xAI' ? this.xaiService : this.openaiService;
 
     aiChangeSummaryService.summarizeLoanChanges(inputChanges).subscribe({
       // this.xaiService.summarizeLoanChanges(inputChanges).subscribe({
@@ -246,11 +229,7 @@ export class AppComponent
   }
 
   // A helper function to avoid repeating code:
-  private async saveAndLoadLoan(loanData: {
-    loan: Amortization;
-    deposits: DepositRecords;
-    rawImportData?: string;
-  }) {
+  private async saveAndLoadLoan(loanData: { loan: Amortization; deposits: DepositRecords; rawImportData?: string }) {
     this.lendPeak = await this.saveLoanWithoutLoading(loanData);
     await this.executeLoadLoan(this.lendPeak.amortization.name);
   }
@@ -304,9 +283,7 @@ export class AppComponent
           const pdDate = DateUtil.normalizeDate(pd.date);
           if (!lastPaymentDate || pdDate.isAfter(lastPaymentDate)) {
             lastPaymentDate = pdDate;
-            lastPaymentAmount = pd.allocatedPrincipal
-              .add(pd.allocatedInterest)
-              .add(pd.allocatedFees);
+            lastPaymentAmount = pd.allocatedPrincipal.add(pd.allocatedInterest).add(pd.allocatedFees);
           }
         }
       }
@@ -321,25 +298,21 @@ export class AppComponent
       nextBillDate = unpaidBills[0].jsDueDate;
     }
 
-    const originalPrincipal = Currency.of(
-      this.lendPeak.amortization.loanAmount,
-    ).add(this.lendPeak.amortization.originationFee);
-    const actualRemainingPrincipal =
-      originalPrincipal.subtract(actualPrincipalPaid);
+    const originalPrincipal = Currency.of(this.lendPeak.amortization.loanAmount).add(
+      this.lendPeak.amortization.originationFee,
+    );
+    const actualRemainingPrincipal = originalPrincipal.subtract(actualPrincipalPaid);
 
     const accruedInterestNow = this.lendPeak.amortization
       ? this.lendPeak.amortization.getAccruedInterestByDate(this.snapshotDate)
       : Currency.Zero();
-    const actualCurrentPayoff =
-      actualRemainingPrincipal.add(accruedInterestNow);
+    const actualCurrentPayoff = actualRemainingPrincipal.add(accruedInterestNow);
 
     return {
       nextBillDate,
       actualPrincipalPaid,
       actualInterestPaid,
-      lastPaymentDate: lastPaymentDate
-        ? DateUtil.normalizeDateToJsDate(lastPaymentDate)
-        : undefined,
+      lastPaymentDate: lastPaymentDate ? DateUtil.normalizeDateToJsDate(lastPaymentDate) : undefined,
       lastPaymentAmount,
       actualRemainingPrincipal,
       actualCurrentPayoff,
@@ -349,18 +322,12 @@ export class AppComponent
   newLoan() {
     console.log('new loan');
     if (this.loanModified) {
-      if (
-        !confirm(
-          'You have unsaved changes. Do you want to discard them and create a new loan?',
-        )
-      ) {
+      if (!confirm('You have unsaved changes. Do you want to discard them and create a new loan?')) {
         return;
       }
     }
 
-    this.lendPeak = new LendPeak({})
-      .addAmortizationVersionManager()
-      .addFinancialOpsVersionManager();
+    this.lendPeak = new LendPeak({}).addAmortizationVersionManager().addFinancialOpsVersionManager();
 
     // Generate the default loan data
     this.updateTermOptions();
@@ -494,16 +461,12 @@ export class AppComponent
   showCurrentReleaseNotes() {
     this.showNewVersionModal = true;
 
-    this.selectedReleaseNotes = this.releaseNotes.find(
-      (note) => note.version === this.selectedVersion,
-    );
+    this.selectedReleaseNotes = this.releaseNotes.find((note) => note.version === this.selectedVersion);
   }
 
   onVersionChange(event: any) {
     this.selectedVersion = event.value;
-    this.selectedReleaseNotes = this.releaseNotes.find(
-      (note) => note.version === this.selectedVersion,
-    );
+    this.selectedReleaseNotes = this.releaseNotes.find((note) => note.version === this.selectedVersion);
   }
 
   ngOnInit(): void {
@@ -529,9 +492,7 @@ export class AppComponent
     try {
       const snapshotDate = localStorage.getItem('snapshotDate');
       if (snapshotDate) {
-        this.snapshotDate = DateUtil.normalizeDateToJsDate(
-          DateUtil.normalizeDate(snapshotDate),
-        );
+        this.snapshotDate = DateUtil.normalizeDateToJsDate(DateUtil.normalizeDate(snapshotDate));
         if (!this.snapshotDate) {
           this.snapshotDate = new Date();
         }
@@ -539,11 +500,7 @@ export class AppComponent
         this.snapshotDate = new Date();
       }
     } catch (e) {
-      console.warn(
-        'Error while parsing snapshot date from local storage: ',
-        this.snapshotDate,
-        e,
-      );
+      console.warn('Error while parsing snapshot date from local storage: ', this.snapshotDate, e);
       // clear the snapshot date from local storage
       localStorage.removeItem('snapshotDate');
       this.snapshotDate = new Date();
@@ -620,8 +577,7 @@ export class AppComponent
     this.loanModified = false;
 
     // Check localStorage for welcome modal
-    this.hideWelcomeDemoLoanModal =
-      localStorage.getItem('hideWelcomeDemoLoanModal') === 'true';
+    this.hideWelcomeDemoLoanModal = localStorage.getItem('hideWelcomeDemoLoanModal') === 'true';
     this.welcomeDemoLoanModalVisible = !this.hideWelcomeDemoLoanModal;
 
     this.loaderSub = this.loaderService.loaderState$.subscribe((state) => {
@@ -636,9 +592,7 @@ export class AppComponent
     this.loanNotFound = false;
 
     // No loan found in localStorage, initialize with default values
-    this.lendPeak = new LendPeak({})
-      .addAmortizationVersionManager()
-      .addFinancialOpsVersionManager();
+    this.lendPeak = new LendPeak({}).addAmortizationVersionManager().addFinancialOpsVersionManager();
 
     this.submitLoan();
   }
@@ -821,10 +775,7 @@ export class AppComponent
 
   openCodeDialog() {
     if (this.lendPeak) {
-      this.generatedCode =
-        this.lendPeak.amortization.export.toCode() +
-        '\n' +
-        this.lendPeak.depositRecords.toCode();
+      this.generatedCode = this.lendPeak.amortization.export.toCode() + '\n' + this.lendPeak.depositRecords.toCode();
       this.showCodeDialogVisible = true;
     } else {
       this.messageService.add({
@@ -835,11 +786,7 @@ export class AppComponent
     }
   }
 
-  scheduleShow: string[] = [
-    'loan__Due_Date__c',
-    'loan__Total_Installment__c',
-    'loan__isPaid__c',
-  ];
+  scheduleShow: string[] = ['loan__Due_Date__c', 'loan__Total_Installment__c', 'loan__isPaid__c'];
   lptShow: string[] = []; // empty = show all
   historyShow: string[] = ['CreatedDate', 'Field', 'OldValue', 'NewValue'];
 
@@ -921,9 +868,7 @@ export class AppComponent
     if (!this.rawImportJSON?.bills?.length) return;
 
     const rows = this.rawImportJSON.bills
-      .filter((b: any) =>
-        this.copyRawImportBillsHideArchived ? !b.loan__Archived__c : true,
-      )
+      .filter((b: any) => (this.copyRawImportBillsHideArchived ? !b.loan__Archived__c : true))
       .map((obj: any) =>
         Object.values(obj)
           .map((v) => `"${String(v).replace(/"/g, '""')}"`)
@@ -994,9 +939,7 @@ export class AppComponent
 
       // remove from rawImportJSON.loan all keys where value is null or undefined
       this.rawImportJSON.loan = Object.fromEntries(
-        Object.entries(this.rawImportJSON.loan).filter(
-          ([_, value]) => value !== null && value !== undefined,
-        ),
+        Object.entries(this.rawImportJSON.loan).filter(([_, value]) => value !== null && value !== undefined),
       );
 
       // remove from rawImportJSON.lpts array keys _id, Id, attributes, loan_Is_Migrated__c, loan__Automated_Payment_Setup__c, , loan__Loan_Account__c, loan__Other_Charges_Interest__c, loan__Total_Charges_Interest__c, loan__Total_Charges_Principal__c,
@@ -1023,29 +966,25 @@ export class AppComponent
         return dateA.isAfter(dateB) ? 1 : -1;
       });
 
-      this.rawImportJSON.schedule = this.rawImportJSON.schedule.map(
-        (rsi: any) => {
-          return {
-            Name: rsi.Name,
-            loan__Balance__c: rsi.loan__Balance__c,
-            loan__Due_Interest__c: rsi.loan__Due_Interest__c,
-            loan__Due_Principal__c: rsi.loan__Due_Principal__c,
-            loan__Interest_Rounding_Error__c:
-              rsi.loan__Interest_Rounding_Error__c,
-            loan__Total_Installment__c: rsi.loan__Total_Installment__c,
-            loan__Due_Date__c: rsi.loan__Due_Date__c,
-            loan__Is_Archived__c: rsi.loan__Is_Archived__c,
-          };
-        },
-      );
+      this.rawImportJSON.schedule = this.rawImportJSON.schedule.map((rsi: any) => {
+        return {
+          Name: rsi.Name,
+          loan__Balance__c: rsi.loan__Balance__c,
+          loan__Due_Interest__c: rsi.loan__Due_Interest__c,
+          loan__Due_Principal__c: rsi.loan__Due_Principal__c,
+          loan__Interest_Rounding_Error__c: rsi.loan__Interest_Rounding_Error__c,
+          loan__Total_Installment__c: rsi.loan__Total_Installment__c,
+          loan__Due_Date__c: rsi.loan__Due_Date__c,
+          loan__Is_Archived__c: rsi.loan__Is_Archived__c,
+        };
+      });
 
       this.rawImportJSON.bills = this.rawImportJSON.bills.map((bill: any) => {
         return {
           Name: bill.Name,
           loan__Due_Date__c: bill.loan__Due_Date__c,
           loan__Balance_Amount__c: bill.loan__Balance_Amount__c,
-          loan__Compounding_Interest_Billed__c:
-            bill.loan__Compounding_Interest_Billed__c,
+          loan__Compounding_Interest_Billed__c: bill.loan__Compounding_Interest_Billed__c,
           loan__Due_Amt__c: bill.loan__Due_Amt__c,
           // loan__Due_Type_Description__c: bill.loan__Due_Type_Description__c,
           // loan__Due_Type__c: bill.loan__Due_Type__c,
@@ -1075,16 +1014,14 @@ export class AppComponent
         return dateA.isAfter(dateB) ? 1 : -1;
       });
 
-      this.rawImportJSON.history = this.rawImportJSON.history.map(
-        (hist: any) => {
-          return {
-            CreatedDate: hist.CreatedDate,
-            Field: hist.Field,
-            OldValue: hist.OldValue,
-            NewValue: hist.NewValue,
-          };
-        },
-      );
+      this.rawImportJSON.history = this.rawImportJSON.history.map((hist: any) => {
+        return {
+          CreatedDate: hist.CreatedDate,
+          Field: hist.Field,
+          OldValue: hist.OldValue,
+          NewValue: hist.NewValue,
+        };
+      });
 
       // now we will sort history by CreatedDate
       this.rawImportJSON.history.sort((a: any, b: any) => {
@@ -1154,8 +1091,7 @@ export class AppComponent
             loanAmount: row.data.amortization.loanAmount ?? 0,
             startDate: row.data.amortization?.startDate ?? '',
             endDate: row.data.amortization?.endDate ?? '',
-            annualInterestRate:
-              (row.data.amortization?.annualInterestRate ?? 0) * 100,
+            annualInterestRate: (row.data.amortization?.annualInterestRate ?? 0) * 100,
           };
         });
       // console.log('loadSavedLoans:', this.savedLoans);
@@ -1198,8 +1134,7 @@ export class AppComponent
     // If unsaved changes exist => show p-confirmPopup
     this.confirmationService.confirm({
       target: (event.currentTarget || event.target) as EventTarget, // anchor to the button
-      message:
-        'You have unsaved changes. Discard them and load a different loan?',
+      message: 'You have unsaved changes. Discard them and load a different loan?',
       icon: 'pi pi-exclamation-triangle',
       acceptLabel: 'Yes',
       rejectLabel: 'Cancel',
@@ -1216,17 +1151,12 @@ export class AppComponent
   async saveFinancialOps() {
     // If changes exist
     if (this.lendPeak?.financialOpsVersionManager?.hasChanges()) {
-      this.lendPeak?.financialOpsVersionManager.commitTransaction(
-        'User updated some bills/deposits',
-      );
+      this.lendPeak?.financialOpsVersionManager.commitTransaction('User updated some bills/deposits');
     }
 
     // Then store to IndexedDB (like your main loan data)
     const data = this.lendPeak?.financialOpsVersionManager?.toJSON();
-    await this.indexedDbService.saveLoan(
-      'financial_ops_' + this.lendPeak.amortization.name,
-      data,
-    );
+    await this.indexedDbService.saveLoan('financial_ops_' + this.lendPeak.amortization.name, data);
 
     this.messageService.add({
       severity: 'success',
@@ -1235,10 +1165,7 @@ export class AppComponent
     });
   }
 
-  public handleFinancialOpsRollback(payload: {
-    versionId: string;
-    event: Event;
-  }): void {
+  public handleFinancialOpsRollback(payload: { versionId: string; event: Event }): void {
     const { versionId, event } = payload;
     // Show a confirm popup if desired
     this.confirmationService.confirm({
@@ -1249,16 +1176,11 @@ export class AppComponent
       rejectLabel: 'Cancel',
       accept: () => {
         try {
-          this.lendPeak?.financialOpsVersionManager?.rollback(
-            versionId,
-            `Rollback to version ${versionId}`,
-          );
+          this.lendPeak?.financialOpsVersionManager?.rollback(versionId, `Rollback to version ${versionId}`);
           // Re-sync the domain objects
           if (this.lendPeak?.financialOpsVersionManager) {
-            this.lendPeak.bills =
-              this.lendPeak?.financialOpsVersionManager?.getBills();
-            this.lendPeak.depositRecords =
-              this.lendPeak?.financialOpsVersionManager?.getDeposits();
+            this.lendPeak.bills = this.lendPeak?.financialOpsVersionManager?.getBills();
+            this.lendPeak.depositRecords = this.lendPeak?.financialOpsVersionManager?.getDeposits();
           }
           this.messageService.add({
             severity: 'success',
@@ -1330,16 +1252,12 @@ export class AppComponent
     // in that instance we wont commit a transaction because manager has been updated already
     if (lendPeak.amortizationVersionManager?.hasChanges()) {
       //console.log('committing transaction');
-      lendPeak.amortizationVersionManager.commitTransaction(
-        this.changesSummary || 'Initial Version',
-      );
+      lendPeak.amortizationVersionManager.commitTransaction(this.changesSummary || 'Initial Version');
     }
 
     // Also commit Bills+Deposits if changed
     if (lendPeak?.financialOpsVersionManager?.hasChanges()) {
-      lendPeak?.financialOpsVersionManager.commitTransaction(
-        'Financial ops changes',
-      );
+      lendPeak?.financialOpsVersionManager.commitTransaction('Financial ops changes');
     }
 
     // this.versionHistoryRefresh.emit(this.lendPeak.amortizationVersionManager);
@@ -1364,10 +1282,7 @@ export class AppComponent
   exportData() {
     // Code to export data
     console.log('Exporting data', this.lendPeak.amortization.json);
-    console.log(
-      'Exporting data',
-      JSON.stringify(this.lendPeak.amortization.json),
-    );
+    console.log('Exporting data', JSON.stringify(this.lendPeak.amortization.json));
   }
 
   importData() {
@@ -1439,12 +1354,10 @@ export class AppComponent
 
   repaymentPlanEndDateChange(index: number) {
     // when end date is changed following start date should be updated
-    const selectedRow =
-      this.lendPeak.amortization.periodsSchedule.periods[index];
+    const selectedRow = this.lendPeak.amortization.periodsSchedule.periods[index];
     const endDate = dayjs(selectedRow.jsEndDate);
     const startDate = endDate;
-    this.lendPeak.amortization.periodsSchedule.periods[index + 1].startDate =
-      selectedRow.endDate;
+    this.lendPeak.amortization.periodsSchedule.periods[index + 1].startDate = selectedRow.endDate;
     this.submitLoan();
   }
 
@@ -1566,15 +1479,11 @@ export class AppComponent
       accept: () => {
         // user clicked 'Yes' => proceed to rollback
         try {
-          this.lendPeak.amortizationVersionManager?.rollback(
-            versionId,
-            `Rollback to version ${versionId}`,
-          );
+          this.lendPeak.amortizationVersionManager?.rollback(versionId, `Rollback to version ${versionId}`);
           // After rollback, the manager has a new version at the top referencing the old version
           // Re-sync the loan in your UI
           if (this.lendPeak.amortizationVersionManager) {
-            this.lendPeak.amortization =
-              this.lendPeak.amortizationVersionManager?.getAmortization();
+            this.lendPeak.amortization = this.lendPeak.amortizationVersionManager?.getAmortization();
           }
           this.loanModified = true; // or false, depending on your logic
           // Then re-run the schedule if needed
@@ -1584,9 +1493,7 @@ export class AppComponent
             summary: 'Rollback Successful',
             detail: `Rolled back to version ${versionId}`,
           });
-          this.versionHistoryRefresh.emit(
-            this.lendPeak.amortizationVersionManager,
-          );
+          this.versionHistoryRefresh.emit(this.lendPeak.amortizationVersionManager);
         } catch (err) {
           console.error('Rollback error:', err);
           this.messageService.add({
@@ -1677,9 +1584,7 @@ export class AppComponent
     {
       version: '1.4.0',
       date: '2024-10-12',
-      details: [
-        'Implemented early repayment where user can pay off the loan early',
-      ],
+      details: ['Implemented early repayment where user can pay off the loan early'],
     },
     {
       version: '1.5.0',
@@ -1834,10 +1739,7 @@ export class AppComponent
   }
 
   onWelcomeModalDontShowAgainChange() {
-    localStorage.setItem(
-      'hideWelcomeDemoLoanModal',
-      this.hideWelcomeDemoLoanModal ? 'true' : 'false',
-    );
+    localStorage.setItem('hideWelcomeDemoLoanModal', this.hideWelcomeDemoLoanModal ? 'true' : 'false');
   }
 
   onCloseWelcomeDemoLoanModal() {
@@ -1911,17 +1813,17 @@ export class AppComponent
     const height = canvas.offsetHeight * dpr;
     canvas.width = width;
     canvas.height = height;
-    // Generate target positions for particles
-    const numParticles = 32;
+    // --- BURST AND FLOAT ANIMATION ---
+    const numParticles = 40;
     const center = { x: width / 2, y: height / 2 };
     const now0 = performance.now();
     const targets = Array.from({ length: numParticles }, () => ({
       x: Math.random() * width,
       y: Math.random() * height,
-      r: 1.5 + Math.random() * 2.5,
+      r: 3.2 + Math.random() * 2.8,
       dx: (Math.random() - 0.5) * 0.7,
       dy: (Math.random() - 0.5) * 0.7,
-      alpha: 0.5 + Math.random() * 0.5,
+      alpha: 1,
       colorSeed: Math.random() * 360,
     }));
     // Start all particles at center
@@ -1944,7 +1846,7 @@ export class AppComponent
         ctx.arc(p.x, p.y, p.r, 0, 2 * Math.PI);
         ctx.fillStyle = `hsl(${hue}, 100%, 65%)`;
         ctx.shadowColor = `hsl(${hue}, 100%, 85%)`;
-        ctx.shadowBlur = 8;
+        ctx.shadowBlur = 22;
         ctx.fill();
         ctx.restore();
       }
@@ -1961,7 +1863,7 @@ export class AppComponent
             grad.addColorStop(0, `hsl(${hueA}, 100%, 65%)`);
             grad.addColorStop(1, `hsl(${hueB}, 100%, 65%)`);
             ctx.save();
-            ctx.globalAlpha = 0.12;
+            ctx.globalAlpha = 0.32;
             ctx.strokeStyle = grad;
             ctx.beginPath();
             ctx.moveTo(a.x, a.y);
@@ -1991,7 +1893,7 @@ export class AppComponent
         ctx.arc(p.x, p.y, p.r, 0, 2 * Math.PI);
         ctx.fillStyle = `hsl(${hue}, 100%, 65%)`;
         ctx.shadowColor = `hsl(${hue}, 100%, 85%)`;
-        ctx.shadowBlur = 8;
+        ctx.shadowBlur = 22;
         ctx.fill();
         ctx.restore();
         p.x += p.dx;
@@ -2012,7 +1914,7 @@ export class AppComponent
             grad.addColorStop(0, `hsl(${hueA}, 100%, 65%)`);
             grad.addColorStop(1, `hsl(${hueB}, 100%, 65%)`);
             ctx.save();
-            ctx.globalAlpha = 0.12;
+            ctx.globalAlpha = 0.32;
             ctx.strokeStyle = grad;
             ctx.beginPath();
             ctx.moveTo(a.x, a.y);

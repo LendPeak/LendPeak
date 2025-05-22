@@ -1705,7 +1705,7 @@
   [(visible)]="welcomeDemoLoanModalVisible"
   [modal]="true"
   [closable]="false"
-  [style]="{ width: '420px', 'max-width': '95vw' }"
+  [style]="{ width: '600px', 'max-width': '98vw' }"
 >
   <button
     (click)="welcomeDemoLoanModalVisible = false"
@@ -1744,18 +1744,22 @@
   <div
     style="
       text-align: center;
-      padding: 1.5rem 1.5rem 2.2rem 1.5rem;
-      font-family: 'Inter', 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+      padding: 2.2rem 2.2rem 2.7rem 2.2rem;
+      font-family:
+        &quot;Inter&quot;, &quot;Segoe UI&quot;, &quot;Roboto&quot;,
+        &quot;Helvetica Neue&quot;, Arial, sans-serif;
       position: relative;
+      max-width: 700px;
+      margin: 0 auto;
     "
   >
     <h1
       style="
-        font-size: 2.3rem;
+        font-size: 3.1rem;
         font-weight: 900;
         color: #181f2b;
-        margin-bottom: 0.35rem;
-        letter-spacing: -1.5px;
+        margin-bottom: 0.45rem;
+        letter-spacing: -1.7px;
         line-height: 1.08;
       "
     >
@@ -1766,9 +1770,9 @@
       style="
         position: relative;
         width: 100%;
-        height: 90px;
-        margin-top: 2.2rem;
-        margin-bottom: 2.2rem;
+        height: 100px;
+        margin-top: 2.7rem;
+        margin-bottom: 2.7rem;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -1790,10 +1794,10 @@
         style="
           position: relative;
           z-index: 1;
-          font-size: 1.18rem;
+          font-size: 1.55rem;
           color: #4f8cff;
-          font-weight: 800;
-          letter-spacing: 1.5px;
+          font-weight: 900;
+          letter-spacing: 2px;
           text-transform: uppercase;
           opacity: 0;
           transform: scale(0.95);
@@ -1809,9 +1813,9 @@
     <p
       style="
         color: #47506b;
-        font-size: 1.07rem;
-        margin-bottom: 2.1rem;
-        line-height: 1.75;
+        font-size: 1.35rem;
+        margin-bottom: 2.5rem;
+        line-height: 1.85;
         font-weight: 500;
         opacity: 0.93;
       "
@@ -1825,19 +1829,19 @@
       style="
         background: linear-gradient(90deg, #4f8cff 0%, #6f6fff 100%);
         color: #fff;
-        font-weight: 700;
-        font-size: 1.13rem;
+        font-weight: 800;
+        font-size: 1.35rem;
         border: none;
-        border-radius: 8px;
-        padding: 0.95rem 2.3rem;
-        margin-bottom: 1.3rem;
+        border-radius: 10px;
+        padding: 1.15rem 3.1rem;
+        margin-bottom: 1.7rem;
         box-shadow: 0 2px 8px rgba(79, 140, 255, 0.1);
         cursor: pointer;
         transition:
           background 0.2s,
           box-shadow 0.2s,
           transform 0.15s;
-        letter-spacing: 0.5px;
+        letter-spacing: 0.7px;
       "
       (click)="openDemoLoanBrowserDialog(); welcomeDemoLoanModalVisible = false"
     >
@@ -1846,13 +1850,13 @@
     <div
       style="
         position: absolute;
-        left: 1.5rem;
+        left: 2.2rem;
         bottom: -1.1rem;
         width: max-content;
         display: flex;
         align-items: center;
         gap: 0.5rem;
-        font-size: 1.01rem;
+        font-size: 1.13rem;
         color: #6b7280;
         margin-bottom: 1.5rem;
       "

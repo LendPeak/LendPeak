@@ -1,0 +1,56 @@
+.loader-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(10, 17, 36, 0.96); /* less transparent, darker */
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.loader-backdrop.visible {
+  display: flex;
+}
+
+.loader-backdrop.hidden {
+  display: none;
+}
+
+.loader-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.loader-text {
+  position: relative;
+  color: #fff;
+  font-size: 2rem;
+  font-weight: 600;
+  text-shadow: 0 2px 16px rgba(0,0,0,0.7);
+  z-index: 2;
+  letter-spacing: 0.05em;
+  text-align: center;
+  animation: loader-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes loader-pulse {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.82;
+    transform: scale(1.045);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+} 

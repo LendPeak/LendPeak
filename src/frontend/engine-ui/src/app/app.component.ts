@@ -18,6 +18,8 @@ import {
   SecurityContext,
   ChangeDetectorRef,
   AfterViewInit,
+  OnInit,
+  OnDestroy,
 } from '@angular/core';
 
 import {
@@ -66,6 +68,7 @@ import {
   ActualLoanSummary,
 } from 'lendpeak-engine/models/UIInterfaces';
 import { DemoLoanFactory } from './loan-import/demo-loan.factory';
+import { LoaderService } from './shared/components/loader/loader.service';
 
 declare let gtag: Function;
 
@@ -76,13 +79,20 @@ declare let gtag: Function;
   providers: [MessageService, ConfirmationService, MarkdownService],
   standalone: false,
 })
-export class AppComponent implements OnChanges, AfterViewInit {
+export class AppComponent
+  implements OnChanges, AfterViewInit, OnInit, OnDestroy
+{
   @ViewChild('confirmPopup') confirmPopup!: ConfirmPopup;
   @ViewChild('repaymentPlanTable', { static: false })
   repaymentPlanTableRef!: ElementRef;
   public versionHistoryRefresh = new EventEmitter<AmortizationVersionManager>();
   @ViewChild('particleCanvas')
   particleCanvasRef!: ElementRef<HTMLCanvasElement>;
+
+  loaderText: string = 'Loading...';
+  loaderMinDisplayTime: number = 0;
+  loaderVisible: boolean = false;
+  private loaderSub: any;
 
   constructor(
     private route: ActivatedRoute,
@@ -96,6 +106,7 @@ export class AppComponent implements OnChanges, AfterViewInit {
     private systemSettingsService: SystemSettingsService,
     private markdownService: MarkdownService,
     private cdr: ChangeDetectorRef,
+    private loaderService: LoaderService,
   ) {}
 
   developerMode: DeveloperModeType = 'Disabled';
@@ -161,34 +172,29 @@ export class AppComponent implements OnChanges, AfterViewInit {
       rawImportData?: string;
     }[],
   ) {
-    if (loanData.length > 1) {
-      // Multiple loans imported
-      // For example, save each loan individually under its own name
-
-      for (let singleLoan of loanData) {
-        console.log('adding loan:', singleLoan.loan.name);
-        try {
+    this.loaderService.show('Importing loan...', 5000);
+    try {
+      if (loanData.length > 1) {
+        for (let singleLoan of loanData) {
           await this.saveLoanWithoutLoading(singleLoan);
-        } catch (e) {
-          console.error('Error while saving loan:', e, singleLoan);
         }
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Success',
+          detail: `${loanData.length} loans imported and saved successfully.`,
+        });
+      } else {
+        await this.saveAndLoadLoan(loanData[0]);
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Success',
+          detail: `Loan "${loanData[0].loan.name}" imported successfully`,
+        });
       }
-      this.messageService.add({
-        severity: 'success',
-        summary: 'Success',
-        detail: `${loanData.length} loans imported and saved successfully.`,
-      });
-    } else {
-      // Single loan imported
-      await this.saveAndLoadLoan(loanData[0]);
-      this.messageService.add({
-        severity: 'success',
-        summary: 'Success',
-        detail: `Loan "${loanData[0].loan.name}" imported successfully`,
-      });
+      this.showLoanImportDialog = false;
+    } finally {
+      this.loaderService.hide();
     }
-
-    this.showLoanImportDialog = false;
   }
 
   aiSummaryInProgress: boolean = false;
@@ -617,6 +623,12 @@ export class AppComponent implements OnChanges, AfterViewInit {
     this.hideWelcomeDemoLoanModal =
       localStorage.getItem('hideWelcomeDemoLoanModal') === 'true';
     this.welcomeDemoLoanModalVisible = !this.hideWelcomeDemoLoanModal;
+
+    this.loaderSub = this.loaderService.loaderState$.subscribe((state) => {
+      this.loaderText = state.text;
+      this.loaderMinDisplayTime = state.minDisplayTime;
+      this.loaderVisible = state.visible;
+    });
   }
 
   loadDefaultLoan() {
@@ -2035,5 +2047,9 @@ export class AppComponent implements OnChanges, AfterViewInit {
         el.style.transform = 'scale(1)';
       }, 100);
     }
+  }
+
+  ngOnDestroy() {
+    if (this.loaderSub) this.loaderSub.unsubscribe();
   }
 }

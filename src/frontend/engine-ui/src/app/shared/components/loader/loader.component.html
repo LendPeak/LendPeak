@@ -1,0 +1,8 @@
+<div
+  class="loader-backdrop"
+  [class.visible]="visible"
+  [class.hidden]="!visible"
+>
+  <canvas #particleCanvas class="loader-canvas"></canvas>
+  <div class="loader-text">{{ text }}</div>
+</div>

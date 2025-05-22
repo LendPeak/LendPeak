@@ -99,6 +99,8 @@ import {
   withInterceptorsFromDi,
 } from '@angular/common/http';
 
+import { LoaderComponent } from './shared/components/loader/loader.component';
+
 @NgModule({
   declarations: [
     AppComponent,
@@ -120,6 +122,7 @@ import {
     RefundDialogComponent,
     RefundsListDialogComponent,
     DemoLoanBrowserComponent,
+    LoaderComponent,
   ],
   imports: [
     DynamicDialogModule,

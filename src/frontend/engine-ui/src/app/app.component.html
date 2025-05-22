@@ -1889,3 +1889,9 @@
     (selected)="onDemoLoanSelected($event)"
   ></app-demo-loan-browser>
 </p-dialog>
+
+<app-loader
+  [text]="loaderText"
+  [minDisplayTime]="loaderMinDisplayTime"
+  [visible]="loaderVisible"
+></app-loader>

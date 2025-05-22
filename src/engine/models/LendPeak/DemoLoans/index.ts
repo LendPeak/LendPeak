@@ -4,3 +4,6 @@ export * from "./demo-c3";
 export * from "./demo-c4";
 export * from "./demo-c5";
 export * from "./demo-c6";
+export * from "./demo-c7";
+export * from "./demo-c8";
+export * from "./demo-c10";

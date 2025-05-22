@@ -88,6 +88,9 @@ export class LoanImportComponent implements OnInit, OnDestroy {
   totalLoans: number = 0;
   progressValue: number = 0; // 0–100
 
+  // Track last connector type to avoid clearing searchValue unnecessarily
+  private lastConnectorType: string | null = null;
+
   constructor(
     private connectorService: ConnectorService,
     private importService: ConnectorImportService,
@@ -411,6 +414,8 @@ export class LoanImportComponent implements OnInit, OnDestroy {
         summary: 'Success',
         detail: `${loanData.length} loans imported successfully.`,
       });
+      // Optionally clear after import (uncomment if desired)
+      // this.searchValue = '';
     } catch (e) {
       console.error('Error importing loan(s):', e);
       this.messageService.add({
@@ -771,12 +776,20 @@ export class LoanImportComponent implements OnInit, OnDestroy {
   /** adjust searchType whenever the connector changes */
   onConnectorChange(): void {
     const connector = this.getSelectedConnector();
-    if (connector?.type === 'Mongo') {
-      // force System-ID search & clear any range inputs
+    if (!connector) return;
+
+    // Only clear if the connector type actually changes
+    if (this.lastConnectorType && this.lastConnectorType !== connector.type) {
+      this.searchValue = '';
+      this.fromSystemId = '';
+      this.toSystemId = '';
+    } else if (connector.type === 'Mongo') {
+      // Only clear range fields, not searchValue
       this.searchType = 'systemId';
       this.fromSystemId = '';
       this.toSystemId = '';
     }
+    this.lastConnectorType = connector.type;
   }
 
   private mapDeposits(loanData: LoanResponse): DepositRecords {

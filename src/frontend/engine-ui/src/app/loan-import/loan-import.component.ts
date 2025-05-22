@@ -213,20 +213,20 @@ export class LoanImportComponent implements OnInit, OnDestroy {
 
   /**
    * Import the loan chosen in the Demo-Loans tree.
-   * Assumes each leaf node’s data object exposes a `factory()` that
+   * Assumes each leaf node's data object exposes a `factory()` that
    * yields { loan: Amortization, deposits: DepositRecords }.
    */
 
   importDemoLoan(): void {
-    const node = this.selectedTreeNode;
-    const demoId = node?.key ?? '';
+    const demo = this.selectedDemoLoan;
+    const demoId = demo?.id ?? '';
 
     const factory = DemoLoanFactory[demoId];
     if (!factory) {
       this.messageService.add({
         severity: 'warn',
         summary: 'No loan selected',
-        detail: 'Please choose a demo loan in the tree first.',
+        detail: 'Please choose a demo loan in the library first.',
       });
       return;
     }

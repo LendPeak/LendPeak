@@ -1,5 +1,3 @@
-
-
 /* Tooltip adjustments */
 .ui-tooltip {
     max-width: 250px;
@@ -376,4 +374,409 @@ footer p {
     margin: 0;
     color: #888;
     white-space: nowrap;
+}
+
+/* --- Ultra-Modern LendPeak Welcome Modal Styles --- */
+.lp-welcome-modal-advanced-bg {
+  position: relative;
+  min-height: 100%;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #e0e7ff 0%, #f0f4ff 100%);
+  overflow: hidden;
+}
+.lp-welcome-bg-svg {
+  position: absolute;
+  top: 0; left: 0; width: 100%; height: 100%;
+  z-index: 0;
+  pointer-events: none;
+  animation: bgMove 12s ease-in-out infinite alternate;
+}
+@keyframes bgMove {
+  0% { transform: scale(1) translateY(0); }
+  100% { transform: scale(1.04) translateY(-10px); }
+}
+
+.lp-welcome-modal-advanced-glass {
+  position: relative;
+  z-index: 1;
+  background: rgba(255,255,255,0.82);
+  border-radius: 22px;
+  box-shadow: 0 12px 40px rgba(79,140,255,0.18), 0 2px 12px rgba(0,0,0,0.10);
+  padding: 2.8rem 2.2rem 1.7rem 2.2rem;
+  max-width: 420px;
+  width: 100%;
+  text-align: center;
+  backdrop-filter: blur(16px) saturate(1.2);
+  border: 1.5px solid rgba(79,140,255,0.10);
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.lp-welcome-advanced-icon {
+  margin-bottom: 1.5rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  filter: drop-shadow(0 0 16px #4f8cff88);
+  animation: iconGlow 2.5s ease-in-out infinite alternate;
+}
+@keyframes iconGlow {
+  0% { filter: drop-shadow(0 0 8px #4f8cff44); }
+  100% { filter: drop-shadow(0 0 24px #4f8cffcc); }
+}
+
+.lp-welcome-advanced-title {
+  font-size: 2.2rem;
+  font-weight: 900;
+  color: #1e293b;
+  margin-bottom: 0.4rem;
+  letter-spacing: -1.2px;
+  text-shadow: 0 2px 8px #e0e7ff;
+}
+
+.lp-welcome-advanced-subtitle {
+  font-size: 1.15rem;
+  color: #4f8cff;
+  font-weight: 700;
+  margin-bottom: 1.2rem;
+  letter-spacing: 0.7px;
+  text-transform: uppercase;
+}
+
+.lp-welcome-advanced-desc {
+  color: #334155;
+  font-size: 1.08rem;
+  margin-bottom: 2.2rem;
+  line-height: 1.7;
+  font-weight: 500;
+}
+
+.lp-welcome-advanced-btn {
+  background: linear-gradient(90deg, #4f8cff 0%, #6f6fff 100%);
+  color: #fff;
+  font-weight: 800;
+  font-size: 1.13rem;
+  border: none;
+  border-radius: 10px;
+  padding: 1rem 2.5rem;
+  margin-bottom: 1.3rem;
+  box-shadow: 0 2px 12px rgba(79,140,255,0.13);
+  transition: background 0.2s, box-shadow 0.2s, transform 0.15s;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+.lp-welcome-advanced-btn::after {
+  content: '';
+  position: absolute;
+  left: 50%; top: 50%;
+  width: 0; height: 0;
+  background: rgba(111,111,255,0.18);
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  transition: width 0.4s, height 0.4s;
+  z-index: 0;
+}
+.lp-welcome-advanced-btn:hover {
+  background: linear-gradient(90deg, #6f6fff 0%, #4f8cff 100%);
+  box-shadow: 0 6px 24px rgba(79,140,255,0.22);
+  transform: translateY(-2px) scale(1.035);
+}
+.lp-welcome-advanced-btn:active::after {
+  width: 180%; height: 180%;
+}
+
+.lp-welcome-advanced-checkbox {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-size: 1.01rem;
+  color: #64748b;
+  margin-bottom: 1.3rem;
+}
+.lp-welcome-advanced-checkbox label {
+  cursor: pointer;
+  font-weight: 400;
+  color: #64748b;
+}
+
+.lp-welcome-advanced-logo {
+  margin-top: 0.7rem;
+  opacity: 0.8;
+  display: flex;
+  justify-content: center;
+  background: rgba(255,255,255,0.7);
+  border-radius: 12px;
+  box-shadow: 0 1px 6px rgba(79,140,255,0.08);
+  padding: 0.3rem 1.2rem;
+  width: fit-content;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+@media (max-width: 600px) {
+  .lp-welcome-modal-advanced-glass {
+    padding: 1.2rem 0.5rem 1rem 0.5rem;
+    max-width: 98vw;
+  }
+  .lp-welcome-advanced-title {
+    font-size: 1.3rem;
+  }
+  .lp-welcome-advanced-desc {
+    font-size: 0.98rem;
+  }
+  .lp-welcome-advanced-btn {
+    font-size: 1rem;
+    padding: 0.7rem 1.2rem;
+  }
+}
+
+/* Remove old welcome modal styles if present */
+.lp-welcome-modal-bg, .lp-welcome-modal-content, .lp-welcome-icon, .lp-welcome-title, .lp-welcome-subtitle, .lp-welcome-desc, .lp-welcome-btn, .lp-welcome-checkbox, .lp-welcome-logo {
+  display: none !important;
+}
+
+/* Remove border, background, and header from PrimeNG dialog for welcome modal */
+.p-dialog[style*='440px'] {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
+.p-dialog[style*='440px'] .p-dialog-content {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+.p-dialog[style*='440px'] .p-dialog-header {
+  display: none !important;
+}
+.p-dialog-mask, .p-component-overlay {
+  background: rgba(0,0,0,0.18) !important; /* or rgba(0,0,0,0) for fully transparent */
+}
+.lp-welcome-modal-advanced-glass {
+  width: 100% !important;
+  height: 100% !important;
+  border-radius: 22px !important;
+  margin: 0 !important;
+  box-sizing: border-box;
+}
+
+/* --- Nuclear fix: Remove all backgrounds, borders, and shadows from PrimeNG dialog and parents for welcome modal --- */
+.p-dialog, .p-dialog-content, .p-dialog-header, .p-dialog-wrapper, .p-dialog-mask, .p-component-overlay {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+  border-radius: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+.p-dialog {
+  border-radius: 0 !important;
+  overflow: visible !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  background: transparent !important;
+}
+.p-dialog .p-dialog-content, .p-dialog .p-dialog-header {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+.p-dialog-header, .p-dialog-title, .p-dialog-footer {
+  display: none !important;
+}
+.p-dialog-mask, .p-component-overlay {
+  background: rgba(0,0,0,0.18) !important;
+}
+.lp-welcome-modal-advanced-glass {
+  width: 100vw !important;
+  max-width: 440px !important;
+  height: 100vh !important;
+  max-height: 98vh !important;
+  border-radius: 32px !important;
+  margin: 0 !important;
+  box-sizing: border-box;
+  background: rgba(255,255,255,0.82) !important;
+  box-shadow: 0 12px 40px rgba(79,140,255,0.18), 0 2px 12px rgba(0,0,0,0.10) !important;
+  overflow: hidden !important;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.lp-welcome-close-btn {
+  position: absolute;
+  top: 24px;
+  right: 24px;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #fff;
+  color: #4f8cff;
+  border: none;
+  box-shadow: 0 2px 8px rgba(79,140,255,0.12);
+  font-size: 2.2rem;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 10;
+  transition: background 0.2s, color 0.2s, box-shadow 0.2s, transform 0.15s;
+}
+.lp-welcome-close-btn:hover {
+  background: #4f8cff;
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(79,140,255,0.18);
+  transform: scale(1.08);
+}
+
+@media (max-width: 600px) {
+  .lp-welcome-modal-advanced-glass {
+    width: 98vw !important;
+    height: 98vh !important;
+    max-width: 98vw !important;
+    max-height: 98vh !important;
+    border-radius: 18px !important;
+    padding: 0.5rem !important;
+  }
+  .lp-welcome-close-btn {
+    top: 10px;
+    right: 10px;
+    width: 38px;
+    height: 38px;
+    font-size: 1.5rem;
+  }
+}
+
+/* --- Modern Headless Welcome Modal Styles --- */
+.lp-welcome-card {
+  background: #fff;
+  border-radius: 20px;
+  box-shadow: 0 8px 32px rgba(79,140,255,0.12), 0 1.5px 8px rgba(0,0,0,0.08);
+  max-width: 420px;
+  min-width: 320px;
+  min-height: 340px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 2rem 1.5rem 1.5rem 1.5rem;
+  position: relative;
+  text-align: center;
+  display: block;
+  overflow: visible;
+}
+.lp-welcome-close-btn {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: #f3f4f6;
+  color: #4f8cff;
+  border: none;
+  box-shadow: 0 2px 8px rgba(79,140,255,0.10);
+  font-size: 2rem;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 10;
+  transition: background 0.2s, color 0.2s, box-shadow 0.2s, transform 0.15s;
+}
+.lp-welcome-close-btn:hover {
+  background: #4f8cff;
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(79,140,255,0.18);
+  transform: scale(1.08);
+}
+.lp-welcome-title {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #1e293b;
+  margin-bottom: 0.5rem;
+  letter-spacing: -1px;
+}
+.lp-welcome-subtitle {
+  font-size: 1.1rem;
+  color: #4f8cff;
+  font-weight: 600;
+  margin-bottom: 1.1rem;
+  letter-spacing: 0.5px;
+}
+.lp-welcome-desc {
+  color: #334155;
+  font-size: 1.08rem;
+  margin-bottom: 2.2rem;
+  line-height: 1.7;
+  font-weight: 500;
+}
+.lp-welcome-btn {
+  background: linear-gradient(90deg, #4f8cff 0%, #6f6fff 100%);
+  color: #fff;
+  font-weight: 700;
+  font-size: 1.1rem;
+  border: none;
+  border-radius: 8px;
+  padding: 0.85rem 2.2rem;
+  margin-bottom: 1.2rem;
+  box-shadow: 0 2px 8px rgba(79,140,255,0.10);
+  cursor: pointer;
+  transition: background 0.2s, box-shadow 0.2s, transform 0.15s;
+}
+.lp-welcome-btn:hover {
+  background: linear-gradient(90deg, #6f6fff 0%, #4f8cff 100%);
+  box-shadow: 0 4px 16px rgba(79,140,255,0.18);
+  transform: translateY(-2px) scale(1.03);
+}
+.lp-welcome-checkbox {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-size: 0.98rem;
+  color: #6b7280;
+  margin-bottom: 1.2rem;
+}
+.lp-welcome-checkbox label {
+  cursor: pointer;
+  font-weight: 400;
+  color: #6b7280;
+}
+@media (max-width: 600px) {
+  .lp-welcome-card {
+    padding: 1.2rem 0.5rem 1rem 0.5rem;
+    max-width: 98vw;
+  }
+  .lp-welcome-title {
+    font-size: 1.3rem;
+  }
+  .lp-welcome-desc {
+    font-size: 0.98rem;
+  }
+  .lp-welcome-btn {
+    font-size: 1rem;
+    padding: 0.7rem 1.2rem;
+  }
+  .lp-welcome-close-btn {
+    top: 8px;
+    right: 8px;
+    width: 36px;
+    height: 36px;
+    font-size: 1.3rem;
+  }
 }

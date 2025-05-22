@@ -40,6 +40,8 @@ export class SystemSettingsComponent {
     value: 'Disabled',
   };
 
+  showWelcomeDialogLocalStorage: boolean = true;
+
   constructor(private settingsService: SystemSettingsService) {}
 
   /**
@@ -58,6 +60,10 @@ export class SystemSettingsComponent {
       label: developerMode,
       value: developerMode,
     };
+
+    // Sync local storage value
+    this.showWelcomeDialogLocalStorage =
+      localStorage.getItem('hideWelcomeDemoLoanModal') !== 'true';
   }
 
   onDialogHide() {
@@ -68,9 +74,13 @@ export class SystemSettingsComponent {
 
   saveAndClose() {
     // persist choice
-    // console.log('saving assistant', this.selectedAiAssistant);
     this.settingsService.setAiAssistant(this.selectedAiAssistant.value);
     this.settingsService.setDeveloperMode(this.selectedDeveloperMode.value);
+    // Save local storage value
+    localStorage.setItem(
+      'hideWelcomeDemoLoanModal',
+      this.showWelcomeDialogLocalStorage ? 'false' : 'true',
+    );
     this.showSystemSettingsDialog = false;
     this.showSystemSettingsDialogChange.emit(false);
     this.systemsSettingsChange.emit();

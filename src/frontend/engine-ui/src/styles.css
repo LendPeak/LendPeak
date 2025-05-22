@@ -9,3 +9,10 @@ html {
     /* Reduce base font size to 80% of default */
 }
 
+/* PrimeNG Dialog Mask Blur Override */
+.p-dialog-mask.backdrop-blur-lg {
+  background: rgba(255,255,255,0.10) !important; /* or rgba(0,0,0,0.10) for a darker effect */
+  backdrop-filter: blur(6px) !important;
+  -webkit-backdrop-filter: blur(6px) !important;
+}
+

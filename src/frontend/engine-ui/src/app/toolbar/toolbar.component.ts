@@ -15,6 +15,7 @@ import { sequence } from '@angular/animations';
 export class ToolbarComponent {
   @Input() snapshotDate: Date = new Date();
   @Output() snapshotDateChange = new EventEmitter<Date>();
+  @Output() openDemoLoanBrowser = new EventEmitter<void>();
 
   @Input() toolbarActions: MenuItem[] = [];
 

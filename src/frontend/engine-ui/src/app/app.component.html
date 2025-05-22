@@ -25,6 +25,7 @@
     [toolbarActions]="toolbarActions"
     (openEditLoanDialog)="openEditLoanDialog()"
     (openSaveLoanDialog)="openSaveLoanDialog()"
+    (openDemoLoanBrowser)="openDemoLoanBrowserDialog()"
   ></app-toolbar>
 
   <div class="w-full pt-3 pb-3 border-top-2 shadow-2 border-indigo-300">
@@ -157,7 +158,7 @@
         class="ml-2"
         severity="info"
         value="Payoff Date Set {{
-          lendPeak.amortization.payoffDate?.toString() |   date: 'yyyy-MM-dd'
+          lendPeak.amortization.payoffDate?.toString() | date: 'yyyy-MM-dd'
         }}"
       ></p-tag>
       <p-tag
@@ -515,7 +516,7 @@
               </div>
             </ng-template>
             <p class="m-0 text-300 font-semibold text-3xl text-center">
-              {{ lendPeak.expectedMaturity.toString() |  date: "yyyy-MM-dd" }}
+              {{ lendPeak.expectedMaturity.toString() | date: "yyyy-MM-dd" }}
             </p>
           </p-card>
         </div>
@@ -529,7 +530,7 @@
               </div>
             </ng-template>
             <p class="m-0 text-300 font-semibold text-3xl text-center">
-              {{ lendPeak.actualPayoff.toString() |  date: "yyyy-MM-dd" }}
+              {{ lendPeak.actualPayoff.toString() | date: "yyyy-MM-dd" }}
             </p>
           </p-card>
         </div>
@@ -661,7 +662,7 @@
               </div>
             </ng-template>
             <p class="m-0 text-300 font-semibold text-3xl text-center">
-              {{ lendPeak.expectedMaturity.toString() |  date: "yyyy-MM-dd" }}
+              {{ lendPeak.expectedMaturity.toString() | date: "yyyy-MM-dd" }}
             </p>
           </p-card>
         </div>
@@ -675,7 +676,7 @@
               </div>
             </ng-template>
             <p class="m-0 text-300 font-semibold text-3xl text-center">
-              {{ lendPeak.actualPayoff.toString() |  date: "yyyy-MM-dd" }}
+              {{ lendPeak.actualPayoff.toString() | date: "yyyy-MM-dd" }}
             </p>
           </p-card>
         </div>
@@ -871,7 +872,7 @@
               {{
                 lendPeak.bills.nextUpcomingBill
                   ? (lendPeak.bills.nextUpcomingBill.dueDate.toString()
-                    |  date: "yyyy-MM-dd")
+                    | date: "yyyy-MM-dd")
                   : "No more bills left"
               }}
             </p>
@@ -937,7 +938,7 @@
               {{
                 lendPeak.depositRecords.lastActive
                   ? (lendPeak.depositRecords.lastActive.effectiveDate.toString()
-                    |  date: "yyyy-MM-dd")
+                    | date: "yyyy-MM-dd")
                   : "None"
               }}
             </p>
@@ -1606,8 +1607,8 @@
         <td>{{ loan.id }}</td>
         <td>{{ loan.name }}</td>
         <td>{{ loan.description }}</td>
-        <td>{{ loan.startDate |  date: "yyyy-MM-dd" }}</td>
-        <td>{{ loan.endDate |  date: "yyyy-MM-dd" }}</td>
+        <td>{{ loan.startDate | date: "yyyy-MM-dd" }}</td>
+        <td>{{ loan.endDate | date: "yyyy-MM-dd" }}</td>
         <td>{{ loan.loanAmount | currency }}</td>
         <td>{{ loan.annualInterestRate }}%</td>
         <td>
@@ -1695,4 +1696,192 @@
     <p-button label="Cancel" (click)="showEditLoanDialog = false"></p-button>
     <p-button label="Save" (click)="saveEditedLoanDetails()"></p-button>
   </div>
+</p-dialog>
+
+<p-dialog
+  header=""
+  maskStyleClass="backdrop-blur-lg"
+  styleClass="!border-0 !bg-white"
+  [(visible)]="welcomeDemoLoanModalVisible"
+  [modal]="true"
+  [closable]="false"
+  [style]="{ width: '420px', 'max-width': '95vw' }"
+>
+  <button
+    (click)="welcomeDemoLoanModalVisible = false"
+    style="
+      position: absolute;
+      top: -22px;
+      right: -22px;
+      z-index: 1001;
+      background: #fff;
+      border: none;
+      border-radius: 50%;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.13);
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: box-shadow 0.18s;
+      font-size: 1.45rem;
+      color: #47506b;
+      outline: none;
+    "
+  >
+    <span
+      style="
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        height: 100%;
+      "
+      ><i class="pi pi-times"></i
+    ></span>
+  </button>
+  <div
+    style="
+      text-align: center;
+      padding: 1.5rem 1.5rem 2.2rem 1.5rem;
+      font-family: 'Inter', 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+      position: relative;
+    "
+  >
+    <h1
+      style="
+        font-size: 2.3rem;
+        font-weight: 900;
+        color: #181f2b;
+        margin-bottom: 0.35rem;
+        letter-spacing: -1.5px;
+        line-height: 1.08;
+      "
+    >
+      Welcome to the Future of Lending
+    </h1>
+    <!-- Particle Animation Canvas and Animated Subtitle -->
+    <div
+      style="
+        position: relative;
+        width: 100%;
+        height: 90px;
+        margin-top: 2.2rem;
+        margin-bottom: 2.2rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      "
+    >
+      <canvas
+        #particleCanvas
+        style="
+          position: absolute;
+          left: 0;
+          top: 0;
+          width: 100%;
+          height: 100%;
+          pointer-events: none;
+        "
+      ></canvas>
+      <div
+        id="subtitle-animated"
+        style="
+          position: relative;
+          z-index: 1;
+          font-size: 1.18rem;
+          color: #4f8cff;
+          font-weight: 800;
+          letter-spacing: 1.5px;
+          text-transform: uppercase;
+          opacity: 0;
+          transform: scale(0.95);
+          transition:
+            opacity 1.2s cubic-bezier(0.4, 0, 0.2, 1),
+            transform 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+          text-shadow: 0 2px 8px #e0e7ff;
+        "
+      >
+        Interactive. Visual. Powerful.
+      </div>
+    </div>
+    <p
+      style="
+        color: #47506b;
+        font-size: 1.07rem;
+        margin-bottom: 2.1rem;
+        line-height: 1.75;
+        font-weight: 500;
+        opacity: 0.93;
+      "
+    >
+      Dive into a live sandbox of advanced loan scenarios. Visualize,
+      experiment, and innovate with the most modern lending engine—right in your
+      browser.
+    </p>
+    <button
+      pButton
+      style="
+        background: linear-gradient(90deg, #4f8cff 0%, #6f6fff 100%);
+        color: #fff;
+        font-weight: 700;
+        font-size: 1.13rem;
+        border: none;
+        border-radius: 8px;
+        padding: 0.95rem 2.3rem;
+        margin-bottom: 1.3rem;
+        box-shadow: 0 2px 8px rgba(79, 140, 255, 0.1);
+        cursor: pointer;
+        transition:
+          background 0.2s,
+          box-shadow 0.2s,
+          transform 0.15s;
+        letter-spacing: 0.5px;
+      "
+      (click)="openDemoLoanBrowserDialog(); welcomeDemoLoanModalVisible = false"
+    >
+      Launch Demo Library
+    </button>
+    <div
+      style="
+        position: absolute;
+        left: 1.5rem;
+        bottom: -1.1rem;
+        width: max-content;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 1.01rem;
+        color: #6b7280;
+        margin-bottom: 1.5rem;
+      "
+    >
+      <p-checkbox
+        inputId="dontShowAgain"
+        [(ngModel)]="hideWelcomeDemoLoanModal"
+        (onChange)="onWelcomeModalDontShowAgainChange()"
+        binary="true"
+      ></p-checkbox>
+      <label
+        for="dontShowAgain"
+        style="cursor: pointer; font-weight: 400; color: #6b7280"
+        >Don't show again</label
+      >
+    </div>
+    <div style="height: 2.5rem; width: 100%"></div>
+  </div>
+</p-dialog>
+
+<p-dialog
+  header="Demo Loan Library"
+  [(visible)]="demoLoanBrowserDialogVisible"
+  [modal]="true"
+  [closable]="true"
+  (onHide)="closeDemoLoanBrowserDialog()"
+  [style]="{ width: '40vw' }"
+>
+  <app-demo-loan-browser
+    (selected)="onDemoLoanSelected($event)"
+  ></app-demo-loan-browser>
 </p-dialog>

@@ -13,7 +13,8 @@
     "
   >
     <span class="text-lg font-bold"
-      >Time Travel Mode Active — {{ snapshotDate.toString() |  date: "yyyy-MM-dd" }}</span
+      >Time Travel Mode Active —
+      {{ snapshotDate.toString() | date: "yyyy-MM-dd" }}</span
     >
   </div>
   <!-- spacer -->
@@ -24,7 +25,6 @@
 <p-menubar [model]="toolbarActions" class="w-full">
   <ng-template #start>
     <img src="horizontal-logo.png" style="width: 10em" />
-    <!-- <i class="pi pi-apple px-2"></i> -->
   </ng-template>
 
   <ng-template #item let-item>

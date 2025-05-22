@@ -28,6 +28,14 @@
     appendTo="body"
   ></p-select>
 
+  <h3>Local Storage / Personalization</h3>
+  <div class="flex align-items-center gap-2 mb-3">
+    <p-toggleswitch
+      [(ngModel)]="showWelcomeDialogLocalStorage"
+    ></p-toggleswitch>
+    <label for="showWelcomeDialogLocalStorage">Show Welcome Dialog</label>
+  </div>
+
   <div class="flex gap-2 mt-4 justify-content-end">
     <button
       pButton

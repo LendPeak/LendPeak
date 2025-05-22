@@ -19,7 +19,8 @@
 <!-- ───────────────────── Demo-loan browser ────────────────────── -->
 <app-demo-loan-browser
   *ngIf="isDemoSelected"
-  (selected)="selectedDemoLoan = $event">
+  (selected)="selectedDemoLoan = $event"
+>
 </app-demo-loan-browser>
 
 <!-- ───────────────────── Regular connector search UI ────────────────────── -->
@@ -106,7 +107,7 @@
     *ngIf="isDemoSelected"
     label="Import Selected Loan"
     icon="pi pi-cloud-download"
-    [disabled]="!selectedTreeNode"
+    [disabled]="!selectedDemoLoan"
     (click)="importDemoLoan()"
     [loading]="isLoading"
     severity="success"

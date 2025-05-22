@@ -1856,14 +1856,14 @@ export class AppComponent implements OnChanges, AfterViewInit, OnInit, OnDestroy
           const a = this.particles[i];
           const b = this.particles[j];
           const dist = Math.hypot(a.x - b.x, a.y - b.y);
-          if (dist < 80) {
+          if (dist < 130) {
             const hueA = (a.colorSeed + (now - now0) / 10) % 360;
             const hueB = (b.colorSeed + (now - now0) / 10) % 360;
             const grad = ctx.createLinearGradient(a.x, a.y, b.x, b.y);
             grad.addColorStop(0, `hsl(${hueA}, 100%, 65%)`);
             grad.addColorStop(1, `hsl(${hueB}, 100%, 65%)`);
             ctx.save();
-            ctx.globalAlpha = 0.32;
+            ctx.globalAlpha = 0.36;
             ctx.strokeStyle = grad;
             ctx.beginPath();
             ctx.moveTo(a.x, a.y);
@@ -1907,14 +1907,14 @@ export class AppComponent implements OnChanges, AfterViewInit, OnInit, OnDestroy
           const a = this.particles[i];
           const b = this.particles[j];
           const dist = Math.hypot(a.x - b.x, a.y - b.y);
-          if (dist < 80) {
+          if (dist < 130) {
             const hueA = (a.colorSeed + (now - now0) / 10) % 360;
             const hueB = (b.colorSeed + (now - now0) / 10) % 360;
             const grad = ctx.createLinearGradient(a.x, a.y, b.x, b.y);
             grad.addColorStop(0, `hsl(${hueA}, 100%, 65%)`);
             grad.addColorStop(1, `hsl(${hueB}, 100%, 65%)`);
             ctx.save();
-            ctx.globalAlpha = 0.32;
+            ctx.globalAlpha = 0.36;
             ctx.strokeStyle = grad;
             ctx.beginPath();
             ctx.moveTo(a.x, a.y);

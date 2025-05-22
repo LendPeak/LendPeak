@@ -1755,12 +1755,16 @@
   >
     <h1
       style="
-        font-size: 3.1rem;
-        font-weight: 900;
-        color: #181f2b;
+        font-size: 2.8rem;
+        font-weight: 600;
+        font-family:
+          &quot;Inter&quot;, &quot;Montserrat&quot;, &quot;Segoe UI&quot;,
+          &quot;Roboto&quot;, Arial, sans-serif;
+        color: #1a223a;
         margin-bottom: 0.45rem;
-        letter-spacing: -1.7px;
-        line-height: 1.08;
+        letter-spacing: -0.5px;
+        line-height: 1.12;
+        text-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
       "
     >
       Welcome to the Future of Lending
@@ -1794,35 +1798,57 @@
         style="
           position: relative;
           z-index: 1;
-          font-size: 1.55rem;
-          color: #4f8cff;
+          font-size: 1.7rem;
+          font-family:
+            &quot;Inter&quot;, &quot;Montserrat&quot;, &quot;Segoe UI&quot;,
+            &quot;Roboto&quot;, Arial, sans-serif;
           font-weight: 900;
-          letter-spacing: 2px;
+          letter-spacing: 2.5px;
           text-transform: uppercase;
-          opacity: 0;
-          transform: scale(0.95);
-          transition:
-            opacity 1.2s cubic-bezier(0.4, 0, 0.2, 1),
-            transform 1.2s cubic-bezier(0.4, 0, 0.2, 1);
-          text-shadow: 0 2px 8px #e0e7ff;
+          background: linear-gradient(90deg, #4f8cff 0%, #6f6fff 100%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+          text-fill-color: transparent;
+          opacity: 0.98;
+          animation: shimmer 2.2s infinite linear;
+          text-shadow:
+            0 4px 24px #4f8cff55,
+            0 2px 8px #e0e7ff55;
         "
       >
         Interactive. Visual. Powerful.
       </div>
+      <style>
+        @keyframes shimmer {
+          0% {
+            filter: brightness(1) drop-shadow(0 0 2px #4f8cff);
+          }
+          50% {
+            filter: brightness(1.18) drop-shadow(0 0 8px #6f6fff);
+          }
+          100% {
+            filter: brightness(1) drop-shadow(0 0 2px #4f8cff);
+          }
+        }
+      </style>
     </div>
     <p
       style="
         color: #47506b;
-        font-size: 1.35rem;
+        font-size: 1.18rem;
         margin-bottom: 2.5rem;
         line-height: 1.85;
         font-weight: 500;
         opacity: 0.93;
+        font-family:
+          &quot;Inter&quot;, &quot;Montserrat&quot;, &quot;Segoe UI&quot;,
+          &quot;Roboto&quot;, Arial, sans-serif;
       "
     >
       Dive into a live sandbox of advanced loan scenarios. Visualize,
-      experiment, and innovate with the most modern lending engine—right in your
-      browser.
+      experiment, and innovate with the most modern lending engine &ndash; right
+      in your browser.
     </p>
     <button
       pButton

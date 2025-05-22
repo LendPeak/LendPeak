@@ -21,7 +21,7 @@ import { Subscription } from 'rxjs';
 export class ConnectorManagementComponent implements OnInit, OnDestroy {
   connectors: Connector[] = [];
   showConnectorDialog: boolean = false;
-  connectorTypes: ConnectorType[] = ['LoanPro', 'Mongo']; 
+  connectorTypes: ConnectorType[] = ['LoanPro', 'Mongo'];
   connectorDialogTitle: string = 'Add New Connector';
 
   newConnector: Connector = this.getEmptyConnector();
@@ -105,17 +105,16 @@ export class ConnectorManagementComponent implements OnInit, OnDestroy {
       }
     }
 
-     if (this.newConnector.type === 'Mongo') {
-       if (!this.newConnector.credentials.mongoUri) {
-         this.messageService.add({
-           severity: 'warn',
-           summary: 'Validation Error',
-           detail: 'Mongo URI is required.',
-         });
-         return;
-       }
-     }
-     
+    if (this.newConnector.type === 'Mongo') {
+      if (!this.newConnector.credentials.mongoUri) {
+        this.messageService.add({
+          severity: 'warn',
+          summary: 'Validation Error',
+          detail: 'Mongo URI is required.',
+        });
+        return;
+      }
+    }
 
     this.connectorService.saveConnector(this.newConnector);
     this.showConnectorDialog = false;
@@ -149,7 +148,9 @@ export class ConnectorManagementComponent implements OnInit, OnDestroy {
    */
   exportConnectors(): void {
     // Fetch all connectors
-    const connectors = this.connectorService.getAllConnectors();
+    const connectors = this.connectorService
+      .getAllConnectors()
+      .filter((c) => c.type !== 'Demo');
     // Convert them to JSON
     const dataStr = JSON.stringify(connectors, null, 2);
     // Create a blob

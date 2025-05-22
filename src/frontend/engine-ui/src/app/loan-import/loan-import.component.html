@@ -17,11 +17,7 @@
 </div>
 
 <!-- ───────────────────── Demo-loan browser ────────────────────── -->
-<app-demo-loan-browser
-  *ngIf="isDemoSelected"
-  (selected)="selectedDemoLoan = $event"
->
-</app-demo-loan-browser>
+<app-demo-loan-browser *ngIf="isDemoSelected" (selected)="selectedDemoLoan = $event"></app-demo-loan-browser>
 
 <!-- ───────────────────── Regular connector search UI ────────────────────── -->
 <div *ngIf="!isDemoSelected" class="p-fluid">
@@ -42,10 +38,7 @@
   </div>
 
   <!-- single-value search -->
-  <div
-    class="field"
-    *ngIf="searchType === 'displayId' || searchType === 'systemId'"
-  >
+  <div class="field" *ngIf="searchType === 'displayId' || searchType === 'systemId'">
     <label for="searchValue">Search Value</label>
     <input
       *ngIf="searchType === 'displayId'"
@@ -54,6 +47,8 @@
       class="w-full"
       placeholder="Enter a Display ID"
       [(ngModel)]="searchValue"
+      [ngModelOptions]="{ standalone: true }"
+      [attr.key]="selectedConnectorId + '-' + searchType"
     />
     <p-inputnumber
       *ngIf="searchType === 'systemId'"
@@ -63,6 +58,8 @@
       mode="decimal"
       placeholder="Enter a System ID"
       [(ngModel)]="searchValue"
+      [ngModelOptions]="{ standalone: true }"
+      [attr.key]="selectedConnectorId + '-' + searchType"
     ></p-inputnumber>
   </div>
 
@@ -80,22 +77,14 @@
     </div>
     <div class="field col">
       <label for="toSystemId">To System ID</label>
-      <input
-        id="toSystemId"
-        pInputText
-        class="w-full"
-        placeholder="Enter ending System ID"
-        [(ngModel)]="toSystemId"
-      />
+      <input id="toSystemId" pInputText class="w-full" placeholder="Enter ending System ID" [(ngModel)]="toSystemId" />
     </div>
   </div>
 
   <!-- progress indicator (range mode only) -->
   <div class="field" *ngIf="isLoading && searchType === 'systemIdRange'">
     <p-progressbar [value]="progressValue" showValue="true">
-      <ng-template #content>
-        {{ progressValue }}% ({{ loansLoaded }} / {{ totalLoans }})
-      </ng-template>
+      <ng-template #content>{{ progressValue }}% ({{ loansLoaded }} / {{ totalLoans }})</ng-template>
     </p-progressbar>
   </div>
 </div>
@@ -115,13 +104,7 @@
 
   <!-- Non-demo mode: preview + import -->
   <ng-container *ngIf="!isDemoSelected">
-    <p-button
-      label="Preview"
-      icon="pi pi-eye"
-      (click)="onPreview()"
-      [loading]="isLoading"
-      severity="info"
-    ></p-button>
+    <p-button label="Preview" icon="pi pi-eye" (click)="onPreview()" [loading]="isLoading" severity="info"></p-button>
 
     <p-button
       label="Import Loan(s)"
@@ -156,7 +139,8 @@
       <h3>Loan Details</h3>
       <div class="grid">
         <div class="col-6">
-          <strong>Loan Name:</strong> {{ previewLoans[0].d.displayId }}
+          <strong>Loan Name:</strong>
+          {{ previewLoans[0].d.displayId }}
         </div>
         <div class="col-6">
           <strong>Principal:</strong>
@@ -164,19 +148,16 @@
         </div>
         <div class="col-6 mt-2">
           <strong>Start Date:</strong>
-          {{ previewLoans[0].d.LoanSetup.contractDate | date: "yyyy-MM-dd" }}
+          {{ previewLoans[0].d.LoanSetup.contractDate | date: 'yyyy-MM-dd' }}
         </div>
         <div class="col-6 mt-2">
-          <strong>Rate:</strong> {{ previewLoans[0].d.LoanSetup.loanRate }}%
+          <strong>Rate:</strong>
+          {{ previewLoans[0].d.LoanSetup.loanRate }}%
         </div>
       </div>
 
       <h4 class="mt-4">Payments</h4>
-      <p-table
-        [value]="previewLoans[0].d.Payments"
-        [paginator]="true"
-        [rows]="5"
-      >
+      <p-table [value]="previewLoans[0].d.Payments" [paginator]="true" [rows]="5">
         <ng-template pTemplate="header">
           <tr>
             <th>Date</th>
@@ -186,7 +167,7 @@
         </ng-template>
         <ng-template pTemplate="body" let-payment>
           <tr>
-            <td>{{ payment.date | date: "yyyy-MM-dd" }}</td>
+            <td>{{ payment.date | date: 'yyyy-MM-dd' }}</td>
             <td>{{ payment.amount }}</td>
             <td>{{ payment.info }}</td>
           </tr>
@@ -212,7 +193,7 @@
             <td>{{ l.d.id }}</td>
             <td>{{ l.d.displayId }}</td>
             <td>{{ l.d.LoanSetup.tilLoanAmount }}</td>
-            <td>{{ l.d.LoanSetup.contractDate | date: "yyyy-MM-dd" }}</td>
+            <td>{{ l.d.LoanSetup.contractDate | date: 'yyyy-MM-dd' }}</td>
             <td>{{ l.d.LoanSetup.loanRate }}%</td>
           </tr>
         </ng-template>
@@ -221,10 +202,6 @@
   </div>
 
   <p-footer>
-    <p-button
-      label="Close"
-      class="p-button-text"
-      (click)="showPreviewDialog = false"
-    ></p-button>
+    <p-button label="Close" class="p-button-text" (click)="showPreviewDialog = false"></p-button>
   </p-footer>
 </p-dialog>

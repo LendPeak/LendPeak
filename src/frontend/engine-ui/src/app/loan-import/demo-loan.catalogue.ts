@@ -1,5 +1,5 @@
 // -----------------------------------------------------------------------------
-// demo-loan.catalogue.ts  – single source of truth for sample descriptors
+// demo-loan.catalogue.ts   – single source of truth for sample descriptors
 // -----------------------------------------------------------------------------
 
 export type Tag =
@@ -14,156 +14,183 @@ export type Tag =
   | 'auto-close'
   | 'edge';
 
+/** categories must match the four tabs: everyday | hardship | edge | regression */
 export interface DemoLoanDescriptor {
-  id: string; // e.g. "DEMO-C01"
-  name: string; // display label
-  category: 'common' | 'advanced';
-  tags: Tag[]; // see Tag union
-  notes: string; // human‑friendly explanation (tooltip)
+  id: string;
+  title: string;
+  subtitle: string;
+  category: 'everyday' | 'hardship' | 'edge' | 'regression';
+  tags: Tag[];
+  notes: string;
 }
 
 export const DEMO_LOANS: DemoLoanDescriptor[] = [
-  // ─── Common ───────────────────────────────────────────────────────────
+  // ─── Everyday ──────────────────────────────────────────────────────────
   {
     id: 'DEMO-C01',
-    name: 'Vanilla 24‑mo amortised',
-    category: 'common',
+    title: 'Vanilla 24-mo amortised',
+    subtitle: 'Standard 2-year equal-payment schedule',
+    category: 'everyday',
     tags: ['payments'],
-    notes: 'Simple on‑schedule repayment',
+    notes: 'Simple on-schedule repayment',
   },
   {
     id: 'DEMO-C02',
-    name: 'Brand‑new today',
-    category: 'common',
+    title: 'Brand-new today',
+    subtitle: 'Originated today • no payment history',
+    category: 'everyday',
     tags: ['no-payments'],
     notes: 'Originated today, no history',
   },
   {
     id: 'DEMO-C03',
-    name: '20 days old, no pays',
-    category: 'common',
+    title: '20 days old, no pays',
+    subtitle: 'First instalment already delinquent',
+    category: 'everyday',
     tags: ['no-payments', 'missed-payments'],
     notes: 'Shows first delinquency path',
   },
   {
     id: 'DEMO-C04',
-    name: '12‑mo loan, over‑pay',
-    category: 'common',
+    title: '12-mo loan, over-pay',
+    subtitle: 'Two early principal pre-payments',
+    category: 'everyday',
     tags: ['payments', 'over-payments'],
-    notes: 'Two principal pre‑payments',
+    notes: 'Two principal pre-payments',
   },
   {
     id: 'DEMO-C05',
-    name: 'Includes refund',
-    category: 'common',
+    title: 'Includes refund',
+    subtitle: 'Partial refund midway through term',
+    category: 'everyday',
     tags: ['payments', 'refunds'],
-    notes: 'Partial refund mid‑term',
+    notes: 'Partial refund mid-term',
   },
   {
     id: 'DEMO-C06',
-    name: 'Rate mod month 6',
-    category: 'common',
+    title: 'Rate mod month 6',
+    subtitle: 'Single interest-rate reduction',
+    category: 'everyday',
     tags: ['payments', 'mods'],
     notes: 'Single rate reduction',
   },
   {
     id: 'DEMO-C07',
-    name: 'CPD change',
-    category: 'common',
+    title: 'CPD change',
+    subtitle: 'Mid-stream change-payment-date',
+    category: 'everyday',
     tags: ['payments', 'mods'],
-    notes: 'Change‑payment‑date mid‑stream',
+    notes: 'Change-payment-date mid-stream',
   },
   {
     id: 'DEMO-C08',
-    name: 'Custom calendar 30/360',
-    category: 'common',
+    title: 'Custom calendar 30/360',
+    subtitle: 'Alternate 30/360 day-count basis',
+    category: 'everyday',
     tags: ['payments', 'custom-calendar'],
-    notes: 'Alt day‑count basis',
+    notes: 'Alt day-count basis',
   },
   {
     id: 'DEMO-C09',
-    name: '— slot reserved —',
-    category: 'common',
+    title: '— slot reserved —',
+    subtitle: 'Placeholder sample loan',
+    category: 'everyday',
     tags: ['edge'],
     notes: 'Intentional gap for future sample',
   },
   {
     id: 'DEMO-C10',
-    name: 'Early payoff (simple)',
-    category: 'common',
+    title: 'Early payoff (simple)',
+    subtitle: 'Lump-sum in month 18 clears balance',
+    category: 'everyday',
     tags: ['payments', 'over-payments'],
-    notes: 'Lump‑sum in month 18 zeros balance',
+    notes: 'Lump-sum in month 18 zeros balance',
   },
 
-  // ─── Advanced ────────────────────────────────────────────────────────
+  // ─── Hardship ──────────────────────────────────────────────────────────
   {
     id: 'DEMO-A01',
-    name: 'Hardship: zero‑interest skip',
-    category: 'advanced',
+    title: 'Hardship: zero-interest skip',
+    subtitle: 'Interest-free payment holiday',
+    category: 'hardship',
     tags: ['mods', 'missed-payments'],
-    notes: 'Terms 4‑6 at 0 % interest',
+    notes: 'Terms 4-6 at 0 % interest',
   },
   {
     id: 'DEMO-A02',
-    name: 'Hardship: interest‑accruing skip',
-    category: 'advanced',
+    title: 'Hardship: interest-accruing skip',
+    subtitle: 'Payments skipped, interest still accrues',
+    category: 'hardship',
     tags: ['mods', 'missed-payments', 'edge'],
     notes: 'Skip pays, interest accrues & defers',
   },
+
+  // ─── Edge-cases / Advanced ────────────────────────────────────────────
   {
     id: 'DEMO-A03',
-    name: 'Variable‑rate ladder',
-    category: 'advanced',
+    title: 'Variable-rate ladder',
+    subtitle: 'Five-segment rate ladder (30/Actual)',
+    category: 'edge',
     tags: ['mods', 'custom-calendar', 'edge'],
     notes: 'Five rate segments, 30/Actual',
   },
   {
     id: 'DEMO-A04',
-    name: 'Balloon maturity',
-    category: 'advanced',
+    title: 'Balloon maturity',
+    subtitle: 'Interest-only then 90 % balloon',
+    category: 'edge',
     tags: ['mods', 'edge'],
-    notes: 'Interest‑only then 90 % balloon',
+    notes: 'Interest-only then 90 % balloon',
   },
   {
     id: 'DEMO-A05',
-    name: 'Refund > payment (fee defer)',
-    category: 'advanced',
+    title: 'Refund > payment (fee defer)',
+    subtitle: 'Refund exceeds payment; fees deferred',
+    category: 'edge',
     tags: ['refunds', 'edge'],
     notes: 'Scheduled pay smaller than fees',
   },
   {
     id: 'DEMO-A06',
-    name: 'Negative‑amort starter',
-    category: 'advanced',
+    title: 'Negative-amort starter',
+    subtitle: 'First 6 terms negative-amortisation',
+    category: 'edge',
     tags: ['mods', 'edge', 'custom-calendar'],
-    notes: 'First 6 terms negative‑am',
+    notes: 'First 6 terms negative-am',
   },
   {
     id: 'DEMO-A07',
-    name: 'IO → amortised flip',
-    category: 'advanced',
+    title: 'IO → amortised flip',
+    subtitle: '12 × IO then step-up to EMI',
+    category: 'edge',
     tags: ['mods'],
-    notes: '12 × IO then step‑up to EMI',
+    notes: '12 × IO then step-up to EMI',
   },
   {
     id: 'DEMO-A08',
-    name: 'Re‑amort after principal mod',
-    category: 'advanced',
+    title: 'Re-amort after principal mod',
+    subtitle: 'Balance drop triggers schedule rebuild',
+    category: 'edge',
     tags: ['mods', 'payments'],
     notes: 'Balance drop triggers schedule rebuild',
   },
   {
     id: 'DEMO-A09',
-    name: 'Aggressive over‑pay payoff',
-    category: 'advanced',
+    title: 'Aggressive over-pay payoff',
+    subtitle: 'Escalating extras → payoff month 9',
+    category: 'edge',
     tags: ['over-payments', 'early-payoff', 'payments'],
-    notes: 'Escalating extras → payoff month 9',
+    notes: 'Escalating extras → payoff month 9',
   },
   {
     id: 'DEMO-A10',
-    name: 'Auto‑close waiver (< threshold)',
-    category: 'advanced',
+    title: 'Auto-close waiver (< threshold)',
+    subtitle: 'Tolerance waiver closes tiny balance',
+    category: 'edge',
     tags: ['auto-close', 'early-payoff', 'edge'],
     notes: 'Tolerance triggers synthetic waiver row',
   },
+
+  // ─── Regression ───────────────────────────────────────────────────────
+  // Populate as you add regression-specific samples
 ];

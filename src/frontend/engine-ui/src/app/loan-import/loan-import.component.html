@@ -17,18 +17,10 @@
 </div>
 
 <!-- ───────────────────── Demo-loan browser ────────────────────── -->
-<div *ngIf="isDemoSelected" class="mb-4">
-  <label class="mb-2">Browse Demo Loans</label>
-  <p-tree
-    [value]="demoLoanTree"
-    selectionMode="single"
-    [(selection)]="selectedTreeNode"
-    filter
-    filterMode="lenient"
-    filterPlaceholder="Filter by name or tag"
-    class="demo-tree"
-  ></p-tree>
-</div>
+<app-demo-loan-browser
+  *ngIf="isDemoSelected"
+  (selected)="selectedDemoLoan = $event">
+</app-demo-loan-browser>
 
 <!-- ───────────────────── Regular connector search UI ────────────────────── -->
 <div *ngIf="!isDemoSelected" class="p-fluid">

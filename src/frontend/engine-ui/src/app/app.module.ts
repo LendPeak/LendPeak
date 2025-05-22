@@ -45,6 +45,7 @@ import { TooltipModule } from 'primeng/tooltip';
 import { TimelineModule } from 'primeng/timeline';
 import { DataViewModule } from 'primeng/dataview';
 import { MarkdownModule } from 'ngx-markdown';
+import { ScrollerModule } from 'primeng/scroller';
 
 import { TilaDisclosureComponent } from './tila-disclosure.component';
 import { ToolbarComponent } from './toolbar/toolbar.component';
@@ -77,6 +78,7 @@ import { ValueRendererComponent } from './value-renderer/value-renderer.componen
 import { SystemSettingsComponent } from './system-settings/system-settings.component';
 import { CalculatorDialogComponent } from './calculator-dialog/calculator-dialog.component';
 import { RefundsListDialogComponent } from './refunds-list-dialog/refunds-list-dialog.component';
+import { DemoLoanBrowserComponent } from './demo-loan-browser/demo-loan-browser.component';
 
 import { HighlightModule, LineNumbersOptions } from 'ngx-highlightjs';
 import { provideHighlightOptions } from 'ngx-highlightjs';
@@ -117,6 +119,7 @@ import {
     CalculatorDialogComponent,
     RefundDialogComponent,
     RefundsListDialogComponent,
+    DemoLoanBrowserComponent,
   ],
   imports: [
     DynamicDialogModule,
@@ -158,6 +161,7 @@ import {
     OverlayPanelModule,
     SplitButtonModule,
     MenubarModule,
+    ScrollerModule,
     ChipModule,
     PaginatorModule,
     TooltipModule,

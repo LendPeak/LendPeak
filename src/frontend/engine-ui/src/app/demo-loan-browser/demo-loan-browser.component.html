@@ -1,0 +1,83 @@
+<!-- Category selector -->
+<p-tabs [(value)]="activeTab" class="surface-0">
+  <p-tablist>
+    <p-tab *ngFor="let cat of categories; index as i" [value]="i">
+      <span class="font-semibold">{{ cat.label }}</span>
+    </p-tab>
+  </p-tablist>
+
+  <!-- ── Tabs content ── -->
+  <p-tabpanels>
+    <p-tabpanel *ngFor="let cat of categories; index as i" [value]="i">
+      <!-- Filter bar -->
+      <div class="flex align-items-center gap-3 mb-3">
+        <input
+          pInputText
+          [(ngModel)]="searchText"
+          placeholder="Search demos…"
+          class="w-22rem"
+        />
+
+        <div class="flex flex-wrap gap-1">
+          <p-tag
+            *ngFor="let t of tagPalette"
+            [value]="t"
+            [severity]="tagColor(t)"
+            class="cursor-pointer text-xs"
+            (click)="toggleTag(t)"
+          />
+        </div>
+
+        <button
+          pButton
+          icon="pi pi-times"
+          tooltip="Clear filters"
+          class="p-button-text p-button-sm ml-auto"
+          (click)="clearFilters()"
+        ></button>
+      </div>
+
+      <!-- Cards -->
+      <p-virtualscroller
+        class="demo-scroller"
+        [items]="visibleLoans"
+        [itemSize]="60"
+        scrollHeight="450px"
+      >
+        <ng-template #item let-loan let-opt="options">
+          <div
+            class="demo-card"
+            (click)="select(loan)"
+            [ngClass]="{ odd: opt.odd }"
+          >
+            <div class="flex align-items-center justify-content-between">
+              <div class="flex align-items-center gap-3 flex-grow-1">
+                <div>
+                  <h4 class="m-0 flex align-items-center gap-2">
+                    {{ loan.title }}
+                    <i
+                      *ngIf="loan.notes"
+                      class="pi pi-info-circle text-600"
+                      pTooltip="{{ loan.notes }}"
+                      tooltipPosition="top"
+                    ></i>
+                  </h4>
+                  <span class="subtitle">{{ loan.subtitle }}</span>
+                </div>
+              </div>
+
+              <div class="flex gap-1 ml-3">
+                <p-tag
+                  *ngFor="let t of loan.tags"
+                  [value]="t"
+                  severity="contrast"
+                  class="text-xxs font-semibold"
+                />
+              </div>
+            </div>
+          </div>
+        </ng-template>
+      </p-virtualscroller>
+    </p-tabpanel>
+  </p-tabpanels>
+</p-tabs>

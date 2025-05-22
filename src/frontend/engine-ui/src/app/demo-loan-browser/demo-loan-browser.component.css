@@ -1,0 +1,69 @@
+/* ========== VirtualScroller grid ========== */
+:host ::ng-deep .demo-scroller .p-virtualscroller-content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    padding: 0.5rem;
+}
+
+/* ========== Card appearance ========== */
+.demo-card {
+    background: #ffffff;
+    border: 1px solid #e9ecef;
+    border-radius: 0.5rem;
+    padding: 0.75rem;
+    cursor: pointer;
+    transition: all 160ms ease;
+    margin: 0;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.demo-card:hover {
+    background: #ffffff;
+    border-color: #e9ecef;
+    transform: translateX(2px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+}
+
+/* Ensure cards in odd positions have consistent background */
+.demo-card.odd {
+    background: #f8f9fa;
+}
+
+.demo-card.odd:hover {
+    background: #f8f9fa;
+}
+
+/* Typography */
+.demo-card h4 {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #2c3e50;
+    line-height: 1.2;
+}
+
+.demo-card .subtitle {
+    font-size: 0.85rem;
+    color: #475569;
+    display: block;
+    line-height: 1.4;
+}
+
+/* tag helper */
+.text-xxs {
+    font-size: 0.75rem;
+}
+
+/* Tags container */
+.demo-card .flex.gap-1 {
+    flex-wrap: nowrap;
+    overflow: hidden;
+}
+
+/* Virtual scroller container */
+:host ::ng-deep .demo-scroller {
+    border: 1px solid #e9ecef;
+    background: #ffffff;
+    border-radius: 0.5rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}

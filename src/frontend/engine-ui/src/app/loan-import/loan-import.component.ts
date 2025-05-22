@@ -96,38 +96,6 @@ export class LoanImportComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.loadConnectors();
-    this.buildDemoTree();
-  }
-
-  /** Build PrimeNG Tree structure from DEMO_LOANS */
-  private buildDemoTree(): void {
-    const toNode = (d: DemoLoanDescriptor): TreeNode => ({
-      label: d.name,
-      key: d.id,
-      data: {
-        ...d,
-        factory: DemoLoanFactory[d.id], //  ← inject pointer right here
-      },
-      icon: 'pi pi-file',
-    });
-    this.demoLoanTree = [
-      {
-        label: 'Common',
-        key: 'root-common',
-        expanded: true,
-        icon: 'pi pi-folder',
-        children: DEMO_LOANS.filter((l) => l.category === 'common').map(toNode),
-      },
-      {
-        label: 'Advanced',
-        key: 'root-advanced',
-        expanded: true,
-        icon: 'pi pi-folder',
-        children: DEMO_LOANS.filter((l) => l.category === 'advanced').map(
-          toNode,
-        ),
-      },
-    ];
   }
 
   /** Helper: true when Demo connector chosen */

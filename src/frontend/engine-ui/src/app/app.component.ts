@@ -1814,7 +1814,9 @@ export class AppComponent implements OnChanges, AfterViewInit, OnInit, OnDestroy
     canvas.width = width;
     canvas.height = height;
     // --- BURST AND FLOAT ANIMATION ---
-    const numParticles = 40;
+    const density = 0.00025; // particles per pixel
+    let numParticles = Math.round(width * height * density);
+    numParticles = Math.max(14, Math.min(numParticles, 40));
     const center = { x: width / 2, y: height / 2 };
     const now0 = performance.now();
     const targets = Array.from({ length: numParticles }, () => ({

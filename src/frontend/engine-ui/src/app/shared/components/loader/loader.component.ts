@@ -184,8 +184,8 @@ export class LoaderComponent implements OnInit, OnDestroy, OnChanges, AfterViewI
     ctx.clearRect(0, 0, width, height);
     // Draw triangles
     ctx.save();
-    ctx.globalAlpha = 0.16;
-    ctx.strokeStyle = '#fff';
+    ctx.globalAlpha = 0.18;
+    ctx.strokeStyle = '#2a2a6a'; // dark blue/purple lines
     for (const tri of this.delaunayTriangles) {
       ctx.beginPath();
       ctx.moveTo(this.delaunayPoints[tri[0]].x, this.delaunayPoints[tri[0]].y);
@@ -193,14 +193,6 @@ export class LoaderComponent implements OnInit, OnDestroy, OnChanges, AfterViewI
       ctx.lineTo(this.delaunayPoints[tri[2]].x, this.delaunayPoints[tri[2]].y);
       ctx.closePath();
       ctx.stroke();
-      // Occasionally highlight a triangle
-      if (Math.random() < 0.01) {
-        ctx.save();
-        ctx.globalAlpha = 0.1 + 0.1 * Math.abs(Math.sin(time * 2));
-        ctx.fillStyle = '#fff';
-        ctx.fill();
-        ctx.restore();
-      }
     }
     ctx.restore();
     // Draw points
@@ -209,9 +201,9 @@ export class LoaderComponent implements OnInit, OnDestroy, OnChanges, AfterViewI
       ctx.globalAlpha = 0.92;
       ctx.beginPath();
       ctx.arc(p.x, p.y, p.r, 0, 2 * Math.PI);
-      ctx.fillStyle = '#fff';
-      ctx.shadowColor = '#fff';
-      ctx.shadowBlur = 7;
+      ctx.fillStyle = '#2a2a6a'; // dark blue/purple points
+      ctx.shadowColor = '#6a4cff';
+      ctx.shadowBlur = 10;
       ctx.fill();
       ctx.restore();
     }

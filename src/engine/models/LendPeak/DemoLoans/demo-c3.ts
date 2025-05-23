@@ -7,7 +7,7 @@ import { LocalDate, ChronoUnit, TemporalAdjusters } from '@js-joda/core';
 import { TermCalendars } from '../../TermCalendars';
 import { Calendar, CalendarType } from '../../Calendar';
 
-const today = LocalDate.now().minus(1, ChronoUnit.MONTHS);
+const today = LocalDate.now().minus(1, ChronoUnit.MONTHS).minus(20, ChronoUnit.DAYS);
 
 export class DemoC3 {
   static LendPeakObject(): LendPeak {
@@ -16,7 +16,7 @@ export class DemoC3 {
         id: 'DEMO-C03',
         name: 'DEMO-C03',
         description: '20 days delinquent, no pays',
-        startDate: today.plus(20, ChronoUnit.DAYS),
+        startDate: today,
         originationFee: 600,
         loanAmount: 19_900,
         interestAccruesFromDayZero: true,

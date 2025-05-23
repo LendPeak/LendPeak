@@ -94,12 +94,10 @@ import { IconField } from 'primeng/iconfield';
 import { InputIcon } from 'primeng/inputicon';
 import { DynamicDialogModule, DialogService } from 'primeng/dynamicdialog';
 
-import {
-  provideHttpClient,
-  withInterceptorsFromDi,
-} from '@angular/common/http';
+import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 
 import { LoaderComponent } from './shared/components/loader/loader.component';
+import { ListboxModule } from 'primeng/listbox';
 
 @NgModule({
   declarations: [
@@ -177,6 +175,7 @@ import { LoaderComponent } from './shared/components/loader/loader.component';
     InputIcon,
     MarkdownModule.forRoot(),
     RouterModule.forRoot([]),
+    ListboxModule,
   ],
   providers: [
     DialogService,

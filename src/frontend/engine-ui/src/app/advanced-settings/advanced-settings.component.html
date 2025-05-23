@@ -230,48 +230,35 @@
             Payment Priority
             <i class="pi pi-info-circle tooltip-icon" (click)="showTooltip($event, paymentPriorityTooltip)"></i>
           </label>
-          <!-- Payment Priority Selection -->
-          <div class="p-grid">
-            <div class="p-col-4">
-              <p-select
-                inputId="paymentPriority"
-                [(ngModel)]="paymentPriority[0]"
-                [options]="paymentPriorityOptions"
-                placeholder="First"
-                (ngModelChange)="onPaymentPriorityChange()"
-                appendTo="body"
-                class="w-full"
-                [style]="{ width: '100%' }"
-              ></p-select>
-            </div>
-            <div class="p-col-4">
-              <p-select
-                [(ngModel)]="paymentPriority[1]"
-                [options]="paymentPriorityOptions"
-                placeholder="Second"
-                (ngModelChange)="onPaymentPriorityChange()"
-                appendTo="body"
-                class="w-full"
-                [style]="{ width: '100%' }"
-              ></p-select>
-            </div>
-            <div class="p-col-4">
-              <p-select
-                [(ngModel)]="paymentPriority[2]"
-                [options]="paymentPriorityOptions"
-                placeholder="Third"
-                (ngModelChange)="onPaymentPriorityChange()"
-                appendTo="body"
-                class="w-full"
-                [style]="{ width: '100%' }"
-              ></p-select>
+          <div class="payment-priority-list w-full" style="max-width: 400px">
+            <div *ngFor="let item of paymentPriority; let i = index" class="flex align-items-center gap-2 mb-2">
+              <span class="flex-grow-1" [ngClass]="{ 'priority-hover': hoveredPriorityIndex === i }">
+                {{ item | titlecase }}
+              </span>
+              <button
+                pButton
+                icon="pi pi-arrow-up"
+                class="p-button-text p-button-sm"
+                (click)="movePaymentPriorityUp(i)"
+                [disabled]="i === 0"
+                (mouseenter)="hoveredPriorityIndex = i"
+                (mouseleave)="hoveredPriorityIndex = null"
+              ></button>
+              <button
+                pButton
+                icon="pi pi-arrow-down"
+                class="p-button-text p-button-sm"
+                (click)="movePaymentPriorityDown(i)"
+                [disabled]="i === paymentPriority.length - 1"
+                (mouseenter)="hoveredPriorityIndex = i"
+                (mouseleave)="hoveredPriorityIndex = null"
+              ></button>
             </div>
           </div>
-          <!-- Popover replacing OverlayPanel -->
           <p-popover #paymentPriorityTooltip>
             <ng-template pTemplate="content">
               <div class="tooltip-content">
-                <p>Specify the order in which payments are applied to components...</p>
+                <p>Use the up/down arrows to reorder the order in which payments are applied to components.</p>
               </div>
             </ng-template>
           </p-popover>

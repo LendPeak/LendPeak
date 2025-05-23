@@ -327,7 +327,16 @@ export class AppComponent implements OnChanges, AfterViewInit, OnInit, OnDestroy
       }
     }
 
-    this.lendPeak = new LendPeak({}).addAmortizationVersionManager().addFinancialOpsVersionManager();
+    this.lendPeak = new LendPeak({
+      amortization: new Amortization({
+        annualInterestRate: 0.05,
+        loanAmount: 10000,
+        term: 12,
+        startDate: LocalDate.now(),
+      }),
+    })
+      .addAmortizationVersionManager()
+      .addFinancialOpsVersionManager();
 
     // Generate the default loan data
     this.updateTermOptions();
@@ -595,7 +604,16 @@ export class AppComponent implements OnChanges, AfterViewInit, OnInit, OnDestroy
     this.loanNotFound = false;
 
     // No loan found in localStorage, initialize with default values
-    this.lendPeak = new LendPeak({}).addAmortizationVersionManager().addFinancialOpsVersionManager();
+    this.lendPeak = new LendPeak({
+      amortization: new Amortization({
+        annualInterestRate: 0.05,
+        loanAmount: 10000,
+        term: 12,
+        startDate: LocalDate.now(),
+      }),
+    })
+      .addAmortizationVersionManager()
+      .addFinancialOpsVersionManager();
 
     this.submitLoan();
   }

@@ -92,9 +92,11 @@ describe("Functional Test - Early Payoff - one payment", () => {
   //   expect(lendPeak.amortization.balanceModifications.firstModification?.isSystemModification).toEqual(true);
   // });
   it("verify bills", () => {
-    // we should have 3 bil
+    // we should have 3 bills
     expect(lendPeak.bills.length).toBe(3);
-    // first bill
+    const firstBill = lendPeak.bills.atIndex(0);
+    expect(firstBill.dueDate.isEqual(DateUtil.normalizeDate("2022-07-14"))).toBe(true);
+    expect(firstBill.totalDue).toBeDefined();
   });
 });
 
@@ -160,9 +162,11 @@ describe("Functional Test - Early Payoff - two payment", () => {
   //   expect(lendPeak.amortization.balanceModifications.all[1]?.isSystemModification).toEqual(true);
   // });
   it("verify bills", () => {
-    // we should have 3 bil
+    // we should have 3 bills
     expect(lendPeak.bills.length).toBe(3);
-    // first bill
+    const firstBill = lendPeak.bills.atIndex(0);
+    expect(firstBill.dueDate.isEqual(DateUtil.normalizeDate("2022-07-14"))).toBe(true);
+    expect(firstBill.totalDue).toBeDefined();
   });
 });
 

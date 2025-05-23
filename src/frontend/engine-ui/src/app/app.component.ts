@@ -1749,7 +1749,7 @@ export class AppComponent implements OnChanges, AfterViewInit, OnInit, OnDestroy
     this.welcomeDemoLoanModalVisible = false;
   }
 
-  onDemoLoanSelected(descriptor: any) {
+  async onDemoLoanSelected(descriptor: any) {
     // Accepts a DemoLoanDescriptor, builds the actual loan using DemoLoanFactory
     const demoId = descriptor?.id;
     const factory = DemoLoanFactory[demoId];
@@ -1761,14 +1761,19 @@ export class AppComponent implements OnChanges, AfterViewInit, OnInit, OnDestroy
       });
       return;
     }
-    const built = factory(); // { loan, deposits }
-    this.saveAndLoadLoan({
-      loan: built.loan,
-      deposits: built.deposits,
-      rawImportData: `demo:${demoId}`,
-    });
-    this.demoLoanBrowserDialogVisible = false;
-    this.welcomeDemoLoanModalVisible = false;
+    this.loaderService.show('Loading demo loan...', 300);
+    try {
+      const built = factory(); // { loan, deposits }
+      await this.saveAndLoadLoan({
+        loan: built.loan,
+        deposits: built.deposits,
+        rawImportData: `demo:${demoId}`,
+      });
+      this.demoLoanBrowserDialogVisible = false;
+      this.welcomeDemoLoanModalVisible = false;
+    } finally {
+      this.loaderService.hide();
+    }
   }
 
   ngAfterViewInit() {
@@ -1845,7 +1850,7 @@ export class AppComponent implements OnChanges, AfterViewInit, OnInit, OnDestroy
     }));
     // Start all particles at center
     this.particles = targets.map((t) => ({ ...t, x: center.x, y: center.y }));
-    const burstDuration = 700; // ms
+    const burstDuration = 400; // ms (was 700)
     let burstStart = performance.now();
     let burstPhase = true;
     const animateBurst = (now: number) => {

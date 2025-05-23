@@ -1,10 +1,10 @@
-import { LendPeak } from "../../LendPeak";
-import { Amortization } from "../../Amortization";
-import { DepositRecords } from "../../DepositRecords";
-import { DepositRecord } from "../../DepositRecord";
-import { LocalDate, ChronoUnit } from "@js-joda/core";
-import { TermCalendars } from "../../TermCalendars";
-import { Calendar, CalendarType } from "../../Calendar";
+import { LendPeak } from '../../LendPeak';
+import { Amortization } from '../../Amortization';
+import { DepositRecords } from '../../DepositRecords';
+import { DepositRecord } from '../../DepositRecord';
+import { LocalDate, ChronoUnit } from '@js-joda/core';
+import { TermCalendars } from '../../TermCalendars';
+import { Calendar, CalendarType } from '../../Calendar';
 
 const today = LocalDate.now().minus(5, ChronoUnit.DAYS);
 
@@ -12,9 +12,9 @@ export class DemoC8 {
   static LendPeakObject(): LendPeak {
     return new LendPeak({
       amortization: new Amortization({
-        id: "DEMO-C08",
-        name: "DEMO-C08",
-        description: "Alt day-count basis",
+        id: 'DEMO-C08',
+        name: 'DEMO-C08',
+        description: 'Alt day-count basis',
         startDate: today.minus(13, ChronoUnit.MONTHS),
         originationFee: 100,
         loanAmount: 19_900,
@@ -30,74 +30,80 @@ export class DemoC8 {
         new DepositRecord({
           amount: 956.01,
           effectiveDate: today.minus(12, ChronoUnit.MONTHS),
-          id: "DEPOSIT-C08-1",
-          currency: "USD",
+          id: 'DEPOSIT-C08-1',
+          currency: 'USD',
         }),
         new DepositRecord({
           amount: 956.01,
           effectiveDate: today.minus(11, ChronoUnit.MONTHS),
-          id: "DEPOSIT-C08-2",
-          currency: "USD",
+          id: 'DEPOSIT-C08-2',
+          currency: 'USD',
         }),
         new DepositRecord({
           amount: 956.01,
           effectiveDate: today.minus(10, ChronoUnit.MONTHS),
-          id: "DEPOSIT-C08-3",
-          currency: "USD",
+          id: 'DEPOSIT-C08-3',
+          currency: 'USD',
         }),
         new DepositRecord({
           amount: 956.01,
           effectiveDate: today.minus(9, ChronoUnit.MONTHS),
-          id: "DEPOSIT-C08-4",
-          currency: "USD",
+          id: 'DEPOSIT-C08-4',
+          currency: 'USD',
         }),
         new DepositRecord({
           amount: 956.01,
           effectiveDate: today.minus(8, ChronoUnit.MONTHS),
-          id: "DEPOSIT-C08-5",
-          currency: "USD",
+          id: 'DEPOSIT-C08-5',
+          currency: 'USD',
         }),
         new DepositRecord({
           amount: 956.01,
           effectiveDate: today.minus(7, ChronoUnit.MONTHS),
-          id: "DEPOSIT-C08-6",
-          currency: "USD",
+          id: 'DEPOSIT-C08-6',
+          currency: 'USD',
         }),
         new DepositRecord({
           amount: 956.01,
           effectiveDate: today.minus(6, ChronoUnit.MONTHS),
-          id: "DEPOSIT-C08-7",
-          currency: "USD",
+          id: 'DEPOSIT-C08-7',
+          currency: 'USD',
         }),
         new DepositRecord({
           amount: 956.01,
           effectiveDate: today.minus(5, ChronoUnit.MONTHS),
-          id: "DEPOSIT-C08-8",
-          currency: "USD",
+          id: 'DEPOSIT-C08-8',
+          currency: 'USD',
         }),
         new DepositRecord({
           amount: 956.01,
           effectiveDate: today.minus(4, ChronoUnit.MONTHS),
-          id: "DEPOSIT-C08-9",
-          currency: "USD",
+          id: 'DEPOSIT-C08-9',
+          currency: 'USD',
         }),
         new DepositRecord({
           amount: 956.01,
           effectiveDate: today.minus(3, ChronoUnit.MONTHS),
-          id: "DEPOSIT-C08-10",
-          currency: "USD",
+          id: 'DEPOSIT-C08-10',
+          currency: 'USD',
         }),
         new DepositRecord({
           amount: 956.01,
           effectiveDate: today.minus(2, ChronoUnit.MONTHS),
-          id: "DEPOSIT-C08-11",
-          currency: "USD",
+          id: 'DEPOSIT-C08-11',
+          currency: 'USD',
         }),
         new DepositRecord({
           amount: 956.01,
           effectiveDate: today.minus(1, ChronoUnit.MONTHS),
-          id: "DEPOSIT-C08-12",
-          currency: "USD",
+          id: 'DEPOSIT-C08-12',
+          currency: 'USD',
+        }),
+        new DepositRecord({
+          amount: 956.01,
+          effectiveDate: today,
+          id: 'DEPOSIT-C08-13',
+          currency: 'USD',
         }),
       ]),
     });

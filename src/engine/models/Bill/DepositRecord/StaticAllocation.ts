@@ -108,6 +108,6 @@ export class StaticAllocation {
   }
 
   toCode() {
-    return `new StaticAllocation(${this.json})`;  
+    return `new StaticAllocation(${JSON.stringify(this.json)})`;
   }
 }

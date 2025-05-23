@@ -7,7 +7,7 @@ import { LocalDate, ChronoUnit, TemporalAdjusters } from '@js-joda/core';
 import { TermCalendars } from '../../TermCalendars';
 import { Calendar, CalendarType } from '../../Calendar';
 
-const today = LocalDate.now().minus(1, ChronoUnit.MONTHS).minus(20, ChronoUnit.DAYS);
+const today = LocalDate.now().minus(1, ChronoUnit.MONTHS).minus(19, ChronoUnit.DAYS);
 
 export class DemoC3 {
   static LendPeakObject(): LendPeak {

@@ -606,6 +606,8 @@ export class AppComponent implements OnChanges, AfterViewInit, OnInit, OnDestroy
     // No loan found in localStorage, initialize with default values
     this.lendPeak = new LendPeak({
       amortization: new Amortization({
+        name: 'Default Loan',
+        description: 'This is a default loan for demonstration purposes.',
         annualInterestRate: 0.05,
         loanAmount: 10000,
         term: 12,

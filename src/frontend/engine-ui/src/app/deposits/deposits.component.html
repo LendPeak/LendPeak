@@ -573,12 +573,12 @@
           <ng-template pTemplate="content">
             <div class="flex flex-column gap-2 text-sm line-height-3" style="max-width: 320px">
               <p class="m-0">
-                <strong>Apply Payment at Period’s End Date:</strong>
+                <strong>Apply Payment at Period's End Date:</strong>
               </p>
               <p class="m-0">
-                When this setting is enabled and a bill is already open, any extra or “excess” payment will be applied
+                When this setting is enabled and a bill is already open, any extra or "excess" payment will be applied
                 <em>at the start of the next billing cycle</em>
-                . This prevents re-issuing or closing the current open bill, but it also means you won’t see immediate
+                . This prevents re-issuing or closing the current open bill, but it also means you won't see immediate
                 interest reduction on the current statement.
               </p>
               <p class="m-0">
@@ -1172,30 +1172,39 @@
 >
   <div class="p-fluid">
     <div class="field">
-      <label>Amount</label>
-      <p-inputNumber
-        [(ngModel)]="adhocForm.amount"
-        mode="decimal"
-        minFractionDigits="2"
-        maxFractionDigits="2"
-        class="w-full"
-      ></p-inputNumber>
+      <label for="adhoc-amount">Amount</label>
+      <p-inputgroup>
+        <p-inputgroup-addon>$</p-inputgroup-addon>
+        <p-inputNumber
+          id="adhoc-amount"
+          [(ngModel)]="adhocForm.amount"
+          mode="decimal"
+          minFractionDigits="2"
+          maxFractionDigits="2"
+          class="w-full"
+          inputStyleClass="w-full"
+        ></p-inputNumber>
+      </p-inputgroup>
     </div>
 
-    <div class="field">
-      <label>Effective Date</label>
+    <div class="field mb-3">
+      <label for="adhoc-date">Effective Date</label>
       <p-datepicker
+        id="adhoc-date"
         [(ngModel)]="adhocForm.jsEffectiveDate"
         dateFormat="yy-mm-dd"
         showIcon
         appendTo="body"
         class="w-full"
+        inputStyleClass="w-full"
+        [style]="{ width: '100%' }"
+        [inputStyle]="{ width: '100%' }"
       ></p-datepicker>
     </div>
 
-    <div class="field">
+    <div class="field flex align-items-center">
       <p-checkbox binary="true" [(ngModel)]="adhocForm.balanceImpacting" inputId="balImpact"></p-checkbox>
-      <label for="balImpact" class="ml-2">Increase principal balance</label>
+      <label for="balImpact" class="ml-2 mb-0">Increase principal balance</label>
     </div>
   </div>
 

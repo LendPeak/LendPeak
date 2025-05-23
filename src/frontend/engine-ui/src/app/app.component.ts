@@ -1809,25 +1809,35 @@ export class AppComponent implements OnChanges, AfterViewInit, OnInit, OnDestroy
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
     const dpr = window.devicePixelRatio || 1;
-    const width = canvas.offsetWidth * dpr;
-    const height = canvas.offsetHeight * dpr;
+    const fontSizePx = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
+    // Fixed canvas size in rem for visual consistency
+    const widthRem = 38;
+    const heightRem = 14;
+    const width = widthRem * fontSizePx * dpr;
+    const height = heightRem * fontSizePx * dpr;
     canvas.width = width;
     canvas.height = height;
+    canvas.style.width = `${widthRem}rem`;
+    canvas.style.height = `${heightRem}rem`;
 
-    // Get base font size in pixels (rem)
-    const fontSizePx = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
-    const widthRem = width / fontSizePx;
-    const heightRem = height / fontSizePx;
+    // Particle count based on rem area
     const areaRem2 = widthRem * heightRem;
-    const density = 0.4; // particles per rem²
+    const density = 0.5; // particles per rem²
     let numParticles = Math.round(areaRem2 * density);
     numParticles = Math.max(16, Math.min(numParticles, 36));
+
+    // Connection distance in rem
+    const connectionDistance = 8 * fontSizePx; // 8rem
+    // Bubble size in rem
+    const minR = 0.18 * fontSizePx,
+      maxR = 0.32 * fontSizePx;
+
     const center = { x: width / 2, y: height / 2 };
     const now0 = performance.now();
     const targets = Array.from({ length: numParticles }, () => ({
       x: Math.random() * width,
       y: Math.random() * height,
-      r: 3.2 + Math.random() * 2.8,
+      r: minR + Math.random() * (maxR - minR),
       dx: (Math.random() - 0.5) * 0.7,
       dy: (Math.random() - 0.5) * 0.7,
       alpha: 1,
@@ -1863,7 +1873,7 @@ export class AppComponent implements OnChanges, AfterViewInit, OnInit, OnDestroy
           const a = this.particles[i];
           const b = this.particles[j];
           const dist = Math.hypot(a.x - b.x, a.y - b.y);
-          if (dist < 130) {
+          if (dist < connectionDistance) {
             const hueA = (a.colorSeed + (now - now0) / 10) % 360;
             const hueB = (b.colorSeed + (now - now0) / 10) % 360;
             const grad = ctx.createLinearGradient(a.x, a.y, b.x, b.y);
@@ -1914,7 +1924,7 @@ export class AppComponent implements OnChanges, AfterViewInit, OnInit, OnDestroy
           const a = this.particles[i];
           const b = this.particles[j];
           const dist = Math.hypot(a.x - b.x, a.y - b.y);
-          if (dist < 130) {
+          if (dist < connectionDistance) {
             const hueA = (a.colorSeed + (now - now0) / 10) % 360;
             const hueB = (b.colorSeed + (now - now0) / 10) % 360;
             const grad = ctx.createLinearGradient(a.x, a.y, b.x, b.y);

@@ -686,6 +686,7 @@ export class DepositRecord {
       amount: ${this.amount.toNumber()},
       currency: "${this.currency}",
       createdDate: DateUtil.normalizeDate("${this.createdDate.toString()}"),
+      insertedDate: DateUtil.normalizeDate("${this.insertedDate.toString()}"),
       effectiveDate: DateUtil.normalizeDate("${this.effectiveDate.toString()}"),
       clearingDate: ${this.clearingDate ? `DateUtil.normalizeDate("${this.clearingDate.toString()}")` : "undefined"},
       systemDate: DateUtil.normalizeDate("${this.systemDate.toString()}"),

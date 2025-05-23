@@ -33,7 +33,8 @@
             </th>
             <th pSortableColumn="jsDueDate">
               Due Date
-              <p-sortIcon field="jsDueDate"></p-sortIcon>f
+              <p-sortIcon field="jsDueDate"></p-sortIcon>
+              f
             </th>
             <th>Principal Due</th>
             <th>Interest Due</th>
@@ -58,16 +59,13 @@
                 styleClass="ml-2"
                 pTooltip="This bill was satisfied by multiple payments"
                 tooltipPosition="top"
-              >
-              </p-tag>
+              ></p-tag>
             </td>
             <td>{{ bill.period }}</td>
             <td>
               <p-tag
                 value="{{ bill.amortizationEntry.jsPrebillDaysConfiguration }}"
-                pTooltip="Days before period's end when the bill is due {{
-                  bill.jsOpenDate | date: 'YYYY-MM-DD'
-                }}"
+                pTooltip="Days before period's end when the bill is due {{ bill.jsOpenDate | date: 'YYYY-MM-DD' }}"
                 tooltipPosition="top"
                 severity="secondary"
                 styleClass="ml-2"
@@ -77,18 +75,13 @@
               <i class="pi pi-arrows-h mr-2 ml-2"></i>
 
               <p-tag
-                value="{{
-                  bill.amortizationEntry
-                    .jsBillDueDaysAfterPeriodEndConfiguration
-                }}"
-                pTooltip="Days after period's end when the bill is due {{
-                  bill.jsDueDate | date: 'YYYY-MM-DD'
-                }}"
+                value="{{ bill.amortizationEntry.jsBillDueDaysAfterPeriodEndConfiguration }}"
+                pTooltip="Days after period's end when the bill is due {{ bill.jsDueDate | date: 'YYYY-MM-DD' }}"
                 tooltipPosition="top"
                 severity="secondary"
                 styleClass="mr-2"
               ></p-tag>
-              {{ bill.jsDueDate |  date: "yyyy-MM-dd" }}
+              {{ bill.jsDueDate | date: 'yyyy-MM-dd' }}
             </td>
 
             <td>
@@ -98,18 +91,13 @@
                 {{ bill.jsAllocatedPrincipalSum | currency }}
                 =
               </ng-container>
-              <ng-container
-                *ngIf="
-                  !showMathInTheTable &&
-                  bill.jsOriginalPrincipalDue != bill.jsPrincipalDue
-                "
-              >
+              <ng-container *ngIf="!showMathInTheTable && bill.jsOriginalPrincipalDue != bill.jsPrincipalDue">
                 {{ bill.jsOriginalPrincipalDue | currency }}
                 <i class="pi pi-arrow-right" style="font-size: 0.7rem"></i>
               </ng-container>
               <span [class.font-semibold]="bill.jsPrincipalDue > 0">
-                {{ bill.jsPrincipalDue | currency }}</span
-              >
+                {{ bill.jsPrincipalDue | currency }}
+              </span>
             </td>
             <td>
               <ng-container *ngIf="showMathInTheTable">
@@ -118,18 +106,13 @@
                 {{ bill.jsAllocatedInterestSum | currency }}
                 =
               </ng-container>
-              <ng-container
-                *ngIf="
-                  !showMathInTheTable &&
-                  bill.jsOriginalInterestDue != bill.jsInterestDue
-                "
-              >
+              <ng-container *ngIf="!showMathInTheTable && bill.jsOriginalInterestDue != bill.jsInterestDue">
                 {{ bill.jsOriginalInterestDue | currency }}
                 <i class="pi pi-arrow-right" style="font-size: 0.7rem"></i>
               </ng-container>
               <span [class.font-semibold]="bill.jsInterestDue > 0">
-                {{ bill.jsInterestDue | currency }}</span
-              >
+                {{ bill.jsInterestDue | currency }}
+              </span>
             </td>
             <td>
               <ng-container *ngIf="showMathInTheTable">
@@ -138,12 +121,7 @@
                 {{ bill.jsAllocatedFeesSum | currency }}
                 =
               </ng-container>
-              <ng-container
-                *ngIf="
-                  !showMathInTheTable &&
-                  bill.jsFeesDue != bill.jsOriginalFeesDue
-                "
-              >
+              <ng-container *ngIf="!showMathInTheTable && bill.jsFeesDue != bill.jsOriginalFeesDue">
                 {{ bill.jsFeesDue | currency }}
                 <i class="pi pi-arrow-right" style="font-size: 0.7rem"></i>
               </ng-container>
@@ -158,12 +136,7 @@
                 {{ bill.jsAllocatedTotalSum | currency }}
                 =
               </ng-container>
-              <ng-container
-                *ngIf="
-                  !showMathInTheTable &&
-                  bill.jsTotalDue != bill.jsOriginalTotalDue
-                "
-              >
+              <ng-container *ngIf="!showMathInTheTable && bill.jsTotalDue != bill.jsOriginalTotalDue">
                 {{ bill.jsOriginalTotalDue | currency }}
                 <i class="pi pi-arrow-right" style="font-size: 0.7rem"></i>
               </ng-container>
@@ -175,34 +148,20 @@
               <!-- Only show if the bill is paid and we have a satisfied date -->
               <ng-container *ngIf="bill.isPaid() && bill.dateFullySatisfied">
                 <!-- Display date satisfied -->
-                <span class="mr-3">{{
-                  bill.jsDateFullySatisfied |  date: "yyyy-MM-dd"
-                }}</span>
+                <span class="mr-3">{{ bill.jsDateFullySatisfied | date: 'yyyy-MM-dd' }}</span>
 
                 <!-- Show how many days late/early in a p-tag -->
                 <ng-container *ngIf="bill.daysLate > 0">
-                  <p-tag
-                    value="{{ bill.daysLate + ' Days Late' }}"
-                    severity="warn"
-                    class="status-tag"
-                  ></p-tag>
+                  <p-tag value="{{ bill.daysLate + ' Days Late' }}" severity="warn" class="status-tag"></p-tag>
                 </ng-container>
 
                 <ng-container *ngIf="bill.daysEarly > 0">
-                  <p-tag
-                    value="{{ bill.daysEarly + ' Days Early' }}"
-                    severity="success"
-                    class="status-tag"
-                  ></p-tag>
+                  <p-tag value="{{ bill.daysEarly + ' Days Early' }}" severity="success" class="status-tag"></p-tag>
                 </ng-container>
 
                 <!-- If daysLate = 0 & daysEarly = 0, then it's on-time -->
                 <ng-container *ngIf="!bill.daysLate && !bill.daysEarly">
-                  <p-tag
-                    value="On-Time"
-                    severity="info"
-                    class="status-tag"
-                  ></p-tag>
+                  <p-tag value="On-Time" severity="info" class="status-tag"></p-tag>
                 </ng-container>
               </ng-container>
             </td>
@@ -243,12 +202,11 @@
 
             <td>
               <p-button
-                label="View Payment Details"
                 icon="pi pi-eye"
-                [disabled]="
-                  !bill.paymentDetails || bill.paymentDetails.length === 0
-                "
+                severity="info"
+                styleClass="p-button-lg p-button-text"
                 (click)="viewPaymentDetails(bill)"
+                pTooltip="View Payment Details"
               ></p-button>
             </td>
           </tr>
@@ -268,9 +226,7 @@
 >
   <ng-template #header>
     <div *ngIf="selectedBill" class="inline-flex items-center justify-center">
-      <span class="font-semibold whitespace-nowrap pr-5"
-        >Payment Details for {{ selectedBill.id }}</span
-      >
+      <span class="font-semibold whitespace-nowrap pr-5">Payment Details for {{ selectedBill.id }}</span>
       <p-tag
         *ngIf="(selectedBill.paymentDetails || []).length > 1"
         value="{{ selectedBill.paymentDetails.length + ' Payments' }}"
@@ -278,27 +234,16 @@
         styleClass="ml-2 mr-2"
         pTooltip="This bill was satisfied by multiple payments"
         tooltipPosition="top"
-      >
-      </p-tag>
+      ></p-tag>
 
-      <ng-container
-        *ngIf="selectedBill.isPaid() && selectedBill.dateFullySatisfied"
-      >
+      <ng-container *ngIf="selectedBill.isPaid() && selectedBill.dateFullySatisfied">
         <!-- Show how many days late/early in a p-tag -->
         <ng-container *ngIf="selectedBill.daysLate">
-          <p-tag
-            value="{{ selectedBill.daysLate + ' Days Late' }}"
-            severity="warn"
-            class="status-tag"
-          ></p-tag>
+          <p-tag value="{{ selectedBill.daysLate + ' Days Late' }}" severity="warn" class="status-tag"></p-tag>
         </ng-container>
 
         <ng-container *ngIf="selectedBill.daysEarly">
-          <p-tag
-            value="{{ selectedBill.daysEarly + ' Days Early' }}"
-            severity="success"
-            class="status-tag"
-          ></p-tag>
+          <p-tag value="{{ selectedBill.daysEarly + ' Days Early' }}" severity="success" class="status-tag"></p-tag>
         </ng-container>
 
         <!-- If daysLate = 0 & daysEarly = 0, then it's on-time -->
@@ -320,12 +265,7 @@
         severity="info"
         class="status-tag"
       ></p-tag>
-      <p-tag
-        *ngIf="selectedBill.jsTotalDue == 0"
-        value="Skip A Pay"
-        severity="secondary"
-        class="status-tag"
-      ></p-tag>
+      <p-tag *ngIf="selectedBill.jsTotalDue == 0" value="Skip A Pay" severity="secondary" class="status-tag"></p-tag>
       <p-tag
         *ngIf="selectedBill.jsOriginalTotalDue > 0"
         value="{{ selectedBill.isPaid() ? 'Paid' : 'Unpaid' }}"
@@ -386,29 +326,18 @@
 
           {{ detail.depositId }}
 
+          <p-badge *ngIf="isSplitPayment(detail.depositId)" value="Split" severity="warn" styleClass="ml-2"></p-badge>
           <p-badge
-            *ngIf="isSplitPayment(detail.depositId)"
-            value="Split"
-            severity="warn"
-            styleClass="ml-2"
-          ></p-badge>
-          <p-badge
-            *ngIf="
-              lendPeak.depositRecords.getById(detail.depositId)
-                ?.staticAllocation
-            "
+            *ngIf="lendPeak.depositRecords.getById(detail.depositId)?.staticAllocation"
             value="Static"
             severity="info"
             styleClass="ml-2"
           ></p-badge>
         </td>
         <td>
-          {{
-            lendPeak.depositRecords.getById(detail.depositId)?.jsAmount
-              | currency
-          }}
+          {{ lendPeak.depositRecords.getById(detail.depositId)?.jsAmount | currency }}
         </td>
-        <td>{{ detail.jsDate |  date: "yyyy-MM-dd" }}</td>
+        <td>{{ detail.jsDate | date: 'yyyy-MM-dd' }}</td>
         <td>{{ detail.jsAllocatedTotal | currency }}</td>
         <td>{{ detail.jsAllocatedPrincipal | currency }}</td>
         <td>{{ detail.jsAllocatedInterest | currency }}</td>
@@ -419,13 +348,7 @@
     <ng-template #footer>
       <!-- Totals row: how much was allocated in total -->
       <tr>
-        <td
-          class="bg-blue-50"
-          colspan="3"
-          style="text-align: right; font-weight: bold"
-        >
-          Allocated:
-        </td>
+        <td class="bg-blue-50" colspan="3" style="text-align: right; font-weight: bold">Allocated:</td>
         <td class="bg-blue-50" style="font-weight: bold">
           {{ selectedBill?.jsAllocatedTotalSum | currency }}
         </td>
@@ -442,13 +365,7 @@
 
       <!-- Remaining row: original minus allocated -->
       <tr>
-        <td
-          class="bg-blue-50"
-          colspan="3"
-          style="text-align: right; font-weight: bold"
-        >
-          Remaining:
-        </td>
+        <td class="bg-blue-50" colspan="3" style="text-align: right; font-weight: bold">Remaining:</td>
         <td class="bg-blue-50" style="font-weight: bold">
           {{ selectedBill?.jsRemainingTotal | currency }}
         </td>
@@ -478,9 +395,7 @@
 >
   <ng-template #header>
     <div class="inline-flex items-center justify-center">
-      <span class="font-semibold whitespace-nowrap"
-        >Payment Card {{ selectedPaymentDeposit?.id }}</span
-      >
+      <span class="font-semibold whitespace-nowrap">Payment Card {{ selectedPaymentDeposit?.id }}</span>
       <p-badge
         *ngIf="(selectedPaymentDeposit?.usageDetails?.length || 0) > 1"
         class="ml-1"
@@ -518,29 +433,27 @@
       <div class="grid text-sm gap-2 mt-2">
         <div class="col-12 md:col-4 flex align-items-center">
           <span class="font-semibold text-300 mr-1">Effective Date:</span>
-          <span>{{ deposit.jsEffectiveDate |  date: "yyyy-MM-dd" }}</span>
+          <span>{{ deposit.jsEffectiveDate | date: 'yyyy-MM-dd' }}</span>
         </div>
         <div class="col-12 md:col-4 flex align-items-center">
           <span class="font-semibold text-300 mr-1">Clearing Date:</span>
-          <span>{{ deposit.jsClearingDate |  date: "yyyy-MM-dd" }}</span>
+          <span>{{ deposit.jsClearingDate | date: 'yyyy-MM-dd' }}</span>
         </div>
         <div class="col-12 md:col-3 flex align-items-center">
           <span class="font-semibold text-300 mr-1">Excess Applied:</span>
-          <span>{{ deposit.jsExcessAppliedDate |  date: "yyyy-MM-dd" }}</span>
+          <span>{{ deposit.jsExcessAppliedDate | date: 'yyyy-MM-dd' }}</span>
         </div>
       </div>
 
       <!-- Row 3: Apply Excess to Principal, Allocation Type -->
       <div class="grid text-sm gap-2 mt-2">
         <div class="col-12 md:col-6 flex align-items-center">
-          <span class="font-semibold text-300 mr-1"
-            >Apply Excess to Principal:</span
-          >
-          <span>{{ deposit.applyExcessToPrincipal ? "Yes" : "No" }}</span>
+          <span class="font-semibold text-300 mr-1">Apply Excess to Principal:</span>
+          <span>{{ deposit.applyExcessToPrincipal ? 'Yes' : 'No' }}</span>
         </div>
         <div class="col-12 md:col-5 flex align-items-center">
           <span class="font-semibold text-300 mr-1">Allocation Type:</span>
-          <span>{{ deposit.staticAllocation ? "Static" : "Default" }}</span>
+          <span>{{ deposit.staticAllocation ? 'Static' : 'Default' }}</span>
         </div>
       </div>
 
@@ -571,11 +484,7 @@
     <!-- Usage Details Table -->
     <div class="text-sm mt-2">
       <span class="font-semibold text-300">Usage Details:</span>
-      <p-table
-        [value]="deposit.usageDetails || []"
-        responsiveLayout="scroll"
-        styleClass="mt-2"
-      >
+      <p-table [value]="deposit.usageDetails || []" responsiveLayout="scroll" styleClass="mt-2">
         <ng-template pTemplate="header">
           <tr>
             <th>Period</th>
@@ -597,7 +506,7 @@
             <td>{{ usage.allocatedPrincipal.toNumber() | currency }}</td>
             <td>{{ usage.allocatedInterest.toNumber() | currency }}</td>
             <td>{{ usage.allocatedFees.toNumber() | currency }}</td>
-            <td>{{ usage.date.toString() |  date: "yyyy-MM-dd" }}</td>
+            <td>{{ usage.date.toString() | date: 'yyyy-MM-dd' }}</td>
           </tr>
         </ng-template>
       </p-table>

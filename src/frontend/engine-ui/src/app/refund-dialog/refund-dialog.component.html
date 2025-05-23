@@ -35,29 +35,20 @@
       showIcon
       inputStyleClass="w-full"
       class="w-full"
+      [style]="{ width: '100%' }"
+      [inputStyle]="{ width: '100%' }"
     ></p-datepicker>
   </div>
 
   <!-- Reason -->
   <div class="field">
     <label for="r-reason">Reason (optional)</label>
-    <input
-      id="r-reason"
-      pInputText
-      type="text"
-      [(ngModel)]="reason"
-      class="w-full"
-    />
+    <input id="r-reason" pInputText type="text" [(ngModel)]="reason" class="w-full" />
   </div>
 
   <!-- Buttons -->
   <ng-template pTemplate="footer">
     <p-button label="Save" icon="pi pi-check" (click)="save()" />
-    <p-button
-      label="Close"
-      icon="pi pi-times"
-      class="p-button-text"
-      (click)="close()"
-    />
+    <p-button label="Close" icon="pi pi-times" class="p-button-text" (click)="close()" />
   </ng-template>
 </p-dialog>

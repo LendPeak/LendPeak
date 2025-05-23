@@ -43,11 +43,12 @@
     <span *ngIf="loadedSettingName" class="p-mr-2 loaded-settings">
       <i class="pi pi-cog"></i>
       {{ loadedSettingName }}
-      <span *ngIf="loadedSettingVersion"> (v{{ loadedSettingVersion }}) </span>
+      <span *ngIf="loadedSettingVersion">(v{{ loadedSettingVersion }})</span>
     </span>
     <!-- Modified Indicator -->
     <span *ngIf="isModified" class="p-mr-2 modified-indicator">
-      <i class="pi pi-info-circle"></i> Modified
+      <i class="pi pi-info-circle"></i>
+      Modified
     </span>
   </div>
 </p-toolbar>
@@ -64,10 +65,7 @@
           <div class="field col-6">
             <label for="termPeriodUnit">
               Term Period Unit
-              <i
-                class="pi pi-info-circle tooltip-icon"
-                (click)="showTooltip($event, termPeriodUnitTooltip)"
-              ></i>
+              <i class="pi pi-info-circle tooltip-icon" (click)="showTooltip($event, termPeriodUnitTooltip)"></i>
             </label>
             <p-select
               inputId="termPeriodUnit"
@@ -76,12 +74,13 @@
               placeholder="Select a term period unit"
               (ngModelChange)="termPeriodDefinitionChange()"
               appendTo="body"
+              class="w-full"
+              [style]="{ width: '100%' }"
             ></p-select>
             <!-- Popover replacing OverlayPanel -->
             <p-popover #termPeriodUnitTooltip>
               <ng-template pTemplate="content">
-                Defines the unit of time for each term period. For example,
-                select "Month" for monthly payments.
+                Defines the unit of time for each term period. For example, select "Month" for monthly payments.
               </ng-template>
             </p-popover>
           </div>
@@ -90,21 +89,21 @@
           <div class="field col-6">
             <label for="termPeriodCount">
               Term Period Count
-              <i
-                class="pi pi-info-circle tooltip-icon"
-                (click)="showTooltip($event, termPeriodCountTooltip)"
-              ></i>
+              <i class="pi pi-info-circle tooltip-icon" (click)="showTooltip($event, termPeriodCountTooltip)"></i>
             </label>
             <p-inputNumber
               inputId="termPeriodCount"
               [(ngModel)]="lendPeak.amortization.termPeriodDefinition.count[0]"
               (ngModelChange)="termPeriodDefinitionChange()"
+              class="w-full"
+              inputStyleClass="w-full"
+              [style]="{ width: '100%' }"
+              [inputStyle]="{ width: '100%' }"
             ></p-inputNumber>
             <!-- Popover replacing OverlayPanel -->
             <p-popover #termPeriodCountTooltip>
               <ng-template pTemplate="content">
-                Number of units per term period. For example, enter "1" for
-                payments every 1 month.
+                Number of units per term period. For example, enter "1" for payments every 1 month.
               </ng-template>
             </p-popover>
           </div>
@@ -113,10 +112,7 @@
           <div class="field col-6">
             <label for="calendarType">
               Calendar Type
-              <i
-                class="pi pi-info-circle tooltip-icon"
-                (click)="showTooltip($event, calendarTypeTooltip)"
-              ></i>
+              <i class="pi pi-info-circle tooltip-icon" (click)="showTooltip($event, calendarTypeTooltip)"></i>
             </label>
             <p-select
               inputId="calendarType"
@@ -125,6 +121,8 @@
               placeholder="Select a calendar type"
               (ngModelChange)="onInputChange()"
               appendTo="body"
+              class="w-full"
+              [style]="{ width: '100%' }"
             ></p-select>
             <!-- Popover replacing OverlayPanel -->
             <p-popover #calendarTypeTooltip>
@@ -213,6 +211,8 @@
             placeholder="Select an allocation strategy"
             (ngModelChange)="onInputChange()"
             appendTo="body"
+            class="w-full"
+            [style]="{ width: '100%' }"
           ></p-select>
           <!-- Popover replacing OverlayPanel -->
           <p-popover #paymentAllocationStrategyTooltip>
@@ -228,10 +228,7 @@
         <div class="field">
           <label for="paymentPriority">
             Payment Priority
-            <i
-              class="pi pi-info-circle tooltip-icon"
-              (click)="showTooltip($event, paymentPriorityTooltip)"
-            ></i>
+            <i class="pi pi-info-circle tooltip-icon" (click)="showTooltip($event, paymentPriorityTooltip)"></i>
           </label>
           <!-- Payment Priority Selection -->
           <div class="p-grid">
@@ -243,6 +240,8 @@
                 placeholder="First"
                 (ngModelChange)="onPaymentPriorityChange()"
                 appendTo="body"
+                class="w-full"
+                [style]="{ width: '100%' }"
               ></p-select>
             </div>
             <div class="p-col-4">
@@ -252,6 +251,8 @@
                 placeholder="Second"
                 (ngModelChange)="onPaymentPriorityChange()"
                 appendTo="body"
+                class="w-full"
+                [style]="{ width: '100%' }"
               ></p-select>
             </div>
             <div class="p-col-4">
@@ -261,6 +262,8 @@
                 placeholder="Third"
                 (ngModelChange)="onPaymentPriorityChange()"
                 appendTo="body"
+                class="w-full"
+                [style]="{ width: '100%' }"
               ></p-select>
             </div>
           </div>
@@ -268,10 +271,7 @@
           <p-popover #paymentPriorityTooltip>
             <ng-template pTemplate="content">
               <div class="tooltip-content">
-                <p>
-                  Specify the order in which payments are applied to
-                  components...
-                </p>
+                <p>Specify the order in which payments are applied to components...</p>
               </div>
             </ng-template>
           </p-popover>
@@ -289,10 +289,7 @@
         <div class="field">
           <label for="billingModel">
             Loan Type
-            <i
-              class="pi pi-info-circle tooltip-icon"
-              (click)="showTooltip($event, billingModelTooltip)"
-            ></i>
+            <i class="pi pi-info-circle tooltip-icon" (click)="showTooltip($event, billingModelTooltip)"></i>
           </label>
           <p-select
             id="billingModel"
@@ -302,20 +299,21 @@
             placeholder="Select a loan type"
             (ngModelChange)="onInputChange()"
             appendTo="body"
+            class="w-full"
+            [style]="{ width: '100%' }"
           ></p-select>
           <!-- Popover replacing OverlayPanel -->
           <p-popover #billingModelTooltip>
             <ng-template pTemplate="content">
               <div class="tooltip-content">
                 <p>
-                  <strong>Amortized Loan:</strong> An amortized loan has
-                  scheduled payments applied to both principal and interest over
-                  the life of the loan.
+                  <strong>Amortized Loan:</strong>
+                  An amortized loan has scheduled payments applied to both principal and interest over the life of the
+                  loan.
                 </p>
                 <p>
-                  <strong>Daily Simple Interest Loan:</strong> A daily simple
-                  interest loan accrues interest daily on the outstanding
-                  principal.
+                  <strong>Daily Simple Interest Loan:</strong>
+                  A daily simple interest loan accrues interest daily on the outstanding principal.
                 </p>
               </div>
             </ng-template>
@@ -323,32 +321,27 @@
         </div>
 
         <!-- Conditionally display these fields only for 'amortized' loans -->
-        <div
-          *ngIf="lendPeak.amortization.billingModel === 'amortized'"
-          class="field grid"
-        >
+        <div *ngIf="lendPeak.amortization.billingModel === 'amortized'" class="field grid">
           <!-- Default Pre Bill Days -->
           <div class="field col-6">
             <label for="defaultPreBillDaysConfiguration">
               Default Pre Bill Days
-              <i
-                class="pi pi-info-circle tooltip-icon"
-                (click)="showTooltip($event, defaultPreBillDaysTooltip)"
-              ></i>
+              <i class="pi pi-info-circle tooltip-icon" (click)="showTooltip($event, defaultPreBillDaysTooltip)"></i>
             </label>
             <p-inputNumber
               inputId="defaultPreBillDaysConfiguration"
-              [(ngModel)]="
-                lendPeak.amortization.jsDefaultPreBillDaysConfiguration
-              "
+              [(ngModel)]="lendPeak.amortization.jsDefaultPreBillDaysConfiguration"
               (ngModelChange)="onInputChange()"
               appendTo="body"
+              class="w-full"
+              inputStyleClass="w-full"
+              [style]="{ width: '100%' }"
+              [inputStyle]="{ width: '100%' }"
             ></p-inputNumber>
             <!-- Popover replacing OverlayPanel -->
             <p-popover #defaultPreBillDaysTooltip>
               <ng-template pTemplate="content">
-                Number of days before the period end to open the bill by
-                default.
+                Number of days before the period end to open the bill by default.
               </ng-template>
             </p-popover>
           </div>
@@ -357,24 +350,21 @@
           <div class="field col-6">
             <label for="defaultBillDueDaysAfterPeriodEndConfiguration">
               Default Due Date Days
-              <i
-                class="pi pi-info-circle tooltip-icon"
-                (click)="showTooltip($event, defaultDueDateDaysTooltip)"
-              ></i>
+              <i class="pi pi-info-circle tooltip-icon" (click)="showTooltip($event, defaultDueDateDaysTooltip)"></i>
             </label>
             <p-inputNumber
               inputId="defaultBillDueDaysAfterPeriodEndConfiguration"
-              [(ngModel)]="
-                lendPeak.amortization
-                  .jsDefaultBillDueDaysAfterPeriodEndConfiguration
-              "
+              [(ngModel)]="lendPeak.amortization.jsDefaultBillDueDaysAfterPeriodEndConfiguration"
               (ngModelChange)="onInputChange()"
+              class="w-full"
+              inputStyleClass="w-full"
+              [style]="{ width: '100%' }"
+              [inputStyle]="{ width: '100%' }"
             ></p-inputNumber>
             <!-- Popover replacing OverlayPanel -->
             <p-popover #defaultDueDateDaysTooltip>
               <ng-template pTemplate="content">
-                Number of days after the period end when the payment is due by
-                default.
+                Number of days after the period end when the payment is due by default.
               </ng-template>
             </p-popover>
           </div>
@@ -384,10 +374,7 @@
         <div class="field">
           <label for="autoCloseThreshold">
             Auto-close Threshold
-            <i
-              class="pi pi-info-circle tooltip-icon"
-              (click)="showTooltip($event, autoCloseTooltip)"
-            ></i>
+            <i class="pi pi-info-circle tooltip-icon" (click)="showTooltip($event, autoCloseTooltip)"></i>
           </label>
           <p-inputNumber
             id="autoCloseThreshold"
@@ -396,13 +383,16 @@
             currency="USD"
             locale="en-US"
             (ngModelChange)="onInputChange()"
-          >
-          </p-inputNumber>
+            class="w-full"
+            inputStyleClass="w-full"
+            [style]="{ width: '100%' }"
+            [inputStyle]="{ width: '100%' }"
+          ></p-inputNumber>
           <p-popover #autoCloseTooltip>
             <ng-template pTemplate="content">
-              When the remaining payoff amount is &lt;= this value, the engine
-              will generate a one-time <em>Auto Close</em> payment to bring the
-              balance to&nbsp;zero.
+              When the remaining payoff amount is &lt;= this value, the engine will generate a one-time
+              <em>Auto Close</em>
+              payment to bring the balance to&nbsp;zero.
             </ng-template>
           </p-popover>
         </div>
@@ -419,10 +409,7 @@
         <div class="field">
           <label for="perDiemCalculationType">
             Per Diem Calculation Type
-            <i
-              class="pi pi-info-circle tooltip-icon"
-              (click)="showTooltip($event, perDiemCalculationTypeTooltip)"
-            ></i>
+            <i class="pi pi-info-circle tooltip-icon" (click)="showTooltip($event, perDiemCalculationTypeTooltip)"></i>
           </label>
           <p-select
             id="perDiemCalculationType"
@@ -432,6 +419,8 @@
             placeholder="Select a per diem calculation type"
             (ngModelChange)="onInputChange()"
             appendTo="body"
+            class="w-full"
+            [style]="{ width: '100%' }"
           ></p-select>
           <!-- Popover replacing OverlayPanel -->
           <p-popover #perDiemCalculationTypeTooltip>
@@ -457,16 +446,12 @@
           ></p-checkbox>
           <label for="allowRateAbove100">
             Allow rates above 100%
-            <i
-              class="pi pi-info-circle tooltip-icon"
-              (click)="showTooltip($event, allowRateAbove100Tooltip)"
-            ></i>
+            <i class="pi pi-info-circle tooltip-icon" (click)="showTooltip($event, allowRateAbove100Tooltip)"></i>
           </label>
           <!-- Popover replacing OverlayPanel -->
           <p-popover #allowRateAbove100Tooltip>
             <ng-template pTemplate="content">
-              Enable this option to allow setting interest rates higher than
-              100%.
+              Enable this option to allow setting interest rates higher than 100%.
             </ng-template>
           </p-popover>
         </div>
@@ -488,8 +473,7 @@
           <!-- Popover replacing OverlayPanel -->
           <p-popover #accrueInterestAfterEndDateTooltip>
             <ng-template pTemplate="content">
-              If Bill remains unpaid after the end date, interest will continue
-              to accrue on owed principal
+              If Bill remains unpaid after the end date, interest will continue to accrue on owed principal
             </ng-template>
           </p-popover>
         </div>
@@ -514,13 +498,14 @@
             <ng-template pTemplate="content">
               <p>
                 When enabled, interest for a given day is recognised
-                <strong>at the very start of the day</strong> (“day-0”).&nbsp;
-                When disabled (default), interest is not due until the first
-                second of the <em>next</em> day (“day-1” behaviour).
+                <strong>at the very start of the day</strong>
+                (“day-0”).&nbsp; When disabled (default), interest is not due until the first second of the
+                <em>next</em>
+                day (“day-1” behaviour).
               </p>
               <p class="p-mt-1">
-                The flag only affects partial-period pay-offs and snapshot
-                accruals; it does not change your regular term interest.
+                The flag only affects partial-period pay-offs and snapshot accruals; it does not change your regular
+                term interest.
               </p>
             </ng-template>
           </p-popover>
@@ -530,45 +515,33 @@
         <div class="field">
           <label for="flushMethod">
             Unbilled Interest Flush Method
-            <i
-              class="pi pi-info-circle tooltip-icon"
-              (click)="showTooltip($event, flushMethodTooltip)"
-            ></i>
+            <i class="pi pi-info-circle tooltip-icon" (click)="showTooltip($event, flushMethodTooltip)"></i>
           </label>
           <p-select
             id="flushMethod"
-            [(ngModel)]="
-              lendPeak.amortization.flushUnbilledInterestRoundingErrorMethod
-            "
+            [(ngModel)]="lendPeak.amortization.flushUnbilledInterestRoundingErrorMethod"
             name="flushMethod"
             [options]="flushMethods"
             placeholder="Select a flush method"
             (ngModelChange)="onInputChange()"
             appendTo="body"
+            class="w-full"
+            [style]="{ width: '100%' }"
           ></p-select>
           <!-- Popover replacing OverlayPanel -->
           <p-popover #flushMethodTooltip>
             <ng-template pTemplate="content">
-              Determines how unbilled interest is handled. Choose a method to
-              define when unbilled interest should be flushed.
+              Determines how unbilled interest is handled. Choose a method to define when unbilled interest should be
+              flushed.
             </ng-template>
           </p-popover>
         </div>
 
         <!-- Flush Threshold -->
-        <div
-          class="field"
-          *ngIf="
-            lendPeak.amortization.flushUnbilledInterestRoundingErrorMethod !==
-            'none'
-          "
-        >
+        <div class="field" *ngIf="lendPeak.amortization.flushUnbilledInterestRoundingErrorMethod !== 'none'">
           <label for="flushThreshold">
             Unbilled Interest Flush Threshold
-            <i
-              class="pi pi-info-circle tooltip-icon"
-              (click)="showTooltip($event, flushThresholdTooltip)"
-            ></i>
+            <i class="pi pi-info-circle tooltip-icon" (click)="showTooltip($event, flushThresholdTooltip)"></i>
           </label>
           <p-inputNumber
             id="flushThreshold"
@@ -578,12 +551,16 @@
             currency="USD"
             locale="en-US"
             (ngModelChange)="onInputChange()"
+            class="w-full"
+            inputStyleClass="w-full"
+            [style]="{ width: '100%' }"
+            [inputStyle]="{ width: '100%' }"
           ></p-inputNumber>
           <!-- Popover replacing OverlayPanel -->
           <p-popover #flushThresholdTooltip>
             <ng-template pTemplate="content">
-              The threshold amount for flushing unbilled interest. For example,
-              enter "$0.01" to flush unbilled interest when it reaches one cent.
+              The threshold amount for flushing unbilled interest. For example, enter "$0.01" to flush unbilled interest
+              when it reaches one cent.
             </ng-template>
           </p-popover>
         </div>
@@ -600,10 +577,7 @@
         <div class="field">
           <label for="roundingMethod">
             Rounding Method
-            <i
-              class="pi pi-info-circle tooltip-icon"
-              (click)="showTooltip($event, roundingMethodTooltip)"
-            ></i>
+            <i class="pi pi-info-circle tooltip-icon" (click)="showTooltip($event, roundingMethodTooltip)"></i>
           </label>
           <p-select
             id="roundingMethod"
@@ -613,6 +587,8 @@
             placeholder="Select a rounding method"
             (ngModelChange)="onInputChange()"
             appendTo="body"
+            class="w-full"
+            [style]="{ width: '100%' }"
           ></p-select>
           <!-- Popover replacing OverlayPanel -->
           <p-popover #roundingMethodTooltip>
@@ -621,49 +597,95 @@
                 <strong>Rounding Options:</strong>
                 <ul class="p-mt-2">
                   <li>
-                    <strong>Round Up:</strong> Rounds up to the nearest
-                    specified precision.
+                    <strong>Round Up:</strong>
+                    Rounds up to the nearest specified precision.
                     <ul>
-                      <li>2.301 → <strong>2.31</strong></li>
-                      <li>2.374 → <strong>2.38</strong></li>
-                      <li>-2.301 → <strong>-2.30</strong></li>
+                      <li>
+                        2.301 →
+                        <strong>2.31</strong>
+                      </li>
+                      <li>
+                        2.374 →
+                        <strong>2.38</strong>
+                      </li>
+                      <li>
+                        -2.301 →
+                        <strong>-2.30</strong>
+                      </li>
                     </ul>
                   </li>
                   <li>
-                    <strong>Round Down:</strong> Rounds down to the nearest
-                    specified precision.
+                    <strong>Round Down:</strong>
+                    Rounds down to the nearest specified precision.
                     <ul>
-                      <li>2.399 → <strong>2.39</strong></li>
-                      <li>2.376 → <strong>2.37</strong></li>
-                      <li>-2.399 → <strong>-2.40</strong></li>
+                      <li>
+                        2.399 →
+                        <strong>2.39</strong>
+                      </li>
+                      <li>
+                        2.376 →
+                        <strong>2.37</strong>
+                      </li>
+                      <li>
+                        -2.399 →
+                        <strong>-2.40</strong>
+                      </li>
                     </ul>
                   </li>
                   <li>
-                    <strong>Round Half Up:</strong> Rounds to nearest neighbor;
-                    rounds away from zero if equidistant.
+                    <strong>Round Half Up:</strong>
+                    Rounds to nearest neighbor; rounds away from zero if equidistant.
                     <ul>
-                      <li>2.345 → <strong>2.35</strong></li>
-                      <li>2.344 → <strong>2.34</strong></li>
-                      <li>-2.345 → <strong>-2.35</strong></li>
+                      <li>
+                        2.345 →
+                        <strong>2.35</strong>
+                      </li>
+                      <li>
+                        2.344 →
+                        <strong>2.34</strong>
+                      </li>
+                      <li>
+                        -2.345 →
+                        <strong>-2.35</strong>
+                      </li>
                     </ul>
                   </li>
                   <li>
-                    <strong>Round Half Down:</strong> Rounds to nearest
-                    neighbor; rounds towards zero if equidistant.
+                    <strong>Round Half Down:</strong>
+                    Rounds to nearest neighbor; rounds towards zero if equidistant.
                     <ul>
-                      <li>2.345 → <strong>2.34</strong></li>
-                      <li>2.346 → <strong>2.35</strong></li>
-                      <li>-2.345 → <strong>-2.34</strong></li>
+                      <li>
+                        2.345 →
+                        <strong>2.34</strong>
+                      </li>
+                      <li>
+                        2.346 →
+                        <strong>2.35</strong>
+                      </li>
+                      <li>
+                        -2.345 →
+                        <strong>-2.34</strong>
+                      </li>
                     </ul>
                   </li>
                   <li>
-                    <strong>Round Half Even (Bankers' Rounding):</strong> Rounds
-                    to nearest neighbor; rounds towards nearest even number if
-                    equidistant.
+                    <strong>Round Half Even (Bankers' Rounding):</strong>
+                    Rounds to nearest neighbor; rounds towards nearest even number if equidistant.
                     <ul>
-                      <li>2.345 → <strong>2.34</strong> (4 is even)</li>
-                      <li>2.355 → <strong>2.36</strong> (6 is even)</li>
-                      <li>-2.345 → <strong>-2.34</strong></li>
+                      <li>
+                        2.345 →
+                        <strong>2.34</strong>
+                        (4 is even)
+                      </li>
+                      <li>
+                        2.355 →
+                        <strong>2.36</strong>
+                        (6 is even)
+                      </li>
+                      <li>
+                        -2.345 →
+                        <strong>-2.34</strong>
+                      </li>
                     </ul>
                   </li>
                 </ul>
@@ -676,22 +698,22 @@
         <div class="field">
           <label for="roundingPrecision">
             Rounding Precision (decimal places)
-            <i
-              class="pi pi-info-circle tooltip-icon"
-              (click)="showTooltip($event, roundingPrecisionTooltip)"
-            ></i>
+            <i class="pi pi-info-circle tooltip-icon" (click)="showTooltip($event, roundingPrecisionTooltip)"></i>
           </label>
           <p-inputNumber
             id="roundingPrecision"
             [(ngModel)]="lendPeak.amortization.roundingPrecision"
             name="roundingPrecision"
             (ngModelChange)="onInputChange()"
+            class="w-full"
+            inputStyleClass="w-full"
+            [style]="{ width: '100%' }"
+            [inputStyle]="{ width: '100%' }"
           ></p-inputNumber>
           <!-- Popover replacing OverlayPanel -->
           <p-popover #roundingPrecisionTooltip>
             <ng-template pTemplate="content">
-              Number of decimal places to round to. For example, enter "2" to
-              round amounts to two decimal places.
+              Number of decimal places to round to. For example, enter "2" to round amounts to two decimal places.
             </ng-template>
           </p-popover>
         </div>
@@ -711,12 +733,7 @@
   <div class="p-fluid">
     <div class="field">
       <label for="settingName">Setting Name</label>
-      <input
-        id="settingName"
-        type="text"
-        pInputText
-        [(ngModel)]="newSetting.name"
-      />
+      <input id="settingName" type="text" pInputText [(ngModel)]="newSetting.name" />
     </div>
     <div class="field-checkbox">
       <p-checkbox [(ngModel)]="newSetting.isDefault" binary="true"></p-checkbox>
@@ -725,11 +742,7 @@
   </div>
   <div class="flex gap-2 mt-4 justify-content-end">
     <div class="p-d-flex p-jc-end">
-      <p-button
-        label="Cancel"
-        class="p-mr-2"
-        (onClick)="showSaveSettingsDialog = false"
-      ></p-button>
+      <p-button label="Cancel" class="p-mr-2" (onClick)="showSaveSettingsDialog = false"></p-button>
       <p-button label="Save" (onClick)="confirmSaveSettings()"></p-button>
     </div>
   </div>
@@ -743,13 +756,7 @@
   [style]="{ width: '600px' }"
   [closable]="true"
 >
-  <p-table
-    [value]="savedSettings"
-    selectionMode="single"
-    [(selection)]="selectedSetting"
-    [paginator]="true"
-    [rows]="5"
-  >
+  <p-table [value]="savedSettings" selectionMode="single" [(selection)]="selectedSetting" [paginator]="true" [rows]="5">
     <ng-template pTemplate="header">
       <tr>
         <th>Name</th>
@@ -762,7 +769,7 @@
       <tr [pSelectableRow]="setting">
         <td>{{ setting.name }}</td>
         <td>{{ setting.version }}</td>
-        <td>{{ setting.createdAt | date: "short" }}</td>
+        <td>{{ setting.createdAt | date: 'short' }}</td>
         <td>
           <div class="p-d-flex p-ai-center">
             <p-button
@@ -786,16 +793,8 @@
   </p-table>
   <div class="flex gap-2 mt-4 justify-content-end">
     <div class="p-d-flex p-jc-end">
-      <p-button
-        label="Cancel"
-        class="p-mr-2 pr-2"
-        (onClick)="showLoadSettingsDialog = false"
-      ></p-button>
-      <p-button
-        label="Load"
-        [disabled]="!selectedSetting"
-        (onClick)="confirmLoadSettings()"
-      ></p-button>
+      <p-button label="Cancel" class="p-mr-2 pr-2" (onClick)="showLoadSettingsDialog = false"></p-button>
+      <p-button label="Load" [disabled]="!selectedSetting" (onClick)="confirmLoadSettings()"></p-button>
     </div>
   </div>
 </p-dialog>
@@ -810,10 +809,6 @@
 >
   <pre>{{ selectedSetting?.settings | json }}</pre>
   <div class="flex gap-2 mt-4 justify-content-end">
-    <button
-      pButton
-      label="Close"
-      (click)="showPreviewSettingsDialog = false"
-    ></button>
+    <button pButton label="Close" (click)="showPreviewSettingsDialog = false"></button>
   </div>
 </p-dialog>

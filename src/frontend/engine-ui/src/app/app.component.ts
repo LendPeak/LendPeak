@@ -585,6 +585,9 @@ export class AppComponent implements OnChanges, AfterViewInit, OnInit, OnDestroy
       this.loaderMinDisplayTime = state.minDisplayTime;
       this.loaderVisible = state.visible;
     });
+
+    this.updateMobileBlocked();
+    window.addEventListener('resize', this.updateMobileBlocked);
   }
 
   loadDefaultLoan() {
@@ -1975,5 +1978,12 @@ export class AppComponent implements OnChanges, AfterViewInit, OnInit, OnDestroy
 
   ngOnDestroy() {
     if (this.loaderSub) this.loaderSub.unsubscribe();
+    window.removeEventListener('resize', this.updateMobileBlocked);
   }
+
+  mobileBlocked: boolean = false;
+
+  updateMobileBlocked = () => {
+    this.mobileBlocked = window.innerWidth < 800 || window.innerHeight < 600;
+  };
 }

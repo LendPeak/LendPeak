@@ -79,6 +79,7 @@ import { SystemSettingsComponent } from './system-settings/system-settings.compo
 import { CalculatorDialogComponent } from './calculator-dialog/calculator-dialog.component';
 import { RefundsListDialogComponent } from './refunds-list-dialog/refunds-list-dialog.component';
 import { DemoLoanBrowserComponent } from './demo-loan-browser/demo-loan-browser.component';
+import { MobileUnsupportedComponent } from './mobile-unsupported/mobile-unsupported.component';
 
 import { HighlightModule, LineNumbersOptions } from 'ngx-highlightjs';
 import { provideHighlightOptions } from 'ngx-highlightjs';
@@ -120,6 +121,7 @@ import { ListboxModule } from 'primeng/listbox';
     RefundDialogComponent,
     RefundsListDialogComponent,
     DemoLoanBrowserComponent,
+    MobileUnsupportedComponent,
     LoaderComponent,
   ],
   imports: [

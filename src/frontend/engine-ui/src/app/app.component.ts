@@ -1761,7 +1761,7 @@ export class AppComponent implements OnChanges, AfterViewInit, OnInit, OnDestroy
       });
       return;
     }
-    this.loaderService.show('Loading demo loan...', 300);
+    // this.loaderService.show('Loading demo loan...', 300);
     try {
       const built = factory(); // { loan, deposits }
       await this.saveAndLoadLoan({

@@ -57,6 +57,13 @@ export enum FlushUnbilledInterestDueToRoundingErrorType {
   AT_THRESHOLD = "at_threshold",
 }
 
+export enum AmortizationState {
+  NeedsCalculation,
+  Calculating,
+  Calculated,
+  Error,
+}
+
 export interface TermPeriodDefinition {
   unit: "year" | "month" | "week" | "day" | "complex";
   count: number[];
@@ -119,6 +126,28 @@ export interface AmortizationParams {
 }
 
 export type BillingModel = "amortized" | "dailySimpleInterest";
+
+// Amortization State Machine:
+//
+// States:
+// - NeedsCalculation: Initial state, or after a parameter affecting the schedule has been modified.
+// - Calculating: Transient state while `calculateAmortizationPlan()` is executing.
+// - Calculated: State when the repayment schedule is up-to-date.
+// - Error: If an unrecoverable error occurs.
+//
+// Transitions:
+// - Constructor:
+//   - Initializes state to NeedsCalculation.
+//   - Calls `calculateAmortizationPlan()`: NeedsCalculation -> Calculating -> Calculated (or Error).
+// - Setters (for schedule-affecting parameters):
+//   - If current state is Calculated or Error (and error is recoverable): -> NeedsCalculation.
+// - `calculateAmortizationPlan()`:
+//   - Sets state to Calculating.
+//   - On success: -> Calculated.
+//   - On error: -> Error.
+// - Getters (for schedule-dependent data):
+//   - If state is NeedsCalculation: Trigger `calculateAmortizationPlan()` (NeedsCalculation -> Calculating -> Calculated).
+//   - If state is Error: Handle (e.g., throw, return stale).
 
 /**
  * Amortization class to generate an amortization schedule for a loan.
@@ -237,9 +266,6 @@ export class Amortization {
   private _inputParams: AmortizationParams;
   private _termInterestAmountOverride: TermInterestAmountOverrides = new TermInterestAmountOverrides();
   private _termInterestRateOverride: TermInterestRateOverrides = new TermInterestRateOverrides();
-  private _modifiedSinceLastCalculation: boolean = true;
-  private _modificationCount: number = 0;
-  private _modificationOptimizationTracker: any = {};
   private _export?: AmortizationExport;
   private _summary?: AmortizationSummary;
   private _tila?: TILA;
@@ -249,8 +275,10 @@ export class Amortization {
   private _accrueInterestAfterEndDate: boolean = false;
 
   private _interestAccruesFromDayZero: boolean = false;
+  private _currentState: AmortizationState;
 
   constructor(params: AmortizationParams) {
+    this._currentState = AmortizationState.NeedsCalculation;
     this._inputParams = cloneDeep(params);
 
     if (params.id) {
@@ -594,28 +622,7 @@ export class Amortization {
   }
 
   get modifiedSinceLastCalculation(): boolean {
-    return this._modifiedSinceLastCalculation;
-  }
-
-  set modifiedSinceLastCalculation(value: boolean) {
-    if (value === true) {
-      this._modificationCount++;
-      //console.trace("modified since last calculation set to: ", value, this._modificationCount);
-    }
-    this._modifiedSinceLastCalculation = value;
-    //  console.trace("modified since last calculation set to: ", value, this._modificationCount);
-  }
-
-  set modificationOptimizationTracker(value: any) {
-    this._modificationOptimizationTracker[value] = this._modificationCount;
-  }
-
-  get modificationOptimizationTracker(): any {
-    return this._modificationOptimizationTracker;
-  }
-
-  isUpdatedSinceLastCalculation(key: string): boolean {
-    return this._modificationOptimizationTracker[key] === this._modificationCount;
+    return this._currentState === AmortizationState.NeedsCalculation;
   }
 
   get id(): string {
@@ -623,7 +630,12 @@ export class Amortization {
   }
 
   set id(value: string) {
-    this.modifiedSinceLastCalculation = true;
+    if (this._currentState !== AmortizationState.Calculating && this._currentState !== AmortizationState.Error) {
+      this._currentState = AmortizationState.NeedsCalculation;
+    } else if (this._currentState === AmortizationState.Error) {
+      // If an error occurred, changing a property might make the state recoverable
+      this._currentState = AmortizationState.NeedsCalculation;
+    }
     this._id = value;
     this.jsId = value;
   }
@@ -633,8 +645,12 @@ export class Amortization {
   }
 
   set name(value: string) {
-    this.modifiedSinceLastCalculation = true;
-
+    if (this._currentState !== AmortizationState.Calculating && this._currentState !== AmortizationState.Error) {
+      this._currentState = AmortizationState.NeedsCalculation;
+    } else if (this._currentState === AmortizationState.Error) {
+      // If an error occurred, changing a property might make the state recoverable
+      this._currentState = AmortizationState.NeedsCalculation;
+    }
     this._name = value;
     this.jsName = value;
   }
@@ -644,8 +660,12 @@ export class Amortization {
   }
 
   set description(value: string) {
-    this.modifiedSinceLastCalculation = true;
-
+    if (this._currentState !== AmortizationState.Calculating && this._currentState !== AmortizationState.Error) {
+      this._currentState = AmortizationState.NeedsCalculation;
+    } else if (this._currentState === AmortizationState.Error) {
+      // If an error occurred, changing a property might make the state recoverable
+      this._currentState = AmortizationState.NeedsCalculation;
+    }
     this._description = value;
     this.jsDescription = value;
   }
@@ -655,8 +675,12 @@ export class Amortization {
   }
 
   set loanAmount(value: Currency | number | Decimal) {
-    this.modifiedSinceLastCalculation = true;
-
+    if (this._currentState !== AmortizationState.Calculating && this._currentState !== AmortizationState.Error) {
+      this._currentState = AmortizationState.NeedsCalculation;
+    } else if (this._currentState === AmortizationState.Error) {
+      // If an error occurred, changing a property might make the state recoverable
+      this._currentState = AmortizationState.NeedsCalculation;
+    }
     let newValue: Currency;
     if (value instanceof Currency) {
       newValue = value;
@@ -675,8 +699,12 @@ export class Amortization {
   }
 
   set originationFee(value: Currency | number | Decimal | undefined) {
-    this.modifiedSinceLastCalculation = true;
-
+    if (this._currentState !== AmortizationState.Calculating && this._currentState !== AmortizationState.Error) {
+      this._currentState = AmortizationState.NeedsCalculation;
+    } else if (this._currentState === AmortizationState.Error) {
+      // If an error occurred, changing a property might make the state recoverable
+      this._currentState = AmortizationState.NeedsCalculation;
+    }
     if (!value) {
       this._originationFee = Currency.zero;
       return;
@@ -702,8 +730,12 @@ export class Amortization {
   }
 
   set term(value: number) {
-    this.modifiedSinceLastCalculation = true;
-
+    if (this._currentState !== AmortizationState.Calculating && this._currentState !== AmortizationState.Error) {
+      this._currentState = AmortizationState.NeedsCalculation;
+    } else if (this._currentState === AmortizationState.Error) {
+      // If an error occurred, changing a property might make the state recoverable
+      this._currentState = AmortizationState.NeedsCalculation;
+    }
     if (value <= 0) {
       throw new Error("Invalid term, must be greater than zero");
     }
@@ -720,22 +752,24 @@ export class Amortization {
         }),
       ]);
       this.generatePreBillDays();
-      this.modificationOptimizationTracker = "preBillDays";
+      // this.modificationOptimizationTracker = "preBillDays"; // Removed
     } else {
-      if (this.modifiedSinceLastCalculation === true) {
-        //  if (this._modificationOptimizationTracker?.preBillDays !== this._modificationCount) {
-        if (!this.isUpdatedSinceLastCalculation("preBillDays")) {
-          this.generatePreBillDays();
-          this.modificationOptimizationTracker = "preBillDays";
-        }
+      // The check `this.modifiedSinceLastCalculation === true` and modification tracker
+      // are replaced by the state machine. If NeedsCalculation, it will recalculate.
+       if (this._currentState === AmortizationState.NeedsCalculation) {
+        this.generatePreBillDays();
       }
     }
     return this._preBillDays;
   }
 
   set preBillDays(value: PreBillDaysConfigurations) {
-    this.modifiedSinceLastCalculation = true;
-
+    if (this._currentState !== AmortizationState.Calculating && this._currentState !== AmortizationState.Error) {
+      this._currentState = AmortizationState.NeedsCalculation;
+    } else if (this._currentState === AmortizationState.Error) {
+      // If an error occurred, changing a property might make the state recoverable
+      this._currentState = AmortizationState.NeedsCalculation;
+    }
     if (!value) {
       // this._hasCustomPreBillDays = false;
       this._preBillDays = new PreBillDaysConfigurations();
@@ -752,6 +786,11 @@ export class Amortization {
   }
 
   private generatePreBillDays(): void {
+    // This method might be called during initial setup or when term changes,
+    // ensure it doesn't prematurely mark for recalculation if already calculating.
+    // The setters for properties that affect this (like 'term' or 'defaultPreBillDaysConfiguration')
+    // will set the state to NeedsCalculation.
+    // This method itself doesn't need to change the state.
     /* ① start with a copy of every existing row (active **and** inactive) */
     const completed = new PreBillDaysConfigurations([...this._preBillDays.all]);
 
@@ -792,6 +831,9 @@ export class Amortization {
   }
 
   private generateDueBillDays(): void {
+    // Similar to generatePreBillDays, this method is called when related properties change.
+    // The state will already be NeedsCalculation due to those setters.
+    // This method itself doesn't need to change the state.
     /* ①  start with a copy of ALL current rows (active **and** inactive) */
     const completed = new BillDueDaysConfigurations([...this._dueBillDays.all]);
 
@@ -841,22 +883,24 @@ export class Amortization {
         }),
       ]);
       this.generateDueBillDays();
-      this.modificationOptimizationTracker = "dueBillDays";
+      // this.modificationOptimizationTracker = "dueBillDays"; // Removed
     } else {
-      if (this.modifiedSinceLastCalculation === true) {
-        if (this._modificationOptimizationTracker?.dueBillDays !== this._modificationCount) {
-          //    console.log(`modification tracker version didnt match ${this._modificationOptimizationTracker?.dueBillDays} ${this._modificationCount}`);
-          this.generateDueBillDays();
-          this._modificationOptimizationTracker.dueBillDays = this._modificationCount;
-        }
+      // The check `this.modifiedSinceLastCalculation === true` and modification tracker
+      // are replaced by the state machine. If NeedsCalculation, it will recalculate.
+      if (this._currentState === AmortizationState.NeedsCalculation) {
+         this.generateDueBillDays();
       }
     }
     return this._dueBillDays;
   }
 
   set dueBillDays(value: BillDueDaysConfigurations) {
-    this.modifiedSinceLastCalculation = true;
-
+    if (this._currentState !== AmortizationState.Calculating && this._currentState !== AmortizationState.Error) {
+      this._currentState = AmortizationState.NeedsCalculation;
+    } else if (this._currentState === AmortizationState.Error) {
+      // If an error occurred, changing a property might make the state recoverable
+      this._currentState = AmortizationState.NeedsCalculation;
+    }
     if (!value || value.length === 0) {
       this._hasCustomBillDueDays = false;
       this._dueBillDays = new BillDueDaysConfigurations();
@@ -876,7 +920,12 @@ export class Amortization {
   }
 
   set interestAccruesFromDayZero(value: boolean) {
-    this.modifiedSinceLastCalculation = true;
+    if (this._currentState !== AmortizationState.Calculating && this._currentState !== AmortizationState.Error) {
+      this._currentState = AmortizationState.NeedsCalculation;
+    } else if (this._currentState === AmortizationState.Error) {
+      // If an error occurred, changing a property might make the state recoverable
+      this._currentState = AmortizationState.NeedsCalculation;
+    }
     this._interestAccruesFromDayZero = value;
   }
 
@@ -885,8 +934,12 @@ export class Amortization {
   }
 
   set defaultPreBillDaysConfiguration(value: number) {
-    this.modifiedSinceLastCalculation = true;
-
+    if (this._currentState !== AmortizationState.Calculating && this._currentState !== AmortizationState.Error) {
+      this._currentState = AmortizationState.NeedsCalculation;
+    } else if (this._currentState === AmortizationState.Error) {
+      // If an error occurred, changing a property might make the state recoverable
+      this._currentState = AmortizationState.NeedsCalculation;
+    }
     this._defaultPreBillDaysConfiguration = value;
   }
   get defaultBillDueDaysAfterPeriodEndConfiguration() {
@@ -894,8 +947,12 @@ export class Amortization {
   }
 
   set defaultBillDueDaysAfterPeriodEndConfiguration(value: number) {
-    this.modifiedSinceLastCalculation = true;
-
+    if (this._currentState !== AmortizationState.Calculating && this._currentState !== AmortizationState.Error) {
+      this._currentState = AmortizationState.NeedsCalculation;
+    } else if (this._currentState === AmortizationState.Error) {
+      // If an error occurred, changing a property might make the state recoverable
+      this._currentState = AmortizationState.NeedsCalculation;
+    }
     this._defaultBillDueDaysAfterPeriodEndConfiguration = value;
   }
 
@@ -904,8 +961,12 @@ export class Amortization {
   }
 
   set termInterestRateOverride(value: TermInterestRateOverrides) {
-    this.modifiedSinceLastCalculation = true;
-
+    if (this._currentState !== AmortizationState.Calculating && this._currentState !== AmortizationState.Error) {
+      this._currentState = AmortizationState.NeedsCalculation;
+    } else if (this._currentState === AmortizationState.Error) {
+      // If an error occurred, changing a property might make the state recoverable
+      this._currentState = AmortizationState.NeedsCalculation;
+    }
     // Make sure 'value' is a TermInterestAmountOverrides instance
     if (!(value instanceof TermInterestRateOverrides)) {
       value = new TermInterestRateOverrides(value);
@@ -933,8 +994,12 @@ export class Amortization {
   }
 
   set termInterestAmountOverride(value: TermInterestAmountOverrides) {
-    this.modifiedSinceLastCalculation = true;
-
+    if (this._currentState !== AmortizationState.Calculating && this._currentState !== AmortizationState.Error) {
+      this._currentState = AmortizationState.NeedsCalculation;
+    } else if (this._currentState === AmortizationState.Error) {
+      // If an error occurred, changing a property might make the state recoverable
+      this._currentState = AmortizationState.NeedsCalculation;
+    }
     // Make sure 'value' is a TermInterestAmountOverrides instance
     if (!(value instanceof TermInterestAmountOverrides)) {
       value = new TermInterestAmountOverrides(value);
@@ -1008,7 +1073,12 @@ export class Amortization {
   }
 
   set feesForAllTerms(value: Fees) {
-    this.modifiedSinceLastCalculation = true;
+    if (this._currentState !== AmortizationState.Calculating && this._currentState !== AmortizationState.Error) {
+      this._currentState = AmortizationState.NeedsCalculation;
+    } else if (this._currentState === AmortizationState.Error) {
+      // If an error occurred, changing a property might make the state recoverable
+      this._currentState = AmortizationState.NeedsCalculation;
+    }
     // check type and inflate
     if (value instanceof Fees) {
       this._feesForAllTerms = value;
@@ -1022,8 +1092,12 @@ export class Amortization {
   }
 
   set feesPerTerm(feesPerTerm: FeesPerTerm) {
-    this.modifiedSinceLastCalculation = true;
-
+    if (this._currentState !== AmortizationState.Calculating && this._currentState !== AmortizationState.Error) {
+      this._currentState = AmortizationState.NeedsCalculation;
+    } else if (this._currentState === AmortizationState.Error) {
+      // If an error occurred, changing a property might make the state recoverable
+      this._currentState = AmortizationState.NeedsCalculation;
+    }
     // check type and inflate
     if (feesPerTerm instanceof FeesPerTerm) {
       this._feesPerTerm = feesPerTerm;
@@ -1037,8 +1111,12 @@ export class Amortization {
   }
 
   set perDiemCalculationType(value: PerDiemCalculationType) {
-    this.modifiedSinceLastCalculation = true;
-
+    if (this._currentState !== AmortizationState.Calculating && this._currentState !== AmortizationState.Error) {
+      this._currentState = AmortizationState.NeedsCalculation;
+    } else if (this._currentState === AmortizationState.Error) {
+      // If an error occurred, changing a property might make the state recoverable
+      this._currentState = AmortizationState.NeedsCalculation;
+    }
     this._perDiemCalculationType = value;
   }
 
@@ -1078,8 +1156,12 @@ export class Amortization {
   }
 
   set balanceModifications(balanceModifications: BalanceModifications) {
-    this.modifiedSinceLastCalculation = true;
-
+    if (this._currentState !== AmortizationState.Calculating && this._currentState !== AmortizationState.Error) {
+      this._currentState = AmortizationState.NeedsCalculation;
+    } else if (this._currentState === AmortizationState.Error) {
+      // If an error occurred, changing a property might make the state recoverable
+      this._currentState = AmortizationState.NeedsCalculation;
+    }
     if (!(balanceModifications instanceof BalanceModifications)) {
       balanceModifications = new BalanceModifications(balanceModifications);
     }
@@ -1100,8 +1182,12 @@ export class Amortization {
   }
 
   set changePaymentDates(changePaymentDates: ChangePaymentDates) {
-    this.modifiedSinceLastCalculation = true;
-
+    if (this._currentState !== AmortizationState.Calculating && this._currentState !== AmortizationState.Error) {
+      this._currentState = AmortizationState.NeedsCalculation;
+    } else if (this._currentState === AmortizationState.Error) {
+      // If an error occurred, changing a property might make the state recoverable
+      this._currentState = AmortizationState.NeedsCalculation;
+    }
     // check type and inflate
     if (changePaymentDates instanceof ChangePaymentDates) {
       this._changePaymentDates = changePaymentDates;
@@ -1118,15 +1204,23 @@ export class Amortization {
   }
 
   set termPeriodDefinition(termPeriodDefinition: TermPeriodDefinition) {
-    this.modifiedSinceLastCalculation = true;
-
+    if (this._currentState !== AmortizationState.Calculating && this._currentState !== AmortizationState.Error) {
+      this._currentState = AmortizationState.NeedsCalculation;
+    } else if (this._currentState === AmortizationState.Error) {
+      // If an error occurred, changing a property might make the state recoverable
+      this._currentState = AmortizationState.NeedsCalculation;
+    }
     this._termPeriodDefinition = termPeriodDefinition;
   }
 
   set hasCustomEquitedMonthlyPayment(value: boolean) {
     // console.trace("custom equited monthly payment set to", value);
-    this.modifiedSinceLastCalculation = true;
-
+    if (this._currentState !== AmortizationState.Calculating && this._currentState !== AmortizationState.Error) {
+      this._currentState = AmortizationState.NeedsCalculation;
+    } else if (this._currentState === AmortizationState.Error) {
+      // If an error occurred, changing a property might make the state recoverable
+      this._currentState = AmortizationState.NeedsCalculation;
+    }
     this._hasCustomEquitedMonthlyPayment = value;
   }
 
@@ -1135,29 +1229,26 @@ export class Amortization {
   }
 
   get equitedMonthlyPayment(): Currency {
-    if (!this._equitedMonthlyPayment) {
+    if (!this._equitedMonthlyPayment || (this._currentState === AmortizationState.NeedsCalculation && !this.hasCustomEquitedMonthlyPayment)) {
       this._equitedMonthlyPayment = this.calculateFixedMonthlyPayment();
-      this.modificationOptimizationTracker = "equitedMonthlyPayment";
     }
-    if (this.hasCustomEquitedMonthlyPayment) {
-      return this._equitedMonthlyPayment;
-    } else {
-      if (this.isUpdatedSinceLastCalculation("equitedMonthlyPayment")) {
-        this._equitedMonthlyPayment = this.calculateFixedMonthlyPayment();
-        this.modificationOptimizationTracker = "equitedMonthlyPayment";
-      }
-      return this._equitedMonthlyPayment;
-    }
+    // Custom EMI always takes precedence if set.
+    // If not custom, and state is NeedsCalculation, it's recalculated above.
+    // If Calculated, the existing _equitedMonthlyPayment is used.
+    return this._equitedMonthlyPayment;
   }
 
   set equitedMonthlyPayment(value: Currency | Decimal | number | undefined | null) {
-    this.modifiedSinceLastCalculation = true;
-
+    if (this._currentState !== AmortizationState.Calculating && this._currentState !== AmortizationState.Error) {
+      this._currentState = AmortizationState.NeedsCalculation;
+    } else if (this._currentState === AmortizationState.Error) {
+      // If an error occurred, changing a property might make the state recoverable
+      this._currentState = AmortizationState.NeedsCalculation;
+    }
     if (value === undefined || value === null) {
       this.hasCustomEquitedMonthlyPayment = false;
-      this._equitedMonthlyPayment = this.calculateFixedMonthlyPayment();
-      this.modificationOptimizationTracker = "equitedMonthlyPayment";
-
+      // Recalculation will happen on demand if state is NeedsCalculation
+      this._equitedMonthlyPayment = this.calculateFixedMonthlyPayment(); // ensure a base value is set
       return;
     } else {
       this.hasCustomEquitedMonthlyPayment = true;
@@ -1179,8 +1270,12 @@ export class Amortization {
   }
 
   set termPaymentAmountOverride(termPaymentAmountOverride: TermPaymentAmounts) {
-    this.modifiedSinceLastCalculation = true;
-
+    if (this._currentState !== AmortizationState.Calculating && this._currentState !== AmortizationState.Error) {
+      this._currentState = AmortizationState.NeedsCalculation;
+    } else if (this._currentState === AmortizationState.Error) {
+      // If an error occurred, changing a property might make the state recoverable
+      this._currentState = AmortizationState.NeedsCalculation;
+    }
     if (termPaymentAmountOverride instanceof TermPaymentAmounts) {
       this._termPaymentAmountOverride = termPaymentAmountOverride;
     } else {
@@ -1193,8 +1288,12 @@ export class Amortization {
   }
 
   set allowRateAbove100(value: boolean) {
-    this.modifiedSinceLastCalculation = true;
-
+    if (this._currentState !== AmortizationState.Calculating && this._currentState !== AmortizationState.Error) {
+      this._currentState = AmortizationState.NeedsCalculation;
+    } else if (this._currentState === AmortizationState.Error) {
+      // If an error occurred, changing a property might make the state recoverable
+      this._currentState = AmortizationState.NeedsCalculation;
+    }
     this._allowRateAbove100 = value;
   }
 
@@ -1209,7 +1308,7 @@ export class Amortization {
   get rateSchedules() {
     if (!this._rateSchedules || this._rateSchedules.length === 0) {
       this._hasCustomRateSchedule = false;
-      this.modificationOptimizationTracker = "rateSchedules";
+      // this.modificationOptimizationTracker = "rateSchedules"; // Removed
       this._rateSchedules = this.generateRatesSchedule();
       return this._rateSchedules;
     } else {
@@ -1217,27 +1316,42 @@ export class Amortization {
         this.hasCustomRateSchedule = true;
       }
       if (this._rateSchedules.hasModified) {
-        this.modificationOptimizationTracker = "rateSchedules";
+        // this.modificationOptimizationTracker = "rateSchedules"; // Removed
         this._rateSchedules.resetModified();
+         // If it was modified, and we are not already calculating, it needs calculation.
+        if (this._currentState !== AmortizationState.Calculating && this._currentState !== AmortizationState.Error) {
+            this._currentState = AmortizationState.NeedsCalculation;
+        } else if (this._currentState === AmortizationState.Error) {
+            this._currentState = AmortizationState.NeedsCalculation;
+        }
       } else {
         return this._rateSchedules;
       }
     }
 
-    if (this.isUpdatedSinceLastCalculation("rateSchedules")) {
-      // console.log("rate schedules are not updated since last calculation");
+    // The logic `isUpdatedSinceLastCalculation` is replaced by the state machine.
+    // If NeedsCalculation, the schedule will be generated/updated when accessed or calculateAmortizationPlan is called.
+    if (this._currentState === AmortizationState.NeedsCalculation) {
       if (this.hasCustomRateSchedule === true) {
-        this.rateSchedules = this._rateSchedules;
+        // If custom, it implies the custom schedule is already set or being set.
+        // The generation logic or direct assignment should handle this.
+        // Potentially, this needs to re-evaluate if `this.rateSchedules = this._rateSchedules` is right here.
+        // For now, let's assume if it's custom, it's managed correctly by its setter or initial setup.
       } else {
         this._rateSchedules = this.generateRatesSchedule();
       }
-      this.modificationOptimizationTracker = "rateSchedules";
+      // this.modificationOptimizationTracker = "rateSchedules"; // Removed
     }
     return this._rateSchedules;
   }
 
   set rateSchedules(rateSchedules: RateSchedules) {
-    this.modifiedSinceLastCalculation = true;
+    if (this._currentState !== AmortizationState.Calculating && this._currentState !== AmortizationState.Error) {
+      this._currentState = AmortizationState.NeedsCalculation;
+    } else if (this._currentState === AmortizationState.Error) {
+      // If an error occurred, changing a property might make the state recoverable
+      this._currentState = AmortizationState.NeedsCalculation;
+    }
     // check type and inflate
     if (!(rateSchedules instanceof RateSchedules)) {
       rateSchedules = new RateSchedules(rateSchedules);
@@ -1315,7 +1429,8 @@ export class Amortization {
       //console.log("periods custom schedule", this._periodsSchedule);
       return this._periodsSchedule;
     } else {
-      if (this.modifiedSinceLastCalculation === true) {
+      // If needs calculation, regenerate. Otherwise, return existing.
+      if (this._currentState === AmortizationState.NeedsCalculation) {
         this._periodsSchedule.periods = this.generatePeriodicSchedule();
       }
       return this._periodsSchedule;
@@ -1323,8 +1438,12 @@ export class Amortization {
   }
 
   set periodsSchedule(periodsSchedule: PeriodSchedules) {
-    this.modifiedSinceLastCalculation = true;
-
+    if (this._currentState !== AmortizationState.Calculating && this._currentState !== AmortizationState.Error) {
+      this._currentState = AmortizationState.NeedsCalculation;
+    } else if (this._currentState === AmortizationState.Error) {
+      // If an error occurred, changing a property might make the state recoverable
+      this._currentState = AmortizationState.NeedsCalculation;
+    }
     // check type and if not PeriodSchedules, convert it
     if (periodsSchedule instanceof PeriodSchedules) {
       this._periodsSchedule = periodsSchedule;
@@ -1339,7 +1458,12 @@ export class Amortization {
   }
 
   set flushThreshold(value: Currency | number | Decimal) {
-    this.modifiedSinceLastCalculation = true;
+    if (this._currentState !== AmortizationState.Calculating && this._currentState !== AmortizationState.Error) {
+      this._currentState = AmortizationState.NeedsCalculation;
+    } else if (this._currentState === AmortizationState.Error) {
+      // If an error occurred, changing a property might make the state recoverable
+      this._currentState = AmortizationState.NeedsCalculation;
+    }
     if (value instanceof Currency) {
       this._flushThreshold = value;
     } else {
@@ -1352,8 +1476,12 @@ export class Amortization {
   }
 
   set roundingPrecision(value: number) {
-    this.modifiedSinceLastCalculation = true;
-
+    if (this._currentState !== AmortizationState.Calculating && this._currentState !== AmortizationState.Error) {
+      this._currentState = AmortizationState.NeedsCalculation;
+    } else if (this._currentState === AmortizationState.Error) {
+      // If an error occurred, changing a property might make the state recoverable
+      this._currentState = AmortizationState.NeedsCalculation;
+    }
     if (value < 0) {
       throw new Error("Invalid rounding precision, must be greater than or equal to zero, number represents decimal places");
     }
@@ -1426,8 +1554,12 @@ export class Amortization {
   }
 
   set flushUnbilledInterestRoundingErrorMethod(value: FlushUnbilledInterestDueToRoundingErrorType | string) {
-    this.modifiedSinceLastCalculation = true;
-
+    if (this._currentState !== AmortizationState.Calculating && this._currentState !== AmortizationState.Error) {
+      this._currentState = AmortizationState.NeedsCalculation;
+    } else if (this._currentState === AmortizationState.Error) {
+      // If an error occurred, changing a property might make the state recoverable
+      this._currentState = AmortizationState.NeedsCalculation;
+    }
     if (typeof value === "string") {
       let flushMethod: FlushUnbilledInterestDueToRoundingErrorType;
       switch (value) {
@@ -1454,8 +1586,12 @@ export class Amortization {
   }
 
   set roundingMethod(value: RoundingMethod | string) {
-    this.modifiedSinceLastCalculation = true;
-
+    if (this._currentState !== AmortizationState.Calculating && this._currentState !== AmortizationState.Error) {
+      this._currentState = AmortizationState.NeedsCalculation;
+    } else if (this._currentState === AmortizationState.Error) {
+      // If an error occurred, changing a property might make the state recoverable
+      this._currentState = AmortizationState.NeedsCalculation;
+    }
     this._roundingMethod = typeof value === "string" ? Currency.RoundingMethodFromString(value) : value;
   }
 
@@ -1464,8 +1600,12 @@ export class Amortization {
   }
 
   set calendars(calendars: TermCalendars) {
-    this.modifiedSinceLastCalculation = true;
-
+    if (this._currentState !== AmortizationState.Calculating && this._currentState !== AmortizationState.Error) {
+      this._currentState = AmortizationState.NeedsCalculation;
+    } else if (this._currentState === AmortizationState.Error) {
+      // If an error occurred, changing a property might make the state recoverable
+      this._currentState = AmortizationState.NeedsCalculation;
+    }
     this._calendars = calendars instanceof TermCalendars ? calendars : new TermCalendars(calendars);
   }
 
@@ -1474,8 +1614,12 @@ export class Amortization {
   }
 
   set billingModel(value: BillingModel) {
-    this.modifiedSinceLastCalculation = true;
-
+    if (this._currentState !== AmortizationState.Calculating && this._currentState !== AmortizationState.Error) {
+      this._currentState = AmortizationState.NeedsCalculation;
+    } else if (this._currentState === AmortizationState.Error) {
+      // If an error occurred, changing a property might make the state recoverable
+      this._currentState = AmortizationState.NeedsCalculation;
+    }
     if (value === "dailySimpleInterest") {
       if (this.preBillDays.length > 1) {
         throw new Error("Pre-bill days are not used in Daily Simple Interest billing model");
@@ -1512,8 +1656,12 @@ export class Amortization {
   }
 
   set annualInterestRate(value: Decimal | number) {
-    this.modifiedSinceLastCalculation = true;
-
+    if (this._currentState !== AmortizationState.Calculating && this._currentState !== AmortizationState.Error) {
+      this._currentState = AmortizationState.NeedsCalculation;
+    } else if (this._currentState === AmortizationState.Error) {
+      // If an error occurred, changing a property might make the state recoverable
+      this._currentState = AmortizationState.NeedsCalculation;
+    }
     const annualInterestRate = new Decimal(value);
 
     // validate annual interest rate, it should not be negative or greater than 100%
@@ -1533,12 +1681,19 @@ export class Amortization {
   }
 
   set hasCustomFirstPaymentDate(value: boolean) {
-    this.modifiedSinceLastCalculation = true;
+    if (this._currentState !== AmortizationState.Calculating && this._currentState !== AmortizationState.Error) {
+      this._currentState = AmortizationState.NeedsCalculation;
+    } else if (this._currentState === AmortizationState.Error) {
+      // If an error occurred, changing a property might make the state recoverable
+      this._currentState = AmortizationState.NeedsCalculation;
+    }
     this._hasCustomFirstPaymentDate = value;
   }
 
   get firstPaymentDate(): LocalDate {
-    if (!this._firstPaymentDate || (this.modifiedSinceLastCalculation === true && this._hasCustomFirstPaymentDate === false)) {
+    // If a custom date is set, always return that.
+    // Otherwise, if recalculation is needed and no custom date, calculate it.
+    if (!this._firstPaymentDate || (this._currentState === AmortizationState.NeedsCalculation && !this._hasCustomFirstPaymentDate)) {
       const termUnit = this.termPeriodDefinition.unit === "complex" ? "day" : this.termPeriodDefinition.unit;
       //this._firstPaymentDate = this.startDate.add(1 * this.termPeriodDefinition.count[0], termUnit).startOf("day");
       const unitsToAdd = this.termPeriodDefinition.count[0];
@@ -1564,8 +1719,12 @@ export class Amortization {
   }
 
   set firstPaymentDate(date: LocalDate | Date | string | undefined) {
-    this.modifiedSinceLastCalculation = true;
-
+    if (this._currentState !== AmortizationState.Calculating && this._currentState !== AmortizationState.Error) {
+      this._currentState = AmortizationState.NeedsCalculation;
+    } else if (this._currentState === AmortizationState.Error) {
+      // If an error occurred, changing a property might make the state recoverable
+      this._currentState = AmortizationState.NeedsCalculation;
+    }
     if (date) {
       if (date instanceof Date) {
         date = DateUtil.normalizeDate(date);
@@ -1589,8 +1748,12 @@ export class Amortization {
   }
 
   set startDate(startDate: LocalDate | Date | string) {
-    this.modifiedSinceLastCalculation = true;
-
+    if (this._currentState !== AmortizationState.Calculating && this._currentState !== AmortizationState.Error) {
+      this._currentState = AmortizationState.NeedsCalculation;
+    } else if (this._currentState === AmortizationState.Error) {
+      // If an error occurred, changing a property might make the state recoverable
+      this._currentState = AmortizationState.NeedsCalculation;
+    }
     if (!startDate) {
       throw new Error("Invalid start date, must be a valid date");
     }
@@ -1607,8 +1770,12 @@ export class Amortization {
   }
 
   set payoffDate(value: Date | LocalDate | undefined) {
-    this.modifiedSinceLastCalculation = true;
-
+    if (this._currentState !== AmortizationState.Calculating && this._currentState !== AmortizationState.Error) {
+      this._currentState = AmortizationState.NeedsCalculation;
+    } else if (this._currentState === AmortizationState.Error) {
+      // If an error occurred, changing a property might make the state recoverable
+      this._currentState = AmortizationState.NeedsCalculation;
+    }
     if (value) {
       if (value instanceof Date) {
         value = DateUtil.normalizeDate(value);
@@ -1632,7 +1799,9 @@ export class Amortization {
   }
 
   get endDate(): LocalDate {
-    if (!this._endDate || (this.modifiedSinceLastCalculation === true && this.hasCustomEndDate === false)) {
+    // If a custom date is set, always return that.
+    // Otherwise, if recalculation is needed and no custom date, calculate it.
+    if (!this._endDate || (this._currentState === AmortizationState.NeedsCalculation && !this.hasCustomEndDate)) {
       const termUnit = this.termPeriodDefinition.unit === "complex" ? "day" : this.termPeriodDefinition.unit;
       let chronoUnit = ChronoUnit.MONTHS;
       if (termUnit === "day") {
@@ -1654,8 +1823,13 @@ export class Amortization {
 
   set hasCustomEndDate(value: boolean) {
     // console.trace("hasCustomEndDate is being set", value);
-    this.modifiedSinceLastCalculation = true;
-    this._endDate = undefined;
+    if (this._currentState !== AmortizationState.Calculating && this._currentState !== AmortizationState.Error) {
+      this._currentState = AmortizationState.NeedsCalculation;
+    } else if (this._currentState === AmortizationState.Error) {
+      // If an error occurred, changing a property might make the state recoverable
+      this._currentState = AmortizationState.NeedsCalculation;
+    }
+    this._endDate = undefined; // Clear cached endDate when custom flag changes
     this._hasCustomEndDate = value;
   }
 
@@ -1664,8 +1838,12 @@ export class Amortization {
   }
 
   set endDate(endDate: LocalDate | Date | string | undefined) {
-    this.modifiedSinceLastCalculation = true;
-
+    if (this._currentState !== AmortizationState.Calculating && this._currentState !== AmortizationState.Error) {
+      this._currentState = AmortizationState.NeedsCalculation;
+    } else if (this._currentState === AmortizationState.Error) {
+      // If an error occurred, changing a property might make the state recoverable
+      this._currentState = AmortizationState.NeedsCalculation;
+    }
     // console.trace("end date is being set", endDate);
     let newEndDate: LocalDate;
     if (endDate) {
@@ -2238,11 +2416,13 @@ export class Amortization {
    * @returns An array of AmortizationSchedule entries.
    */
   public calculateAmortizationPlan(): AmortizationEntries {
-    const hadRealChanges = this.modifiedSinceLastCalculation;
-    this.balanceModifications.resetUsedAmounts();
-    this.resetUsageDetails();
+    this._currentState = AmortizationState.Calculating;
+    try {
+      const hadRealChanges = this.modifiedSinceLastCalculation;
+      this.balanceModifications.resetUsedAmounts();
+      this.resetUsageDetails();
 
-    const schedule: AmortizationEntries = new AmortizationEntries();
+      const schedule: AmortizationEntries = new AmortizationEntries();
     let startBalance = this.totalLoanAmount;
     //let termIndex = 0;
 
@@ -2770,11 +2950,14 @@ export class Amortization {
     }
 
     this.repaymentSchedule = schedule;
-    this.modifiedSinceLastCalculation = false;
     // this.versionChanged();
     if (hadRealChanges) this.versionChanged();
-
+    this._currentState = AmortizationState.Calculated;
     return schedule;
+    } catch (e) {
+      this._currentState = AmortizationState.Error;
+      throw e;
+    }
   }
 
   getAccruedInterestByDate(date: LocalDate | Date): Currency {

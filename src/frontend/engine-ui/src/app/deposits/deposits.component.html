@@ -6,11 +6,7 @@
       <p-toolbar styleClass="mb-3 gap-2">
         <!-- left: existing actions -->
         <ng-template pTemplate="left">
-          <p-button
-            label="Add New Deposit"
-            icon="pi pi-plus"
-            (click)="openDepositDialog()"
-          />
+          <p-button label="Add New Deposit" icon="pi pi-plus" (click)="openDepositDialog()" />
           <p-button
             class="ml-2"
             label="Go to Last Deposit"
@@ -45,11 +41,7 @@
         </ng-template>
 
         <ng-template pTemplate="right">
-          <p-button
-            icon="pi pi-external-link"
-            label="Download"
-            (onClick)="downloadDepositsAsCSV()"
-          />
+          <p-button icon="pi pi-external-link" label="Download" (onClick)="downloadDepositsAsCSV()" />
           <p-button
             severity="help"
             label="Copy As CSV"
@@ -57,12 +49,7 @@
             class="ml-2"
             (onClick)="copyDepositsAsCSV()"
           />
-          <p-button
-            icon="pi pi-table"
-            severity="contrast"
-            class="ml-2"
-            (click)="depositColumnsDialog()"
-          />
+          <p-button icon="pi pi-table" severity="contrast" class="ml-2" (click)="depositColumnsDialog()" />
         </ng-template>
       </p-toolbar>
 
@@ -91,16 +78,8 @@
         </div>
         <p-divider></p-divider>
         <div class="flex justify-content-end gap-2">
-          <p-button
-            label="Cancel"
-            severity="secondary"
-            (click)="showDepositColumnsDialog = false"
-          />
-          <p-button
-            label="Reset"
-            severity="secondary"
-            (click)="resetDepositColumns()"
-          />
+          <p-button label="Cancel" severity="secondary" (click)="showDepositColumnsDialog = false" />
+          <p-button label="Reset" severity="secondary" (click)="resetDepositColumns()" />
           <p-button label="Save" (click)="saveDepositColumns()" />
         </div>
       </p-dialog>
@@ -138,13 +117,7 @@
                   <p-sortIcon *ngIf="c.sortable" [field]="c.field"></p-sortIcon>
 
                   <!-- funnel (only if filter metadata present) -->
-                  <p-columnFilter
-                    *ngIf="c.filter"
-                    [field]="c.field"
-                    [type]="c.filter"
-                    display="menu"
-                  >
-                  </p-columnFilter>
+                  <p-columnFilter *ngIf="c.filter" [field]="c.field" [type]="c.filter" display="menu"></p-columnFilter>
                 </th>
               </ng-container>
 
@@ -166,33 +139,18 @@
                 <td [ngSwitch]="c.field">
                   <!-- add the cases you need; a few common ones shown -->
                   <ng-container *ngSwitchCase="'active'">
-                    <p-toggleswitch
-                      [(ngModel)]="row.active"
-                      (ngModelChange)="depositActiveUpdated()"
-                    />
+                    <p-toggleswitch [(ngModel)]="row.active" (ngModelChange)="depositActiveUpdated()" />
                   </ng-container>
 
                   <ng-container *ngSwitchCase="'id'">
-                    <span
-                      [class.opacity-30]="
-                        !row.active ||
-                        dateIsInTheFutureFromSnapshotDate(row.effectiveDate)
-                      "
-                    >
+                    <span [class.opacity-30]="!row.active || dateIsInTheFutureFromSnapshotDate(row.effectiveDate)">
                       {{ row.id }}
                     </span>
 
                     <p-badge
                       *ngIf="totalRefunds(row) > 0"
-                      [value]="
-                        activeRefunds(row) +
-                        '/' +
-                        totalRefunds(row) +
-                        ' Refunds'
-                      "
-                      [severity]="
-                        activeRefunds(row) > 0 ? 'contrast' : 'secondary'
-                      "
+                      [value]="activeRefunds(row) + '/' + totalRefunds(row) + ' Refunds'"
+                      [severity]="activeRefunds(row) > 0 ? 'contrast' : 'secondary'"
                       styleClass="mr-2"
                       pTooltip="Active / Total refunds"
                       tooltipPosition="top"
@@ -227,9 +185,7 @@
 
                     <!-- -- future badge -->
                     <p-badge
-                      *ngIf="
-                        dateIsInTheFutureFromSnapshotDate(row.effectiveDate)
-                      "
+                      *ngIf="dateIsInTheFutureFromSnapshotDate(row.effectiveDate)"
                       value="Future"
                       severity="warn"
                       styleClass="mr-2"
@@ -265,20 +221,18 @@
                     ></p-badge>
                   </ng-container>
 
-                  <ng-container *ngSwitchCase="'amount'">{{
-                    row.jsAmount | currency
-                  }}</ng-container>
+                  <ng-container *ngSwitchCase="'amount'">{{ row.jsAmount | currency }}</ng-container>
 
                   <ng-container *ngSwitchCase="'jsEffectiveDate'">
-                    {{ row.jsEffectiveDate | date: "yyyy-MM-dd" }}
+                    {{ row.jsEffectiveDate | date: 'yyyy-MM-dd' }}
                   </ng-container>
 
                   <ng-container *ngSwitchCase="'jsSystemDate'">
-                    {{ row.jsSystemDate | date: "YYYY-MM-DD hh:mm:ss" }}
+                    {{ row.jsSystemDate | date: 'YYYY-MM-DD hh:mm:ss' }}
                   </ng-container>
 
                   <ng-container *ngSwitchCase="'jsClearingDate'">
-                    {{ row.jsClearingDate | date: "yyyy-MM-dd" }}
+                    {{ row.jsClearingDate | date: 'yyyy-MM-dd' }}
                   </ng-container>
 
                   <ng-container *ngSwitchCase="'allocatedTotal'">
@@ -302,11 +256,7 @@
                   </ng-container>
 
                   <ng-container *ngSwitchCase="'jsUnusedAmount'">
-                    <span
-                      [class.font-semibold]="
-                        row.active && row.unusedAmount.greaterThan(0)
-                      "
-                    >
+                    <span [class.font-semibold]="row.active && row.unusedAmount.greaterThan(0)">
                       {{ row.jsUnusedAmount | currency }}
                     </span>
                   </ng-container>
@@ -319,9 +269,7 @@
                         'pi-check-circle': row.applyExcessToPrincipal,
                         'pi-minus-circle': !row.applyExcessToPrincipal,
                       }"
-                      [style.color]="
-                        row.applyExcessToPrincipal ? 'green' : 'orange'
-                      "
+                      [style.color]="row.applyExcessToPrincipal ? 'green' : 'orange'"
                     ></i>
 
                     <!-- badges only when excess-to-principal is on -->
@@ -329,9 +277,7 @@
                       <!-- prepayment amount badge -->
                       <p-badge
                         *ngIf="row.excessAmountApplied.greaterThan(0)"
-                        value="Prepayment: {{
-                          row.excessAmountApplied.toNumber() | currency
-                        }}"
+                        value="Prepayment: {{ row.excessAmountApplied.toNumber() | currency }}"
                         severity="success"
                         badgeSize="large"
                         styleClass="ml-2"
@@ -358,85 +304,29 @@
                   </ng-container>
 
                   <!-- default -->
-                  <ng-container *ngSwitchDefault>{{
-                    row[c.field]
-                  }}</ng-container>
+                  <ng-container *ngSwitchDefault>{{ row[c.field] }}</ng-container>
                 </td>
               </ng-container>
 
               <!-- actions col (static) -->
-              <td>
-                <div class="action-buttons">
-                  <ng-container *ngIf="!row.isAdhocRefund; else adhocBtns">
-                    <p-button
-                      icon="pi pi-pencil"
-                      severity="warn"
-                      rounded
-                      styleClass="mr-1"
-                      (click)="openDepositDialog(row)"
-                      pTooltip="Edit"
-                    ></p-button>
+              <td class="flex gap-1">
+                <!-- View usage – always enabled -->
+                <p-button
+                  icon="pi pi-eye"
+                  severity="info"
+                  styleClass="p-button-lg p-button-text"
+                  (click)="viewDepositUsageDetails(row)"
+                  pTooltip="View Usage"
+                ></p-button>
 
-                    <p-button
-                      icon="pi pi-undo"
-                      severity="secondary"
-                      rounded
-                      styleClass="mr-1"
-                      (click)="openRefundDialog(row)"
-                      pTooltip="Refund / Adjust"
-                    ></p-button>
-
-                    <p-button
-                      *ngIf="totalRefunds(row) > 0"
-                      icon="pi pi-list"
-                      severity="contrast"
-                      rounded
-                      styleClass="mr-1"
-                      (click)="openRefundsManager(row)"
-                      pTooltip="View / manage refunds" />
-
-                    <p-button
-                      icon="pi pi-eye"
-                      severity="info"
-                      rounded
-                      [disabled]="!row.usageDetails?.length"
-                      (click)="viewDepositUsageDetails(row)"
-                      pTooltip="View Usage"
-                    ></p-button>
-
-                    <p-button
-                      icon="pi pi-trash"
-                      severity="danger"
-                      rounded
-                      styleClass="mr-1"
-                      (click)="confirmDelete($event, row)"
-                      pTooltip="Remove"
-                    ></p-button
-                  ></ng-container>
-
-                  <!-- Buttons that show **only** on Ad-hoc refunds -->
-                  <ng-template #adhocBtns>
-                    <p-button
-                      icon="pi pi-pencil"
-                      severity="warn"
-                      rounded
-                      styleClass="mr-1"
-                      (click)="openAdhocRefundDialog(row)"
-                      pTooltip="Edit Ad-hoc Refund"
-                    >
-                    </p-button>
-
-                    <p-button
-                      icon="pi pi-trash"
-                      severity="danger"
-                      rounded
-                      styleClass="mr-1"
-                      (click)="confirmDelete($event, row)"
-                      pTooltip="Delete"
-                    >
-                    </p-button>
-                  </ng-template>
-                </div>
+                <!-- Ellipsis trigger -->
+                <p-button
+                  icon="pi pi-ellipsis-v"
+                  severity="secondary"
+                  styleClass="p-button-lg p-button-text"
+                  (click)="openRowMenu($event, row)"
+                  pTooltip="More actions"
+                ></p-button>
               </td>
             </tr>
           </ng-template>
@@ -484,6 +374,7 @@
             </tr>
           </ng-template>
         </p-table>
+        <p-menu #rowMenu [popup]="true" appendTo="body"></p-menu>
       </div>
     </p-card>
   </div>
@@ -605,9 +496,7 @@
       </div>
     </div>
     <div class="field">
-      <label for="excessAppliedDate-{{ depositData.id }}"
-        >Excess Applied Date</label
-      >
+      <label for="excessAppliedDate-{{ depositData.id }}">Excess Applied Date</label>
 
       <p-inputgroup>
         <p-inputgroup-addon>
@@ -676,34 +565,26 @@
           binary="true"
           size="small"
         />
-        <label for="size_large"
-          >Apply payment at period's end date during open billing cycle
-          <i
-            class="pi pi-info-circle tooltip-icon"
-            (click)="showTooltip($event, applyExcessAtTheEndOfThePeriod)"
-          ></i
-        ></label>
+        <label for="size_large">
+          Apply payment at period's end date during open billing cycle
+          <i class="pi pi-info-circle tooltip-icon" (click)="showTooltip($event, applyExcessAtTheEndOfThePeriod)"></i>
+        </label>
         <p-popover #applyExcessAtTheEndOfThePeriod>
           <ng-template pTemplate="content">
-            <div
-              class="flex flex-column gap-2 text-sm line-height-3"
-              style="max-width: 320px"
-            >
+            <div class="flex flex-column gap-2 text-sm line-height-3" style="max-width: 320px">
               <p class="m-0">
                 <strong>Apply Payment at Period’s End Date:</strong>
               </p>
               <p class="m-0">
-                When this setting is enabled and a bill is already open, any
-                extra or “excess” payment will be applied
-                <em>at the start of the next billing cycle</em>. This prevents
-                re-issuing or closing the current open bill, but it also means
-                you won’t see immediate interest reduction on the current
-                statement.
+                When this setting is enabled and a bill is already open, any extra or “excess” payment will be applied
+                <em>at the start of the next billing cycle</em>
+                . This prevents re-issuing or closing the current open bill, but it also means you won’t see immediate
+                interest reduction on the current statement.
               </p>
               <p class="m-0">
-                However, if the bill is <em>not open yet</em>, any principal
-                prepayment is applied right away using its excess-applied date
-                value.
+                However, if the bill is
+                <em>not open yet</em>
+                , any principal prepayment is applied right away using its excess-applied date value.
               </p>
             </div>
           </ng-template>
@@ -725,21 +606,17 @@
         class="w-full"
       ></p-select>
     </div>
-    <p-card
-      *ngIf="
-        selectedAllocationType === 'staticDistribution' &&
-        depositData.staticAllocation
-      "
-    >
+    <p-card *ngIf="selectedAllocationType === 'staticDistribution' && depositData.staticAllocation">
       <div class="field w-full text-xl text-center">
-        <span class="text-300">Remaining Amount: </span
-        ><span
+        <span class="text-300">Remaining Amount:</span>
+        <span
           class="font-medium"
           [class]="{
             'text-red-500': staticUnusedAmount != 0,
           }"
-          >{{ staticUnusedAmount | currency }}</span
         >
+          {{ staticUnusedAmount | currency }}
+        </span>
       </div>
 
       <div class="formgrid grid">
@@ -801,9 +678,7 @@
           </p-inputgroup>
         </div>
         <div class="field col">
-          <label for="staticPrepayment-{{ depositData.id }}"
-            >Principal Prepayment</label
-          >
+          <label for="staticPrepayment-{{ depositData.id }}">Principal Prepayment</label>
 
           <p-inputgroup>
             <p-inputgroup-addon>$</p-inputgroup-addon>
@@ -854,13 +729,8 @@
   *ngIf="selectedDeposit && lendPeak"
 >
   <ng-template #header>
-    <div
-      *ngIf="selectedDeposit"
-      class="inline-flex items-center justify-center"
-    >
-      <span class="font-semibold whitespace-nowrap pr-5"
-        >Deposit Usage Details: {{ selectedDeposit.id }}</span
-      >
+    <div *ngIf="selectedDeposit" class="inline-flex items-center justify-center">
+      <span class="font-semibold whitespace-nowrap pr-5">Deposit Usage Details: {{ selectedDeposit.id }}</span>
       <!-- Display a badge if there's more than one usage detail -->
       <p-badge
         *ngIf="(selectedDeposit?.usageDetails || []).length > 1"
@@ -940,7 +810,7 @@
     <ng-template pTemplate="body" let-detail>
       <tr>
         <td>{{ detail.period }}</td>
-        <td>{{ detail.billDueDate.toString() | date: "yyyy-MM-dd" }}</td>
+        <td>{{ detail.billDueDate.toString() | date: 'yyyy-MM-dd' }}</td>
         <td>
           <!-- Bill ID + button to open Bill Card -->
           <p-button
@@ -956,9 +826,7 @@
 
         <!-- Bill Tag column -->
         <td>
-          <ng-container
-            *ngIf="lendPeak.bills.getBillById(detail.billId) as bill"
-          >
+          <ng-container *ngIf="lendPeak.bills.getBillById(detail.billId) as bill">
             <div class="flex align-items-center gap-2 mt-1">
               <!-- If more than 1 payment covers this bill -->
               <p-tag
@@ -970,25 +838,13 @@
               ></p-tag>
 
               <!-- If bill is open and not paid -->
-              <p-tag
-                *ngIf="bill.isOpen(snapshotDate) && !bill.isPaid()"
-                value="Open Bill"
-                severity="success"
-              ></p-tag>
+              <p-tag *ngIf="bill.isOpen(snapshotDate) && !bill.isPaid()" value="Open Bill" severity="success"></p-tag>
 
               <!-- If bill is future (not open) and not paid -->
-              <p-tag
-                *ngIf="!bill.isOpen(snapshotDate) && !bill.isPaid()"
-                value="Future"
-                severity="info"
-              ></p-tag>
+              <p-tag *ngIf="!bill.isOpen(snapshotDate) && !bill.isPaid()" value="Future" severity="info"></p-tag>
 
               <!-- If total due is 0 => 'Skip A Pay' -->
-              <p-tag
-                *ngIf="bill.jsOriginalTotalDue == 0"
-                value="Skip A Pay"
-                severity="secondary"
-              ></p-tag>
+              <p-tag *ngIf="bill.jsOriginalTotalDue == 0" value="Skip A Pay" severity="secondary"></p-tag>
 
               <!-- If total due > 0 => 'Paid' or 'Unpaid' -->
               <p-tag
@@ -1006,21 +862,9 @@
 
               <!-- If the bill is paid and has a satisfied date, check days late/early/on-time -->
               <ng-container *ngIf="bill.isPaid() && bill.dateFullySatisfied">
-                <p-tag
-                  *ngIf="bill.daysLate"
-                  [value]="bill.daysLate + ' Days Late'"
-                  severity="warn"
-                ></p-tag>
-                <p-tag
-                  *ngIf="bill.daysEarly"
-                  [value]="bill.daysEarly + ' Days Early'"
-                  severity="success"
-                ></p-tag>
-                <p-tag
-                  *ngIf="!bill.daysLate && !bill.daysEarly"
-                  value="On-Time"
-                  severity="info"
-                ></p-tag>
+                <p-tag *ngIf="bill.daysLate" [value]="bill.daysLate + ' Days Late'" severity="warn"></p-tag>
+                <p-tag *ngIf="bill.daysEarly" [value]="bill.daysEarly + ' Days Early'" severity="success"></p-tag>
+                <p-tag *ngIf="!bill.daysLate && !bill.daysEarly" value="On-Time" severity="info"></p-tag>
               </ng-container>
             </div>
           </ng-container>
@@ -1031,7 +875,7 @@
         <td>{{ detail.allocatedPrincipal.toNumber() | currency }}</td>
         <td>{{ detail.allocatedInterest.toNumber() | currency }}</td>
         <td>{{ detail.allocatedFees.toNumber() | currency }}</td>
-        <td>{{ detail.date.toString() | date: "yyyy-MM-dd" }}</td>
+        <td>{{ detail.date.toString() | date: 'yyyy-MM-dd' }}</td>
       </tr>
     </ng-template>
 
@@ -1039,13 +883,7 @@
     <ng-template pTemplate="footer">
       <!-- ALLOCATED row -->
       <tr>
-        <td
-          class="bg-blue-50"
-          colspan="4"
-          style="text-align: right; font-weight: bold"
-        >
-          Allocated:
-        </td>
+        <td class="bg-blue-50" colspan="4" style="text-align: right; font-weight: bold">Allocated:</td>
         <td class="bg-blue-50 font-bold">
           {{ allocatedTotalSum | currency }}
         </td>
@@ -1063,13 +901,7 @@
 
       <!-- UNUSED row -->
       <tr>
-        <td
-          class="bg-blue-50"
-          colspan="4"
-          style="text-align: right; font-weight: bold"
-        >
-          Unused:
-        </td>
+        <td class="bg-blue-50" colspan="4" style="text-align: right; font-weight: bold">Unused:</td>
         <td class="bg-blue-50 font-bold">
           {{ selectedDepositUnusedAmount() | currency }}
         </td>
@@ -1117,8 +949,7 @@
             [showClear]="false"
             appendTo="body"
             inputStyleClass="w-full"
-          >
-          </p-select>
+          ></p-select>
         </p-inputgroup>
       </div>
       <div class="field">
@@ -1146,25 +977,14 @@
             [showClear]="false"
             appendTo="body"
             inputStyleClass="w-full"
-          >
-          </p-select>
+          ></p-select>
         </p-inputgroup>
       </div>
     </div>
 
     <div class="flex justify-content-end mt-3">
-      <p-button
-        label="Cancel"
-        icon="pi pi-times"
-        (click)="showBulkEditDialog = false"
-        class="p-button-text"
-      ></p-button>
-      <p-button
-        label="Save"
-        icon="pi pi-check"
-        class="pl-2 p-button-warning"
-        type="submit"
-      ></p-button>
+      <p-button label="Cancel" icon="pi pi-times" (click)="showBulkEditDialog = false" class="p-button-text"></p-button>
+      <p-button label="Save" icon="pi pi-check" class="pl-2 p-button-warning" type="submit"></p-button>
     </div>
   </form>
 </p-dialog>
@@ -1192,25 +1012,13 @@
       ></p-tag>
 
       <!-- If bill is open and not paid -->
-      <p-tag
-        *ngIf="bill.isOpen(snapshotDate) && !bill.isPaid()"
-        value="Open Bill"
-        severity="success"
-      ></p-tag>
+      <p-tag *ngIf="bill.isOpen(snapshotDate) && !bill.isPaid()" value="Open Bill" severity="success"></p-tag>
 
       <!-- If bill is future (not open) and not paid -->
-      <p-tag
-        *ngIf="!bill.isOpen(snapshotDate) && !bill.isPaid()"
-        value="Future"
-        severity="info"
-      ></p-tag>
+      <p-tag *ngIf="!bill.isOpen(snapshotDate) && !bill.isPaid()" value="Future" severity="info"></p-tag>
 
       <!-- If total due is 0 => 'Skip A Pay' -->
-      <p-tag
-        *ngIf="bill.jsTotalDue == 0"
-        value="Skip A Pay"
-        severity="secondary"
-      ></p-tag>
+      <p-tag *ngIf="bill.jsTotalDue == 0" value="Skip A Pay" severity="secondary"></p-tag>
 
       <!-- If total due > 0 => 'Paid' or 'Unpaid' -->
       <p-tag
@@ -1229,25 +1037,13 @@
       <!-- If the bill is paid + dateFullySatisfied => check days late/early/on-time -->
       <ng-container *ngIf="bill.isPaid() && bill.dateFullySatisfied">
         <!-- If daysLate > 0 => 'X Days Late' -->
-        <p-tag
-          *ngIf="bill.daysLate"
-          [value]="bill.daysLate + ' Days Late'"
-          severity="warn"
-        ></p-tag>
+        <p-tag *ngIf="bill.daysLate" [value]="bill.daysLate + ' Days Late'" severity="warn"></p-tag>
 
         <!-- If daysEarly > 0 => 'X Days Early' -->
-        <p-tag
-          *ngIf="bill.daysEarly"
-          [value]="bill.daysEarly + ' Days Early'"
-          severity="success"
-        ></p-tag>
+        <p-tag *ngIf="bill.daysEarly" [value]="bill.daysEarly + ' Days Early'" severity="success"></p-tag>
 
         <!-- Otherwise => 'On-Time' -->
-        <p-tag
-          *ngIf="!bill.daysLate && !bill.daysEarly"
-          value="On-Time"
-          severity="info"
-        ></p-tag>
+        <p-tag *ngIf="!bill.daysLate && !bill.daysEarly" value="On-Time" severity="info"></p-tag>
       </ng-container>
     </div>
 
@@ -1262,7 +1058,7 @@
 
         <div class="col-12 md:col-5 flex align-items-center">
           <span class="font-semibold text-300 mr-1">Due Date:</span>
-          <span>{{ bill.jsDueDate | date: "yyyy-MM-dd" }}</span>
+          <span>{{ bill.jsDueDate | date: 'yyyy-MM-dd' }}</span>
         </div>
       </div>
 
@@ -1291,15 +1087,10 @@
       </div>
 
       <!-- Row 4: Satisfied On (only if Paid) -->
-      <div
-        class="grid text-sm gap-2 mt-2"
-        *ngIf="bill.isPaid() && bill.dateFullySatisfied"
-      >
+      <div class="grid text-sm gap-2 mt-2" *ngIf="bill.isPaid() && bill.dateFullySatisfied">
         <div class="col-12 md:col-6 flex align-items-center">
           <span class="font-semibold text-300 mr-1">Satisfied On:</span>
-          <span>{{
-            bill.dateFullySatisfied.toString() | date: "yyyy-MM-dd"
-          }}</span>
+          <span>{{ bill.dateFullySatisfied.toString() | date: 'yyyy-MM-dd' }}</span>
         </div>
       </div>
     </p-card>
@@ -1307,11 +1098,7 @@
     <!-- 3) Payment (Usage) Details Table -->
     <div class="text-sm mt-3">
       <span class="font-semibold text-300">Payment Details:</span>
-      <p-table
-        [value]="bill.paymentDetails || []"
-        responsiveLayout="scroll"
-        styleClass="mt-2"
-      >
+      <p-table [value]="bill.paymentDetails || []" responsiveLayout="scroll" styleClass="mt-2">
         <ng-template pTemplate="header">
           <tr>
             <th>Deposit ID</th>
@@ -1329,20 +1116,14 @@
             <td>{{ payment.jsAllocatedPrincipal | currency }}</td>
             <td>{{ payment.jsAllocatedInterest | currency }}</td>
             <td>{{ payment.jsAllocatedFees | currency }}</td>
-            <td>{{ payment.jsDate | date: "yyyy-MM-dd" }}</td>
+            <td>{{ payment.jsDate | date: 'yyyy-MM-dd' }}</td>
           </tr>
         </ng-template>
 
         <ng-template #footer>
           <!-- Totals row: how much was allocated in total -->
           <tr>
-            <td
-              class="bg-blue-50"
-              colspan="1"
-              style="text-align: right; font-weight: bold"
-            >
-              Allocated:
-            </td>
+            <td class="bg-blue-50" colspan="1" style="text-align: right; font-weight: bold">Allocated:</td>
             <td class="bg-blue-50" style="font-weight: bold">
               {{ bill?.jsAllocatedTotalSum | currency }}
             </td>
@@ -1360,13 +1141,7 @@
 
           <!-- Remaining row: original minus allocated -->
           <tr>
-            <td
-              class="bg-blue-50"
-              colspan="1"
-              style="text-align: right; font-weight: bold"
-            >
-              Remaining:
-            </td>
+            <td class="bg-blue-50" colspan="1" style="text-align: right; font-weight: bold">Remaining:</td>
             <td class="bg-blue-50" style="font-weight: bold">
               {{ bill?.jsRemainingTotal | currency }}
             </td>
@@ -1419,21 +1194,13 @@
     </div>
 
     <div class="field">
-      <p-checkbox
-        binary="true"
-        [(ngModel)]="adhocForm.balanceImpacting"
-        inputId="balImpact"
-      ></p-checkbox>
+      <p-checkbox binary="true" [(ngModel)]="adhocForm.balanceImpacting" inputId="balImpact"></p-checkbox>
       <label for="balImpact" class="ml-2">Increase principal balance</label>
     </div>
   </div>
 
   <ng-template pTemplate="footer">
-    <p-button
-      label="Cancel"
-      severity="secondary"
-      (click)="showAdhocDialog = false"
-    ></p-button>
+    <p-button label="Cancel" severity="secondary" (click)="showAdhocDialog = false"></p-button>
     <p-button label="Save" (click)="saveAdhocRefund()"></p-button>
   </ng-template>
 </p-dialog>

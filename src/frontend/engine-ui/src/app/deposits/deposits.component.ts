@@ -37,6 +37,10 @@ import { RefundDialogComponent } from '../refund-dialog/refund-dialog.component'
 import { RefundRecord } from 'lendpeak-engine/models/RefundRecord';
 import { RefundsListDialogComponent } from '../refunds-list-dialog/refunds-list-dialog.component';
 import { ConfirmationService } from 'primeng/api';
+import { ViewChild } from '@angular/core';
+import { Menu }      from 'primeng/menu';
+import { MenuItem }  from 'primeng/api';
+
 
 dayjs.extend(isSameOrBefore);
 dayjs.extend(isBetween);
@@ -71,9 +75,12 @@ export class DepositsComponent implements OnChanges {
     private confirmation: ConfirmationService,
   ) {}
 
+  @ViewChild('rowMenu') rowMenu!: Menu;
   @ViewChildren('depositRow', { read: ElementRef })
   depositRows!: QueryList<ElementRef>;
 
+  /** dynamic model built for the clicked row */
+  contextMenuItems: MenuItem[] = [];
   /* ── column-picker state ─────────────────────────── */
   showDepositColumnsDialog = false;
 
@@ -206,6 +213,69 @@ export class DepositsComponent implements OnChanges {
   bulkDepositEditAllocationType = false;
   bulkDepositEditApplyExccessToPrincipal = false;
 
+  /** open ellipsis menu */
+  openRowMenu(event: Event, row: DepositRecord): void {
+    this.contextMenuItems = this.getDepositMenuItems(row); // ↓ helper below
+    this.rowMenu.model = this.contextMenuItems;
+    this.rowMenu.toggle(event);
+  }
+
+  /** build menu for a given row */
+  getDepositMenuItems(row: DepositRecord): MenuItem[] {
+    if (row.metadata?.type === 'adhoc_refund') {
+      return [
+        {
+          label: 'Edit Ad-hoc Refund',
+          icon: 'pi pi-pencil',
+          command: () => this.openAdhocRefundDialog(row),
+        },
+        {
+          label: 'Delete',
+          icon: 'pi pi-trash text-red-500',
+          command: () => this.confirmDeleteRow(row),
+        },
+      ];
+    }
+
+    return [
+      {
+        label: 'Edit',
+        icon: 'pi pi-pencil',
+        command: () => this.openDepositDialog(row),
+      },
+      {
+        label: 'Refund / Adjust',
+        icon: 'pi pi-undo',
+        command: () => this.openRefundDialog(row),
+        disabled: row.jsUnusedAmount === 0,
+      },
+      {
+        label: 'View / Manage Refunds',
+        icon: 'pi pi-list',
+        command: () => this.openRefundsManager(row),
+        disabled: this.totalRefunds(row) === 0,
+      },
+      { separator: true },
+      {
+        label: 'Delete',
+        icon: 'pi pi-trash text-red-500',
+        command: () => this.confirmDeleteRow(row),
+      },
+    ];
+  }
+
+  /** confirm-then-delete (menu-safe) */
+  private confirmDeleteRow(row: DepositRecord): void {
+    this.confirmation.confirm({
+      message: `Delete deposit ${row.id}?`,
+      icon: 'pi pi-exclamation-triangle',
+      acceptLabel: 'Yes',
+      rejectLabel: 'No',
+      acceptButtonStyleClass: 'p-button-danger',
+      accept: () => this.removeDeposit(row),
+    });
+  }
+  
   confirmDelete(ev: Event, d: DepositRecord): void {
     this.confirmation.confirm({
       target: ev.target as HTMLElement,
@@ -237,9 +307,7 @@ export class DepositsComponent implements OnChanges {
   private deleteSelected(): void {
     if (!this.lendPeak) return;
 
-    this.selectedDeposits.forEach((d) =>
-      this.lendPeak!.depositRecords.removeRecordById(d.id),
-    );
+    this.selectedDeposits.forEach((d) => this.lendPeak!.depositRecords.removeRecordById(d.id));
 
     this.selectedDeposits = [];
     this.depositUpdated.emit();
@@ -249,10 +317,7 @@ export class DepositsComponent implements OnChanges {
   currencySort(event: SortEvent) {
     const field = event.field as keyof DepositRecord;
 
-    event.data?.sort(
-      (a: any, b: any) =>
-        (a[field] as Currency).toNumber() - (b[field] as Currency).toNumber(),
-    );
+    event.data?.sort((a: any, b: any) => (a[field] as Currency).toNumber() - (b[field] as Currency).toNumber());
   }
 
   currencyFilter(value: Currency, filter: any /* string from input */) {
@@ -281,15 +346,12 @@ export class DepositsComponent implements OnChanges {
 
   /** Opens calculator, patches the originating control when user hits “Use result”. */
   openCalc(ctrl: NgModel) {
-    const ref: DynamicDialogRef = this.dialogSvc.open(
-      CalculatorDialogComponent,
-      {
-        showHeader: false,
-        dismissableMask: true,
-        styleClass: 'p-fluid', // shares PrimeFlex spacing
-        data: { initial: ctrl.model }, // optional – preload current value
-      },
-    );
+    const ref: DynamicDialogRef = this.dialogSvc.open(CalculatorDialogComponent, {
+      showHeader: false,
+      dismissableMask: true,
+      styleClass: 'p-fluid', // shares PrimeFlex spacing
+      data: { initial: ctrl.model }, // optional – preload current value
+    });
 
     ref.onClose.subscribe((val: number | undefined) => {
       if (val != null && !isNaN(val)) {
@@ -344,8 +406,7 @@ export class DepositsComponent implements OnChanges {
       });
 
       this.availableDepositCols = this.depositTableCols.filter(
-        (col) =>
-          !this.selectedDepositCols.some((sel) => sel.field === col.field),
+        (col) => !this.selectedDepositCols.some((sel) => sel.field === col.field),
       );
     } else {
       this.resetDepositColumns(); // first-time users
@@ -405,9 +466,7 @@ export class DepositsComponent implements OnChanges {
     if (!this.snapshotDate) {
       return false;
     }
-    return deposit.effectiveDate.isAfter(
-      DateUtil.normalizeDate(this.snapshotDate),
-    );
+    return deposit.effectiveDate.isAfter(DateUtil.normalizeDate(this.snapshotDate));
   }
 
   openBulkEditDialog() {
@@ -541,8 +600,7 @@ export class DepositsComponent implements OnChanges {
       } else {
         this.depositData.excessAppliedDate = undefined;
       }
-      this.depositData.applyExcessToPrincipal =
-        deposit.applyExcessToPrincipal ?? false;
+      this.depositData.applyExcessToPrincipal = deposit.applyExcessToPrincipal ?? false;
       if (this.depositData.staticAllocation) {
         this.selectedAllocationType = 'staticDistribution';
         this.staticUnusedAmount = this.depositData.amount
@@ -604,10 +662,7 @@ export class DepositsComponent implements OnChanges {
     if (!this.depositData) {
       return;
     }
-    if (
-      this.depositData.applyExcessToPrincipal &&
-      !this.depositData.jsExcessAppliedDate
-    ) {
+    if (this.depositData.applyExcessToPrincipal && !this.depositData.jsExcessAppliedDate) {
       this.depositData.jsExcessAppliedDate = this.depositData.jsEffectiveDate;
     } else if (!this.depositData.applyExcessToPrincipal) {
       this.depositData.jsExcessAppliedDate = undefined;
@@ -701,8 +756,7 @@ export class DepositsComponent implements OnChanges {
       },
       {
         h: 'Excess Applied Date',
-        v: (d: any) =>
-          d.excessAppliedDate ? d.excessAppliedDate.toString() : '',
+        v: (d: any) => (d.excessAppliedDate ? d.excessAppliedDate.toString() : ''),
       },
       { h: 'Active', v: (d: any) => (d.active ? 'Yes' : 'No') },
     ];
@@ -808,10 +862,7 @@ export class DepositsComponent implements OnChanges {
    */
   get allocatedPrincipalSum(): number {
     if (!this.selectedDeposit?.usageDetails) return 0;
-    return this.selectedDeposit.usageDetails.reduce(
-      (acc, u) => acc + u.allocatedPrincipal.toNumber(),
-      0,
-    );
+    return this.selectedDeposit.usageDetails.reduce((acc, u) => acc + u.allocatedPrincipal.toNumber(), 0);
   }
 
   /**
@@ -819,10 +870,7 @@ export class DepositsComponent implements OnChanges {
    */
   get allocatedInterestSum(): number {
     if (!this.selectedDeposit?.usageDetails) return 0;
-    return this.selectedDeposit.usageDetails.reduce(
-      (acc, u) => acc + u.allocatedInterest.toNumber(),
-      0,
-    );
+    return this.selectedDeposit.usageDetails.reduce((acc, u) => acc + u.allocatedInterest.toNumber(), 0);
   }
 
   /**
@@ -830,21 +878,14 @@ export class DepositsComponent implements OnChanges {
    */
   get allocatedFeesSum(): number {
     if (!this.selectedDeposit?.usageDetails) return 0;
-    return this.selectedDeposit.usageDetails.reduce(
-      (acc, u) => acc + u.allocatedFees.toNumber(),
-      0,
-    );
+    return this.selectedDeposit.usageDetails.reduce((acc, u) => acc + u.allocatedFees.toNumber(), 0);
   }
 
   /**
    * Returns the total allocated amount (principal + interest + fees) for the selected deposit.
    */
   get allocatedTotalSum(): number {
-    return (
-      this.allocatedPrincipalSum +
-      this.allocatedInterestSum +
-      this.allocatedFeesSum
-    );
+    return this.allocatedPrincipalSum + this.allocatedInterestSum + this.allocatedFeesSum;
   }
 
   /**
@@ -852,11 +893,7 @@ export class DepositsComponent implements OnChanges {
    * (principal + interest + fees).
    */
   getUsageRowTotal(u: UsageDetail): number {
-    return (
-      u.allocatedPrincipal.toNumber() +
-      u.allocatedInterest.toNumber() +
-      u.allocatedFees.toNumber()
-    );
+    return u.allocatedPrincipal.toNumber() + u.allocatedInterest.toNumber() + u.allocatedFees.toNumber();
   }
 
   selectedDepositUnusedAmount(): number {
@@ -888,9 +925,7 @@ export class DepositsComponent implements OnChanges {
   }
 
   private get activeDeposits(): DepositRecord[] {
-    return (
-      this.lendPeak?.depositRecords?._records.filter((d) => d.active) ?? []
-    );
+    return this.lendPeak?.depositRecords?._records.filter((d) => d.active) ?? [];
   }
 
   /* ── totals for ACTIVE deposits only ───────────────────── */
@@ -903,37 +938,22 @@ export class DepositsComponent implements OnChanges {
   }
 
   get totalRefunded(): number {
-    return this.activeDeposits.reduce(
-      (sum, d) => sum + d.jsActiveRefundAmount,
-      0,
-    );
+    return this.activeDeposits.reduce((sum, d) => sum + d.jsActiveRefundAmount, 0);
   }
 
   get totalAllocatedTotal(): number {
-    return this.activeDeposits.reduce(
-      (sum, d) => sum + d.allocatedTotal.toNumber(),
-      0,
-    );
+    return this.activeDeposits.reduce((sum, d) => sum + d.allocatedTotal.toNumber(), 0);
   }
 
   get totalAllocatedPrincipal(): number {
-    return this.activeDeposits.reduce(
-      (sum, d) => sum + d.allocatedPrincipal.toNumber(),
-      0,
-    );
+    return this.activeDeposits.reduce((sum, d) => sum + d.allocatedPrincipal.toNumber(), 0);
   }
 
   get totalAllocatedInterest(): number {
-    return this.activeDeposits.reduce(
-      (sum, d) => sum + d.allocatedInterest.toNumber(),
-      0,
-    );
+    return this.activeDeposits.reduce((sum, d) => sum + d.allocatedInterest.toNumber(), 0);
   }
 
   get totalAllocatedFees(): number {
-    return this.activeDeposits.reduce(
-      (sum, d) => sum + d.allocatedFees.toNumber(),
-      0,
-    );
+    return this.activeDeposits.reduce((sum, d) => sum + d.allocatedFees.toNumber(), 0);
   }
 }

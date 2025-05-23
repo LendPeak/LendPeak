@@ -1,19 +1,9 @@
-import { Component, EventEmitter, Output } from '@angular/core';
-import {
-  DEMO_LOANS,
-  DemoLoanDescriptor,
-  Tag,
-} from '../loan-import/demo-loan.catalogue';
+import { Component, EventEmitter, Output, OnInit, OnChanges, SimpleChanges } from '@angular/core';
+import { DEMO_LOANS, DemoLoanDescriptor, Tag } from '../loan-import/demo-loan.catalogue';
 import { FormControl } from '@angular/forms';
 import { debounceTime, startWith } from 'rxjs/operators';
 
-type Severity =
-  | 'success'
-  | 'info'
-  | 'warn'
-  | 'danger'
-  | 'secondary'
-  | 'contrast';
+type Severity = 'success' | 'info' | 'warn' | 'danger' | 'secondary' | 'contrast';
 
 @Component({
   selector: 'app-demo-loan-browser',
@@ -21,7 +11,7 @@ type Severity =
   styleUrls: ['./demo-loan-browser.component.css'],
   standalone: false,
 })
-export class DemoLoanBrowserComponent {
+export class DemoLoanBrowserComponent implements OnInit {
   /* ------------------- public API ------------------- */
   @Output() selected = new EventEmitter<DemoLoanDescriptor>();
 
@@ -37,36 +27,57 @@ export class DemoLoanBrowserComponent {
   /** free-text search bound through pInputText + ngModel */
   searchText = '';
 
+  // Persist selected tags per category
+  private tagsByCategory: Record<string, string[]> = {};
+
   /** set of active chip filters */
-  activeTags = new Set<Tag>();
+  private _activeTagsArray: string[] = [];
+  get activeTagsArray(): string[] {
+    return this._activeTagsArray;
+  }
+  set activeTagsArray(val: string[]) {
+    this._activeTagsArray = val;
+    // Persist selection for current category
+    const cat = this.categories[this.activeTab].id;
+    this.tagsByCategory[cat] = [...val];
+  }
+
+  get tagPalette() {
+    const set = new Set<string>();
+    DEMO_LOANS.filter((d) => d.category === this.categories[this.activeTab].id).forEach((d) =>
+      d.tags.forEach((t) => set.add(t)),
+    );
+    return Array.from(set).sort();
+  }
+
+  ngOnInit() {
+    // Restore tags for initial tab
+    const cat = this.categories[this.activeTab].id;
+    this._activeTagsArray = this.tagsByCategory[cat] || [];
+  }
+
+  onTabChange() {
+    // Save current selection
+    const prevCat = this.categories[this.activeTab].id;
+    this.tagsByCategory[prevCat] = [...this._activeTagsArray];
+    // Switch tab
+    // (activeTab is already updated by [(value)])
+    const newCat = this.categories[this.activeTab].id;
+    this._activeTagsArray = this.tagsByCategory[newCat] || [];
+  }
 
   /* ------------------- computed helpers -------------- */
   get visibleLoans(): DemoLoanDescriptor[] {
     const cat = this.categories[this.activeTab].id;
-    return DEMO_LOANS.filter((d) => d.category === cat).filter(
-      (d) => this.matchSearch(d) && this.matchTags(d),
-    );
-  }
-
-  get tagPalette(): Tag[] {
-    const set = new Set<Tag>();
-    DEMO_LOANS.filter(
-      (d) => d.category === this.categories[this.activeTab].id,
-    ).forEach((d) => d.tags.forEach((t) => set.add(t)));
-    return Array.from(set).sort();
+    return DEMO_LOANS.filter((d) => d.category === cat).filter((d) => this.matchSearch(d) && this.matchTags(d));
   }
 
   /* ------------------- actions ----------------------- */
   select(loan: DemoLoanDescriptor) {
     this.selected.emit(loan);
   }
-  toggleTag(tag: Tag) {
-    this.activeTags.has(tag)
-      ? this.activeTags.delete(tag)
-      : this.activeTags.add(tag);
-  }
   clearFilters() {
-    this.activeTags.clear();
+    this.activeTagsArray = [];
     this.searchText = '';
   }
 
@@ -81,9 +92,7 @@ export class DemoLoanBrowserComponent {
     );
   }
   matchTags(d: DemoLoanDescriptor): boolean {
-    return (
-      this.activeTags.size === 0 || d.tags.some((t) => this.activeTags.has(t))
-    );
+    return this.activeTagsArray.length === 0 || d.tags.some((t) => this.activeTagsArray.includes(t));
   }
   tagColor(tag: Tag): Severity {
     switch (tag) {

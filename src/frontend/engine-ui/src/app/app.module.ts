@@ -99,6 +99,7 @@ import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http'
 
 import { LoaderComponent } from './shared/components/loader/loader.component';
 import { ListboxModule } from 'primeng/listbox';
+import { MultiSelectModule } from 'primeng/multiselect';
 
 @NgModule({
   declarations: [
@@ -178,6 +179,7 @@ import { ListboxModule } from 'primeng/listbox';
     MarkdownModule.forRoot(),
     RouterModule.forRoot([]),
     ListboxModule,
+    MultiSelectModule,
   ],
   providers: [
     DialogService,

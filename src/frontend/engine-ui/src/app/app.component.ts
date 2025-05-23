@@ -332,7 +332,7 @@ export class AppComponent implements OnChanges, AfterViewInit, OnInit, OnDestroy
         annualInterestRate: 0.05,
         loanAmount: 10000,
         term: 12,
-        startDate: LocalDate.now(),
+        startDate: DateUtil.today(),
       }),
     })
       .addAmortizationVersionManager()
@@ -611,7 +611,7 @@ export class AppComponent implements OnChanges, AfterViewInit, OnInit, OnDestroy
         annualInterestRate: 0.05,
         loanAmount: 10000,
         term: 12,
-        startDate: LocalDate.now(),
+        startDate: DateUtil.today(),
       }),
     })
       .addAmortizationVersionManager()

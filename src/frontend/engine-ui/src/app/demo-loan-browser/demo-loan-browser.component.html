@@ -52,7 +52,12 @@
                 </div>
 
                 <div class="flex gap-1 ml-3">
-                  <p-tag *ngFor="let t of loan.tags" [value]="t" severity="contrast" class="text-xxs font-semibold" />
+                  <p-tag
+                    *ngFor="let t of loan.tags"
+                    [value]="t"
+                    severity="contrast"
+                    class="font-medium px-3 py-1 rounded-lg"
+                  />
                 </div>
               </div>
             </div>

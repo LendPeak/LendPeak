@@ -57,6 +57,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { PastDueSummary, ActualLoanSummary } from 'lendpeak-engine/models/UIInterfaces';
 import { DemoLoanFactory } from './loan-import/demo-loan.factory';
 import { LoaderService } from './shared/components/loader/loader.service';
+import { LightParticleEffect } from './shared/components/loader/loader.component';
 
 declare let gtag: Function;
 
@@ -79,6 +80,9 @@ export class AppComponent implements OnChanges, AfterViewInit, OnInit, OnDestroy
   loaderMinDisplayTime: number = 0;
   loaderVisible: boolean = false;
   private loaderSub: any;
+
+  isMobileBlocked: boolean = false;
+  private mobileBlockerParticles?: LightParticleEffect;
 
   constructor(
     private route: ActivatedRoute,
@@ -470,6 +474,10 @@ export class AppComponent implements OnChanges, AfterViewInit, OnInit, OnDestroy
   }
 
   ngOnInit(): void {
+    // Mobile device detection
+    this.isMobileBlocked = this.detectMobileDevice();
+    if (this.isMobileBlocked) return;
+
     this.developerMode = this.systemSettingsService.getDeveloperMode();
 
     this.router.events.subscribe((event) => {
@@ -1761,7 +1769,7 @@ export class AppComponent implements OnChanges, AfterViewInit, OnInit, OnDestroy
       });
       return;
     }
-    this.loaderService.show('Loading demo loan...', 300);
+    // this.loaderService.show('Loading demo loan...', 300);
     try {
       const built = factory(); // { loan, deposits }
       await this.saveAndLoadLoan({
@@ -1777,203 +1785,26 @@ export class AppComponent implements OnChanges, AfterViewInit, OnInit, OnDestroy
   }
 
   ngAfterViewInit() {
-    // Watch for modal open
-    this.observeWelcomeModal();
-  }
-
-  private observeWelcomeModal() {
-    // Use MutationObserver or polling to watch for modal open
-    const check = () => {
-      if (this.welcomeDemoLoanModalVisible) {
-        setTimeout(() => {
-          this.startParticleAnimation();
-          this.animateSubtitle();
-        }, 100);
-      } else {
-        this.stopParticleAnimation();
-      }
-    };
-    // Patch setter for welcomeDemoLoanModalVisible
-    let _val = this.welcomeDemoLoanModalVisible;
-    Object.defineProperty(this, 'welcomeDemoLoanModalVisible', {
-      get: () => _val,
-      set: (v: boolean) => {
-        _val = v;
-        check();
-      },
-      configurable: true,
-    });
-    check();
-  }
-
-  private particleAnimationFrame: any;
-  private particles: any[] = [];
-  private startParticleAnimation() {
-    const canvas = this.particleCanvasRef?.nativeElement;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-    const dpr = window.devicePixelRatio || 1;
-    const fontSizePx = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16;
-    // Fixed canvas size in rem for visual consistency
-    const widthRem = 38;
-    const heightRem = 14;
-    const width = widthRem * fontSizePx * dpr;
-    const height = heightRem * fontSizePx * dpr;
-    canvas.width = width;
-    canvas.height = height;
-    canvas.style.width = `${widthRem}rem`;
-    canvas.style.height = `${heightRem}rem`;
-
-    // Particle count based on rem area
-    const areaRem2 = widthRem * heightRem;
-    const density = 0.5; // particles per rem²
-    let numParticles = Math.round(areaRem2 * density);
-    numParticles = Math.max(16, Math.min(numParticles, 36));
-
-    // Connection distance in rem
-    const connectionDistance = 8 * fontSizePx; // 8rem
-    // Bubble size in rem
-    const minR = 0.18 * fontSizePx,
-      maxR = 0.32 * fontSizePx;
-
-    const center = { x: width / 2, y: height / 2 };
-    const now0 = performance.now();
-    const targets = Array.from({ length: numParticles }, () => ({
-      x: Math.random() * width,
-      y: Math.random() * height,
-      r: minR + Math.random() * (maxR - minR),
-      dx: (Math.random() - 0.5) * 0.7,
-      dy: (Math.random() - 0.5) * 0.7,
-      alpha: 1,
-      colorSeed: Math.random() * 360,
-    }));
-    // Start all particles at center
-    this.particles = targets.map((t) => ({ ...t, x: center.x, y: center.y }));
-    const burstDuration = 400; // ms (was 700)
-    let burstStart = performance.now();
-    let burstPhase = true;
-    const animateBurst = (now: number) => {
-      const t = Math.min(1, (now - burstStart) / burstDuration);
-      ctx.clearRect(0, 0, width, height);
-      for (let i = 0; i < this.particles.length; i++) {
-        const p = this.particles[i];
-        const target = targets[i];
-        p.x = center.x + (target.x - center.x) * t;
-        p.y = center.y + (target.y - center.y) * t;
-        const hue = (p.colorSeed + (now - now0) / 10) % 360;
-        ctx.save();
-        ctx.globalAlpha = p.alpha;
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.r, 0, 2 * Math.PI);
-        ctx.fillStyle = `hsl(${hue}, 100%, 65%)`;
-        ctx.shadowColor = `hsl(${hue}, 100%, 85%)`;
-        ctx.shadowBlur = 22;
-        ctx.fill();
-        ctx.restore();
-      }
-      // Draw lines between close particles
-      for (let i = 0; i < this.particles.length; i++) {
-        for (let j = i + 1; j < this.particles.length; j++) {
-          const a = this.particles[i];
-          const b = this.particles[j];
-          const dist = Math.hypot(a.x - b.x, a.y - b.y);
-          if (dist < connectionDistance) {
-            const hueA = (a.colorSeed + (now - now0) / 10) % 360;
-            const hueB = (b.colorSeed + (now - now0) / 10) % 360;
-            const grad = ctx.createLinearGradient(a.x, a.y, b.x, b.y);
-            grad.addColorStop(0, `hsl(${hueA}, 100%, 65%)`);
-            grad.addColorStop(1, `hsl(${hueB}, 100%, 65%)`);
-            ctx.save();
-            ctx.globalAlpha = 0.36;
-            ctx.strokeStyle = grad;
-            ctx.beginPath();
-            ctx.moveTo(a.x, a.y);
-            ctx.lineTo(b.x, b.y);
-            ctx.stroke();
-            ctx.restore();
-          }
-        }
-      }
-      if (t < 1) {
-        this.particleAnimationFrame = requestAnimationFrame(animateBurst);
-      } else {
-        for (let i = 0; i < this.particles.length; i++) {
-          this.particles[i].dx = targets[i].dx;
-          this.particles[i].dy = targets[i].dy;
-        }
-        animateFloat(now);
-      }
-    };
-    const animateFloat = (now: number) => {
-      ctx.clearRect(0, 0, width, height);
-      for (const p of this.particles) {
-        const hue = (p.colorSeed + (now - now0) / 10) % 360;
-        ctx.save();
-        ctx.globalAlpha = p.alpha;
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.r, 0, 2 * Math.PI);
-        ctx.fillStyle = `hsl(${hue}, 100%, 65%)`;
-        ctx.shadowColor = `hsl(${hue}, 100%, 85%)`;
-        ctx.shadowBlur = 22;
-        ctx.fill();
-        ctx.restore();
-        p.x += p.dx;
-        p.y += p.dy;
-        if (p.x < 0 || p.x > width) p.dx *= -1;
-        if (p.y < 0 || p.y > height) p.dy *= -1;
-      }
-      // Draw lines between close particles
-      for (let i = 0; i < this.particles.length; i++) {
-        for (let j = i + 1; j < this.particles.length; j++) {
-          const a = this.particles[i];
-          const b = this.particles[j];
-          const dist = Math.hypot(a.x - b.x, a.y - b.y);
-          if (dist < connectionDistance) {
-            const hueA = (a.colorSeed + (now - now0) / 10) % 360;
-            const hueB = (b.colorSeed + (now - now0) / 10) % 360;
-            const grad = ctx.createLinearGradient(a.x, a.y, b.x, b.y);
-            grad.addColorStop(0, `hsl(${hueA}, 100%, 65%)`);
-            grad.addColorStop(1, `hsl(${hueB}, 100%, 65%)`);
-            ctx.save();
-            ctx.globalAlpha = 0.36;
-            ctx.strokeStyle = grad;
-            ctx.beginPath();
-            ctx.moveTo(a.x, a.y);
-            ctx.lineTo(b.x, b.y);
-            ctx.stroke();
-            ctx.restore();
-          }
-        }
-      }
-      this.particleAnimationFrame = requestAnimationFrame(animateFloat);
-    };
-    this.particleAnimationFrame = requestAnimationFrame(animateBurst);
-  }
-  private stopParticleAnimation() {
-    if (this.particleAnimationFrame) {
-      cancelAnimationFrame(this.particleAnimationFrame);
-      this.particleAnimationFrame = null;
-    }
-    const canvas = this.particleCanvasRef?.nativeElement;
-    if (canvas) {
-      const ctx = canvas.getContext('2d');
-      if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
-    }
-  }
-  private animateSubtitle() {
-    const el = document.getElementById('subtitle-animated');
-    if (el) {
-      el.style.opacity = '0';
-      el.style.transform = 'scale(0.95)';
+    // Start mobile-blocker particles if needed
+    if (this.isMobileBlocked) {
       setTimeout(() => {
-        el.style.opacity = '1';
-        el.style.transform = 'scale(1)';
-      }, 100);
+        const canvas = document.getElementById('mobileBlockerParticles') as HTMLCanvasElement;
+        if (canvas) {
+          this.mobileBlockerParticles = new LightParticleEffect(canvas);
+          this.mobileBlockerParticles.start();
+        }
+      }, 0);
     }
   }
 
   ngOnDestroy() {
     if (this.loaderSub) this.loaderSub.unsubscribe();
+    if (this.mobileBlockerParticles) this.mobileBlockerParticles.destroy();
+  }
+
+  detectMobileDevice(): boolean {
+    // Only block small screens, not all mobile user agents
+    const isSmallScreen = window.innerWidth < 800 || window.innerHeight < 600;
+    return isSmallScreen;
   }
 }

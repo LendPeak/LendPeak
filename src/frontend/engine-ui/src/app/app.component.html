@@ -12,1522 +12,1616 @@
   </p>
 </div>
 
-<div *ngIf="!loanNotFound">
-  <app-system-settings
-    [(showSystemSettingsDialog)]="showSystemSettingsDialog"
-    (systemsSettingsChange)="onSystemsSettingsChange()"
-  ></app-system-settings>
-
-  <!-- Toolbar with Loan Name -->
-  <app-toolbar
-    [snapshotDate]="snapshotDate"
-    (snapshotDateChange)="onSnapshotDateChange($event)"
-    [toolbarActions]="toolbarActions"
-    (openEditLoanDialog)="openEditLoanDialog()"
-    (openSaveLoanDialog)="openSaveLoanDialog()"
-    (openDemoLoanBrowser)="openDemoLoanBrowserDialog()"
-  ></app-toolbar>
-
-  <div class="w-full pt-3 pb-3 border-top-2 shadow-2 border-indigo-300">
-    <div class="loan-header">
-      <div class="loan-header-content">
-        <!-- Left Section: Loan Details -->
-        <div class="loan-details">
-          <h2 class="loan-name-title">
-            <a class="sexy-link" href="?loan={{ this.lendPeak.amortization.name }}">
-              <i class="pi pi-external-link" style="font-size: 1.5rem"></i>
-            </a>
-            {{ this.lendPeak.amortization.name }} (version:
-            {{ lendPeak.amortizationVersionManager?.versionNumber || 0 }})
-            <span *ngIf="loanModified" class="unsaved-indicator">(Modified)</span>
-            <span *ngIf="!loanModified && this.lendPeak.amortization.name === 'New Loan'" class="unsaved-indicator">
-              (Unsaved)
-            </span>
-          </h2>
-          <p class="loan-description" *ngIf="this.lendPeak.amortization.description">
-            {{ this.lendPeak.amortization.description }}
-            <span *ngIf="this.lendPeak.amortization.id">(ID: {{ this.lendPeak.amortization.id }})</span>
-          </p>
-        </div>
-
-        <!-- Right Section: Loan Actions -->
-        <div class="loan-actions">
-          <button
-            pButton
-            label="Edit Loan Details"
-            icon="pi pi-pencil"
-            class="p-button-text"
-            (click)="openEditLoanDialog()"
-          ></button>
-          <button
-            *ngIf="loanModified"
-            pButton
-            label="Save Loan"
-            icon="pi pi-save"
-            (click)="openSaveLoanDialog()"
-          ></button>
-        </div>
-      </div>
-    </div>
-    <hr />
-    <div class="loan-highlights">
-      <p-tag
-        *ngIf="lendPeak.summary.highlights.status.isPaidInFull"
-        class="ml-2"
-        severity="success"
-        value="Paid In Full"
-      ></p-tag>
-      <p-tag
-        *ngIf="lendPeak.summary.highlights.status.hasOverpayment"
-        class="ml-2"
-        severity="danger"
-        value="Overpayment Detected {{ lendPeak.payoffQuote.unusedAmountFromDeposis.toNumber() | currency }}"
-      ></p-tag>
-      <p-tag
-        *ngIf="lendPeak.summary.highlights.status.isEarlyPayoff"
-        class="ml-2"
-        severity="info"
-        value="Early Payoff"
-      ></p-tag>
-      <p-tag
-        *ngIf="lendPeak.summary.highlights.payments.hasAutoCloseDeposit"
-        class="ml-2"
-        severity="info"
-        value="Auto-Close Deposit"
-      ></p-tag>
-      <p-tag
-        *ngIf="lendPeak.summary.highlights.status.isPastDue"
-        class="ml-2"
-        severity="danger"
-        value="Past Due {{ lendPeak.bills.summary.daysPastDue }} Days"
-      ></p-tag>
-      <p-badge
-        *ngIf="lendPeak.summary.highlights.payments.hasAdhocRefunds"
-        [value]="
-          lendPeak.summary.highlights.payments.totalAdhocRefunds +
-          ' Ad-hoc Refund' +
-          (lendPeak.summary.highlights.payments.totalAdhocRefunds > 1 ? 's' : '')
-        "
-        severity="warn"
-        styleClass="ml-2"
-      />
-      <p-tag
-        *ngIf="lendPeak.summary.highlights.payments.hasRefunds"
-        class="ml-2"
-        [severity]="lendPeak.summary.highlights.payments.activeRefunds > 0 ? 'contrast' : 'secondary'"
-        [value]="
-          lendPeak.summary.highlights.payments.activeRefunds +
-          '/' +
-          lendPeak.summary.highlights.payments.totalRefunds +
-          ' Refunds'
-        "
-        pTooltip="Active / Total refund records"
-        tooltipPosition="top"
-      />
-      <p-tag
-        *ngIf="lendPeak.summary.highlights.billing.hasOpenBills"
-        class="ml-2"
-        severity="warn"
-        value="Open Bills"
-      ></p-tag>
-      <p-tag
-        *ngIf="lendPeak.summary.highlights.modifications.hasPayoffDate"
-        class="ml-2"
-        severity="info"
-        value="Payoff Date Set {{ lendPeak.amortization.payoffDate?.toString() | date: 'yyyy-MM-dd' }}"
-      ></p-tag>
-      <p-tag
-        *ngIf="lendPeak.summary.highlights.modifications.hasCustomEndDate"
-        class="ml-2"
-        severity="warn"
-        value="Custom End Date"
-      ></p-tag>
-
-      <p-tag
-        *ngIf="lendPeak.summary.highlights.modifications.hasCustomFirstPaymentDate"
-        class="ml-2"
-        severity="info"
-        value="Custom First Payment Date"
-      ></p-tag>
-
-      <p-tag
-        *ngIf="lendPeak.summary.highlights.modifications.hasCustomEquitedMonthlyPayment"
-        class="ml-2"
-        severity="warn"
-        value="Custom Monthly Payment"
-      ></p-tag>
-
-      <p-tag
-        *ngIf="lendPeak.summary.highlights.modifications.hasTermPaymentAmountOverride"
-        class="ml-2"
-        severity="warn"
-        value="Term Payment Amount Override"
-      ></p-tag>
-
-      <p-tag
-        *ngIf="lendPeak.summary.highlights.modifications.hasTermInterestAmountOverride"
-        class="ml-2"
-        severity="warn"
-        value="Term Interest Amount Override"
-      ></p-tag>
-
-      <p-tag
-        *ngIf="lendPeak.summary.highlights.modifications.hasCustomCalendars"
-        class="ml-2"
-        severity="warn"
-        value="Custom Calendars"
-      ></p-tag>
-
-      <p-tag
-        *ngIf="lendPeak.summary.highlights.modifications.hasChangePaymentDates"
-        class="ml-2"
-        [severity]="
-          lendPeak.summary.highlights.modifications.hasChangePaymentDates > 5
-            ? 'danger'
-            : lendPeak.summary.highlights.modifications.hasChangePaymentDates > 2
-              ? 'warn'
-              : 'info'
-        "
-        [value]="'Change Payment Dates ' + lendPeak.summary.highlights.modifications.hasChangePaymentDates"
-      ></p-tag>
-
-      <p-tag
-        *ngIf="lendPeak.summary.highlights.modifications.hasBalanceModifications"
-        class="ml-2"
-        severity="info"
-        value="Balance Modifications"
-      ></p-tag>
-    </div>
-  </div>
-  <!-- Loan Header Section -->
-
-  <!-- Tabsw -->
-  <p-tabs [(value)]="activeTabIndex" (valueChange)="onTabChange($event)" scrollable class="pt-1">
-    <p-tablist class="pt-1 border-bottom-2 border-indigo-300">
-      <ng-template #previcon>
-        <i class="pi pi-minus"></i>
-      </ng-template>
-      <p-tab [value]="0">
-        <span class="font-bold whitespace-nowrap">Basic Loan Info</span>
-      </p-tab>
-      <p-tab [value]="5">
-        <span class="font-bold whitespace-nowrap">Bills</span>
-      </p-tab>
-      <p-tab [value]="4">
-        <span class="font-bold whitespace-nowrap">Deposits</span>
-      </p-tab>
-
-      <p-tab [value]="1">
-        <span class="font-bold whitespace-nowrap">Modifications</span>
-      </p-tab>
-      <p-tab [value]="2">
-        <span class="font-bold whitespace-nowrap">Settings</span>
-      </p-tab>
-      <p-tab [value]="6">
-        <span class="font-bold whitespace-nowrap">Loan History</span>
-      </p-tab>
-
-      <p-tab [value]="7">
-        <span class="font-bold whitespace-nowrap">Financial History</span>
-      </p-tab>
-      <!-- <p-tab [value]="3"
-          ><span class="font-bold whitespace-nowrap"
-            >Custom Periods Schedule</span
-          ></p-tab
-        > -->
-      <ng-template #nexticon>
-        <i class="pi pi-plus"></i>
-      </ng-template>
-    </p-tablist>
-    <p-tabpanels>
-      <!-- Basic Loan Info Tab -->
-      <p-tabpanel [value]="0">
-        <app-basic-loan-info
-          [lendPeak]="lendPeak"
-          (loanChange)="onLoanChange($event)"
-          (loanUpdated)="submitLoan()"
-        ></app-basic-loan-info>
-      </p-tabpanel>
-
-      <!-- Overrides Tab -->
-      <p-tabpanel [value]="1">
-        <app-overrides
-          [lendPeak]="lendPeak"
-          [termOptions]="termOptions"
-          [balanceIncreaseType]="balanceIncreaseType"
-          (loanChange)="onLoanChange($event)"
-          (loanUpdated)="submitLoan()"
-        ></app-overrides>
-      </p-tabpanel>
-
-      <!-- Advanced Settings Tab -->
-      <p-tabpanel [value]="2">
-        <app-advanced-settings
-          [lendPeak]="lendPeak"
-          (loanChange)="onLoanChange($event)"
-          (loanUpdated)="submitLoan()"
-        ></app-advanced-settings>
-      </p-tabpanel>
-
-      <!-- Custom Periods Schedule Tab -->
-      <!-- <p-tabpanel [value]="3">
-          <div class="grid">
-            <div class="col-12">
-              <p-card>
-                <div class="p-mb-3">
-                  <p-button
-                    label="Create Custom Schedule"
-                    icon="pi pi-plus p-ml-2"
-                    class="create-schedule-buttons"
-                    (onClick)="createLoanRepaymentPlan()"
-                    pTooltip="Generate a custom periods schedule based on your inputs."
-                    tooltipPosition="top"
-                  ></p-button>
-                  <p-button
-                    label="Remove Schedule Override"
-                    icon="pi pi-minus"
-                    class="p-ml-2 create-schedule-buttons"
-                    (onClick)="removeLoanRepaymentPlan()"
-                    pTooltip="Remove the custom periods schedule override."
-                    tooltipPosition="top"
-                  ></p-button>
-                </div>
-                <p-divider></p-divider>
-                <div class="p-fluid">
-                  <table
-                    *ngIf="lendPeak.amortization.periodsSchedule.length > 0"
-                    class="p-datatable p-component"
-                  >
-                    <thead>
-                      <tr>
-                        <th>Term</th>
-                        <th>Start Date</th>
-                        <th>End Date</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr
-                        *ngFor="let plan of lendPeak.amortization.periodsSchedule; let i = index"
-                      >
-                        <td>{{ i + 1 }}</td>
-                        <td>
-                          <p-datepicker
-                            [(ngModel)]="plan.startDate"
-                            dateFormat="yy-mm-dd"
-                            name="periodStartDate-{{ i }}"
-                            showIcon
-                            (onSelect)="submitLoan()"
-                            pTooltip="Custom start date for term {{ i + 1 }}."
-                            tooltipPosition="top"
-                          ></p-datepicker>
-                        </td>
-                        <td>
-                          <p-datepicker
-                            [(ngModel)]="plan.endDate"
-                            dateFormat="yy-mm-dd"
-                            name="periodEndDate-{{ i }}"
-                            showIcon
-                            (onSelect)="repaymentPlanEndDateChange(i)"
-                            pTooltip="Custom end date for term {{ i + 1 }}."
-                            tooltipPosition="top"
-                          ></p-datepicker>
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              </p-card>
-            </div>
-          </div>
-        </p-tabpanel> -->
-
-      <!-- Deposits Tab -->
-      <p-tabpanel [value]="4">
-        <app-deposits
-          [lendPeak]="lendPeak"
-          [currencyOptions]="currencyOptions"
-          (depositUpdated)="onDepositUpdated()"
-          [snapshotDate]="snapshotDate"
-        ></app-deposits>
-      </p-tabpanel>
-
-      <!-- Bills -->
-      <p-tabpanel [value]="5">
-        <app-bills [lendPeak]="lendPeak" [snapshotDate]="snapshotDate" (billAction)="onBillAction()"></app-bills>
-      </p-tabpanel>
-
-      <p-tabpanel [value]="6" *ngIf="lendPeak.amortizationVersionManager">
-        <app-version-history
-          [lendPeak]="lendPeak"
-          [refreshEvent]="versionHistoryRefresh"
-          (onRollback)="handleRollback($event)"
-        ></app-version-history>
-      </p-tabpanel>
-    </p-tabpanels>
-
-    <p-tabpanel [value]="7" *ngIf="lendPeak.financialOpsVersionManager">
-      <app-financial-ops-history
-        [manager]="lendPeak.financialOpsVersionManager"
-        (onRollback)="handleFinancialOpsRollback($event)"
-      ></app-financial-ops-history>
-    </p-tabpanel>
-  </p-tabs>
-
-  <!-- Repayment Plan at the Bottom -->
-
-  <!-- ✅ PAID IN FULL — NO OVERPAYMENT (GREEN) -->
-  <div *ngIf="lendPeak.isPaidInFull && !lendPeak.hasOverpayment">
-    <div class="col-12">
-      <div class="w-full p-4 text-lg text-center shadow-2 border-top-3 border-green-400">
-        <span class="font-bold text-100 text-2xl">Contract Paid In Full</span>
-      </div>
-    </div>
-
-    <p-card styleClass="mb-3">
-      <div class="grid">
-        <!-- Last Payment Date -->
-        <div class="col-3">
-          <p-card>
-            <ng-template #header>
-              <div class="card-header-container font-semibold text-xl">Last Payment Date</div>
-            </ng-template>
-            <p class="m-0 text-300 font-semibold text-3xl text-center">
-              {{ lendPeak.depositRecords.lastPaymentDateStr || '—' }}
-            </p>
-          </p-card>
-        </div>
-
-        <!-- Last Payment Amount -->
-        <div class="col-3">
-          <p-card>
-            <ng-template #header>
-              <div class="card-header-container font-semibold text-xl">Last Payment Amount</div>
-            </ng-template>
-            <p class="m-0 text-300 font-semibold text-3xl text-center">
-              {{ lendPeak.depositRecords.lastPaymentAmt | currency: 'USD' : 'symbol' : '1.0-2' }}
-            </p>
-          </p-card>
-        </div>
-
-        <!-- Last Satisfied Bill -->
-        <div class="col-3">
-          <p-card>
-            <ng-template #header>
-              <div class="card-header-container font-semibold text-xl">Last Satisfied Bill</div>
-            </ng-template>
-            <p class="m-0 text-300 font-semibold text-3xl text-center">
-              {{ lendPeak.bills.lastSatisfiedBillNo || '—' }}
-            </p>
-          </p-card>
-        </div>
-
-        <!-- Early Payoff? -->
-        <div class="col-3">
-          <p-card>
-            <ng-template #header>
-              <div class="card-header-container font-semibold text-xl">Early&nbsp;Payoff</div>
-            </ng-template>
-            <p class="m-0 text-300 font-semibold text-3xl text-center">
-              {{ lendPeak.isEarlyPayoff ? 'Yes' : 'No' }}
-            </p>
-          </p-card>
-        </div>
-      </div>
-    </p-card>
-    <!-- Early-payoff extra panel -->
-    <p-card *ngIf="lendPeak.isEarlyPayoff" styleClass="mb-3">
-      <ng-template #header>
-        <div class="card-header-container font-semibold text-xl">Early&nbsp;Payoff&nbsp;Details</div>
-      </ng-template>
-
-      <div class="grid">
-        <!-- Expected maturity -->
-        <div class="col-3">
-          <p-card>
-            <ng-template #header>
-              <div class="card-header-container font-semibold text-xl">Expected&nbsp;Maturity</div>
-            </ng-template>
-            <p class="m-0 text-300 font-semibold text-3xl text-center">
-              {{ lendPeak.expectedMaturity.toString() | date: 'yyyy-MM-dd' }}
-            </p>
-          </p-card>
-        </div>
-
-        <!-- Paid off on -->
-        <div class="col-3">
-          <p-card>
-            <ng-template #header>
-              <div class="card-header-container font-semibold text-xl">Paid&nbsp;Off&nbsp;On</div>
-            </ng-template>
-            <p class="m-0 text-300 font-semibold text-3xl text-center">
-              {{ lendPeak.actualPayoff.toString() | date: 'yyyy-MM-dd' }}
-            </p>
-          </p-card>
-        </div>
-
-        <!-- Terms saved -->
-        <div class="col-3">
-          <p-card>
-            <ng-template #header>
-              <div class="card-header-container font-semibold text-xl">Terms&nbsp;Saved</div>
-            </ng-template>
-            <p class="m-0 text-300 font-semibold text-3xl text-center">
-              {{ lendPeak.termsSaved }}
-            </p>
-          </p-card>
-        </div>
-
-        <!-- Months saved -->
-        <div class="col-3">
-          <p-card>
-            <ng-template #header>
-              <div class="card-header-container font-semibold text-xl">Months&nbsp;Ahead</div>
-            </ng-template>
-            <p class="m-0 text-300 font-semibold text-3xl text-center">
-              {{ lendPeak.monthsSaved }}
-            </p>
-          </p-card>
-        </div>
-      </div>
-    </p-card>
-  </div>
-
-  <!-- ⚠️ PAID IN FULL — OVERPAYMENT (YELLOW) -->
-  <div *ngIf="lendPeak.isPaidInFull && lendPeak.hasOverpayment">
-    <div class="col-12">
-      <div class="w-full p-4 text-lg text-center shadow-2 border-top-3 border-yellow-400">
-        <span class="font-bold text-100 text-2xl">Paid In Full — Overpayment Detected</span>
-      </div>
-    </div>
-
-    <p-card styleClass="mb-3">
-      <div class="grid">
-        <!-- Overpayment Amount -->
-        <div class="col-3">
-          <p-card>
-            <ng-template #header>
-              <div class="card-header-container font-semibold text-xl">Overpayment Amount</div>
-            </ng-template>
-            <p class="m-0 text-300 font-bold text-3xl text-center">
-              {{ lendPeak.payoffQuote.unusedAmountFromDeposis.toNumber() | currency }}
-            </p>
-          </p-card>
-        </div>
-
-        <!-- Last Payment Date -->
-        <div class="col-3">
-          <p-card>
-            <ng-template #header>
-              <div class="card-header-container font-semibold text-xl">Last Payment Date</div>
-            </ng-template>
-            <p class="m-0 text-300 font-semibold text-3xl text-center">
-              {{ lendPeak.depositRecords.lastPaymentDateStr || '—' }}
-            </p>
-          </p-card>
-        </div>
-
-        <!-- Last Payment Amount -->
-        <div class="col-3">
-          <p-card>
-            <ng-template #header>
-              <div class="card-header-container font-semibold text-xl">Last Payment Amount</div>
-            </ng-template>
-            <p class="m-0 text-300 font-semibold text-3xl text-center">
-              {{ lendPeak.depositRecords.lastPaymentAmt | currency: 'USD' : 'symbol' : '1.0-2' }}
-            </p>
-          </p-card>
-        </div>
-
-        <!-- Early Payoff? -->
-        <div class="col-3">
-          <p-card>
-            <ng-template #header>
-              <div class="card-header-container font-semibold text-xl">Early&nbsp;Payoff</div>
-            </ng-template>
-            <p class="m-0 text-300 font-semibold text-3xl text-center">
-              {{ lendPeak.isEarlyPayoff ? 'Yes' : 'No' }}
-            </p>
-          </p-card>
-        </div>
-      </div>
-    </p-card>
-
-    <!-- Early-payoff extra panel -->
-    <p-card *ngIf="lendPeak.isEarlyPayoff" styleClass="mb-3">
-      <ng-template #header>
-        <div class="card-header-container font-semibold text-xl">Early&nbsp;Payoff&nbsp;Details</div>
-      </ng-template>
-
-      <div class="grid">
-        <!-- Expected maturity -->
-        <div class="col-3">
-          <p-card>
-            <ng-template #header>
-              <div class="card-header-container font-semibold text-xl">Expected&nbsp;Maturity</div>
-            </ng-template>
-            <p class="m-0 text-300 font-semibold text-3xl text-center">
-              {{ lendPeak.expectedMaturity.toString() | date: 'yyyy-MM-dd' }}
-            </p>
-          </p-card>
-        </div>
-
-        <!-- Paid off on -->
-        <div class="col-3">
-          <p-card>
-            <ng-template #header>
-              <div class="card-header-container font-semibold text-xl">Paid&nbsp;Off&nbsp;On</div>
-            </ng-template>
-            <p class="m-0 text-300 font-semibold text-3xl text-center">
-              {{ lendPeak.actualPayoff.toString() | date: 'yyyy-MM-dd' }}
-            </p>
-          </p-card>
-        </div>
-
-        <!-- Terms saved -->
-        <div class="col-3">
-          <p-card>
-            <ng-template #header>
-              <div class="card-header-container font-semibold text-xl">Terms&nbsp;Saved</div>
-            </ng-template>
-            <p class="m-0 text-300 font-semibold text-3xl text-center">
-              {{ lendPeak.termsSaved }}
-            </p>
-          </p-card>
-        </div>
-
-        <!-- Months saved -->
-        <div class="col-3">
-          <p-card>
-            <ng-template #header>
-              <div class="card-header-container font-semibold text-xl">Months&nbsp;Ahead</div>
-            </ng-template>
-            <p class="m-0 text-300 font-semibold text-3xl text-center">
-              {{ lendPeak.monthsSaved }}
-            </p>
-          </p-card>
-        </div>
-      </div>
-    </p-card>
-  </div>
-
-  <!-- Past Due Bills Status card -->
-  <div *ngIf="lendPeak.bills.summary.billsPastDue > 0">
-    <div class="col-12">
-      <div class="w-full p-4 text-lg align-content-center text-center shadow-2 border-top-3 border-red-400">
-        <span class="font-bold text-100 text-2xl">Contract is Past Due</span>
-      </div>
-    </div>
-    <p-card styleClass="mb-3">
-      <div class="grid">
-        <!-- <div
-            class="col-12"
-            *ngIf="lendPeak.bills.summary.pastDueTotal.isZero()"
-          >
-            <div class="flex flex-column">
-              <span class="text-300 font-semibold mb-1"
-                >Account is Current</span
-              >
-              <span>All bills are current as of the snapshot date.</span>
-            </div>
-          </div> -->
-        <div class="col-12">
-          <div class="flex flex-column p-3">
-            <div class="grid">
-              <!-- Add Days Contract Is Past Due here -->
-              <div class="col-2">
-                <p-card>
-                  <ng-template #header>
-                    <div class="card-header-container font-semibold text-xl">Days Past Due</div>
-                  </ng-template>
-
-                  <p class="m-0 text-300 font-semibold text-5xl text-center">
-                    {{ lendPeak.bills.summary.daysPastDue }}
-                  </p>
-                </p-card>
-              </div>
-
-              <div class="col-2">
-                <p-card>
-                  <ng-template #header>
-                    <div class="card-header-container font-semibold text-xl">Bills Past Due</div>
-                  </ng-template>
-
-                  <p class="m-0 text-300 font-semibold text-5xl text-center">
-                    {{ lendPeak.bills.summary.billsPastDue }}
-                  </p>
-                </p-card>
-              </div>
-
-              <div class="col-2">
-                <p-card>
-                  <ng-template #header>
-                    <div class="card-header-container font-semibold text-xl">Total Past Due</div>
-                  </ng-template>
-
-                  <p class="m-0 text-300 font-semibold text-5xl text-center">
-                    {{ lendPeak.bills.summary.pastDueTotal.toNumber() | currency }}
-                  </p>
-                </p-card>
-              </div>
-
-              <div class="col-2">
-                <p-card>
-                  <ng-template #header>
-                    <div class="card-header-container font-semibold text-xl">Principal Past Due</div>
-                  </ng-template>
-
-                  <p class="m-0 text-300 font-semibold text-5xl text-center">
-                    {{ lendPeak.bills.summary.pastDuePrincipal.toNumber() | currency }}
-                  </p>
-                </p-card>
-              </div>
-              <div class="col-2">
-                <p-card>
-                  <ng-template #header>
-                    <div class="card-header-container font-semibold text-xl">Interest Past Due</div>
-                  </ng-template>
-
-                  <p class="m-0 text-300 font-semibold text-5xl text-center">
-                    {{ lendPeak.bills.summary.pastDueInterest.toNumber() | currency }}
-                  </p>
-                </p-card>
-              </div>
-              <div class="col-2">
-                <p-card>
-                  <ng-template #header>
-                    <div class="card-header-container font-semibold text-xl">Fees Past Due</div>
-                  </ng-template>
-
-                  <p class="m-0 text-300 font-semibold text-5xl text-center">
-                    {{ lendPeak.bills.summary.pastDueFees.toNumber() | currency }}
-                  </p>
-                </p-card>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </p-card>
-  </div>
-
-  <!-- Current Loan Status card-->
-
-  <div class="col-12">
-    <div class="w-full p-4 text-lg align-content-center text-center shadow-2 border-top-2 border-indigo-300">
-      <span class="font-bold text-100 text-2xl">Quick Details</span>
-    </div>
-    <div class="flex flex-column p-3">
-      <div class="grid">
-        <div class="col-2">
-          <p-card>
-            <ng-template #header>
-              <div class="card-header-container font-semibold text-xl">Remaining Terms</div>
-            </ng-template>
-
-            <p class="m-0 text-300 font-semibold text-5xl text-center">
-              {{ lendPeak.bills.summary.remainingUnpaidBills }} /
-              {{ lendPeak.bills.length }}
-            </p>
-          </p-card>
-        </div>
-        <div class="col-2">
-          <p-card>
-            <ng-template #header>
-              <div class="card-header-container font-semibold text-xl">Next Bill Date</div>
-            </ng-template>
-
-            <p class="m-0 text-300 font-semibold text-5xl text-center">
-              {{
-                lendPeak.bills.nextUpcomingBill
-                  ? (lendPeak.bills.nextUpcomingBill.dueDate.toString() | date: 'yyyy-MM-dd')
-                  : 'No more bills left'
-              }}
-            </p>
-          </p-card>
-        </div>
-        <div class="col-4">
-          <p-card class="">
-            <ng-template #header>
-              <div class="card-header-container font-semibold text-xl">Current Payoff</div>
-            </ng-template>
-
-            <p class="m-0 text-300 font-semibold text-5xl text-center">
-              {{ lendPeak.payoffQuote.dueTotal.toNumber() | currency }}
-            </p>
-            <div class="w-full pt-4 align-content-center text-center">
-              <p-tag
-                class="ml-4"
-                severity="secondary"
-                value="Principal: {{ lendPeak.payoffQuote.duePrincipal.toNumber() | currency }}"
-              />
-              <p-tag
-                class="ml-4"
-                severity="secondary"
-                value="Interest: {{ lendPeak.payoffQuote.dueInterest.toNumber() | currency }}"
-              />
-              <p-tag
-                class="ml-4"
-                severity="secondary"
-                value="Fees: {{ lendPeak.payoffQuote.dueFees.toNumber() | currency }}"
-              />
-              <p-tag
-                class="ml-4"
-                [severity]="lendPeak.payoffQuote.unusedAmountFromDeposis.isZero() ? 'secondary' : 'danger'"
-                value="Unused Amount: {{ lendPeak.payoffQuote.unusedAmountFromDeposis.toNumber() | currency }}"
-              />
-            </div>
-          </p-card>
-        </div>
-        <div class="col-2">
-          <p-card>
-            <ng-template #header>
-              <div class="card-header-container font-semibold text-xl">Last Payment Date</div>
-            </ng-template>
-
-            <p class="m-0 text-300 font-semibold text-5xl text-center">
-              {{
-                lendPeak.depositRecords.lastActive
-                  ? (lendPeak.depositRecords.lastActive.effectiveDate.toString() | date: 'yyyy-MM-dd')
-                  : 'None'
-              }}
-            </p>
-          </p-card>
-        </div>
-        <div class="col-2">
-          <p-card>
-            <ng-template #header>
-              <div class="card-header-container font-semibold text-xl">Last Payment Amount</div>
-            </ng-template>
-
-            <p class="m-0 text-300 font-semibold text-5xl text-center">
-              {{
-                lendPeak.depositRecords.lastActive
-                  ? (lendPeak.depositRecords.lastActive.amount.toNumber() | currency)
-                  : 'None'
-              }}
-            </p>
-          </p-card>
-        </div>
-      </div>
-      <p-accordion [multiple]="true" [value]="[]">
-        <p-accordion-panel value="interestRate">
-          <p-accordion-header>
-            <div>Paid To Date Balances</div>
-          </p-accordion-header>
-          <p-accordion-content>
-            <div class="grid">
-              <div class="col-3">
-                <p-card>
-                  <ng-template #header>
-                    <div class="card-header-container font-semibold text-xl">Paid Total To Date</div>
-                  </ng-template>
-
-                  <p class="m-0 text-300 font-semibold text-5xl text-center">
-                    {{ lendPeak.bills.summary.allocatedTotalSum.toNumber() | currency }}
-                  </p>
-                </p-card>
-              </div>
-              <div class="col-3">
-                <p-card>
-                  <ng-template #header>
-                    <div class="card-header-container font-semibold text-xl">Paid Principal To Date</div>
-                  </ng-template>
-
-                  <p class="m-0 text-300 font-semibold text-5xl text-center">
-                    {{ lendPeak.bills.summary.allocatedPrincipalSum.toNumber() | currency }}
-                  </p>
-                </p-card>
-              </div>
-              <div class="col-3">
-                <p-card>
-                  <ng-template #header>
-                    <div class="card-header-container font-semibold text-xl">Paid Interest To Date</div>
-                  </ng-template>
-
-                  <p class="m-0 text-300 font-semibold text-5xl text-center">
-                    {{ lendPeak.bills.summary.allocatedInterestSum.toNumber() | currency }}
-                  </p>
-                </p-card>
-              </div>
-              <div class="col-3">
-                <p-card>
-                  <ng-template #header>
-                    <div class="card-header-container font-semibold text-xl">Paid Fees To Date</div>
-                  </ng-template>
-
-                  <p class="m-0 text-300 font-semibold text-5xl text-center">
-                    {{ lendPeak.bills.summary.allocatedFeesSum.toNumber() | currency }}
-                  </p>
-                </p-card>
-              </div>
-            </div>
-          </p-accordion-content>
-        </p-accordion-panel>
-      </p-accordion>
-      <p-accordion [multiple]="true" [value]="[]">
-        <p-accordion-panel value="interestRate">
-          <p-accordion-header>
-            <div>Remaining Balances</div>
-          </p-accordion-header>
-          <p-accordion-content>
-            <div class="grid">
-              <div class="col-3">
-                <p-card>
-                  <ng-template #header>
-                    <div class="card-header-container font-semibold text-xl">Remaining Total</div>
-                  </ng-template>
-
-                  <p class="m-0 text-300 font-semibold text-5xl text-center">
-                    {{ lendPeak.bills.summary.remainingTotal.toNumber() | currency }}
-                  </p>
-                </p-card>
-              </div>
-              <div class="col-3">
-                <p-card>
-                  <ng-template #header>
-                    <div class="card-header-container font-semibold text-xl">Remaining Principal</div>
-                  </ng-template>
-
-                  <p class="m-0 text-300 font-semibold text-5xl text-center">
-                    {{ lendPeak.bills.summary.remainingPrincipal.toNumber() | currency }}
-                  </p>
-                </p-card>
-              </div>
-
-              <div class="col-3">
-                <p-card>
-                  <ng-template #header>
-                    <div class="card-header-container font-semibold text-xl">Remaining Interest</div>
-                  </ng-template>
-
-                  <p class="m-0 text-300 font-semibold text-5xl text-center">
-                    {{ lendPeak.bills.summary.remainingInterest.toNumber() | currency }}
-                  </p>
-                </p-card>
-              </div>
-              <div class="col-3">
-                <p-card>
-                  <ng-template #header>
-                    <div class="card-header-container font-semibold text-xl">Remaining Fees</div>
-                  </ng-template>
-
-                  <p class="m-0 text-300 font-semibold text-5xl text-center">
-                    {{ lendPeak.bills.summary.remainingFees.toNumber() | currency }}
-                  </p>
-                </p-card>
-              </div>
-            </div>
-          </p-accordion-content>
-        </p-accordion-panel>
-      </p-accordion>
-    </div>
-  </div>
-
-  <div class="col-12">
-    <div class="w-full p-4 text-lg align-content-center text-center shadow-2 border-top-2 border-indigo-300">
-      <span class="font-bold text-100 text-2xl">Repayment Plan Summary</span>
-    </div>
-  </div>
-  <!-- Repayment Plan Card -->
-
-  <app-repayment-plan [lendPeak]="lendPeak" [snapshotDate]="snapshotDate"></app-repayment-plan>
-
-  <!-- Version Modal -->
-  <p-dialog
-    header="🎉 New Version Release!"
-    [(visible)]="showNewVersionModal"
-    modal="true"
-    [closable]="true"
-    [style]="{ width: '400px' }"
-    [contentStyle]="{ 'text-align': 'center' }"
-  >
-    <div class="modal-content">
-      <i class="pi pi-info-circle modal-icon"></i>
-      <h2>Version {{ selectedVersion }}</h2>
-
-      <!-- Version Selector -->
-      <div class="version-selector">
-        <label for="versionSelect">Select Version:</label>
-        <p-select
-          [options]="releaseNotes"
-          [(ngModel)]="selectedVersion"
-          optionLabel="version"
-          optionValue="version"
-          (onChange)="onVersionChange($event)"
-          placeholder="Select Version"
-          styleClass="version-dropdown"
-        ></p-select>
-      </div>
-
-      <div *ngIf="selectedReleaseNotes">
-        <h3>What's New:</h3>
-        <ul>
-          <li *ngFor="let note of selectedReleaseNotes.details">
-            {{ note }}
-          </li>
-        </ul>
-      </div>
-      <p *ngIf="!selectedReleaseNotes">We've made improvements and fixed some bugs to enhance your experience.</p>
-    </div>
-    <div class="flex justify-content-end gap-2">
-      <button pButton type="button" label="Continue" (click)="closeNewVersionModal()" class="p-button-rounded"></button>
-    </div>
-  </p-dialog>
-</div>
-
-<!-- Footer -->
-<footer class="app-footer">
-  <div class="social-icons">
-    <a href="https://github.com/LendPeak/LendPeak" aria-label="GitHub repository" target="_blank" rel="noopener">
-      <i class="pi pi-github"></i>
-    </a>
-
-    <a href="https://www.facebook.com/lendpeak/" aria-label="LendPeak Facebook page" target="_blank" rel="noopener">
-      <i class="pi pi-facebook"></i>
-    </a>
-
-    <!-- X -->
-    <a href="https://x.com/lendpeak/" aria-label="LendPeak X page" target="_blank" rel="noopener">
-      <i class="pi pi-twitter text-2xl"></i>
-    </a>
-  </div>
-
-  <span class="app-version">Version: {{ currentVersion }}</span>
-</footer>
-
-<p-dialog
-  header="Markdown Preview"
-  [(visible)]="previewVisible"
-  [style]="{ width: '400px', position: 'fixed', top: '50px', left: '50px' }"
-  [modal]="false"
-  (onHide)="closePreview()"
->
-  <markdown [data]="changesSummary"></markdown>
-</p-dialog>
-
-<p-dialog
-  header="Save Loan"
-  [(visible)]="showSaveLoanDialog"
-  [modal]="true"
-  [style]="{ width: '600px' }"
-  [closable]="true"
->
-  <div class="p-fluid">
-    <div class="field">
-      <label for="loanName">Loan Name</label>
-      <input
-        id="loanName"
-        type="text"
-        pInputText
-        [(ngModel)]="lendPeak.amortization.name"
-        class="w-full"
-        [disabled]="aiSummaryInProgress"
-      />
-    </div>
-    <div class="field">
-      <label for="loanDescription">Description</label>
-      <textarea
-        id="loanDescription"
-        pInputTextarea
-        [(ngModel)]="lendPeak.amortization.description"
-        rows="3"
-        class="w-full"
-        [disabled]="aiSummaryInProgress"
-      ></textarea>
-    </div>
-    <div class="field">
-      <label for="loanDescription">Changes Summary</label>
-      <textarea
-        id="changesSummary"
-        pInputTextarea
-        [(ngModel)]="changesSummary"
-        rows="10"
-        class="w-full"
-        [disabled]="aiSummaryInProgress"
-      ></textarea>
-    </div>
-    <div class="field">
-      <p-progressbar mode="indeterminate" *ngIf="aiSummaryInProgress" [style]="{ height: '1rem' }" color="black" />
-    </div>
-  </div>
-  <div class="flex justify-content-end gap-2">
-    <button
-      pButton
-      label="Cancel"
-      class="p-button-text"
-      [disabled]="aiSummaryInProgress"
-      (click)="showSaveLoanDialog = false"
-    ></button>
-    <p-button label="Preview" icon="pi pi-eye" (click)="openPreview()" [disabled]="previewVisible"></p-button>
-    <button pButton label="Summarize Changes ({{ getAiAssistantName() }})" (click)="summarize()"></button>
-
-    <button pButton label="Save" (click)="saveAndReloadLoan()"></button>
-  </div>
-</p-dialog>
-
-<!-- Explanation Dialog -->
-<p-dialog
-  header="Loan Explanation and Transparency"
-  [(visible)]="showExplanationDialog"
-  [modal]="true"
-  [closable]="true"
-  [style]="{ width: '80%', height: '80%' }"
-  [contentStyle]="{ overflow: 'auto' }"
-  (onHide)="showExplanationDialog = false"
->
-  <pre style="white-space: pre-wrap; font-family: monospace; font-size: 14px"
-    >{{ loanExplanationText }}
-  </pre>
-  <div class="flex justify-content-end gap-2">
-    <button pButton label="Close" (click)="showExplanationDialog = false" class="p-button-text"></button>
-  </div>
-</p-dialog>
-
-<!-- generated code -->
-<p-dialog
-  header="Generated Code"
-  [(visible)]="showCodeDialogVisible"
-  [modal]="true"
-  [style]="{ width: '80%' }"
-  [maximizable]="true"
-  [closable]="true"
->
-  <pre><code [highlight]="generatedCode" language="typescript" lineNumbers></code></pre>
-
-  <div class="flex justify-content-end gap-2">
-    <button pButton label="Copy to Clipboard" icon="pi pi-copy" (click)="copyCodeToClipboard()"></button>
-
-    <button pButton label="Close" (click)="showCodeDialogVisible = false"></button>
-  </div>
-</p-dialog>
-
-<!-- raw import -->
-<p-dialog
-  header="Raw Import Data"
-  [(visible)]="showRawImportDialogVisible"
-  [modal]="true"
-  [style]="{ width: '80%' }"
-  [maximizable]="true"
-  [closable]="true"
->
-  <!-- =========== Loan (simple object) =========== -->
-  <p-card header="Loan Details" class="mb-3" *ngIf="rawImportJSON?.loan">
-    <p-table [value]="rawImportJSON.loan | keyvalue" responsiveLayout="scroll" [scrollable]="true" scrollHeight="300px">
-      <ng-template pTemplate="header">
-        <tr>
-          <th>Key</th>
-          <th>Value</th>
-        </tr>
-      </ng-template>
-      <ng-template pTemplate="body" let-row>
-        <tr>
-          <td>{{ row.key }}</td>
-          <td style="word-break: break-all">{{ row.value }}</td>
-        </tr>
-      </ng-template>
-    </p-table>
-  </p-card>
-
-  <hr />
-
-  <!-- =========== Arrays in tabs =========== -->
-  <div class="card">
-    <!-- the selected tab; 0 = first tab -->
-    <p-tabs value="0">
-      <!-- ------- Tab headers ------- -->
-      <p-tablist>
-        <p-tab value="0">Repayment Schedule</p-tab>
-        <p-tab value="1">Payments</p-tab>
-        <p-tab value="2">History</p-tab>
-        <p-tab value="3">Bills</p-tab>
-      </p-tablist>
-
-      <!-- ------- Tab panels ------- -->
-      <p-tabpanels>
-        <!-- ===== Repayment Schedule ===== -->
-        <p-tabpanel value="0">
-          <p-button
-            icon="pi pi-clipboard"
-            label="Copy Schedule as CSV"
-            (click)="copyRawImportScheduleAsCSV()"
-            class="p-button-secondary"
-          />
-
-          <p-button
-            icon="pi pi-eye-slash"
-            [label]="copyRawImportScheduleHideArchived ? 'Show Archived' : 'Hide Archived'"
-            (click)="copyRawImportScheduleHideArchived = !copyRawImportScheduleHideArchived"
-            class="p-button-secondary"
-          />
-
-          <p-table #dtSchedule *ngIf="rawImportJSON?.schedule?.length" [value]="rawImportJSON.schedule" dataKey="Name">
-            <ng-template pTemplate="header">
-              <tr>
-                <th *ngFor="let col of rawImportJSON.schedule[0] | keyvalue">
-                  {{ col.key }}
-                </th>
-              </tr>
-            </ng-template>
-
-            <ng-template pTemplate="body" let-row>
-              <tr *ngIf="!copyRawImportScheduleHideArchived || row.loan__Is_Archived__c === false">
-                <td *ngFor="let col of rawImportJSON.schedule[0] | keyvalue">
-                  {{ $any($any(row))[$any(col).key] }}
-                </td>
-              </tr>
-            </ng-template>
-          </p-table>
-        </p-tabpanel>
-
-        <!-- ===== Payments (LPTs) ===== -->
-        <p-tabpanel value="1">
-          <p-button
-            icon="pi pi-clipboard"
-            label="Copy Payments as CSV"
-            (click)="copyRawImportPaymentsAsCSV()"
-            class="p-button-secondary"
-          />
-
-          <p-table *ngIf="rawImportJSON?.lpts?.length" [value]="rawImportJSON.lpts" dataKey="_id">
-            <ng-template pTemplate="header">
-              <tr>
-                <th *ngFor="let col of rawImportJSON.lpts[0] | keyvalue">
-                  {{ col.key }}
-                </th>
-              </tr>
-            </ng-template>
-
-            <ng-template pTemplate="body" let-row>
-              <tr>
-                <td *ngFor="let col of rawImportJSON.lpts[0] | keyvalue">
-                  {{ $any($any(row))[$any(col).key] }}
-                </td>
-              </tr>
-            </ng-template>
-          </p-table>
-        </p-tabpanel>
-
-        <!-- ===== History ===== -->
-        <p-tabpanel value="2">
-          <p-button
-            icon="pi pi-clipboard"
-            label="Copy History as CSV"
-            (click)="copyRawImportHistoryAsCSV()"
-            class="p-button-secondary"
-          />
-          <p-table *ngIf="rawImportJSON?.history?.length" [value]="rawImportJSON.history" dataKey="_id">
-            <ng-template pTemplate="header">
-              <tr>
-                <th *ngFor="let col of rawImportJSON.history[0] | keyvalue">
-                  {{ col.key }}
-                </th>
-              </tr>
-            </ng-template>
-
-            <ng-template pTemplate="body" let-row>
-              <tr>
-                <td *ngFor="let col of rawImportJSON.history[0] | keyvalue">
-                  {{ $any($any(row))[$any(col).key] }}
-                </td>
-              </tr>
-            </ng-template>
-          </p-table>
-        </p-tabpanel>
-
-        <!-- ===== Bills ===== -->
-        <p-tabpanel value="3">
-          <p-button
-            icon="pi pi-clipboard"
-            label="Copy Bills as CSV"
-            (click)="copyRawImportBillsAsCSV()"
-            class="p-button-secondary"
-          />
-
-          <p-button
-            icon="pi pi-eye-slash"
-            [label]="copyRawImportBillsHideArchived ? 'Show Archived' : 'Hide Archived'"
-            (click)="copyRawImportBillsHideArchived = !copyRawImportBillsHideArchived"
-            class="p-button-secondary"
-          />
-
-          <p-table *ngIf="rawImportJSON?.bills?.length" [value]="rawImportJSON.bills" dataKey="Id">
-            <ng-template pTemplate="header">
-              <tr>
-                <th *ngFor="let col of rawImportJSON.bills[0] | keyvalue">
-                  {{ col.key }}
-                </th>
-              </tr>
-            </ng-template>
-
-            <ng-template pTemplate="body" let-row>
-              <tr *ngIf="!copyRawImportBillsHideArchived || row.loan__Archived__c === false">
-                <td *ngFor="let col of rawImportJSON.bills[0] | keyvalue">
-                  {{ $any($any(row))[$any(col).key] }}
-                </td>
-              </tr>
-            </ng-template>
-          </p-table>
-        </p-tabpanel>
-      </p-tabpanels>
-    </p-tabs>
-  </div>
-
-  <div class="flex justify-content-end gap-2">
-    <button pButton label="Close" (click)="showRawImportDialogVisible = false"></button>
-  </div>
-</p-dialog>
-
-<p-dialog
-  header="Manage Loans"
-  [(visible)]="showManageLoansDialog"
-  [modal]="true"
-  [style]="{ width: '80%' }"
-  [maximizable]="true"
-  [closable]="true"
-  [closeOnEscape]="true"
->
-  <p-table *ngIf="savedLoans.length > 0" [value]="savedLoans" sortField="startDate" [sortOrder]="-1">
-    <ng-template pTemplate="header">
-      <tr>
-        <th>#</th>
-        <th>Id</th>
-        <th>Loan Name</th>
-        <th>Description</th>
-        <th pSortableColumn="startDate">Start Date</th>
-        <th pSortableColumn="endDate">End Date</th>
-        <th pSortableColumn="loanAmount">Amount</th>
-        <th>Interest Rate</th>
-        <th>Actions</th>
-      </tr>
-    </ng-template>
-    <ng-template pTemplate="body" let-loan let-rowIndex="rowIndex">
-      <tr>
-        <td>{{ rowIndex + 1 }}</td>
-        <td>{{ loan.id }}</td>
-        <td>{{ loan.name }}</td>
-        <td>{{ loan.description }}</td>
-        <td>{{ loan.startDate | date: 'yyyy-MM-dd' }}</td>
-        <td>{{ loan.endDate | date: 'yyyy-MM-dd' }}</td>
-        <td>{{ loan.loanAmount | currency }}</td>
-        <td>{{ loan.annualInterestRate }}%</td>
-        <td>
-          <button
-            pButton
-            icon="pi pi-trash"
-            severity="danger"
-            class="mr-2"
-            (click)="deleteLoan(loan.key)"
-            pTooltip="Delete Loan"
-          ></button>
-          <button pButton icon="pi pi-folder-open" (click)="loadLoan(loan.key, $event)" pTooltip="Load Loan"></button>
-        </td>
-      </tr>
-    </ng-template>
-  </p-table>
-  <div class="flex justify-content-end gap-2">
-    <button pButton label="Close" class="p-button-text" (click)="showManageLoansDialog = false"></button>
-  </div>
-</p-dialog>
-
-<!-- Connector Management Dialog -->
-<p-dialog
-  header="Manage Connectors"
-  [(visible)]="showConnectorManagementDialog"
-  [modal]="true"
-  [style]="{ width: '80%', height: '80%' }"
-  (onHide)="showConnectorManagementDialog = false"
->
-  <app-connector-management></app-connector-management>
-</p-dialog>
-
-<!-- Loan Import Dialog -->
-<p-dialog
-  header="Import Loan"
-  [(visible)]="showLoanImportDialog"
-  [modal]="true"
-  [closable]="true"
-  [style]="{ width: '40%' }"
-  (onHide)="showLoanImportDialog = false"
->
-  <app-loan-import (loanImported)="onLoanImported($event)"></app-loan-import>
-</p-dialog>
-
-<!-- Edit Loan Dialog -->
-<p-dialog
-  header="Edit Loan Details"
-  [modal]="true"
-  [closable]="true"
-  [resizable]="true"
-  [(visible)]="showEditLoanDialog"
-  [style]="{ width: '60%' }"
->
-  <div class="flex items-center gap-4 mb-4">
-    <label for="editLoanName">Loan Name</label>
-    <input id="editLoanName" type="text" class="flex-auto" pInputText [(ngModel)]="lendPeak.amortization.jsName" />
-  </div>
-  <div class="flex items-center gap-4 mb-8">
-    <label for="editLoanDescription">Description</label>
-    <textarea
-      id="editLoanDescription"
-      pInputTextarea
-      [(ngModel)]="lendPeak.amortization.jsDescription"
-      class="flex-auto"
-      rows="5"
-    ></textarea>
-  </div>
-  <div class="flex justify-content-end gap-2">
-    <p-button label="Cancel" (click)="showEditLoanDialog = false"></p-button>
-    <p-button label="Save" (click)="saveEditedLoanDetails()"></p-button>
-  </div>
-</p-dialog>
-
-<p-dialog
-  header=""
-  maskStyleClass="backdrop-blur-lg"
-  styleClass="!border-0 !bg-white"
-  [(visible)]="welcomeDemoLoanModalVisible"
-  [modal]="true"
-  [closable]="false"
-  [style]="{ width: '600px', 'max-width': '98vw' }"
->
-  <button
-    (click)="welcomeDemoLoanModalVisible = false"
+<div *ngIf="isMobileBlocked" class="mobile-blocker-overlay">
+  <h1
+    class="mobile-blocker-headline"
     style="
-      position: absolute;
-      top: -22px;
-      right: -22px;
-      z-index: 1001;
-      background: #fff;
-      border: none;
-      border-radius: 50%;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.13);
-      width: 40px;
-      height: 40px;
+      font-size: 2.8rem;
+      font-weight: 600;
+      font-family: 'Inter', 'Montserrat', 'Segoe UI', 'Roboto', Arial, sans-serif;
+      color: #1a223a;
+      margin-bottom: 0.45rem;
+      letter-spacing: -0.5px;
+      line-height: 1.12;
+      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+      text-transform: none;
+      margin-top: 2.5rem;
+      text-align: center;
+    "
+  >
+    Welcome to the Future of Lending
+  </h1>
+  <div
+    class="mobile-blocker-content"
+    style="
+      position: relative;
+      z-index: 1;
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
-      cursor: pointer;
-      transition: box-shadow 0.18s;
-      font-size: 1.45rem;
-      color: #47506b;
-      outline: none;
-    "
-  >
-    <span style="display: flex; align-items: center; justify-content: center; width: 100%; height: 100%">
-      <i class="pi pi-times"></i>
-    </span>
-  </button>
-  <div
-    style="
       text-align: center;
-      padding: 2.2rem 2.2rem 2.7rem 2.2rem;
-      font-family: 'Inter', 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
-      position: relative;
-      max-width: 700px;
-      margin: 0 auto;
+      max-width: 90vw;
     "
   >
-    <h1
-      style="
-        font-size: 2.8rem;
-        font-weight: 600;
-        font-family: 'Inter', 'Montserrat', 'Segoe UI', 'Roboto', Arial, sans-serif;
-        color: #1a223a;
-        margin-bottom: 0.45rem;
-        letter-spacing: -0.5px;
-        line-height: 1.12;
-        text-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-      "
-    >
-      Welcome to the Future of Lending
-    </h1>
-    <!-- Particle Animation Canvas and Animated Subtitle -->
     <div
       style="
         position: relative;
         width: 100%;
-        height: 220px;
-        margin-top: 2.7rem;
-        margin-bottom: 2.7rem;
+        max-width: 600px;
+        height: 120px;
+        margin: 0 auto 1.2rem auto;
         display: flex;
         align-items: center;
         justify-content: center;
-        border-radius: 18px;
-        overflow: hidden;
       "
     >
       <canvas
-        #particleCanvas
-        width="600"
-        height="220"
-        style="position: absolute; left: 0; top: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1"
+        id="mobileBlockerParticles"
+        style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; border-radius: 18px"
       ></canvas>
-      <div id="subtitle-animated" class="subtitle-animated" style="z-index: 2; position: relative">
-        Interactive. Visual. Powerful.
-      </div>
+      <div class="mobile-blocker-subtitle">INTERACTIVE. VISUAL. POWERFUL.</div>
     </div>
-    <p class="welcome-desc-modern">
+    <div class="mobile-blocker-desc">
       Dive into a live sandbox of advanced loan scenarios. Visualize, experiment, and innovate with the most modern
       lending engine &ndash; right in your browser.
-    </p>
-    <button
-      pButton
-      style="
-        background: linear-gradient(90deg, #4f8cff 0%, #6f6fff 100%);
-        color: #fff;
-        font-weight: 800;
-        font-size: 1.35rem;
-        border: none;
-        border-radius: 10px;
-        padding: 1.15rem 3.1rem;
-        margin-bottom: 1.7rem;
-        box-shadow: 0 2px 8px rgba(79, 140, 255, 0.1);
-        cursor: pointer;
-        transition:
-          background 0.2s,
-          box-shadow 0.2s,
-          transform 0.15s;
-        letter-spacing: 0.7px;
-      "
-      (click)="openDemoLoanBrowserDialog(); welcomeDemoLoanModalVisible = false"
+      <br />
+      <br />
+      <span style="color: #e11d48; font-weight: 700">Mobile devices are not supported.</span>
+      <br />
+      For the best experience, please use a desktop or large tablet.
+      <br />
+      <span style="color: #4f8cff; font-weight: 600">LendPeak Servicing is designed for larger screens.</span>
+    </div>
+    <div class="social-icons" style="margin-bottom: 1.7rem">
+      <a href="https://github.com/LendPeak/LendPeak" aria-label="GitHub repository" target="_blank" rel="noopener">
+        <i class="pi pi-github"></i>
+      </a>
+      <a href="https://www.facebook.com/lendpeak/" aria-label="LendPeak Facebook page" target="_blank" rel="noopener">
+        <i class="pi pi-facebook"></i>
+      </a>
+      <a href="https://x.com/lendpeak/" aria-label="LendPeak X page" target="_blank" rel="noopener">
+        <i class="pi pi-twitter text-2xl"></i>
+      </a>
+    </div>
+    <div style="font-size: 1.05rem; color: #888">LendPeak &copy; 2024</div>
+  </div>
+</div>
+<div *ngIf="!isMobileBlocked">
+  <div *ngIf="!loanNotFound">
+    <app-system-settings
+      [(showSystemSettingsDialog)]="showSystemSettingsDialog"
+      (systemsSettingsChange)="onSystemsSettingsChange()"
+    ></app-system-settings>
+
+    <!-- Toolbar with Loan Name -->
+    <app-toolbar
+      [snapshotDate]="snapshotDate"
+      (snapshotDateChange)="onSnapshotDateChange($event)"
+      [toolbarActions]="toolbarActions"
+      (openEditLoanDialog)="openEditLoanDialog()"
+      (openSaveLoanDialog)="openSaveLoanDialog()"
+      (openDemoLoanBrowser)="openDemoLoanBrowserDialog()"
+    ></app-toolbar>
+
+    <div class="w-full pt-3 pb-3 border-top-2 shadow-2 border-indigo-300">
+      <div class="loan-header">
+        <div class="loan-header-content">
+          <!-- Left Section: Loan Details -->
+          <div class="loan-details">
+            <h2 class="loan-name-title">
+              <a class="sexy-link" href="?loan={{ this.lendPeak.amortization.name }}">
+                <i class="pi pi-external-link" style="font-size: 1.5rem"></i>
+              </a>
+              {{ this.lendPeak.amortization.name }} (version:
+              {{ lendPeak.amortizationVersionManager?.versionNumber || 0 }})
+              <span *ngIf="loanModified" class="unsaved-indicator">(Modified)</span>
+              <span *ngIf="!loanModified && this.lendPeak.amortization.name === 'New Loan'" class="unsaved-indicator">
+                (Unsaved)
+              </span>
+            </h2>
+            <p class="loan-description" *ngIf="this.lendPeak.amortization.description">
+              {{ this.lendPeak.amortization.description }}
+              <span *ngIf="this.lendPeak.amortization.id">(ID: {{ this.lendPeak.amortization.id }})</span>
+            </p>
+          </div>
+
+          <!-- Right Section: Loan Actions -->
+          <div class="loan-actions">
+            <button
+              pButton
+              label="Edit Loan Details"
+              icon="pi pi-pencil"
+              class="p-button-text"
+              (click)="openEditLoanDialog()"
+            ></button>
+            <button
+              *ngIf="loanModified"
+              pButton
+              label="Save Loan"
+              icon="pi pi-save"
+              (click)="openSaveLoanDialog()"
+            ></button>
+          </div>
+        </div>
+      </div>
+      <hr />
+      <div class="loan-highlights">
+        <p-tag
+          *ngIf="lendPeak.summary.highlights.status.isPaidInFull"
+          class="ml-2"
+          severity="success"
+          value="Paid In Full"
+        ></p-tag>
+        <p-tag
+          *ngIf="lendPeak.summary.highlights.status.hasOverpayment"
+          class="ml-2"
+          severity="danger"
+          value="Overpayment Detected {{ lendPeak.payoffQuote.unusedAmountFromDeposis.toNumber() | currency }}"
+        ></p-tag>
+        <p-tag
+          *ngIf="lendPeak.summary.highlights.status.isEarlyPayoff"
+          class="ml-2"
+          severity="info"
+          value="Early Payoff"
+        ></p-tag>
+        <p-tag
+          *ngIf="lendPeak.summary.highlights.payments.hasAutoCloseDeposit"
+          class="ml-2"
+          severity="info"
+          value="Auto-Close Deposit"
+        ></p-tag>
+        <p-tag
+          *ngIf="lendPeak.summary.highlights.status.isPastDue"
+          class="ml-2"
+          severity="danger"
+          value="Past Due {{ lendPeak.bills.summary.daysPastDue }} Days"
+        ></p-tag>
+        <p-badge
+          *ngIf="lendPeak.summary.highlights.payments.hasAdhocRefunds"
+          [value]="
+            lendPeak.summary.highlights.payments.totalAdhocRefunds +
+            ' Ad-hoc Refund' +
+            (lendPeak.summary.highlights.payments.totalAdhocRefunds > 1 ? 's' : '')
+          "
+          severity="warn"
+          styleClass="ml-2"
+        />
+        <p-tag
+          *ngIf="lendPeak.summary.highlights.payments.hasRefunds"
+          class="ml-2"
+          [severity]="lendPeak.summary.highlights.payments.activeRefunds > 0 ? 'contrast' : 'secondary'"
+          [value]="
+            lendPeak.summary.highlights.payments.activeRefunds +
+            '/' +
+            lendPeak.summary.highlights.payments.totalRefunds +
+            ' Refunds'
+          "
+          pTooltip="Active / Total refund records"
+          tooltipPosition="top"
+        />
+        <p-tag
+          *ngIf="lendPeak.summary.highlights.billing.hasOpenBills"
+          class="ml-2"
+          severity="warn"
+          value="Open Bills"
+        ></p-tag>
+        <p-tag
+          *ngIf="lendPeak.summary.highlights.modifications.hasPayoffDate"
+          class="ml-2"
+          severity="info"
+          value="Payoff Date Set {{ lendPeak.amortization.payoffDate?.toString() | date: 'yyyy-MM-dd' }}"
+        ></p-tag>
+        <p-tag
+          *ngIf="lendPeak.summary.highlights.modifications.hasCustomEndDate"
+          class="ml-2"
+          severity="warn"
+          value="Custom End Date"
+        ></p-tag>
+
+        <p-tag
+          *ngIf="lendPeak.summary.highlights.modifications.hasCustomFirstPaymentDate"
+          class="ml-2"
+          severity="info"
+          value="Custom First Payment Date"
+        ></p-tag>
+
+        <p-tag
+          *ngIf="lendPeak.summary.highlights.modifications.hasCustomEquitedMonthlyPayment"
+          class="ml-2"
+          severity="warn"
+          value="Custom Monthly Payment"
+        ></p-tag>
+
+        <p-tag
+          *ngIf="lendPeak.summary.highlights.modifications.hasTermPaymentAmountOverride"
+          class="ml-2"
+          severity="warn"
+          value="Term Payment Amount Override"
+        ></p-tag>
+
+        <p-tag
+          *ngIf="lendPeak.summary.highlights.modifications.hasTermInterestAmountOverride"
+          class="ml-2"
+          severity="warn"
+          value="Term Interest Amount Override"
+        ></p-tag>
+
+        <p-tag
+          *ngIf="lendPeak.summary.highlights.modifications.hasCustomCalendars"
+          class="ml-2"
+          severity="warn"
+          value="Custom Calendars"
+        ></p-tag>
+
+        <p-tag
+          *ngIf="lendPeak.summary.highlights.modifications.hasChangePaymentDates"
+          class="ml-2"
+          [severity]="
+            lendPeak.summary.highlights.modifications.hasChangePaymentDates > 5
+              ? 'danger'
+              : lendPeak.summary.highlights.modifications.hasChangePaymentDates > 2
+                ? 'warn'
+                : 'info'
+          "
+          [value]="'Change Payment Dates ' + lendPeak.summary.highlights.modifications.hasChangePaymentDates"
+        ></p-tag>
+
+        <p-tag
+          *ngIf="lendPeak.summary.highlights.modifications.hasBalanceModifications"
+          class="ml-2"
+          severity="info"
+          value="Balance Modifications"
+        ></p-tag>
+      </div>
+    </div>
+    <!-- Loan Header Section -->
+
+    <!-- Tabsw -->
+    <p-tabs [(value)]="activeTabIndex" (valueChange)="onTabChange($event)" scrollable class="pt-1">
+      <p-tablist class="pt-1 border-bottom-2 border-indigo-300">
+        <ng-template #previcon>
+          <i class="pi pi-minus"></i>
+        </ng-template>
+        <p-tab [value]="0">
+          <span class="font-bold whitespace-nowrap">Basic Loan Info</span>
+        </p-tab>
+        <p-tab [value]="5">
+          <span class="font-bold whitespace-nowrap">Bills</span>
+        </p-tab>
+        <p-tab [value]="4">
+          <span class="font-bold whitespace-nowrap">Deposits</span>
+        </p-tab>
+
+        <p-tab [value]="1">
+          <span class="font-bold whitespace-nowrap">Modifications</span>
+        </p-tab>
+        <p-tab [value]="2">
+          <span class="font-bold whitespace-nowrap">Settings</span>
+        </p-tab>
+        <p-tab [value]="6">
+          <span class="font-bold whitespace-nowrap">Loan History</span>
+        </p-tab>
+
+        <p-tab [value]="7">
+          <span class="font-bold whitespace-nowrap">Financial History</span>
+        </p-tab>
+        <!-- <p-tab [value]="3"
+            ><span class="font-bold whitespace-nowrap"
+              >Custom Periods Schedule</span
+            ></p-tab
+          > -->
+        <ng-template #nexticon>
+          <i class="pi pi-plus"></i>
+        </ng-template>
+      </p-tablist>
+      <p-tabpanels>
+        <!-- Basic Loan Info Tab -->
+        <p-tabpanel [value]="0">
+          <app-basic-loan-info
+            [lendPeak]="lendPeak"
+            (loanChange)="onLoanChange($event)"
+            (loanUpdated)="submitLoan()"
+          ></app-basic-loan-info>
+        </p-tabpanel>
+
+        <!-- Overrides Tab -->
+        <p-tabpanel [value]="1">
+          <app-overrides
+            [lendPeak]="lendPeak"
+            [termOptions]="termOptions"
+            [balanceIncreaseType]="balanceIncreaseType"
+            (loanChange)="onLoanChange($event)"
+            (loanUpdated)="submitLoan()"
+          ></app-overrides>
+        </p-tabpanel>
+
+        <!-- Advanced Settings Tab -->
+        <p-tabpanel [value]="2">
+          <app-advanced-settings
+            [lendPeak]="lendPeak"
+            (loanChange)="onLoanChange($event)"
+            (loanUpdated)="submitLoan()"
+          ></app-advanced-settings>
+        </p-tabpanel>
+
+        <!-- Custom Periods Schedule Tab -->
+        <!-- <p-tabpanel [value]="3">
+            <div class="grid">
+              <div class="col-12">
+                <p-card>
+                  <div class="p-mb-3">
+                    <p-button
+                      label="Create Custom Schedule"
+                      icon="pi pi-plus p-ml-2"
+                      class="create-schedule-buttons"
+                      (onClick)="createLoanRepaymentPlan()"
+                      pTooltip="Generate a custom periods schedule based on your inputs."
+                      tooltipPosition="top"
+                    ></p-button>
+                    <p-button
+                      label="Remove Schedule Override"
+                      icon="pi pi-minus"
+                      class="p-ml-2 create-schedule-buttons"
+                      (onClick)="removeLoanRepaymentPlan()"
+                      pTooltip="Remove the custom periods schedule override."
+                      tooltipPosition="top"
+                    ></p-button>
+                  </div>
+                  <p-divider></p-divider>
+                  <div class="p-fluid">
+                    <table
+                      *ngIf="lendPeak.amortization.periodsSchedule.length > 0"
+                      class="p-datatable p-component"
+                    >
+                      <thead>
+                        <tr>
+                          <th>Term</th>
+                          <th>Start Date</th>
+                          <th>End Date</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr
+                          *ngFor="let plan of lendPeak.amortization.periodsSchedule; let i = index"
+                        >
+                          <td>{{ i + 1 }}</td>
+                          <td>
+                            <p-datepicker
+                              [(ngModel)]="plan.startDate"
+                              dateFormat="yy-mm-dd"
+                              name="periodStartDate-{{ i }}"
+                              showIcon
+                              (onSelect)="submitLoan()"
+                              pTooltip="Custom start date for term {{ i + 1 }}."
+                              tooltipPosition="top"
+                            ></p-datepicker>
+                          </td>
+                          <td>
+                            <p-datepicker
+                              [(ngModel)]="plan.endDate"
+                              dateFormat="yy-mm-dd"
+                              name="periodEndDate-{{ i }}"
+                              showIcon
+                              (onSelect)="repaymentPlanEndDateChange(i)"
+                              pTooltip="Custom end date for term {{ i + 1 }}."
+                              tooltipPosition="top"
+                            ></p-datepicker>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </p-card>
+              </div>
+            </div>
+          </p-tabpanel> -->
+
+        <!-- Deposits Tab -->
+        <p-tabpanel [value]="4">
+          <app-deposits
+            [lendPeak]="lendPeak"
+            [currencyOptions]="currencyOptions"
+            (depositUpdated)="onDepositUpdated()"
+            [snapshotDate]="snapshotDate"
+          ></app-deposits>
+        </p-tabpanel>
+
+        <!-- Bills -->
+        <p-tabpanel [value]="5">
+          <app-bills [lendPeak]="lendPeak" [snapshotDate]="snapshotDate" (billAction)="onBillAction()"></app-bills>
+        </p-tabpanel>
+
+        <p-tabpanel [value]="6" *ngIf="lendPeak.amortizationVersionManager">
+          <app-version-history
+            [lendPeak]="lendPeak"
+            [refreshEvent]="versionHistoryRefresh"
+            (onRollback)="handleRollback($event)"
+          ></app-version-history>
+        </p-tabpanel>
+      </p-tabpanels>
+
+      <p-tabpanel [value]="7" *ngIf="lendPeak.financialOpsVersionManager">
+        <app-financial-ops-history
+          [manager]="lendPeak.financialOpsVersionManager"
+          (onRollback)="handleFinancialOpsRollback($event)"
+        ></app-financial-ops-history>
+      </p-tabpanel>
+    </p-tabs>
+
+    <!-- Repayment Plan at the Bottom -->
+
+    <!-- ✅ PAID IN FULL — NO OVERPAYMENT (GREEN) -->
+    <div *ngIf="lendPeak.isPaidInFull && !lendPeak.hasOverpayment">
+      <div class="col-12">
+        <div class="w-full p-4 text-lg text-center shadow-2 border-top-3 border-green-400">
+          <span class="font-bold text-100 text-2xl">Contract Paid In Full</span>
+        </div>
+      </div>
+
+      <p-card styleClass="mb-3">
+        <div class="grid">
+          <!-- Last Payment Date -->
+          <div class="col-3">
+            <p-card>
+              <ng-template #header>
+                <div class="card-header-container font-semibold text-xl">Last Payment Date</div>
+              </ng-template>
+              <p class="m-0 text-300 font-semibold text-3xl text-center">
+                {{ lendPeak.depositRecords.lastPaymentDateStr || '—' }}
+              </p>
+            </p-card>
+          </div>
+
+          <!-- Last Payment Amount -->
+          <div class="col-3">
+            <p-card>
+              <ng-template #header>
+                <div class="card-header-container font-semibold text-xl">Last Payment Amount</div>
+              </ng-template>
+              <p class="m-0 text-300 font-semibold text-3xl text-center">
+                {{ lendPeak.depositRecords.lastPaymentAmt | currency: 'USD' : 'symbol' : '1.0-2' }}
+              </p>
+            </p-card>
+          </div>
+
+          <!-- Last Satisfied Bill -->
+          <div class="col-3">
+            <p-card>
+              <ng-template #header>
+                <div class="card-header-container font-semibold text-xl">Last Satisfied Bill</div>
+              </ng-template>
+              <p class="m-0 text-300 font-semibold text-3xl text-center">
+                {{ lendPeak.bills.lastSatisfiedBillNo || '—' }}
+              </p>
+            </p-card>
+          </div>
+
+          <!-- Early Payoff? -->
+          <div class="col-3">
+            <p-card>
+              <ng-template #header>
+                <div class="card-header-container font-semibold text-xl">Early&nbsp;Payoff</div>
+              </ng-template>
+              <p class="m-0 text-300 font-semibold text-3xl text-center">
+                {{ lendPeak.isEarlyPayoff ? 'Yes' : 'No' }}
+              </p>
+            </p-card>
+          </div>
+        </div>
+      </p-card>
+      <!-- Early-payoff extra panel -->
+      <p-card *ngIf="lendPeak.isEarlyPayoff" styleClass="mb-3">
+        <ng-template #header>
+          <div class="card-header-container font-semibold text-xl">Early&nbsp;Payoff&nbsp;Details</div>
+        </ng-template>
+
+        <div class="grid">
+          <!-- Expected maturity -->
+          <div class="col-3">
+            <p-card>
+              <ng-template #header>
+                <div class="card-header-container font-semibold text-xl">Expected&nbsp;Maturity</div>
+              </ng-template>
+              <p class="m-0 text-300 font-semibold text-3xl text-center">
+                {{ lendPeak.expectedMaturity.toString() | date: 'yyyy-MM-dd' }}
+              </p>
+            </p-card>
+          </div>
+
+          <!-- Paid off on -->
+          <div class="col-3">
+            <p-card>
+              <ng-template #header>
+                <div class="card-header-container font-semibold text-xl">Paid&nbsp;Off&nbsp;On</div>
+              </ng-template>
+              <p class="m-0 text-300 font-semibold text-3xl text-center">
+                {{ lendPeak.actualPayoff.toString() | date: 'yyyy-MM-dd' }}
+              </p>
+            </p-card>
+          </div>
+
+          <!-- Terms saved -->
+          <div class="col-3">
+            <p-card>
+              <ng-template #header>
+                <div class="card-header-container font-semibold text-xl">Terms&nbsp;Saved</div>
+              </ng-template>
+              <p class="m-0 text-300 font-semibold text-3xl text-center">
+                {{ lendPeak.termsSaved }}
+              </p>
+            </p-card>
+          </div>
+
+          <!-- Months saved -->
+          <div class="col-3">
+            <p-card>
+              <ng-template #header>
+                <div class="card-header-container font-semibold text-xl">Months&nbsp;Ahead</div>
+              </ng-template>
+              <p class="m-0 text-300 font-semibold text-3xl text-center">
+                {{ lendPeak.monthsSaved }}
+              </p>
+            </p-card>
+          </div>
+        </div>
+      </p-card>
+    </div>
+
+    <!-- ⚠️ PAID IN FULL — OVERPAYMENT (YELLOW) -->
+    <div *ngIf="lendPeak.isPaidInFull && lendPeak.hasOverpayment">
+      <div class="col-12">
+        <div class="w-full p-4 text-lg text-center shadow-2 border-top-3 border-yellow-400">
+          <span class="font-bold text-100 text-2xl">Paid In Full — Overpayment Detected</span>
+        </div>
+      </div>
+
+      <p-card styleClass="mb-3">
+        <div class="grid">
+          <!-- Overpayment Amount -->
+          <div class="col-3">
+            <p-card>
+              <ng-template #header>
+                <div class="card-header-container font-semibold text-xl">Overpayment Amount</div>
+              </ng-template>
+              <p class="m-0 text-300 font-bold text-3xl text-center">
+                {{ lendPeak.payoffQuote.unusedAmountFromDeposis.toNumber() | currency }}
+              </p>
+            </p-card>
+          </div>
+
+          <!-- Last Payment Date -->
+          <div class="col-3">
+            <p-card>
+              <ng-template #header>
+                <div class="card-header-container font-semibold text-xl">Last Payment Date</div>
+              </ng-template>
+              <p class="m-0 text-300 font-semibold text-3xl text-center">
+                {{ lendPeak.depositRecords.lastPaymentDateStr || '—' }}
+              </p>
+            </p-card>
+          </div>
+
+          <!-- Last Payment Amount -->
+          <div class="col-3">
+            <p-card>
+              <ng-template #header>
+                <div class="card-header-container font-semibold text-xl">Last Payment Amount</div>
+              </ng-template>
+              <p class="m-0 text-300 font-semibold text-3xl text-center">
+                {{ lendPeak.depositRecords.lastPaymentAmt | currency: 'USD' : 'symbol' : '1.0-2' }}
+              </p>
+            </p-card>
+          </div>
+
+          <!-- Early Payoff? -->
+          <div class="col-3">
+            <p-card>
+              <ng-template #header>
+                <div class="card-header-container font-semibold text-xl">Early&nbsp;Payoff</div>
+              </ng-template>
+              <p class="m-0 text-300 font-semibold text-3xl text-center">
+                {{ lendPeak.isEarlyPayoff ? 'Yes' : 'No' }}
+              </p>
+            </p-card>
+          </div>
+        </div>
+      </p-card>
+
+      <!-- Early-payoff extra panel -->
+      <p-card *ngIf="lendPeak.isEarlyPayoff" styleClass="mb-3">
+        <ng-template #header>
+          <div class="card-header-container font-semibold text-xl">Early&nbsp;Payoff&nbsp;Details</div>
+        </ng-template>
+
+        <div class="grid">
+          <!-- Expected maturity -->
+          <div class="col-3">
+            <p-card>
+              <ng-template #header>
+                <div class="card-header-container font-semibold text-xl">Expected&nbsp;Maturity</div>
+              </ng-template>
+              <p class="m-0 text-300 font-semibold text-3xl text-center">
+                {{ lendPeak.expectedMaturity.toString() | date: 'yyyy-MM-dd' }}
+              </p>
+            </p-card>
+          </div>
+
+          <!-- Paid off on -->
+          <div class="col-3">
+            <p-card>
+              <ng-template #header>
+                <div class="card-header-container font-semibold text-xl">Paid&nbsp;Off&nbsp;On</div>
+              </ng-template>
+              <p class="m-0 text-300 font-semibold text-3xl text-center">
+                {{ lendPeak.actualPayoff.toString() | date: 'yyyy-MM-dd' }}
+              </p>
+            </p-card>
+          </div>
+
+          <!-- Terms saved -->
+          <div class="col-3">
+            <p-card>
+              <ng-template #header>
+                <div class="card-header-container font-semibold text-xl">Terms&nbsp;Saved</div>
+              </ng-template>
+              <p class="m-0 text-300 font-semibold text-3xl text-center">
+                {{ lendPeak.termsSaved }}
+              </p>
+            </p-card>
+          </div>
+
+          <!-- Months saved -->
+          <div class="col-3">
+            <p-card>
+              <ng-template #header>
+                <div class="card-header-container font-semibold text-xl">Months&nbsp;Ahead</div>
+              </ng-template>
+              <p class="m-0 text-300 font-semibold text-3xl text-center">
+                {{ lendPeak.monthsSaved }}
+              </p>
+            </p-card>
+          </div>
+        </div>
+      </p-card>
+    </div>
+
+    <!-- Past Due Bills Status card -->
+    <div *ngIf="lendPeak.bills.summary.billsPastDue > 0">
+      <div class="col-12">
+        <div class="w-full p-4 text-lg align-content-center text-center shadow-2 border-top-3 border-red-400">
+          <span class="font-bold text-100 text-2xl">Contract is Past Due</span>
+        </div>
+      </div>
+      <p-card styleClass="mb-3">
+        <div class="grid">
+          <!-- <div
+              class="col-12"
+              *ngIf="lendPeak.bills.summary.pastDueTotal.isZero()"
+            >
+              <div class="flex flex-column">
+                <span class="text-300 font-semibold mb-1"
+                  >Account is Current</span
+                >
+                <span>All bills are current as of the snapshot date.</span>
+              </div>
+            </div> -->
+          <div class="col-12">
+            <div class="flex flex-column p-3">
+              <div class="grid">
+                <!-- Add Days Contract Is Past Due here -->
+                <div class="col-2">
+                  <p-card>
+                    <ng-template #header>
+                      <div class="card-header-container font-semibold text-xl">Days Past Due</div>
+                    </ng-template>
+
+                    <p class="m-0 text-300 font-semibold text-5xl text-center">
+                      {{ lendPeak.bills.summary.daysPastDue }}
+                    </p>
+                  </p-card>
+                </div>
+
+                <div class="col-2">
+                  <p-card>
+                    <ng-template #header>
+                      <div class="card-header-container font-semibold text-xl">Bills Past Due</div>
+                    </ng-template>
+
+                    <p class="m-0 text-300 font-semibold text-5xl text-center">
+                      {{ lendPeak.bills.summary.billsPastDue }}
+                    </p>
+                  </p-card>
+                </div>
+
+                <div class="col-2">
+                  <p-card>
+                    <ng-template #header>
+                      <div class="card-header-container font-semibold text-xl">Total Past Due</div>
+                    </ng-template>
+
+                    <p class="m-0 text-300 font-semibold text-5xl text-center">
+                      {{ lendPeak.bills.summary.pastDueTotal.toNumber() | currency }}
+                    </p>
+                  </p-card>
+                </div>
+
+                <div class="col-2">
+                  <p-card>
+                    <ng-template #header>
+                      <div class="card-header-container font-semibold text-xl">Principal Past Due</div>
+                    </ng-template>
+
+                    <p class="m-0 text-300 font-semibold text-5xl text-center">
+                      {{ lendPeak.bills.summary.pastDuePrincipal.toNumber() | currency }}
+                    </p>
+                  </p-card>
+                </div>
+                <div class="col-2">
+                  <p-card>
+                    <ng-template #header>
+                      <div class="card-header-container font-semibold text-xl">Interest Past Due</div>
+                    </ng-template>
+
+                    <p class="m-0 text-300 font-semibold text-5xl text-center">
+                      {{ lendPeak.bills.summary.pastDueInterest.toNumber() | currency }}
+                    </p>
+                  </p-card>
+                </div>
+                <div class="col-2">
+                  <p-card>
+                    <ng-template #header>
+                      <div class="card-header-container font-semibold text-xl">Fees Past Due</div>
+                    </ng-template>
+
+                    <p class="m-0 text-300 font-semibold text-5xl text-center">
+                      {{ lendPeak.bills.summary.pastDueFees.toNumber() | currency }}
+                    </p>
+                  </p-card>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </p-card>
+    </div>
+
+    <!-- Current Loan Status card-->
+
+    <div class="col-12">
+      <div class="w-full p-4 text-lg align-content-center text-center shadow-2 border-top-2 border-indigo-300">
+        <span class="font-bold text-100 text-2xl">Quick Details</span>
+      </div>
+      <div class="flex flex-column p-3">
+        <div class="grid">
+          <div class="col-2">
+            <p-card>
+              <ng-template #header>
+                <div class="card-header-container font-semibold text-xl">Remaining Terms</div>
+              </ng-template>
+
+              <p class="m-0 text-300 font-semibold text-5xl text-center">
+                {{ lendPeak.bills.summary.remainingUnpaidBills }} /
+                {{ lendPeak.bills.length }}
+              </p>
+            </p-card>
+          </div>
+          <div class="col-2">
+            <p-card>
+              <ng-template #header>
+                <div class="card-header-container font-semibold text-xl">Next Bill Date</div>
+              </ng-template>
+
+              <p class="m-0 text-300 font-semibold text-5xl text-center">
+                {{
+                  lendPeak.bills.nextUpcomingBill
+                    ? (lendPeak.bills.nextUpcomingBill.dueDate.toString() | date: 'yyyy-MM-dd')
+                    : 'No more bills left'
+                }}
+              </p>
+            </p-card>
+          </div>
+          <div class="col-4">
+            <p-card class="">
+              <ng-template #header>
+                <div class="card-header-container font-semibold text-xl">Current Payoff</div>
+              </ng-template>
+
+              <p class="m-0 text-300 font-semibold text-5xl text-center">
+                {{ lendPeak.payoffQuote.dueTotal.toNumber() | currency }}
+              </p>
+              <div class="w-full pt-4 align-content-center text-center">
+                <p-tag
+                  class="ml-4"
+                  severity="secondary"
+                  value="Principal: {{ lendPeak.payoffQuote.duePrincipal.toNumber() | currency }}"
+                />
+                <p-tag
+                  class="ml-4"
+                  severity="secondary"
+                  value="Interest: {{ lendPeak.payoffQuote.dueInterest.toNumber() | currency }}"
+                />
+                <p-tag
+                  class="ml-4"
+                  severity="secondary"
+                  value="Fees: {{ lendPeak.payoffQuote.dueFees.toNumber() | currency }}"
+                />
+                <p-tag
+                  class="ml-4"
+                  [severity]="lendPeak.payoffQuote.unusedAmountFromDeposis.isZero() ? 'secondary' : 'danger'"
+                  value="Unused Amount: {{ lendPeak.payoffQuote.unusedAmountFromDeposis.toNumber() | currency }}"
+                />
+              </div>
+            </p-card>
+          </div>
+          <div class="col-2">
+            <p-card>
+              <ng-template #header>
+                <div class="card-header-container font-semibold text-xl">Last Payment Date</div>
+              </ng-template>
+
+              <p class="m-0 text-300 font-semibold text-5xl text-center">
+                {{
+                  lendPeak.depositRecords.lastActive
+                    ? (lendPeak.depositRecords.lastActive.effectiveDate.toString() | date: 'yyyy-MM-dd')
+                    : 'None'
+                }}
+              </p>
+            </p-card>
+          </div>
+          <div class="col-2">
+            <p-card>
+              <ng-template #header>
+                <div class="card-header-container font-semibold text-xl">Last Payment Amount</div>
+              </ng-template>
+
+              <p class="m-0 text-300 font-semibold text-5xl text-center">
+                {{
+                  lendPeak.depositRecords.lastActive
+                    ? (lendPeak.depositRecords.lastActive.amount.toNumber() | currency)
+                    : 'None'
+                }}
+              </p>
+            </p-card>
+          </div>
+        </div>
+        <p-accordion [multiple]="true" [value]="[]">
+          <p-accordion-panel value="interestRate">
+            <p-accordion-header>
+              <div>Paid To Date Balances</div>
+            </p-accordion-header>
+            <p-accordion-content>
+              <div class="grid">
+                <div class="col-3">
+                  <p-card>
+                    <ng-template #header>
+                      <div class="card-header-container font-semibold text-xl">Paid Total To Date</div>
+                    </ng-template>
+
+                    <p class="m-0 text-300 font-semibold text-5xl text-center">
+                      {{ lendPeak.bills.summary.allocatedTotalSum.toNumber() | currency }}
+                    </p>
+                  </p-card>
+                </div>
+                <div class="col-3">
+                  <p-card>
+                    <ng-template #header>
+                      <div class="card-header-container font-semibold text-xl">Paid Principal To Date</div>
+                    </ng-template>
+
+                    <p class="m-0 text-300 font-semibold text-5xl text-center">
+                      {{ lendPeak.bills.summary.allocatedPrincipalSum.toNumber() | currency }}
+                    </p>
+                  </p-card>
+                </div>
+                <div class="col-3">
+                  <p-card>
+                    <ng-template #header>
+                      <div class="card-header-container font-semibold text-xl">Paid Interest To Date</div>
+                    </ng-template>
+
+                    <p class="m-0 text-300 font-semibold text-5xl text-center">
+                      {{ lendPeak.bills.summary.allocatedInterestSum.toNumber() | currency }}
+                    </p>
+                  </p-card>
+                </div>
+                <div class="col-3">
+                  <p-card>
+                    <ng-template #header>
+                      <div class="card-header-container font-semibold text-xl">Paid Fees To Date</div>
+                    </ng-template>
+
+                    <p class="m-0 text-300 font-semibold text-5xl text-center">
+                      {{ lendPeak.bills.summary.allocatedFeesSum.toNumber() | currency }}
+                    </p>
+                  </p-card>
+                </div>
+              </div>
+            </p-accordion-content>
+          </p-accordion-panel>
+        </p-accordion>
+        <p-accordion [multiple]="true" [value]="[]">
+          <p-accordion-panel value="interestRate">
+            <p-accordion-header>
+              <div>Remaining Balances</div>
+            </p-accordion-header>
+            <p-accordion-content>
+              <div class="grid">
+                <div class="col-3">
+                  <p-card>
+                    <ng-template #header>
+                      <div class="card-header-container font-semibold text-xl">Remaining Total</div>
+                    </ng-template>
+
+                    <p class="m-0 text-300 font-semibold text-5xl text-center">
+                      {{ lendPeak.bills.summary.remainingTotal.toNumber() | currency }}
+                    </p>
+                  </p-card>
+                </div>
+                <div class="col-3">
+                  <p-card>
+                    <ng-template #header>
+                      <div class="card-header-container font-semibold text-xl">Remaining Principal</div>
+                    </ng-template>
+
+                    <p class="m-0 text-300 font-semibold text-5xl text-center">
+                      {{ lendPeak.bills.summary.remainingPrincipal.toNumber() | currency }}
+                    </p>
+                  </p-card>
+                </div>
+
+                <div class="col-3">
+                  <p-card>
+                    <ng-template #header>
+                      <div class="card-header-container font-semibold text-xl">Remaining Interest</div>
+                    </ng-template>
+
+                    <p class="m-0 text-300 font-semibold text-5xl text-center">
+                      {{ lendPeak.bills.summary.remainingInterest.toNumber() | currency }}
+                    </p>
+                  </p-card>
+                </div>
+                <div class="col-3">
+                  <p-card>
+                    <ng-template #header>
+                      <div class="card-header-container font-semibold text-xl">Remaining Fees</div>
+                    </ng-template>
+
+                    <p class="m-0 text-300 font-semibold text-5xl text-center">
+                      {{ lendPeak.bills.summary.remainingFees.toNumber() | currency }}
+                    </p>
+                  </p-card>
+                </div>
+              </div>
+            </p-accordion-content>
+          </p-accordion-panel>
+        </p-accordion>
+      </div>
+    </div>
+
+    <div class="col-12">
+      <div class="w-full p-4 text-lg align-content-center text-center shadow-2 border-top-2 border-indigo-300">
+        <span class="font-bold text-100 text-2xl">Repayment Plan Summary</span>
+      </div>
+    </div>
+    <!-- Repayment Plan Card -->
+
+    <app-repayment-plan [lendPeak]="lendPeak" [snapshotDate]="snapshotDate"></app-repayment-plan>
+
+    <!-- Version Modal -->
+    <p-dialog
+      header="🎉 New Version Release!"
+      [(visible)]="showNewVersionModal"
+      modal="true"
+      [closable]="true"
+      [style]="{ width: '400px' }"
+      [contentStyle]="{ 'text-align': 'center' }"
     >
-      Launch Demo Library
+      <div class="modal-content">
+        <i class="pi pi-info-circle modal-icon"></i>
+        <h2>Version {{ selectedVersion }}</h2>
+
+        <!-- Version Selector -->
+        <div class="version-selector">
+          <label for="versionSelect">Select Version:</label>
+          <p-select
+            [options]="releaseNotes"
+            [(ngModel)]="selectedVersion"
+            optionLabel="version"
+            optionValue="version"
+            (onChange)="onVersionChange($event)"
+            placeholder="Select Version"
+            styleClass="version-dropdown"
+          ></p-select>
+        </div>
+
+        <div *ngIf="selectedReleaseNotes">
+          <h3>What's New:</h3>
+          <ul>
+            <li *ngFor="let note of selectedReleaseNotes.details">
+              {{ note }}
+            </li>
+          </ul>
+        </div>
+        <p *ngIf="!selectedReleaseNotes">We've made improvements and fixed some bugs to enhance your experience.</p>
+      </div>
+      <div class="flex justify-content-end gap-2">
+        <button
+          pButton
+          type="button"
+          label="Continue"
+          (click)="closeNewVersionModal()"
+          class="p-button-rounded"
+        ></button>
+      </div>
+    </p-dialog>
+  </div>
+
+  <!-- Footer -->
+  <footer class="app-footer">
+    <div class="social-icons">
+      <a href="https://github.com/LendPeak/LendPeak" aria-label="GitHub repository" target="_blank" rel="noopener">
+        <i class="pi pi-github"></i>
+      </a>
+
+      <a href="https://www.facebook.com/lendpeak/" aria-label="LendPeak Facebook page" target="_blank" rel="noopener">
+        <i class="pi pi-facebook"></i>
+      </a>
+
+      <!-- X -->
+      <a href="https://x.com/lendpeak/" aria-label="LendPeak X page" target="_blank" rel="noopener">
+        <i class="pi pi-twitter text-2xl"></i>
+      </a>
+    </div>
+
+    <span class="app-version">Version: {{ currentVersion }}</span>
+  </footer>
+
+  <p-dialog
+    header="Markdown Preview"
+    [(visible)]="previewVisible"
+    [style]="{ width: '400px', position: 'fixed', top: '50px', left: '50px' }"
+    [modal]="false"
+    (onHide)="closePreview()"
+  >
+    <markdown [data]="changesSummary"></markdown>
+  </p-dialog>
+
+  <p-dialog
+    header="Save Loan"
+    [(visible)]="showSaveLoanDialog"
+    [modal]="true"
+    [style]="{ width: '600px' }"
+    [closable]="true"
+  >
+    <div class="p-fluid">
+      <div class="field">
+        <label for="loanName">Loan Name</label>
+        <input
+          id="loanName"
+          type="text"
+          pInputText
+          [(ngModel)]="lendPeak.amortization.name"
+          class="w-full"
+          [disabled]="aiSummaryInProgress"
+        />
+      </div>
+      <div class="field">
+        <label for="loanDescription">Description</label>
+        <textarea
+          id="loanDescription"
+          pInputTextarea
+          [(ngModel)]="lendPeak.amortization.description"
+          rows="3"
+          class="w-full"
+          [disabled]="aiSummaryInProgress"
+        ></textarea>
+      </div>
+      <div class="field">
+        <label for="loanDescription">Changes Summary</label>
+        <textarea
+          id="changesSummary"
+          pInputTextarea
+          [(ngModel)]="changesSummary"
+          rows="10"
+          class="w-full"
+          [disabled]="aiSummaryInProgress"
+        ></textarea>
+      </div>
+      <div class="field">
+        <p-progressbar mode="indeterminate" *ngIf="aiSummaryInProgress" [style]="{ height: '1rem' }" color="black" />
+      </div>
+    </div>
+    <div class="flex justify-content-end gap-2">
+      <button
+        pButton
+        label="Cancel"
+        class="p-button-text"
+        [disabled]="aiSummaryInProgress"
+        (click)="showSaveLoanDialog = false"
+      ></button>
+      <p-button label="Preview" icon="pi pi-eye" (click)="openPreview()" [disabled]="previewVisible"></p-button>
+      <button pButton label="Summarize Changes ({{ getAiAssistantName() }})" (click)="summarize()"></button>
+
+      <button pButton label="Save" (click)="saveAndReloadLoan()"></button>
+    </div>
+  </p-dialog>
+
+  <!-- Explanation Dialog -->
+  <p-dialog
+    header="Loan Explanation and Transparency"
+    [(visible)]="showExplanationDialog"
+    [modal]="true"
+    [closable]="true"
+    [style]="{ width: '80%', height: '80%' }"
+    [contentStyle]="{ overflow: 'auto' }"
+    (onHide)="showExplanationDialog = false"
+  >
+    <pre style="white-space: pre-wrap; font-family: monospace; font-size: 14px"
+      >{{ loanExplanationText }}
+    </pre>
+    <div class="flex justify-content-end gap-2">
+      <button pButton label="Close" (click)="showExplanationDialog = false" class="p-button-text"></button>
+    </div>
+  </p-dialog>
+
+  <!-- generated code -->
+  <p-dialog
+    header="Generated Code"
+    [(visible)]="showCodeDialogVisible"
+    [modal]="true"
+    [style]="{ width: '80%' }"
+    [maximizable]="true"
+    [closable]="true"
+  >
+    <pre><code [highlight]="generatedCode" language="typescript" lineNumbers></code></pre>
+
+    <div class="flex justify-content-end gap-2">
+      <button pButton label="Copy to Clipboard" icon="pi pi-copy" (click)="copyCodeToClipboard()"></button>
+
+      <button pButton label="Close" (click)="showCodeDialogVisible = false"></button>
+    </div>
+  </p-dialog>
+
+  <!-- raw import -->
+  <p-dialog
+    header="Raw Import Data"
+    [(visible)]="showRawImportDialogVisible"
+    [modal]="true"
+    [style]="{ width: '80%' }"
+    [maximizable]="true"
+    [closable]="true"
+  >
+    <!-- =========== Loan (simple object) =========== -->
+    <p-card header="Loan Details" class="mb-3" *ngIf="rawImportJSON?.loan">
+      <p-table
+        [value]="rawImportJSON.loan | keyvalue"
+        responsiveLayout="scroll"
+        [scrollable]="true"
+        scrollHeight="300px"
+      >
+        <ng-template pTemplate="header">
+          <tr>
+            <th>Key</th>
+            <th>Value</th>
+          </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-row>
+          <tr>
+            <td>{{ row.key }}</td>
+            <td style="word-break: break-all">{{ row.value }}</td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </p-card>
+
+    <hr />
+
+    <!-- =========== Arrays in tabs =========== -->
+    <div class="card">
+      <!-- the selected tab; 0 = first tab -->
+      <p-tabs value="0">
+        <!-- ------- Tab headers ------- -->
+        <p-tablist>
+          <p-tab value="0">Repayment Schedule</p-tab>
+          <p-tab value="1">Payments</p-tab>
+          <p-tab value="2">History</p-tab>
+          <p-tab value="3">Bills</p-tab>
+        </p-tablist>
+
+        <!-- ------- Tab panels ------- -->
+        <p-tabpanels>
+          <!-- ===== Repayment Schedule ===== -->
+          <p-tabpanel value="0">
+            <p-button
+              icon="pi pi-clipboard"
+              label="Copy Schedule as CSV"
+              (click)="copyRawImportScheduleAsCSV()"
+              class="p-button-secondary"
+            />
+
+            <p-button
+              icon="pi pi-eye-slash"
+              [label]="copyRawImportScheduleHideArchived ? 'Show Archived' : 'Hide Archived'"
+              (click)="copyRawImportScheduleHideArchived = !copyRawImportScheduleHideArchived"
+              class="p-button-secondary"
+            />
+
+            <p-table
+              #dtSchedule
+              *ngIf="rawImportJSON?.schedule?.length"
+              [value]="rawImportJSON.schedule"
+              dataKey="Name"
+            >
+              <ng-template pTemplate="header">
+                <tr>
+                  <th *ngFor="let col of rawImportJSON.schedule[0] | keyvalue">
+                    {{ col.key }}
+                  </th>
+                </tr>
+              </ng-template>
+
+              <ng-template pTemplate="body" let-row>
+                <tr *ngIf="!copyRawImportScheduleHideArchived || row.loan__Is_Archived__c === false">
+                  <td *ngFor="let col of rawImportJSON.schedule[0] | keyvalue">
+                    {{ $any($any(row))[$any(col).key] }}
+                  </td>
+                </tr>
+              </ng-template>
+            </p-table>
+          </p-tabpanel>
+
+          <!-- ===== Payments (LPTs) ===== -->
+          <p-tabpanel value="1">
+            <p-button
+              icon="pi pi-clipboard"
+              label="Copy Payments as CSV"
+              (click)="copyRawImportPaymentsAsCSV()"
+              class="p-button-secondary"
+            />
+
+            <p-table *ngIf="rawImportJSON?.lpts?.length" [value]="rawImportJSON.lpts" dataKey="_id">
+              <ng-template pTemplate="header">
+                <tr>
+                  <th *ngFor="let col of rawImportJSON.lpts[0] | keyvalue">
+                    {{ col.key }}
+                  </th>
+                </tr>
+              </ng-template>
+
+              <ng-template pTemplate="body" let-row>
+                <tr>
+                  <td *ngFor="let col of rawImportJSON.lpts[0] | keyvalue">
+                    {{ $any($any(row))[$any(col).key] }}
+                  </td>
+                </tr>
+              </ng-template>
+            </p-table>
+          </p-tabpanel>
+
+          <!-- ===== History ===== -->
+          <p-tabpanel value="2">
+            <p-button
+              icon="pi pi-clipboard"
+              label="Copy History as CSV"
+              (click)="copyRawImportHistoryAsCSV()"
+              class="p-button-secondary"
+            />
+            <p-table *ngIf="rawImportJSON?.history?.length" [value]="rawImportJSON.history" dataKey="_id">
+              <ng-template pTemplate="header">
+                <tr>
+                  <th *ngFor="let col of rawImportJSON.history[0] | keyvalue">
+                    {{ col.key }}
+                  </th>
+                </tr>
+              </ng-template>
+
+              <ng-template pTemplate="body" let-row>
+                <tr>
+                  <td *ngFor="let col of rawImportJSON.history[0] | keyvalue">
+                    {{ $any($any(row))[$any(col).key] }}
+                  </td>
+                </tr>
+              </ng-template>
+            </p-table>
+          </p-tabpanel>
+
+          <!-- ===== Bills ===== -->
+          <p-tabpanel value="3">
+            <p-button
+              icon="pi pi-clipboard"
+              label="Copy Bills as CSV"
+              (click)="copyRawImportBillsAsCSV()"
+              class="p-button-secondary"
+            />
+
+            <p-button
+              icon="pi pi-eye-slash"
+              [label]="copyRawImportBillsHideArchived ? 'Show Archived' : 'Hide Archived'"
+              (click)="copyRawImportBillsHideArchived = !copyRawImportBillsHideArchived"
+              class="p-button-secondary"
+            />
+
+            <p-table *ngIf="rawImportJSON?.bills?.length" [value]="rawImportJSON.bills" dataKey="Id">
+              <ng-template pTemplate="header">
+                <tr>
+                  <th *ngFor="let col of rawImportJSON.bills[0] | keyvalue">
+                    {{ col.key }}
+                  </th>
+                </tr>
+              </ng-template>
+
+              <ng-template pTemplate="body" let-row>
+                <tr *ngIf="!copyRawImportBillsHideArchived || row.loan__Archived__c === false">
+                  <td *ngFor="let col of rawImportJSON.bills[0] | keyvalue">
+                    {{ $any($any(row))[$any(col).key] }}
+                  </td>
+                </tr>
+              </ng-template>
+            </p-table>
+          </p-tabpanel>
+        </p-tabpanels>
+      </p-tabs>
+    </div>
+
+    <div class="flex justify-content-end gap-2">
+      <button pButton label="Close" (click)="showRawImportDialogVisible = false"></button>
+    </div>
+  </p-dialog>
+
+  <p-dialog
+    header="Manage Loans"
+    [(visible)]="showManageLoansDialog"
+    [modal]="true"
+    [style]="{ width: '80%' }"
+    [maximizable]="true"
+    [closable]="true"
+    [closeOnEscape]="true"
+  >
+    <p-table *ngIf="savedLoans.length > 0" [value]="savedLoans" sortField="startDate" [sortOrder]="-1">
+      <ng-template pTemplate="header">
+        <tr>
+          <th>#</th>
+          <th>Id</th>
+          <th>Loan Name</th>
+          <th>Description</th>
+          <th pSortableColumn="startDate">Start Date</th>
+          <th pSortableColumn="endDate">End Date</th>
+          <th pSortableColumn="loanAmount">Amount</th>
+          <th>Interest Rate</th>
+          <th>Actions</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-loan let-rowIndex="rowIndex">
+        <tr>
+          <td>{{ rowIndex + 1 }}</td>
+          <td>{{ loan.id }}</td>
+          <td>{{ loan.name }}</td>
+          <td>{{ loan.description }}</td>
+          <td>{{ loan.startDate | date: 'yyyy-MM-dd' }}</td>
+          <td>{{ loan.endDate | date: 'yyyy-MM-dd' }}</td>
+          <td>{{ loan.loanAmount | currency }}</td>
+          <td>{{ loan.annualInterestRate }}%</td>
+          <td>
+            <button
+              pButton
+              icon="pi pi-trash"
+              severity="danger"
+              class="mr-2"
+              (click)="deleteLoan(loan.key)"
+              pTooltip="Delete Loan"
+            ></button>
+            <button pButton icon="pi pi-folder-open" (click)="loadLoan(loan.key, $event)" pTooltip="Load Loan"></button>
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+    <div class="flex justify-content-end gap-2">
+      <button pButton label="Close" class="p-button-text" (click)="showManageLoansDialog = false"></button>
+    </div>
+  </p-dialog>
+
+  <!-- Connector Management Dialog -->
+  <p-dialog
+    header="Manage Connectors"
+    [(visible)]="showConnectorManagementDialog"
+    [modal]="true"
+    [style]="{ width: '80%', height: '80%' }"
+    (onHide)="showConnectorManagementDialog = false"
+  >
+    <app-connector-management></app-connector-management>
+  </p-dialog>
+
+  <!-- Loan Import Dialog -->
+  <p-dialog
+    header="Import Loan"
+    [(visible)]="showLoanImportDialog"
+    [modal]="true"
+    [closable]="true"
+    [style]="{ width: '40%' }"
+    (onHide)="showLoanImportDialog = false"
+  >
+    <app-loan-import (loanImported)="onLoanImported($event)"></app-loan-import>
+  </p-dialog>
+
+  <!-- Edit Loan Dialog -->
+  <p-dialog
+    header="Edit Loan Details"
+    [modal]="true"
+    [closable]="true"
+    [resizable]="true"
+    [(visible)]="showEditLoanDialog"
+    [style]="{ width: '60%' }"
+  >
+    <div class="flex items-center gap-4 mb-4">
+      <label for="editLoanName">Loan Name</label>
+      <input id="editLoanName" type="text" class="flex-auto" pInputText [(ngModel)]="lendPeak.amortization.jsName" />
+    </div>
+    <div class="flex items-center gap-4 mb-8">
+      <label for="editLoanDescription">Description</label>
+      <textarea
+        id="editLoanDescription"
+        pInputTextarea
+        [(ngModel)]="lendPeak.amortization.jsDescription"
+        class="flex-auto"
+        rows="5"
+      ></textarea>
+    </div>
+    <div class="flex justify-content-end gap-2">
+      <p-button label="Cancel" (click)="showEditLoanDialog = false"></p-button>
+      <p-button label="Save" (click)="saveEditedLoanDetails()"></p-button>
+    </div>
+  </p-dialog>
+
+  <p-dialog
+    header=""
+    maskStyleClass="backdrop-blur-lg"
+    styleClass="!border-0 !bg-white"
+    [(visible)]="welcomeDemoLoanModalVisible"
+    [modal]="true"
+    [closable]="false"
+    [style]="{ width: '600px', 'max-width': '98vw' }"
+  >
+    <button
+      (click)="welcomeDemoLoanModalVisible = false"
+      style="
+        position: absolute;
+        top: -22px;
+        right: -22px;
+        z-index: 1001;
+        background: #fff;
+        border: none;
+        border-radius: 50%;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.13);
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: box-shadow 0.18s;
+        font-size: 1.45rem;
+        color: #47506b;
+        outline: none;
+      "
+    >
+      <span style="display: flex; align-items: center; justify-content: center; width: 100%; height: 100%">
+        <i class="pi pi-times"></i>
+      </span>
     </button>
     <div
       style="
-        position: absolute;
-        left: 2.2rem;
-        bottom: -1.1rem;
-        width: max-content;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        font-size: 1.13rem;
-        color: #6b7280;
-        margin-bottom: 1.5rem;
+        text-align: center;
+        padding: 2.2rem 2.2rem 2.7rem 2.2rem;
+        font-family: 'Inter', 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+        position: relative;
+        max-width: 700px;
+        margin: 0 auto;
       "
     >
-      <p-checkbox
-        inputId="dontShowAgain"
-        [(ngModel)]="hideWelcomeDemoLoanModal"
-        (onChange)="onWelcomeModalDontShowAgainChange()"
-        binary="true"
-      ></p-checkbox>
-      <label for="dontShowAgain" style="cursor: pointer; font-weight: 400; color: #6b7280">Don't show again</label>
+      <h1
+        style="
+          font-size: 2.8rem;
+          font-weight: 600;
+          font-family: 'Inter', 'Montserrat', 'Segoe UI', 'Roboto', Arial, sans-serif;
+          color: #1a223a;
+          margin-bottom: 0.45rem;
+          letter-spacing: -0.5px;
+          line-height: 1.12;
+          text-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+          text-transform: none;
+        "
+      >
+        Welcome to the Future of Lending
+      </h1>
+      <!-- Particle Animation Canvas and Animated Subtitle -->
+      <div
+        style="
+          position: relative;
+          width: 100%;
+          height: 220px;
+          margin-top: 2.7rem;
+          margin-bottom: 2.7rem;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 18px;
+          overflow: hidden;
+        "
+      >
+        <canvas
+          #particleCanvas
+          width="600"
+          height="220"
+          style="position: absolute; left: 0; top: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1"
+        ></canvas>
+        <div id="subtitle-animated" class="subtitle-animated" style="z-index: 2; position: relative">
+          Interactive. Visual. Powerful.
+        </div>
+      </div>
+      <p class="welcome-desc-modern">
+        Dive into a live sandbox of advanced loan scenarios. Visualize, experiment, and innovate with the most modern
+        lending engine &ndash; right in your browser.
+      </p>
+      <button
+        pButton
+        style="
+          background: linear-gradient(90deg, #4f8cff 0%, #6f6fff 100%);
+          color: #fff;
+          font-weight: 800;
+          font-size: 1.35rem;
+          border: none;
+          border-radius: 10px;
+          padding: 1.15rem 3.1rem;
+          margin-bottom: 1.7rem;
+          box-shadow: 0 2px 8px rgba(79, 140, 255, 0.1);
+          cursor: pointer;
+          transition:
+            background 0.2s,
+            box-shadow 0.2s,
+            transform 0.15s;
+          letter-spacing: 0.7px;
+        "
+        (click)="openDemoLoanBrowserDialog(); welcomeDemoLoanModalVisible = false"
+      >
+        Launch Demo Library
+      </button>
+      <div
+        style="
+          position: absolute;
+          left: 2.2rem;
+          bottom: -1.1rem;
+          width: max-content;
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          font-size: 1.13rem;
+          color: #6b7280;
+          margin-bottom: 1.5rem;
+        "
+      >
+        <p-checkbox
+          inputId="dontShowAgain"
+          [(ngModel)]="hideWelcomeDemoLoanModal"
+          (onChange)="onWelcomeModalDontShowAgainChange()"
+          binary="true"
+        ></p-checkbox>
+        <label for="dontShowAgain" style="cursor: pointer; font-weight: 400; color: #6b7280">Don't show again</label>
+      </div>
+      <div style="height: 2.5rem; width: 100%"></div>
     </div>
-    <div style="height: 2.5rem; width: 100%"></div>
-  </div>
-</p-dialog>
+  </p-dialog>
 
-<p-dialog
-  header="Demo Loan Library"
-  [(visible)]="demoLoanBrowserDialogVisible"
-  [modal]="true"
-  [closable]="true"
-  (onHide)="closeDemoLoanBrowserDialog()"
-  [style]="{ width: '40vw' }"
->
-  <app-demo-loan-browser (selected)="onDemoLoanSelected($event)"></app-demo-loan-browser>
-</p-dialog>
+  <p-dialog
+    header="Demo Loan Library"
+    [(visible)]="demoLoanBrowserDialogVisible"
+    [modal]="true"
+    [closable]="true"
+    (onHide)="closeDemoLoanBrowserDialog()"
+    [style]="{ width: '40vw' }"
+  >
+    <app-demo-loan-browser (selected)="onDemoLoanSelected($event)"></app-demo-loan-browser>
+  </p-dialog>
 
-<app-loader [text]="loaderText" [minDisplayTime]="loaderMinDisplayTime" [visible]="loaderVisible"></app-loader>
+  <app-loader [text]="loaderText" [minDisplayTime]="loaderMinDisplayTime" [visible]="loaderVisible"></app-loader>
+</div>

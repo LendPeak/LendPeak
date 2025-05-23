@@ -218,3 +218,110 @@ export class LoaderComponent implements OnInit, OnDestroy, OnChanges, AfterViewI
     this.particles = [];
   }
 }
+
+// --- Particle animation logic for reuse ---
+export class LightParticleEffect {
+  private animationFrame: any;
+  private particles: any[] = [];
+  private width: number = 0;
+  private height: number = 0;
+  private dpr: number = 1;
+  private ctx: CanvasRenderingContext2D | null = null;
+  private colorSeed: number = 0;
+
+  constructor(private canvas: HTMLCanvasElement) {
+    this.dpr = window.devicePixelRatio || 1;
+    this.ctx = this.canvas.getContext('2d');
+    this.resize();
+    window.addEventListener('resize', this.resize);
+  }
+
+  resize = () => {
+    this.width = window.innerWidth * this.dpr;
+    this.height = window.innerHeight * this.dpr;
+    this.canvas.width = this.width;
+    this.canvas.height = this.height;
+    this.canvas.style.width = '100vw';
+    this.canvas.style.height = '100vh';
+    this.particles = [];
+    this.initParticles();
+  };
+
+  initParticles() {
+    const N = 36;
+    for (let i = 0; i < N; i++) {
+      this.particles.push({
+        x: Math.random() * this.width,
+        y: Math.random() * this.height,
+        r: 2.5 + Math.random() * 2.5,
+        dx: (Math.random() - 0.5) * 0.7,
+        dy: (Math.random() - 0.5) * 0.7,
+        alpha: 0.7 + Math.random() * 0.3,
+        colorSeed: Math.random() * 360,
+      });
+    }
+  }
+
+  start() {
+    this.stop();
+    this.animate();
+  }
+
+  animate = () => {
+    if (!this.ctx) return;
+    this.ctx.clearRect(0, 0, this.width, this.height);
+    for (const p of this.particles) {
+      const hue = (p.colorSeed + this.colorSeed) % 360;
+      this.ctx.save();
+      this.ctx.globalAlpha = p.alpha;
+      this.ctx.beginPath();
+      this.ctx.arc(p.x, p.y, p.r, 0, 2 * Math.PI);
+      this.ctx.fillStyle = `hsl(${hue}, 100%, 70%)`;
+      this.ctx.shadowColor = `hsl(${hue}, 100%, 90%)`;
+      this.ctx.shadowBlur = 18;
+      this.ctx.fill();
+      this.ctx.restore();
+      p.x += p.dx;
+      p.y += p.dy;
+      if (p.x < 0 || p.x > this.width) p.dx *= -1;
+      if (p.y < 0 || p.y > this.height) p.dy *= -1;
+    }
+    // Draw lines between close particles
+    for (let i = 0; i < this.particles.length; i++) {
+      for (let j = i + 1; j < this.particles.length; j++) {
+        const a = this.particles[i];
+        const b = this.particles[j];
+        const dist = Math.hypot(a.x - b.x, a.y - b.y);
+        if (dist < 180 * this.dpr) {
+          const hueA = (a.colorSeed + this.colorSeed) % 360;
+          const hueB = (b.colorSeed + this.colorSeed) % 360;
+          const grad = this.ctx.createLinearGradient(a.x, a.y, b.x, b.y);
+          grad.addColorStop(0, `hsl(${hueA}, 100%, 80%)`);
+          grad.addColorStop(1, `hsl(${hueB}, 100%, 80%)`);
+          this.ctx.save();
+          this.ctx.globalAlpha = 0.18;
+          this.ctx.strokeStyle = grad;
+          this.ctx.beginPath();
+          this.ctx.moveTo(a.x, a.y);
+          this.ctx.lineTo(b.x, b.y);
+          this.ctx.stroke();
+          this.ctx.restore();
+        }
+      }
+    }
+    this.colorSeed += 0.2;
+    this.animationFrame = requestAnimationFrame(this.animate);
+  };
+
+  stop() {
+    if (this.animationFrame) {
+      cancelAnimationFrame(this.animationFrame);
+      this.animationFrame = null;
+    }
+  }
+
+  destroy() {
+    this.stop();
+    window.removeEventListener('resize', this.resize);
+  }
+}

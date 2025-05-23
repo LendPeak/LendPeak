@@ -1,8 +1,8 @@
-import { LendPeak } from "../../LendPeak";
-import { Amortization } from "../../Amortization";
-import { DepositRecords } from "../../DepositRecords";
-import { DepositRecord } from "../../DepositRecord";
-import { LocalDate, ChronoUnit } from "@js-joda/core";
+import { LendPeak } from '../../LendPeak';
+import { Amortization } from '../../Amortization';
+import { DepositRecords } from '../../DepositRecords';
+import { DepositRecord } from '../../DepositRecord';
+import { LocalDate, ChronoUnit } from '@js-joda/core';
 
 const today = LocalDate.now().minus(5, ChronoUnit.DAYS);
 
@@ -13,9 +13,9 @@ export class DemoC10 {
 
     return new LendPeak({
       amortization: new Amortization({
-        id: "DEMO-C10",
-        name: "DEMO-C10",
-        description: "Early payoff (simple)",
+        id: 'DEMO-C10',
+        name: 'DEMO-C10',
+        description: 'Early payoff (simple)',
         startDate: startDate,
         payoffDate: payoffDate,
         originationFee: 100,
@@ -33,15 +33,15 @@ export class DemoC10 {
               amount: 956.01,
               effectiveDate: startDate.plus(i + 1, ChronoUnit.MONTHS),
               id: `DEPOSIT-C10-${i + 1}`,
-              currency: "USD",
+              currency: 'USD',
             })
         ),
         // Final lump sum payment
         new DepositRecord({
-          amount: 5_123.45, // Larger final payment to pay off remaining balance
+          amount: 6_476.30, // Larger final payment to pay off remaining balance
           effectiveDate: payoffDate,
-          id: "DEPOSIT-C10-18",
-          currency: "USD",
+          id: 'DEPOSIT-C10-18',
+          currency: 'USD',
         }),
       ]),
     });

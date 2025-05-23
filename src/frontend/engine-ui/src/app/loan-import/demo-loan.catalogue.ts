@@ -103,7 +103,7 @@ export const DEMO_LOANS: DemoLoanDescriptor[] = [
     title: 'Lump-Sum Payoff in Month 18',
     subtitle: 'Single extra payment retires balance early',
     category: 'everyday',
-    tags: ['payments', 'over-payments', 'early-payoff'],
+    tags: ['payments', 'early-payoff'],
     notes: 'Demonstrates payoff quote and close-out',
   },
 

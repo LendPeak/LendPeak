@@ -329,6 +329,8 @@ export class AppComponent implements OnChanges, AfterViewInit, OnInit, OnDestroy
 
     this.lendPeak = new LendPeak({
       amortization: new Amortization({
+        name: 'New Loan',
+        description: 'Empty loan with minimal placeholder data',
         annualInterestRate: 0.05,
         loanAmount: 10000,
         term: 12,

@@ -231,8 +231,9 @@ describe('Demo Loans', () => {
 
     it('should have correct deposit dates matching payment schedule', () => {
       const schedule = loan.loan.calculateAmortizationPlan();
+      expect(loan.deposits.all[0].amount.toNumber()).toBe(956.01);
       loan.deposits.all.forEach((deposit, index) => {
-        const scheduleEntry = schedule.entries.find((e) => e.term === index);
+        const scheduleEntry = schedule.entries.find((e) => e.term === index + 1);
         if (scheduleEntry) {
           const diff = Math.abs(
             ChronoUnit.DAYS.between(scheduleEntry.periodEndDate, deposit.effectiveDate)

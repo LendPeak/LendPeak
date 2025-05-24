@@ -1,0 +1,26 @@
+{
+  "name": "Skip a Pay with Term Extension (Scenario 62)",
+  "description": "Shows a skip-a-pay event managed with a subsequent term extension.",
+  "params": {
+    "loanAmount": 8000,
+    "annualInterestRate": 0.09,
+    "term": 18,
+    "startDate": "2024-03-01",
+    "termPeriodDefinition": { "unit": "month", "count": [1] },
+    "roundingPrecision": 2,
+    "changePaymentDates": [
+      {
+        "termNumber": 5, 
+        "newDate": "2024-10-01",
+        "originalDate": "2024-09-01",
+        "active": true
+      }
+    ],
+    "termPaymentAmountOverride": [
+      { "termNumber": 5, "paymentAmount": 0, "active": true }
+    ],
+    "termExtensions": [
+      { "date": "2024-10-02", "termsModified": 3, "active": true }
+    ]
+  }
+}

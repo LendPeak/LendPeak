@@ -100,6 +100,7 @@ import { provideHttpClient, withInterceptorsFromDi } from '@angular/common/http'
 import { LoaderComponent } from './shared/components/loader/loader.component';
 import { ListboxModule } from 'primeng/listbox';
 import { MultiSelectModule } from 'primeng/multiselect';
+import { TermExtensionPanelComponent } from './modules/loan-modification/components/term-extension-panel/term-extension-panel.component';
 
 @NgModule({
   declarations: [
@@ -124,6 +125,7 @@ import { MultiSelectModule } from 'primeng/multiselect';
     DemoLoanBrowserComponent,
     MobileUnsupportedComponent,
     LoaderComponent,
+    TermExtensionPanelComponent,
   ],
   imports: [
     DynamicDialogModule,

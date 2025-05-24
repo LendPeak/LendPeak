@@ -102,6 +102,10 @@ Here is the **nested menu** for all the scenarios, organized by major category.
     - **(#57) Extremely Large Principal & Very Small Payment**  
     - **(#58) Regulatory Maximum APR (e.g., 36% Cap)**  
 
+11. **Term Extensions**
+    - **(#61) Hardship with Term Extension**
+    - **(#62) Skip a Pay with Term Extension**
+
 ---
 
 
@@ -1008,3 +1012,78 @@ Here is the **nested menu** for all the scenarios, organized by major category.
   - **term**: 3
   - DepositRecords: multiple small deposits in a single term.
 - **Complexities Tested**: Summation across multiple partial deposits, verifying no leftover shortfall or double-count.
+
+---
+
+## Term Extensions
+
+The **Term Extension** feature allows for the modification of the loan's overall term length, either increasing or decreasing it. This is typically used in scenarios such as:
+
+-   **Hardship**: When a borrower faces financial difficulties, extending the term can lower their periodic payment amounts, making the loan more manageable.
+-   **Restructuring / Avoiding Balloon Payments**: In conjunction with other modifications (like "skip-a-pay" or principal adjustments), extending the term can help re-amortize the loan to avoid a large final balloon payment or to smooth out payments after a period of non-payment.
+
+Term extensions are defined by:
+-   **`date`**: The date on which the term extension becomes effective. This date is primarily for record-keeping and to associate the extension with a point in time, though the actual term change applies to the overall loan duration calculation.
+-   **`termsModified`**: The number of terms by which the original loan term is changed. A positive value extends the loan, while a negative value shortens it.
+-   **`active`**: A boolean indicating whether the extension is currently in effect.
+
+The system calculates an `actualTerms` value by summing all `termsModified` from active extensions and adding it to the original contractual term. This `actualTerms` is then used for calculating the loan's end date, generating periodic schedules, and determining payment amounts.
+
+---
+
+## 61. Hardship with Term Extension
+
+- **Purpose**: Demonstrates extending the loan term due to borrower hardship, aiming to reduce periodic payment amounts.
+- **Key Features**:
+    - A standard loan setup.
+    - A `TermExtension` is applied to increase the overall number of payments.
+- **Parameters**:
+    - **loanAmount**: 12,000
+    - **annualInterestRate**: 0.07 (7%)
+    - **term**: 24 (original contractual term)
+    - **startDate**: 1/1/2024
+    - **termPeriodDefinition**: \{ unit: "month", count: [1] \}
+    - **termExtensions**: \[
+        \{ "date": "2024-07-15", "termsModified": 6, "active": true }
+      ]
+- **Complexities Tested**:
+    - Correct calculation of `actualTerms`.
+    - Recalculation of `endDate` based on the extended term.
+    - Adjustment of the amortization schedule and periodic payments to reflect the new, longer term.
+    - Verification that the Equated Monthly Installment (EMI) decreases due to the extension.
+
+---
+
+## 62. Skip a Pay with Term Extension
+
+- **Purpose**: Shows a scenario where a "skip-a-pay" event occurs, and a term extension is subsequently applied to help manage the loan and avoid a large final payment.
+- **Key Features**:
+    - The loan has a "skip-a-pay" event. This could be modeled by:
+        - `ChangePaymentDate` to push a specific payment date further out, creating a longer interest accrual period before it.
+        - And/or `TermPaymentAmountOverride` to set a specific term's payment to zero.
+        - And/or `BalanceModification` if interest from the skipped period is capitalized.
+    - A `TermExtension` is added to increase the overall term, helping to re-amortize the potentially increased balance (if interest capitalized) or simply to smooth out payments over a longer period.
+- **Parameters**:
+    - **loanAmount**: 8,000
+    - **annualInterestRate**: 0.09 (9%)
+    - **term**: 18 (original contractual term)
+    - **startDate**: 3/1/2024
+    - **termPeriodDefinition**: \{ unit: "month", count: [1] \}
+    - **changePaymentDates**: \[
+        // Example: Original due date for term #6 (Aug 2024 payment) is 9/1/2024.
+        // We push its due date to 10/1/2024, effectively skipping September's payment.
+        \{ "termNumber": 5, "newDate": "2024-10-01", "originalDate": "2024-09-01" } // Assuming term numbers are 0-indexed for overrides, so term 5 is the 6th payment.
+      ]
+    // Alternatively, or in addition, use TermPaymentAmountOverride for term #6 to be $0.
+    - **termPaymentAmountOverride**: \[
+        \{ "termNumber": 5, "paymentAmount": 0 } // Make 6th payment (index 5) zero.
+      ]
+    - **termExtensions**: \[
+        // Extend the loan by 3 months to accommodate the skipped payment's impact and smooth out future payments.
+        \{ "date": "2024-10-02", "termsModified": 3, "active": true }
+      ]
+- **Complexities Tested**:
+    - Interaction between skip-a-pay mechanics (e.g., `ChangePaymentDate`, `TermPaymentAmountOverride`) and `TermExtension`.
+    - Correct calculation of `actualTerms` and `endDate` after both types of modifications.
+    - Ensuring the amortization schedule correctly reflects the skipped payment (e.g., zero payment, potentially higher interest in the following period or capitalized interest) and then the subsequent extension.
+    - Verification that the term extension helps in managing the loan repayment, possibly avoiding a significant balloon payment that might otherwise result from the skip.

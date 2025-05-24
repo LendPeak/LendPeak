@@ -2373,6 +2373,33 @@
           </div>
         </p-accordion-content>
       </p-accordion-panel>
+
+      <!-- Term Extensions Panel -->
+      <p-accordion-panel value="termExtensions">
+        <p-accordion-header>
+          <div>
+            <p-badge
+              class="mr-4"
+              badgeSize="xlarge"
+              [severity]="
+                lendPeak.amortization.termExtensions.length > 0
+                  ? 'contrast'
+                  : 'secondary'
+              "
+              [value]="lendPeak.amortization.termExtensions.length"
+            />
+            Term Extensions
+          </div>
+        </p-accordion-header>
+        <p-accordion-content>
+          <app-term-extension-panel
+            *ngIf="lendPeak && lendPeak.amortization"
+            [amortization]="lendPeak.amortization"
+            [(termExtensions)]="lendPeak.amortization.termExtensions"
+            (markAsModified)="onAmortizationModified()"
+          ></app-term-extension-panel>
+        </p-accordion-content>
+      </p-accordion-panel>
       <!-- End of Accordion -->
     </p-accordion>
   </div>

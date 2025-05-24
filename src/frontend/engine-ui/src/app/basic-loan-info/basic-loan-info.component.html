@@ -131,6 +131,11 @@
           Number of periods for the loan term. E.g., 12
         </ng-template>
       </p-popover>
+
+      <!-- Term Extension Highlight -->
+      <div *ngIf="termExtensionHighlightText" class="term-extension-highlight mt-2">
+        <p-tag severity="info" [value]="termExtensionHighlightText"></p-tag>
+      </div>
     </div>
   </div>
 

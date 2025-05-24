@@ -1,0 +1,56 @@
+<div class="modification-panel">
+  <h4>Term Extensions</h4>
+
+  <div class="form-section">
+    <h5>Add New Term Extension</h5>
+    <div class="form-row">
+      <div class="form-group">
+        <label for="newExtensionDate">Effective Date:</label>
+        <input type="date" id="newExtensionDate" class="form-control" [(ngModel)]="newExtensionDate">
+      </div>
+      <div class="form-group">
+        <label for="newTermsModified">Terms Modified:</label>
+        <input type="number" id="newTermsModified" class="form-control" [(ngModel)]="newTermsModified" placeholder="e.g., 6 or -3">
+      </div>
+      <div class="form-group">
+        <button (click)="addTermExtension()" class="btn btn-primary">Add Extension</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="table-section" *ngIf="termExtensions && termExtensions.all && termExtensions.all.length > 0">
+    <h5>Existing Term Extensions</h5>
+    <table class="table table-striped table-sm">
+      <thead>
+        <tr>
+          <th>Effective Date</th>
+          <th>Terms Modified</th>
+          <th>Active</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let extension of termExtensions.all; let i = index">
+          <td>{{ getJsDate(extension) | date:'yyyy-MM-dd' }}</td>
+          <td>{{ extension.jsTermsModified }}</td>
+          <td>
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" role="switch" 
+                     id="extensionActive{{i}}" 
+                     [ngModel]="extension.jsActive" 
+                     (ngModelChange)="toggleActive(extension)">
+              <label class="form-check-label" for="extensionActive{{i}}"></label>
+            </div>
+          </td>
+          <td>
+            <button (click)="removeTermExtension(extension)" class="btn btn-danger btn-sm">Remove</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div *ngIf="!termExtensions || !termExtensions.all || termExtensions.all.length === 0">
+    <p>No term extensions defined.</p>
+  </div>
+</div>

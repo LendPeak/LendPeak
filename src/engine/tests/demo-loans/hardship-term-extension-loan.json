@@ -1,0 +1,15 @@
+{
+  "name": "Hardship with Term Extension (Scenario 61)",
+  "description": "Demonstrates extending the loan term due to borrower hardship, aiming to reduce periodic payment amounts.",
+  "params": {
+    "loanAmount": 12000,
+    "annualInterestRate": 0.07,
+    "term": 24,
+    "startDate": "2024-01-01",
+    "termPeriodDefinition": { "unit": "month", "count": [1] },
+    "roundingPrecision": 2,
+    "termExtensions": [
+      { "date": "2024-07-15", "termsModified": 6, "active": true }
+    ]
+  }
+}

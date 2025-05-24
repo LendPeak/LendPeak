@@ -38,6 +38,8 @@ import { v4 as uuidv4 } from "uuid";
 
 import cloneDeep from "lodash/cloneDeep";
 import { AmortizationEntries } from "./Amortization/AmortizationEntries";
+import { TermExtension, TermExtensionParams } from "./TermExtension";
+import { TermExtensions } from "./TermExtensions";
 
 /** A single “slice” of balance valid over a sub-range of the period */
 interface BalanceSlice {
@@ -93,6 +95,7 @@ export interface AmortizationParams {
   termPeriodDefinition?: TermPeriodDefinition;
   changePaymentDates?: ChangePaymentDates;
   balanceModifications?: BalanceModifications;
+  termExtensions?: TermExtensions | TermExtensionParams[];
   perDiemCalculationType?: PerDiemCalculationType;
   // staticFeePerBill?: Currency; // A fixed fee amount applied to each bill.
   // customFeesPerTerm?: { termNumber: number; feeAmount: Currency }[]; // An array specifying custom fee amounts for each term.
@@ -214,6 +217,7 @@ export class Amortization {
   private _dueBillDays: BillDueDaysConfigurations = new BillDueDaysConfigurations();
   private _termPaymentAmountOverride: TermPaymentAmounts = new TermPaymentAmounts();
   private _balanceModifications: BalanceModifications = new BalanceModifications();
+  private _termExtensions: TermExtensions = new TermExtensions();
 
   private _defaultPreBillDaysConfiguration: number = Amortization.DEFAULT_PRE_BILL_DAYS_CONFIGURATION;
   jsDefaultPreBillDaysConfiguration!: number;
@@ -282,6 +286,10 @@ export class Amortization {
     if (params.balanceModifications) {
       //console.trace("setting balance modification with params", params.balanceModifications);
       this.balanceModifications = params.balanceModifications;
+    }
+
+    if (params.termExtensions) {
+      this.termExtensions = params.termExtensions; // Use the setter
     }
 
     if (params.perDiemCalculationType) {
@@ -458,6 +466,7 @@ export class Amortization {
     this.periodsSchedule.updateJsValues();
     this.preBillDays.updateJsValues();
     this.dueBillDays.updateJsValues();
+    this.termExtensions.updateJsValues();
 
     this.jsId = this.id;
     this.jsName = this.name;
@@ -542,6 +551,7 @@ export class Amortization {
     this.rateSchedules.updateModelValues();
     this.preBillDays.updateModelValues();
     this.dueBillDays.updateModelValues();
+    this.termExtensions.updateModelValues();
 
     this.defaultPreBillDaysConfiguration = this.jsDefaultPreBillDaysConfiguration;
     this.defaultBillDueDaysAfterPeriodEndConfiguration = this.jsDefaultBillDueDaysAfterPeriodEndConfiguration;
@@ -710,6 +720,17 @@ export class Amortization {
     this._term = value;
   }
 
+  get actualTerms(): number {
+    let currentTerms = this.term; // Start with contractual term (_term)
+    if (this._termExtensions && this._termExtensions.active.length > 0) {
+      for (const extension of this._termExtensions.active) {
+        currentTerms += extension.termsModified;
+      }
+    }
+    // Ensure terms don't go below 1, or a reasonable minimum for your business logic
+    return Math.max(1, currentTerms);
+  }
+
   get preBillDays(): PreBillDaysConfigurations {
     if (!this._preBillDays || this._preBillDays.length === 0) {
       this._preBillDays = new PreBillDaysConfigurations([
@@ -771,7 +792,7 @@ export class Amortization {
 
     /* ③ back-fill the missing terms */
     let last = activeCustom[0];
-    for (let i = 0; i < this.term; i++) {
+    for (let i = 0; i < this.actualTerms; i++) {
       const term = i + 1;
       if (!completed.all.find((c) => c.termNumber === term)) {
         completed.addConfiguration(
@@ -811,7 +832,7 @@ export class Amortization {
 
     /* ③  back-fill the missing terms */
     let last = activeCustom[0];
-    for (let i = 0; i < this.term; i++) {
+    for (let i = 0; i < this.actualTerms; i++) {
       const term = i + 1;
       if (!completed.all.find((c) => c.termNumber === term)) {
         completed.addConfiguration(
@@ -914,7 +935,7 @@ export class Amortization {
     this._termInterestRateOverride = new TermInterestRateOverrides();
 
     for (const override of value.all) {
-      if (override.termNumber <= 0 || override.termNumber > this.term) {
+      if (override.termNumber <= 0 || override.termNumber > this.term) { // Retain this.term for validation as per subtask correction
         throw new Error(`Invalid termInterestRateOverride: termNumber ${override.termNumber} out of range`);
       }
       if (override.interestRate.isNegative()) {
@@ -992,7 +1013,7 @@ export class Amortization {
       }
 
       // 4. Range check
-      if (current.termNumber < 0 || current.termNumber > this.term) {
+      if (current.termNumber < 0 || current.termNumber > this.term) { // Retain this.term for validation as per subtask correction
         console.warn("termInterestOverride: termNumber out of range", current.termNumber, this.term);
         continue;
         //throw new Error(`Invalid termInterestOverride: termNumber ${current.termNumber} out of range`);
@@ -1085,6 +1106,19 @@ export class Amortization {
     }
 
     this._balanceModifications = balanceModifications;
+  }
+
+  get termExtensions(): TermExtensions {
+    return this._termExtensions;
+  }
+
+  set termExtensions(value: TermExtensions | TermExtensionParams[]) {
+    this.modifiedSinceLastCalculation = true;
+    if (value instanceof TermExtensions) {
+      this._termExtensions = value;
+    } else {
+      this._termExtensions = new TermExtensions(value);
+    }
   }
 
   get repaymentSchedule(): AmortizationEntries {
@@ -1647,7 +1681,7 @@ export class Amortization {
         throw new Error(`Invalid term unit ${termUnit}`);
       }
 
-      this._endDate = this.startDate.plus(this.term * this.termPeriodDefinition.count[0], chronoUnit);
+      this._endDate = this.startDate.plus(this.actualTerms * this.termPeriodDefinition.count[0], chronoUnit);
     }
     return this._endDate;
   }
@@ -1850,7 +1884,7 @@ export class Amortization {
    * Validate the schedule periods.
    */
   verifySchedulePeriods(): void {
-    if (this.periodsSchedule.length !== this.term) {
+    if (this.periodsSchedule.length !== this.actualTerms) {
       if (!this.payoffDate && !this.earlyRepayment) {
         throw new Error("Invalid schedule periods, number of periods must match the term");
       }
@@ -1894,7 +1928,7 @@ export class Amortization {
     const shouldUseEndOfMonth = this.startDate.isEqual(this.startDate.with(TemporalAdjusters.lastDayOfMonth()));
     let startDate = DateUtil.normalizeDate(this.startDate);
 
-    for (let currentTerm = 0; currentTerm < this.term; currentTerm++) {
+    for (let currentTerm = 0; currentTerm < this.actualTerms; currentTerm++) {
       let endDate: LocalDate;
 
       if (currentTerm === 0 && this.firstPaymentDate) {
@@ -1957,7 +1991,7 @@ export class Amortization {
         endDate = this.payoffDate;
         // console.log("payoff date is between start and end date", startDate.format("YYYY-MM-DD"), endDate.format("YYYY-MM-DD"));
         // terminate the loop
-        currentTerm = this.term;
+        currentTerm = this.actualTerms;
       }
 
       periodsSchedule.push(
@@ -2445,7 +2479,7 @@ export class Amortization {
         );
 
         startBalance = balanceAfterPayment;
-        if (balanceAfterPayment.lessThanOrEqualTo(0) && termIndex < this.term) {
+        if (balanceAfterPayment.lessThanOrEqualTo(0) && termIndex < this.actualTerms - 1) {
           this.earlyRepayment = true;
           break;
         }
@@ -2816,11 +2850,11 @@ export class Amortization {
    */
   private calculateFixedMonthlyPayment(): Currency {
     if (this.annualInterestRate.isZero()) {
-      return this.round(this.totalLoanAmount.divide(this.term));
+      return this.round(this.totalLoanAmount.divide(this.actualTerms));
     }
     const monthlyRate = this.annualInterestRate.dividedBy(12);
     const numerator = this.totalLoanAmount.multiply(monthlyRate);
-    const denominator = Currency.of(1).subtract(Currency.of(1).divide(new Decimal(1).plus(monthlyRate).pow(this.term)));
+    const denominator = Currency.of(1).subtract(Currency.of(1).divide(new Decimal(1).plus(monthlyRate).pow(this.actualTerms)));
     return this.round(numerator.divide(denominator));
   }
 
@@ -2843,6 +2877,7 @@ export class Amortization {
       totalLoanAmount: this.totalLoanAmount.toNumber(),
       annualInterestRate: this.annualInterestRate.toString(),
       term: this.term,
+      actualTerms: this.actualTerms,
       hasCustomPreBillDays: this.hasCustomPreBillDays,
       preBillDays: this.preBillDays.json,
       hasCustomBillDueDays: this.hasCustomBillDueDays,
@@ -2869,6 +2904,7 @@ export class Amortization {
       termPeriodDefinition: this.termPeriodDefinition,
       changePaymentDates: this.changePaymentDates.json,
       balanceModifications: this.balanceModifications.json,
+      termExtensions: this.termExtensions.json,
       perDiemCalculationType: this.perDiemCalculationType,
       billingModel: this.billingModel,
       feesPerTerm: this.feesPerTerm.json,
@@ -2892,6 +2928,7 @@ export class Amortization {
       totalLoanAmount: this.totalLoanAmount.toNumber(),
       annualInterestRate: this.annualInterestRate.toString(),
       term: this.term,
+      actualTerms: this.actualTerms,
       hasCustomPreBillDays: this.hasCustomPreBillDays,
       preBillDays: this.preBillDays.json,
       hasCustomBillDueDays: this.hasCustomBillDueDays,
@@ -2919,6 +2956,7 @@ export class Amortization {
       termPeriodDefinition: this.termPeriodDefinition,
       changePaymentDates: this.changePaymentDates.json,
       balanceModifications: this.balanceModifications.json,
+      termExtensions: this.termExtensions.json,
       perDiemCalculationType: this.perDiemCalculationType,
       billingModel: this.billingModel,
       feesPerTerm: this.feesPerTerm.json,

@@ -1,0 +1,49 @@
+/* basic-loan-info.component.css */
+.tooltip-icon {
+  cursor: pointer;
+  color: #007bff; /* Or your preferred icon color */
+  margin-left: 5px;
+}
+
+/* General card styling if needed */
+p-card {
+  margin-bottom: 20px;
+}
+
+/* Style for the highlight tag to ensure it's noticeable */
+.term-extension-highlight {
+  margin-top: 8px; /* Add some space above the tag */
+  display: block; /* Ensure it takes its own line if needed or adjust as per layout */
+}
+
+.term-extension-highlight .p-tag { /* PrimeNG Tag specific styling */
+  font-weight: bold;
+}
+
+/* Ensure input groups and elements are well-aligned */
+.formgrid .field {
+  margin-bottom: 1rem; /* Consistent spacing for fields */
+}
+
+.p-inputgroup {
+  width: 100%; /* Ensure input groups take full width of their container */
+}
+
+p-inputNumber,
+p-datepicker {
+  width: 100%; /* Make form controls take full width */
+}
+
+/* Adjust label alignment or font if necessary */
+label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+}
+
+/* Responsive adjustments if necessary */
+@media (max-width: 768px) {
+  .formgrid .field.col {
+    flex-basis: 100%; /* Stack fields vertically on smaller screens */
+  }
+}

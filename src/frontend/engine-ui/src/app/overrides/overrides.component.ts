@@ -36,6 +36,8 @@ import { PreBillDaysConfigurations } from 'lendpeak-engine/models/PreBillDaysCon
 import { BillDueDaysConfiguration } from 'lendpeak-engine/models/BillDueDaysConfiguration';
 import { BillDueDaysConfigurations } from 'lendpeak-engine/models/BillDueDaysConfigurations';
 import { TermPaymentAmounts } from 'lendpeak-engine/models/TermPaymentAmounts';
+import { TermExtension } from 'lendpeak-engine/models/TermExtension';
+import { TermExtensions } from 'lendpeak-engine/models/TermExtensions';
 import { RateSchedules } from 'lendpeak-engine/models/RateSchedules';
 import { LendPeak } from 'lendpeak-engine/models/LendPeak';
 import { TermInterestAmountOverrides } from 'lendpeak-engine/models/TermInterestAmountOverrides';
@@ -479,6 +481,10 @@ export class OverridesComponent implements OnInit {
       this.openPanels.push('termPaymentAmount');
     }
 
+    if (this.lendPeak.amortization?.termExtensions?.length > 0) {
+      this.openPanels.push('termExtensions');
+    }
+
     // Panel: Term Interest Override
     if (
       this.lendPeak.amortization.termInterestAmountOverride &&
@@ -809,6 +815,16 @@ export class OverridesComponent implements OnInit {
     this.onInputChange(true);
   }
 
+  addTermExtension() {
+    if (!this.lendPeak) {
+      return;
+    }
+    const exts = this.lendPeak.amortization.termExtensions;
+    exts.addExtension(new TermExtension({ termChange: 1 }));
+    this.lendPeak.amortization.termExtensions = exts;
+    this.onInputChange(true);
+  }
+
   refreshSortForTermCalendarOverride() {
     if (!this.lendPeak) {
       return;
@@ -1127,6 +1143,13 @@ export class OverridesComponent implements OnInit {
     if (!this.lendPeak) return;
     const cpd = this.lendPeak.amortization.changePaymentDates;
     ev.checked ? cpd.activateAll() : cpd.deactivateAll();
+    this.onInputChange(true);
+  }
+
+  toggleAllTermExtensions(ev: any): void {
+    if (!this.lendPeak) return;
+    const exts = this.lendPeak.amortization.termExtensions;
+    ev.checked ? exts.activateAll() : exts.deactivateAll();
     this.onInputChange(true);
   }
 

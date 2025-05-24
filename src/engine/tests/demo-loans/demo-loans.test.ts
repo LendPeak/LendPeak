@@ -8,6 +8,7 @@ import {
   DemoC7,
   DemoC8,
   DemoC10,
+  DemoA1,
   DemoA5,
   DemoA2,
 } from '../../models/LendPeak/DemoLoans';
@@ -300,6 +301,27 @@ describe('Demo Loans', () => {
     });
   });
 
+  describe('DemoA1', () => {
+    const loan = DemoA1.ImportObject();
+
+    it('should have correct basic loan properties', () => {
+      expect(loan.loan.id).toBe('DEMO-A01');
+      expect(loan.loan.description).toBe('Hardship: zero-interest skip');
+    });
+
+    it('should have zero interest for terms 4-6', () => {
+      const schedule = loan.loan.calculateAmortizationPlan();
+      expect(schedule.entries[4].periodInterestRate.toNumber()).toBe(0);
+      expect(schedule.entries[5].periodInterestRate.toNumber()).toBe(0);
+      expect(schedule.entries[6].periodInterestRate.toNumber()).toBe(0);
+    });
+
+    it('should exclude skipped terms from deposit count', () => {
+      const expectedDeposits = 21; // 24 terms minus 3 skipped
+      expect(loan.deposits.length).toBe(expectedDeposits);
+   });
+  });
+    
   describe('DemoA5', () => {
     const loan = DemoA5.ImportObject();
 
@@ -314,6 +336,8 @@ describe('Demo Loans', () => {
     it('should defer fees when refund exceeds payment', () => {
       const schedule = loan.loan.calculateAmortizationPlan();
       expect(schedule.entries[6].unbilledTotalDeferredFees.toNumber()).toBeGreaterThan(0);
+      });
+  });
   describe('DemoA2', () => {
     const loan = DemoA2.ImportObject();
 

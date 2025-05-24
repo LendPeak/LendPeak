@@ -14,6 +14,7 @@ describe('AppComponent', () => {
     expect(app).toBeTruthy();
   });
 
+  // Basic creation test covers component setup
   it(`should initialize without errors`, () => {
     const fixture = TestBed.createComponent(AppComponent);
     const app = fixture.componentInstance;

@@ -245,7 +245,6 @@ export class LendPeak {
     this.cleanupBalanceModifications();
 
     do {
-      console.log("LendPeak.calc()", guard, previousVersion, this.amortization.versionId);
       // 1️⃣  tidy up anything stale
 
       // 2️⃣  build schedule + bills from the current BM set

@@ -242,6 +242,12 @@ export class OverridesComponent implements OnInit {
   /* deep snapshots keyed by term # */
   private tpaSnapshots: Record<number, any> = {};
 
+  /* deep snapshots for Fees For All Terms */
+  private ffaSnapshots: Record<string, any> = {};
+
+  /* deep snapshots for Fees Per Term */
+  private fptSnapshots: Record<number, any> = {};
+
   /* master-toggle helper */
   get tpaMasterActive(): boolean {
     if (!this.lendPeak) return true;
@@ -252,6 +258,24 @@ export class OverridesComponent implements OnInit {
   set tpaMasterActive(val: boolean) {
     /* re-use your existing bulk-toggle method */
     this.toggleAllTermPaymentAmountOverrides({ checked: val });
+  }
+
+  get ffaMasterActive(): boolean {
+    if (!this.lendPeak) return true;
+    return this.lendPeak.amortization.feesForAllTerms.all.every((f) => f.active);
+  }
+  set ffaMasterActive(val: boolean) {
+    this.toggleAllFeesForAllTerms({ checked: val });
+  }
+
+  get fptMasterActive(): boolean {
+    if (!this.lendPeak) return true;
+    return this.lendPeak.amortization.feesPerTerm.all.every((tf) =>
+      tf.fees.every((f) => f.active),
+    );
+  }
+  set fptMasterActive(val: boolean) {
+    this.toggleAllFeesPerTerm({ checked: val });
   }
 
   /* ✏️ Edit */
@@ -275,6 +299,46 @@ export class OverridesComponent implements OnInit {
     const restored = new TermPaymentAmount(saved); // re-hydrate
     Object.assign(row, restored); // rollback in place
     delete this.tpaSnapshots[row.jsTermNumber];
+  }
+
+  /* ✏️ Edit */
+  onFfaEditInit(row: Fee) {
+    this.ffaSnapshots[row.id] = row.json;
+  }
+
+  /* ✔ Save */
+  onFfaEditSave(row: Fee) {
+    delete this.ffaSnapshots[row.id];
+    this.isModified = true;
+    this.emitLoanChange();
+  }
+
+  /* ✖ Cancel */
+  onFfaEditCancel(row: Fee, ri: number) {
+    const saved = this.ffaSnapshots[row.id];
+    if (!saved) return;
+    Object.assign(row, new Fee(saved));
+    delete this.ffaSnapshots[row.id];
+  }
+
+  /* ✏️ Edit */
+  onFptEditInit(row: TermFees) {
+    this.fptSnapshots[row.jsTermNumber] = row.json;
+  }
+
+  /* ✔ Save */
+  onFptEditSave(row: TermFees) {
+    delete this.fptSnapshots[row.jsTermNumber];
+    this.isModified = true;
+    this.emitLoanChange();
+  }
+
+  /* ✖ Cancel */
+  onFptEditCancel(row: TermFees, ri: number) {
+    const saved = this.fptSnapshots[row.jsTermNumber];
+    if (!saved) return;
+    Object.assign(row, new TermFees(saved));
+    delete this.fptSnapshots[row.jsTermNumber];
   }
 
   // deep snapshots for Term Calendar Override
@@ -934,6 +998,20 @@ export class OverridesComponent implements OnInit {
     this.onInputChange(true);
   }
 
+  toggleAllFeesForAllTerms(ev: any): void {
+    if (!this.lendPeak) return;
+    const ffa = this.lendPeak.amortization.feesForAllTerms;
+    ev.checked ? ffa.activateAll() : ffa.deactivateAll();
+    this.onInputChange(true);
+  }
+
+  toggleAllFeesPerTerm(ev: any): void {
+    if (!this.lendPeak) return;
+    const fpt = this.lendPeak.amortization.feesPerTerm;
+    ev.checked ? fpt.activateAll() : fpt.deactivateAll();
+    this.onInputChange(true);
+  }
+
   // Methods related to Pre Bill Day Term
   addPrebillDayTermRow() {
     if (!this.lendPeak) {
@@ -1108,6 +1186,7 @@ export class OverridesComponent implements OnInit {
         type: 'fixed',
         amount: 0,
         description: '',
+        active: true,
       }),
     );
 
@@ -1146,7 +1225,7 @@ export class OverridesComponent implements OnInit {
     feesPerTerm.addFee(
       new TermFees({
         termNumber: nextTerm,
-        fees: [new Fee({ type: 'fixed', amount: 0, description: '' })],
+        fees: [new Fee({ type: 'fixed', amount: 0, description: '', active: true })],
       }),
     );
 

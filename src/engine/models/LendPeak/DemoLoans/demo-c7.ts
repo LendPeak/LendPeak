@@ -194,7 +194,7 @@ export class DemoC7 {
 
     const schedule = lendPeak.amortization.calculateAmortizationPlan();
     lendPeak.depositRecords.all.forEach((deposit, index) => {
-      const entry = schedule.entries.find((e) => e.term === index);
+      const entry = schedule.entries.find((e) => e.term === index + 1);
       if (entry) {
         deposit.effectiveDate = entry.periodEndDate;
       }

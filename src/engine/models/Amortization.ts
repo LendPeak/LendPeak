@@ -192,7 +192,7 @@ export class Amortization {
   jsFirstPaymentDate!: Date;
 
   private _hasCustomFirstPaymentDate: boolean = false;
-  jshasCustomFirstPaymentDate!: boolean;
+  jsHasCustomFirstPaymentDate!: boolean;
 
   private _earlyRepayment: boolean = false;
   jsEarlyRepayment!: boolean;
@@ -482,7 +482,7 @@ export class Amortization {
     this.jsHasCustomEquitedMonthlyPayment = this.hasCustomEquitedMonthlyPayment;
     //  this.jsHasCustomPreBillDays = this.hasCustomPreBillDays;
     this.jsHasCustomBillDueDays = this.hasCustomBillDueDays;
-    this.jshasCustomFirstPaymentDate = this.hasCustomFirstPaymentDate;
+    this.jsHasCustomFirstPaymentDate = this.hasCustomFirstPaymentDate;
     this.jsHasCustomEndDate = this.hasCustomEndDate;
     this.jsEndDate = DateUtil.normalizeDateToJsDate(this.endDate);
     this.jsDefaultPreBillDaysConfiguration = this.defaultPreBillDaysConfiguration;
@@ -519,7 +519,7 @@ export class Amortization {
     this.flushThreshold = Currency.of(this.jsFlushThreshold);
     this.hasCustomPeriodsSchedule = this.jsHasCustomPeriodsSchedule;
     this.allowRateAbove100 = this.jsAllowRateAbove100;
-    this.hasCustomFirstPaymentDate = this.jshasCustomFirstPaymentDate;
+    this.hasCustomFirstPaymentDate = this.jsHasCustomFirstPaymentDate;
     if (this.hasCustomFirstPaymentDate) {
       this.firstPaymentDate = this.jsFirstPaymentDate;
     }

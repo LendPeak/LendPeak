@@ -181,7 +181,7 @@
           <p-checkbox
             id="enableFirstPaymentDate"
             name="enableFirstPaymentDate"
-            [(ngModel)]="lendPeak.amortization.jshasCustomFirstPaymentDate"
+            [(ngModel)]="lendPeak.amortization.jsHasCustomFirstPaymentDate"
             (ngModelChange)="inputChanged($event)"
             binary="true"
             inputId="enableFirstPaymentDate"
@@ -197,7 +197,7 @@
           [numberOfMonths]="2"
           [showButtonBar]="true"
           [maxDate]="lendPeak.amortization.jsEndDate"
-          [disabled]="!lendPeak.amortization.jshasCustomFirstPaymentDate"
+          [disabled]="!lendPeak.amortization.jsHasCustomFirstPaymentDate"
           [style]="{ width: '100%' }"
           appendTo="body"
           [inputStyle]="{

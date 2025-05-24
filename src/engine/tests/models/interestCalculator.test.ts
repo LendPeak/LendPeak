@@ -16,6 +16,12 @@ describe("InterestCalculator", () => {
     interestCalculator = new InterestCalculator(annualInterestRate);
   });
 
+  it("should calculate daily interest rate using annual rate divided by days in year", () => {
+    const rate = (interestCalculator as any).calculateDailyInterestUsingAnnualRateDividedByDaysInYear(annualInterestRate);
+    // Calendar defaults to today's date which is non-leap (365 days)
+    expect(rate.toNumber()).toBeCloseTo(annualInterestRate.toNumber() / 365, 10);
+  });
+
   it("should calculate the correct daily interest", () => {
     const dailyInterest = interestCalculator.calculateDailyInterest(principal);
     expect(dailyInterest.getRoundedValue().toNumber()).toBeCloseTo(13.7, 2);

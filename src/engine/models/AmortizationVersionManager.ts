@@ -371,7 +371,6 @@ export class AmortizationVersionManager {
       return toReturn;
     } else {
       const toReturn = this.versions.filter((v) => !v.isDeleted);
-      console.log("toReturn ELSE", toReturn);
       return toReturn;
     }
   }

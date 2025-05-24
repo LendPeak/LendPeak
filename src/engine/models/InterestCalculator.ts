@@ -202,7 +202,7 @@ export class InterestCalculator {
 
     let dailyInterestRate: Decimal;
     if (this.perDiemCalculationType === "AnnualRateDividedByDaysInYear") {
-      dailyInterestRate = this.calculateDailyInteresUsingAnnualRateDividedByDaysInYear(annualRate);
+      dailyInterestRate = this.calculateDailyInterestUsingAnnualRateDividedByDaysInYear(annualRate);
     } else if (this.perDiemCalculationType === "MonthlyRateDividedByDaysInMonth") {
       dailyInterestRate = this.calculateDailyInterestUsingMonthlyRateDividedByDaysInMonth(annualRate);
     } else {
@@ -213,7 +213,7 @@ export class InterestCalculator {
     return dailyInterestAmount;
   }
 
-  calculateDailyInteresUsingAnnualRateDividedByDaysInYear(annualInterestRate: Decimal, customAnnualInterestRate?: Decimal): Decimal {
+  calculateDailyInterestUsingAnnualRateDividedByDaysInYear(annualInterestRate: Decimal, customAnnualInterestRate?: Decimal): Decimal {
     return new Decimal(annualInterestRate).dividedBy(this.calendar.daysInYear());
   }
 

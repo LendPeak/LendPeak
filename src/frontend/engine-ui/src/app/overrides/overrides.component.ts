@@ -24,7 +24,7 @@ import { Dayjs } from 'dayjs';
 import { ChangePaymentDate } from 'lendpeak-engine/models/ChangePaymentDate';
 import { ChangePaymentDates } from 'lendpeak-engine/models/ChangePaymentDates';
 import { FeesPerTerm } from 'lendpeak-engine/models/FeesPerTerm';
-import { TermFees } from 'lendpeak-engine/models/TermFees';
+import { TermFees, FlatTermFees } from 'lendpeak-engine/models/TermFees';
 import { Fee } from 'lendpeak-engine/models/Fee';
 import { Fees } from 'lendpeak-engine/models/Fees';
 import { RateSchedule } from 'lendpeak-engine/models/RateSchedule';
@@ -241,6 +241,8 @@ export class OverridesComponent implements OnInit {
 
   /* deep snapshots keyed by term # */
   private tpaSnapshots: Record<number, any> = {};
+  private ffaSnapshots: Record<string, any> = {};
+  private fptSnapshots: Record<string, any> = {};
 
   /* master-toggle helper */
   get tpaMasterActive(): boolean {
@@ -252,6 +254,81 @@ export class OverridesComponent implements OnInit {
   set tpaMasterActive(val: boolean) {
     /* re-use your existing bulk-toggle method */
     this.toggleAllTermPaymentAmountOverrides({ checked: val });
+  }
+
+  get ffaMasterActive(): boolean {
+    if (!this.lendPeak) return true;
+    return this.lendPeak.amortization.feesForAllTerms.all.every((f) => f.active);
+  }
+  set ffaMasterActive(val: boolean) {
+    this.toggleAllFeesForAllTerms({ checked: val });
+  }
+
+  get fptMasterActive(): boolean {
+    if (!this.lendPeak) return true;
+    return this.lendPeak.amortization.feesPerTerm.all.every((tf) =>
+      tf.fees.every((f) => f.active),
+    );
+  }
+  set fptMasterActive(val: boolean) {
+    this.toggleAllFeesPerTerm({ checked: val });
+  }
+
+  /* ─── Fees For All Terms row editing ────────── */
+  onFfaEditInit(row: Fee) {
+    this.ffaSnapshots[row.id] = row.json;
+  }
+
+  onFfaEditSave(row: Fee) {
+    delete this.ffaSnapshots[row.id];
+    this.lendPeak?.amortization.feesForAllTerms.updateModelValues();
+    this.isModified = true;
+    this.emitLoanChange();
+  }
+
+  onFfaEditCancel(row: Fee, ri: number) {
+    const saved = this.ffaSnapshots[row.id];
+    if (!saved) return;
+    Object.assign(row, new Fee(saved));
+    delete this.ffaSnapshots[row.id];
+  }
+
+  /* ─── Fees Per Term row editing ─────────────── */
+  onFptEditInit(row: FlatTermFees) {
+    this.fptSnapshots[row.fee.id] = {
+      termNumber: row.termNumber,
+      fee: row.fee.json,
+    };
+  }
+
+  onFptEditSave(row: FlatTermFees) {
+    const saved = this.fptSnapshots[row.fee.id];
+    delete this.fptSnapshots[row.fee.id];
+
+    if (saved && saved.termNumber !== row.termNumber && this.lendPeak) {
+      const fpt = this.lendPeak.amortization.feesPerTerm;
+      const oldTf = fpt.termFees.find((tf) => tf.termNumber === saved.termNumber);
+      const newTf = fpt.termFees.find((tf) => tf.termNumber === row.termNumber);
+      oldTf?.removeFeeById(row.fee.id);
+      if (newTf) {
+        newTf.addFee(row.fee);
+      } else {
+        fpt.addFee(new TermFees({ termNumber: row.termNumber, fees: [row.fee] }));
+      }
+    }
+
+    this.lendPeak?.amortization.feesPerTerm.updateModelValues();
+    this.isModified = true;
+    this.emitLoanChange();
+  }
+
+  onFptEditCancel(row: FlatTermFees, ri: number) {
+    const saved = this.fptSnapshots[row.fee.id];
+    if (!saved) return;
+
+    row.termNumber = saved.termNumber;
+    Object.assign(row.fee, new Fee(saved.fee));
+    delete this.fptSnapshots[row.fee.id];
   }
 
   /* ✏️ Edit */
@@ -934,6 +1011,20 @@ export class OverridesComponent implements OnInit {
     this.onInputChange(true);
   }
 
+  toggleAllFeesForAllTerms(ev: any): void {
+    if (!this.lendPeak) return;
+    const ffa = this.lendPeak.amortization.feesForAllTerms;
+    ev.checked ? ffa.activateAll() : ffa.deactivateAll();
+    this.onInputChange(true);
+  }
+
+  toggleAllFeesPerTerm(ev: any): void {
+    if (!this.lendPeak) return;
+    const fpt = this.lendPeak.amortization.feesPerTerm;
+    ev.checked ? fpt.activateAll() : fpt.deactivateAll();
+    this.onInputChange(true);
+  }
+
   // Methods related to Pre Bill Day Term
   addPrebillDayTermRow() {
     if (!this.lendPeak) {
@@ -1108,6 +1199,7 @@ export class OverridesComponent implements OnInit {
         type: 'fixed',
         amount: 0,
         description: '',
+        active: true,
       }),
     );
 
@@ -1146,7 +1238,7 @@ export class OverridesComponent implements OnInit {
     feesPerTerm.addFee(
       new TermFees({
         termNumber: nextTerm,
-        fees: [new Fee({ type: 'fixed', amount: 0, description: '' })],
+        fees: [new Fee({ type: 'fixed', amount: 0, description: '', active: true })],
       }),
     );
 

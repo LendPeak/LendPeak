@@ -27,6 +27,8 @@ import { BillDueDaysConfigurations } from "./BillDueDaysConfigurations";
 import { AmortizationExport } from "./AmortizationExport";
 import { TermPaymentAmount } from "./TermPaymentAmount";
 import { TermPaymentAmounts } from "./TermPaymentAmounts";
+import { TermExtension } from "./TermExtension";
+import { TermExtensions } from "./TermExtensions";
 import { TermCalendar } from "./TermCalendar";
 import { TermCalendars } from "./TermCalendars";
 import { DateUtil } from "../utils/DateUtil";
@@ -93,6 +95,7 @@ export interface AmortizationParams {
   termPeriodDefinition?: TermPeriodDefinition;
   changePaymentDates?: ChangePaymentDates;
   balanceModifications?: BalanceModifications;
+  termExtensions?: TermExtensions;
   perDiemCalculationType?: PerDiemCalculationType;
   // staticFeePerBill?: Currency; // A fixed fee amount applied to each bill.
   // customFeesPerTerm?: { termNumber: number; feeAmount: Currency }[]; // An array specifying custom fee amounts for each term.
@@ -228,6 +231,7 @@ export class Amortization {
   private _hasCustomRateSchedule: boolean = false;
   private _termPeriodDefinition: TermPeriodDefinition = { unit: "month", count: [1] };
   private _changePaymentDates: ChangePaymentDates = new ChangePaymentDates();
+  private _termExtensions: TermExtensions = new TermExtensions();
   private _repaymentSchedule!: AmortizationEntries;
   private _apr?: Decimal;
   private _perDiemCalculationType: PerDiemCalculationType = "AnnualRateDividedByDaysInYear";
@@ -302,6 +306,10 @@ export class Amortization {
 
     if (params.changePaymentDates) {
       this.changePaymentDates = params.changePaymentDates;
+    }
+
+    if (params.termExtensions) {
+      this.termExtensions = params.termExtensions;
     }
 
     if (params.allowRateAbove100 !== undefined) {
@@ -452,6 +460,7 @@ export class Amortization {
   updateJsValues() {
     this.termPaymentAmountOverride.updateJsValues();
     this.changePaymentDates.updateJsValues();
+    this.termExtensions.updateJsValues();
     this.termInterestAmountOverride.updateJsValues();
     this.termInterestRateOverride.updateJsValues();
     this.balanceModifications.updateJsValues();
@@ -535,6 +544,7 @@ export class Amortization {
 
     this.termPaymentAmountOverride.updateModelValues();
     this.changePaymentDates.updateModelValues();
+    this.termExtensions.updateModelValues();
     this.termInterestAmountOverride.updateModelValues();
     this.termInterestRateOverride.updateModelValues();
     this.balanceModifications.updateModelValues();
@@ -699,6 +709,14 @@ export class Amortization {
 
   get term(): number {
     return this._term;
+  }
+
+  get actualTerm(): number {
+    const modifier = this.termExtensions.active.reduce(
+      (acc, ext) => acc + ext.termChange,
+      0,
+    );
+    return this.term + modifier;
   }
 
   set term(value: number) {
@@ -1111,6 +1129,19 @@ export class Amortization {
 
     // update period schedule
     //this.periodsSchedule = this.generatePeriodsSchedule();
+  }
+
+  get termExtensions() {
+    return this._termExtensions;
+  }
+
+  set termExtensions(val: TermExtensions) {
+    this.modifiedSinceLastCalculation = true;
+    if (val instanceof TermExtensions) {
+      this._termExtensions = val;
+    } else {
+      this._termExtensions = new TermExtensions(val as any);
+    }
   }
 
   get termPeriodDefinition() {
@@ -2864,6 +2895,7 @@ export class Amortization {
       rateSchedules: this.rateSchedules.json,
       allowRateAbove100: this.allowRateAbove100,
       termPaymentAmountOverride: this.termPaymentAmountOverride.json,
+      termExtensions: this.termExtensions.json,
       termInterestAmountOverride: this.termInterestAmountOverride.json,
       termInterestRateOverride: this.termInterestRateOverride.json,
       termPeriodDefinition: this.termPeriodDefinition,
@@ -2914,6 +2946,7 @@ export class Amortization {
       rateSchedules: this.rateSchedules.json,
       allowRateAbove100: this.allowRateAbove100,
       termPaymentAmountOverride: this.termPaymentAmountOverride.json,
+      termExtensions: this.termExtensions.json,
       termInterestAmountOverride: this.termInterestAmountOverride.json,
       termInterestRateOverride: this.termInterestRateOverride.json,
       termPeriodDefinition: this.termPeriodDefinition,

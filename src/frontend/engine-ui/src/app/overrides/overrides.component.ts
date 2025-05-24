@@ -36,6 +36,8 @@ import { PreBillDaysConfigurations } from 'lendpeak-engine/models/PreBillDaysCon
 import { BillDueDaysConfiguration } from 'lendpeak-engine/models/BillDueDaysConfiguration';
 import { BillDueDaysConfigurations } from 'lendpeak-engine/models/BillDueDaysConfigurations';
 import { TermPaymentAmounts } from 'lendpeak-engine/models/TermPaymentAmounts';
+import { TermExtension } from 'lendpeak-engine/models/TermExtension';
+import { TermExtensions } from 'lendpeak-engine/models/TermExtensions';
 import { RateSchedules } from 'lendpeak-engine/models/RateSchedules';
 import { LendPeak } from 'lendpeak-engine/models/LendPeak';
 import { TermInterestAmountOverrides } from 'lendpeak-engine/models/TermInterestAmountOverrides';
@@ -243,6 +245,7 @@ export class OverridesComponent implements OnInit {
   private tpaSnapshots: Record<number, any> = {};
   private ffaSnapshots: Record<string, any> = {};
   private fptSnapshots: Record<string, any> = {};
+  private texSnapshots: Record<string, any> = {};
 
   /* master-toggle helper */
   get tpaMasterActive(): boolean {
@@ -272,6 +275,14 @@ export class OverridesComponent implements OnInit {
   }
   set fptMasterActive(val: boolean) {
     this.toggleAllFeesPerTerm({ checked: val });
+  }
+
+  get texMasterActive(): boolean {
+    if (!this.lendPeak) return true;
+    return this.lendPeak.amortization.termExtensions.all.every((e) => e.active);
+  }
+  set texMasterActive(val: boolean) {
+    this.toggleAllTermExtensions({ checked: val });
   }
 
   /* ─── Fees For All Terms row editing ────────── */
@@ -445,6 +456,24 @@ export class OverridesComponent implements OnInit {
     this.emitLoanChange(); // run recalcs / notify parent
   }
 
+  /* ───────── Term Extension row editing ───────── */
+  onTexEditInit(row: TermExtension) {
+    this.texSnapshots[row.jsDate.toISOString()] = row.json;
+  }
+
+  onTexEditSave(row: TermExtension) {
+    delete this.texSnapshots[row.jsDate.toISOString()];
+    this.isModified = true;
+    this.emitLoanChange();
+  }
+
+  onTexEditCancel(row: TermExtension, ri: number) {
+    const saved = this.texSnapshots[row.jsDate.toISOString()];
+    if (!saved) return;
+    Object.assign(row, new TermExtension(saved));
+    delete this.texSnapshots[row.jsDate.toISOString()];
+  }
+
   expandAllUsedTabs() {
     this.refreshOpenTabs();
   }
@@ -477,6 +506,10 @@ export class OverridesComponent implements OnInit {
     // Panel: Term Payment Amount
     if (this.lendPeak.amortization?.termPaymentAmountOverride?.length > 0) {
       this.openPanels.push('termPaymentAmount');
+    }
+
+    if (this.lendPeak.amortization?.termExtensions?.length > 0) {
+      this.openPanels.push('termExtensions');
     }
 
     // Panel: Term Interest Override
@@ -809,6 +842,26 @@ export class OverridesComponent implements OnInit {
     this.onInputChange(true);
   }
 
+  addTermExtension() {
+    if (!this.lendPeak) {
+      return;
+    }
+    const exts = this.lendPeak.amortization.termExtensions;
+    exts.addExtension(new TermExtension({ termChange: 1 }));
+    this.lendPeak.amortization.termExtensions = exts;
+    this.onInputChange(true);
+  }
+
+  removeTermExtension(index: number) {
+    if (!this.lendPeak) {
+      return;
+    }
+    if (this.lendPeak.amortization.termExtensions.length > 0) {
+      this.lendPeak.amortization.termExtensions.removeExtensionAtIndex(index);
+      this.emitLoanChange();
+    }
+  }
+
   refreshSortForTermCalendarOverride() {
     if (!this.lendPeak) {
       return;
@@ -1127,6 +1180,13 @@ export class OverridesComponent implements OnInit {
     if (!this.lendPeak) return;
     const cpd = this.lendPeak.amortization.changePaymentDates;
     ev.checked ? cpd.activateAll() : cpd.deactivateAll();
+    this.onInputChange(true);
+  }
+
+  toggleAllTermExtensions(ev: any): void {
+    if (!this.lendPeak) return;
+    const exts = this.lendPeak.amortization.termExtensions;
+    ev.checked ? exts.activateAll() : exts.deactivateAll();
     this.onInputChange(true);
   }
 

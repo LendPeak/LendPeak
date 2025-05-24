@@ -823,6 +823,7 @@ export class LendPeak {
           hasCustomPreBillDays: this.amortization.hasCustomPreBillDays,
           hasCustomBillDueDays: this.amortization.hasCustomBillDueDays,
           hasTermPaymentAmountOverride: this.amortization.termPaymentAmountOverride.length > 0,
+          hasTermExtensions: this.amortization.termExtensions.length > 0,
           hasChangePaymentDates: this.amortization.changePaymentDates.length,
           hasTermInterestAmountOverride: this.amortization.termInterestAmountOverride.length > 0,
           hasTermInterestRateOverride: this.amortization.termInterestRateOverride.length > 0,

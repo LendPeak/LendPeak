@@ -29,6 +29,7 @@
 | **DEMO-A08** | Re-amort after principal mod     | `mods`, `payments`                          | Balance drop triggers schedule rebuild  |
 | **DEMO-A09** | Aggressive over-pay payoff       | `over-payments`, `early-payoff`, `payments` | Escalating extras → payoff month 9      |
 | **DEMO-A10** | Auto-close waiver (< threshold)  | `auto-close`, `early-payoff`, `edge`        | Tolerance triggers synthetic waiver row |
+| **DEMO-A11** | Hardship with term extension     | `mods`, `payments`          | Skip with added term                     |
 
 ---
 

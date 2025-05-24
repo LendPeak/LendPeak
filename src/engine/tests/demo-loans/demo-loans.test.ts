@@ -18,6 +18,7 @@ import {
   DemoA8,
   DemoA9,
   DemoA10,
+  DemoA11,
 } from '../../models/LendPeak/DemoLoans';
 import { LocalDate, ChronoUnit } from '@js-joda/core';
 import { Currency } from '../../utils/Currency';
@@ -410,6 +411,16 @@ describe('DemoA10', () => {
   const loan = DemoA10.ImportObject();
   it('should have id DEMO-A10', () => {
     expect(loan.loan.id).toBe('DEMO-A10');
+  });
+});
+
+describe('DemoA11', () => {
+  const loan = DemoA11.ImportObject();
+  it('should have id DEMO-A11', () => {
+    expect(loan.loan.id).toBe('DEMO-A11');
+  });
+  it('should report actual term greater than contractual term', () => {
+    expect(loan.loan.actualTerm).toBeGreaterThan(loan.loan.term);
   });
 });
 });

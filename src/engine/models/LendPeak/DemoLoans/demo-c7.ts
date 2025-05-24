@@ -19,7 +19,7 @@ export class DemoC7 {
     const term9Date = startDate.plusMonths(10);
     const newPaymentDate = term9Date.plusDays(10); // Move payment date 10 days later
 
-    return new LendPeak({
+    const lendPeak = new LendPeak({
       amortization: new Amortization({
         id: "DEMO-C07",
         name: "DEMO-C07",
@@ -191,6 +191,16 @@ export class DemoC7 {
         }),
       ]),
     });
+
+    const schedule = lendPeak.amortization.calculateAmortizationPlan();
+    lendPeak.depositRecords.all.forEach((deposit, index) => {
+      const entry = schedule.entries.find((e) => e.term === index);
+      if (entry) {
+        deposit.effectiveDate = entry.periodEndDate;
+      }
+    });
+
+    return lendPeak;
   }
 
   static ImportObject(): { loan: Amortization; deposits: DepositRecords } {

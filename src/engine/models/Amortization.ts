@@ -1806,6 +1806,7 @@ export class Amortization {
         loanAmount: this.totalLoanAmount.getValue(),
         originationFee: this.originationFee.getValue(),
         terms: payments,
+        startDate: DateUtil.normalizeDateToJsDate(this.startDate),
       },
       10
     );

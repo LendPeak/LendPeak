@@ -166,19 +166,19 @@ export class DemoC7 {
         }),
         new DepositRecord({
           amount: 956.01,
-          effectiveDate: today.minus(3, ChronoUnit.MONTHS).plusDays(10),
+          effectiveDate: today.minus(3, ChronoUnit.MONTHS).plusDays(9),
           id: "DEPOSIT-C07-21",
           currency: "USD",
         }),
         new DepositRecord({
           amount: 956.01,
-          effectiveDate: today.minus(2, ChronoUnit.MONTHS).plusDays(10),
+          effectiveDate: today.minus(2, ChronoUnit.MONTHS).plusDays(9),
           id: "DEPOSIT-C07-22",
           currency: "USD",
         }),
         new DepositRecord({
           amount: 956.01,
-          effectiveDate: today.minus(1, ChronoUnit.MONTHS).plusDays(10),
+          effectiveDate: today.minus(1, ChronoUnit.MONTHS).plusDays(9),
           id: "DEPOSIT-C07-23",
           currency: "USD",
         }),

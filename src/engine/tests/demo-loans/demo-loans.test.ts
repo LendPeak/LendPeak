@@ -8,6 +8,7 @@ import {
   DemoC7,
   DemoC8,
   DemoC10,
+  DemoA2,
 } from '../../models/LendPeak/DemoLoans';
 import { LocalDate, ChronoUnit } from '@js-joda/core';
 import { Currency } from '../../utils/Currency';
@@ -292,6 +293,25 @@ describe('Demo Loans', () => {
       const finalDeposit = loan.deposits.all[17]; // 18th month, 0-based index
       expect(finalDeposit.amount.toNumber()).toBeGreaterThan(loan.deposits.all[16].amount.toNumber());
       expect(loan.loan.calculateAmortizationPlan().lastEntry.endBalance.isZero()).toBe(true);
+    });
+  });
+
+  describe('DemoA2', () => {
+    const loan = DemoA2.ImportObject();
+
+    it('should accrue interest and defer it during skipped terms', () => {
+      const schedule = loan.loan.calculateAmortizationPlan();
+      for (let i = 3; i <= 5; i++) {
+        expect(schedule.entries[i].unbilledTotalDeferredInterest.toNumber()).toBeGreaterThan(0);
+      }
+    });
+
+    it('should show zero payments but positive accrued interest for terms 4-6', () => {
+      const schedule = loan.loan.calculateAmortizationPlan();
+      for (let i = 3; i <= 5; i++) {
+        expect(schedule.entries[i].totalPayment.toNumber()).toBe(0);
+        expect(schedule.entries[i].accruedInterestForPeriod.toNumber()).toBeGreaterThan(0);
+      }
     });
   });
 });

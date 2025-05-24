@@ -12,6 +12,7 @@ import {
   DemoC7,
   DemoC8,
   DemoC10,
+  DemoA2,
 } from 'lendpeak-engine/models/LendPeak/DemoLoans';
 
 export interface BuiltDemoLoan {
@@ -38,7 +39,7 @@ export const DemoLoanFactory: Record<string, () => BuiltDemoLoan> = {
   'DEMO-C10': DemoC10.ImportObject,
 
   'DEMO-A01': notImplemented('DEMO-A01'),
-  'DEMO-A02': notImplemented('DEMO-A02'),
+  'DEMO-A02': DemoA2.ImportObject,
   'DEMO-A03': notImplemented('DEMO-A03'),
   'DEMO-A04': notImplemented('DEMO-A04'),
   'DEMO-A05': notImplemented('DEMO-A05'),

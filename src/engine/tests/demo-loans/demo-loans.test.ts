@@ -9,6 +9,7 @@ import {
   DemoC8,
   DemoC10,
   DemoA5,
+  DemoA2,
 } from '../../models/LendPeak/DemoLoans';
 import { LocalDate, ChronoUnit } from '@js-joda/core';
 import { Currency } from '../../utils/Currency';
@@ -313,6 +314,22 @@ describe('Demo Loans', () => {
     it('should defer fees when refund exceeds payment', () => {
       const schedule = loan.loan.calculateAmortizationPlan();
       expect(schedule.entries[6].unbilledTotalDeferredFees.toNumber()).toBeGreaterThan(0);
+  describe('DemoA2', () => {
+    const loan = DemoA2.ImportObject();
+
+    it('should accrue interest and defer it during skipped terms', () => {
+      const schedule = loan.loan.calculateAmortizationPlan();
+      for (let i = 3; i <= 5; i++) {
+        expect(schedule.entries[i].unbilledTotalDeferredInterest.toNumber()).toBeGreaterThan(0);
+      }
+    });
+
+    it('should show zero payments but positive accrued interest for terms 4-6', () => {
+      const schedule = loan.loan.calculateAmortizationPlan();
+      for (let i = 3; i <= 5; i++) {
+        expect(schedule.entries[i].totalPayment.toNumber()).toBe(0);
+        expect(schedule.entries[i].accruedInterestForPeriod.toNumber()).toBeGreaterThan(0);
+      }
     });
   });
 });

@@ -35,6 +35,18 @@ export class Fees {
     return this._fees;
   }
 
+  get active(): Fee[] {
+    return this._fees.filter((f) => f.active);
+  }
+
+  deactivateAll() {
+    this._fees.forEach((f) => (f.active = false));
+  }
+
+  activateAll() {
+    this._fees.forEach((f) => (f.active = true));
+  }
+
   addFee(fee: Fee) {
     // check if fee is of correct type otherwise inflate
     if (!(fee instanceof Fee)) {

@@ -41,6 +41,22 @@ export class FeesPerTerm {
     return this.termFees.map((termFee) => termFee.json);
   }
 
+  updateModelValues() {
+    this.termFees.forEach((tf) => tf.fees.forEach((f) => f.updateModelValues()));
+  }
+
+  updateJsValues() {
+    this.termFees.forEach((tf) => tf.fees.forEach((f) => f.updateJsValues()));
+  }
+
+  activateAll() {
+    this.termFees.forEach((tf) => tf.fees.forEach((f) => (f.active = true)));
+  }
+
+  deactivateAll() {
+    this.termFees.forEach((tf) => tf.fees.forEach((f) => (f.active = false)));
+  }
+
   get length() {
     return this.termFees.length;
   }

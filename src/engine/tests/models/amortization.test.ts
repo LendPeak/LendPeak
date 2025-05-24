@@ -5,6 +5,8 @@ import { ChangePaymentDate } from "@models/ChangePaymentDate";
 import { ChangePaymentDates } from "@models/ChangePaymentDates";
 import { CalendarType } from "@models/Calendar";
 import { TermCalendars } from "@models/TermCalendars";
+import { TermExtensions } from "@models/TermExtensions";
+import { TermExtension } from "@models/TermExtension";
 import Decimal from "decimal.js";
 import { DateUtil } from "../../utils/DateUtil";
 
@@ -160,5 +162,31 @@ describe("Amortization", () => {
     });
     const schedule = amortization.calculateAmortizationPlan();
     expect(schedule.length).toBe(12);
+  });
+
+  it("should compute actual term including term extensions", () => {
+    const amortization = new Amortization({
+      loanAmount: Currency.of(1000),
+      annualInterestRate: new Decimal(0.05),
+      term: 12,
+      startDate: DateUtil.normalizeDate("2023-01-01"),
+      termExtensions: new TermExtensions([
+        new TermExtension({ termChange: 2 }),
+        new TermExtension({ termChange: -1 }),
+      ]),
+    });
+    expect(amortization.actualTerm).toBe(13);
+  });
+
+  it("should extend amortization schedule when term extensions are active", () => {
+    const amortization = new Amortization({
+      loanAmount: Currency.of(1000),
+      annualInterestRate: new Decimal(0.05),
+      term: 12,
+      startDate: DateUtil.normalizeDate("2023-01-01"),
+      termExtensions: new TermExtensions([new TermExtension({ termChange: 4 })]),
+    });
+    const schedule = amortization.calculateAmortizationPlan();
+    expect(schedule.length).toBe(16);
   });
 });

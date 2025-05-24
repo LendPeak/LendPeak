@@ -326,6 +326,38 @@
           </div>
         </p-accordion-content>
       </p-accordion-panel>
+
+      <!-- Term Extensions -->
+      <p-accordion-panel value="termExtensions">
+        <p-accordion-header>
+          <div>
+            <p-badge
+              class="mr-4"
+              badgeSize="xlarge"
+              [severity]="lendPeak.amortization.termExtensions.length > 0 ? 'contrast' : 'secondary'"
+              [value]="lendPeak.amortization.termExtensions.length"
+            ></p-badge>
+            Term Extensions
+          </div>
+        </p-accordion-header>
+        <p-accordion-content>
+          <!-- Placeholder table -->
+          <p-table [value]="lendPeak.amortization.termExtensions.all">
+            <ng-template pTemplate="header">
+              <tr>
+                <th>Change</th>
+                <th>Date</th>
+              </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-row>
+              <tr>
+                <td>{{ row.termChange }}</td>
+                <td>{{ row.date.toString() }}</td>
+              </tr>
+            </ng-template>
+          </p-table>
+        </p-accordion-content>
+      </p-accordion-panel>
       <p-accordion-panel value="termCalendarOverride">
         <p-accordion-header>
           <div>

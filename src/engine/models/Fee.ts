@@ -21,6 +21,7 @@ export interface FeeParams {
   basedOn?: FeeBasedOn; // What the percentage is applied to
   description?: string;
   metadata?: any;
+  active?: boolean;
 }
 
 export class Fee {
@@ -35,6 +36,8 @@ export class Fee {
   private _metadata?: any;
   jsAmount?: number;
   jsPercentage?: number;
+  private _active = true;
+  jsActive = true;
 
   constructor(params: FeeParams) {
     this.id = Math.random().toString(36).substr(2, 9);
@@ -53,6 +56,9 @@ export class Fee {
     }
     if (params.metadata) {
       this.metadata = params.metadata;
+    }
+    if (params.active !== undefined) {
+      this.active = params.active;
     }
   }
 
@@ -118,6 +124,15 @@ export class Fee {
     this._metadata = value;
   }
 
+  get active(): boolean {
+    return this._active;
+  }
+
+  set active(value: boolean) {
+    this._active = value;
+    this.jsActive = value;
+  }
+
   updateModelValues(): void {
     if (this.jsAmount !== undefined) {
       this.amount = this.jsAmount;
@@ -130,11 +145,14 @@ export class Fee {
     } else {
       this.percentage = undefined;
     }
+
+    this.active = this.jsActive;
   }
 
   updateJsValues(): void {
     this.jsAmount = this.amount?.toNumber();
     this.jsPercentage = this.percentage?.toNumber();
+    this.jsActive = this.active;
   }
 
   get json(): FeeParams {
@@ -145,6 +163,7 @@ export class Fee {
       basedOn: this.basedOn,
       description: this.description,
       metadata: this.metadata,
+      active: this.active,
     };
   }
 }

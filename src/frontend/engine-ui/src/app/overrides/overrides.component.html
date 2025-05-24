@@ -2035,97 +2035,150 @@
         >
         <p-accordion-content>
           <div class="p-fluid">
-            <table
+            <p-table
+              [value]="lendPeak!.amortization.feesForAllTerms.all"
+              dataKey="id"
+              editMode="row"
+              class="p-datatable p-component"
               *ngIf="lendPeak.amortization.feesForAllTerms.length > 0"
-              class="p-datatable p-component p-datatable-responsive"
             >
-              <thead>
+              <ng-template #header>
                 <tr>
+                  <th style="width:3rem">
+                    <p-toggleswitch
+                      [(ngModel)]="ffaMasterActive"
+                      (ngModelChange)="toggleAllFeesForAllTerms($event)"
+                    ></p-toggleswitch>
+                  </th>
                   <th>Type</th>
                   <th>Amount / Percentage</th>
                   <th>Based On</th>
                   <th>Description</th>
-                  <th>Actions</th>
+                  <th style="width:9rem">Actions</th>
                 </tr>
-              </thead>
-              <tbody>
-                <tr
-                  *ngFor="
-                    let fee of lendPeak.amortization.feesForAllTerms.all;
-                    let i = index
-                  "
-                >
-                  <!-- Fee Type -->
+              </ng-template>
+              <ng-template pTemplate="body" let-row let-editing="editing" let-ri="rowIndex">
+                <tr [pEditableRow]="row" [ngClass]="{ 'opacity-40': !row.active }">
                   <td>
-                    <p-select
-                      [(ngModel)]="fee.type"
-                      [options]="[
-                        { label: 'Fixed', value: 'fixed' },
-                        { label: 'Percentage', value: 'percentage' },
-                      ]"
+                    <p-toggleswitch
+                      [(ngModel)]="row.active"
                       (ngModelChange)="onInputChange($event)"
-                    ></p-select>
+                    ></p-toggleswitch>
                   </td>
-                  <!-- Amount or Percentage -->
-                  <td>
-                    <ng-container *ngIf="fee.type === 'fixed'">
-                      <p-inputNumber
-                        inputId="feeAmountCurrency"
-                        [(ngModel)]="fee.jsAmount"
-                        mode="currency"
-                        currency="USD"
-                        locale="en-US"
-                        (ngModelChange)="onInputChange($event)"
-                      ></p-inputNumber>
-                    </ng-container>
-                    <ng-container *ngIf="fee.type === 'percentage'">
-                      <p-inputNumber
-                        inputId="feeAmountPercentage"
-                        [(ngModel)]="fee.jsPercentage"
-                        mode="decimal"
-                        minFractionDigits="2"
-                        suffix="%"
-                        (ngModelChange)="onInputChange($event)"
-                      ></p-inputNumber>
-                    </ng-container>
+                  <td pEditableColumn>
+                    <p-cellEditor>
+                      <ng-template #output>{{ row.type }}</ng-template>
+                      <ng-template #input>
+                        <p-select
+                          [(ngModel)]="row.type"
+                          [options]="[
+                            { label: 'Fixed', value: 'fixed' },
+                            { label: 'Percentage', value: 'percentage' },
+                          ]"
+                        ></p-select>
+                      </ng-template>
+                    </p-cellEditor>
                   </td>
-                  <!-- Based On -->
-                  <td>
-                    <p-select
-                      inputId="feeBasedOn"
-                      [disabled]="fee.type !== 'percentage'"
-                      [(ngModel)]="fee.basedOn"
-                      [options]="[
-                        { label: 'Interest', value: 'interest' },
-                        { label: 'Principal', value: 'principal' },
-                        { label: 'Total Payment', value: 'totalPayment' },
-                      ]"
-                      (ngModelChange)="onInputChange($event)"
-                    ></p-select>
+                  <td pEditableColumn>
+                    <p-cellEditor>
+                      <ng-template #output>
+                        {{
+                          row.type === 'fixed'
+                            ? (row.jsAmount | number: '1.2-2')
+                            : (row.jsPercentage | percent: '1.2-2')
+                        }}
+                      </ng-template>
+                      <ng-template #input>
+                        <ng-container *ngIf="row.type === 'fixed'">
+                          <p-inputNumber
+                            [(ngModel)]="row.jsAmount"
+                            mode="currency"
+                            currency="USD"
+                            locale="en-US"
+                          ></p-inputNumber>
+                        </ng-container>
+                        <ng-container *ngIf="row.type === 'percentage'">
+                          <p-inputNumber
+                            [(ngModel)]="row.jsPercentage"
+                            mode="decimal"
+                            minFractionDigits="2"
+                            suffix="%"
+                          ></p-inputNumber>
+                        </ng-container>
+                      </ng-template>
+                    </p-cellEditor>
                   </td>
-                  <!-- Description -->
-                  <td>
-                    <input
-                      id="feeDescription"
-                      name="feeDescription"
-                      pInputText
-                      type="text"
-                      [(ngModel)]="fee.description"
-                      (ngModelChange)="onInputChange($event)"
-                    />
+                  <td pEditableColumn>
+                    <p-cellEditor>
+                      <ng-template #output>{{ row.basedOn }}</ng-template>
+                      <ng-template #input>
+                        <p-select
+                          [disabled]="row.type !== 'percentage'"
+                          [(ngModel)]="row.basedOn"
+                          [options]="[
+                            { label: 'Interest', value: 'interest' },
+                            { label: 'Principal', value: 'principal' },
+                            { label: 'Total Payment', value: 'totalPayment' },
+                          ]"
+                        ></p-select>
+                      </ng-template>
+                    </p-cellEditor>
                   </td>
-                  <!-- Remove Button -->
-                  <td>
-                    <p-button
-                      icon="pi pi-trash"
-                      class="p-button-rounded"
-                      severity="danger"
-                      (click)="removeFeeForAllTerms(i)"
-                    ></p-button>
+                  <td pEditableColumn>
+                    <p-cellEditor>
+                      <ng-template #output>{{ row.description }}</ng-template>
+                      <ng-template #input>
+                        <input pInputText [(ngModel)]="row.description" />
+                      </ng-template>
+                    </p-cellEditor>
+                  </td>
+                  <td class="text-center" style="width:9rem">
+                    <div class="flex items-center justify-center gap-2">
+                      <button
+                        *ngIf="!editing"
+                        pButton
+                        pRipple
+                        text
+                        rounded
+                        severity="secondary"
+                        pInitEditableRow
+                        icon="pi pi-pencil"
+                        (click)=""
+                      ></button>
+                      <button
+                        *ngIf="!editing"
+                        pButton
+                        pRipple
+                        text
+                        rounded
+                        severity="danger"
+                        icon="pi pi-trash"
+                        (click)="removeFeeForAllTerms(ri)"
+                      ></button>
+                      <button
+                        *ngIf="editing"
+                        pButton
+                        pRipple
+                        rounded
+                        severity="success"
+                        pSaveEditableRow
+                        icon="pi pi-check"
+                        (click)=""
+                      ></button>
+                      <button
+                        *ngIf="editing"
+                        pButton
+                        pRipple
+                        rounded
+                        severity="secondary"
+                        pCancelEditableRow
+                        icon="pi pi-times"
+                      ></button>
+                    </div>
                   </td>
                 </tr>
-              </tbody>
-            </table>
+              </ng-template>
+            </p-table>
             <p-divider></p-divider>
             <div class="p-mt-2">
               <p-button
@@ -2157,107 +2210,154 @@
         >
         <p-accordion-content>
           <div class="p-fluid">
-            <table
+            <p-table
+              [value]="lendPeak!.amortization.feesPerTerm.flatFeesPerTerm"
+              dataKey="fee.id"
+              editMode="row"
               class="p-datatable p-component"
               *ngIf="lendPeak.amortization.feesPerTerm.length > 0"
             >
-              <thead>
+              <ng-template #header>
                 <tr>
+                  <th style="width:3rem">
+                    <p-toggleswitch
+                      [(ngModel)]="fptMasterActive"
+                      (ngModelChange)="toggleAllFeesPerTerm($event)"
+                    ></p-toggleswitch>
+                  </th>
                   <th>Term Number</th>
                   <th>Type</th>
                   <th>Amount / Percentage</th>
                   <th>Based On</th>
                   <th>Description</th>
-                  <th>Actions</th>
+                  <th style="width:9rem">Actions</th>
                 </tr>
-              </thead>
-              <tbody>
-                <tr
-                  *ngFor="
-                    let termFee of lendPeak.amortization.feesPerTerm
-                      .flatFeesPerTerm;
-                    let i = index
-                  "
-                >
-                  <!-- Term Number -->
+              </ng-template>
+              <ng-template pTemplate="body" let-row let-editing="editing" let-ri="rowIndex">
+                <tr [pEditableRow]="row" [ngClass]="{ 'opacity-40': !row.fee.active }">
                   <td>
-                    <p-inputNumber
-                      inputId="feeTermNumber"
-                      [(ngModel)]="termFee.termNumber"
-                      (ngModelChange)="onInputChange($event)"
-                    ></p-inputNumber>
+                    <p-toggleswitch [(ngModel)]="row.fee.active" (ngModelChange)="onInputChange($event)"></p-toggleswitch>
                   </td>
-                  <!-- Fee Type -->
-                  <td>
-                    <p-select
-                      inputId="feeTermType"
-                      [(ngModel)]="termFee.fee.type"
-                      [options]="[
-                        { label: 'Fixed', value: 'fixed' },
-                        { label: 'Percentage', value: 'percentage' },
-                      ]"
-                      (ngModelChange)="onInputChange($event)"
-                    ></p-select>
+                  <td pEditableColumn>
+                    <p-cellEditor>
+                      <ng-template #output>{{ row.termNumber }}</ng-template>
+                      <ng-template #input>
+                        <p-inputNumber [(ngModel)]="row.termNumber"></p-inputNumber>
+                      </ng-template>
+                    </p-cellEditor>
                   </td>
-                  <!-- Amount or Percentage -->
-                  <td>
-                    <ng-container *ngIf="termFee.fee.type === 'fixed'">
-                      <p-inputNumber
-                        inputId="feeTermAmountCurrency"
-                        [(ngModel)]="termFee.fee.jsAmount"
-                        mode="currency"
-                        currency="USD"
-                        locale="en-US"
-                        (ngModelChange)="onInputChange($event)"
-                      ></p-inputNumber>
-                    </ng-container>
-                    <ng-container *ngIf="termFee.fee.type === 'percentage'">
-                      <p-inputNumber
-                        inputId="feeTermAmountPercentage"
-                        [(ngModel)]="termFee.fee.jsPercentage"
-                        mode="decimal"
-                        minFractionDigits="2"
-                        suffix="%"
-                        (ngModelChange)="onInputChange($event)"
-                      ></p-inputNumber>
-                    </ng-container>
+                  <td pEditableColumn>
+                    <p-cellEditor>
+                      <ng-template #output>{{ row.fee.type }}</ng-template>
+                      <ng-template #input>
+                        <p-select
+                          [(ngModel)]="row.fee.type"
+                          [options]="[
+                            { label: 'Fixed', value: 'fixed' },
+                            { label: 'Percentage', value: 'percentage' },
+                          ]"
+                        ></p-select>
+                      </ng-template>
+                    </p-cellEditor>
                   </td>
-                  <!-- Based On -->
-                  <td>
-                    <p-select
-                      inputId="feeTermBasedOn"
-                      [disabled]="termFee.fee.type !== 'percentage'"
-                      [(ngModel)]="termFee.fee.basedOn"
-                      [options]="[
-                        { label: 'Interest', value: 'interest' },
-                        { label: 'Principal', value: 'principal' },
-                        { label: 'Total Payment', value: 'totalPayment' },
-                      ]"
-                      (ngModelChange)="onInputChange($event)"
-                    ></p-select>
+                  <td pEditableColumn>
+                    <p-cellEditor>
+                      <ng-template #output>
+                        {{
+                          row.fee.type === 'fixed'
+                            ? (row.fee.jsAmount | number: '1.2-2')
+                            : (row.fee.jsPercentage | percent: '1.2-2')
+                        }}
+                      </ng-template>
+                      <ng-template #input>
+                        <ng-container *ngIf="row.fee.type === 'fixed'">
+                          <p-inputNumber
+                            [(ngModel)]="row.fee.jsAmount"
+                            mode="currency"
+                            currency="USD"
+                            locale="en-US"
+                          ></p-inputNumber>
+                        </ng-container>
+                        <ng-container *ngIf="row.fee.type === 'percentage'">
+                          <p-inputNumber
+                            [(ngModel)]="row.fee.jsPercentage"
+                            mode="decimal"
+                            minFractionDigits="2"
+                            suffix="%"
+                          ></p-inputNumber>
+                        </ng-container>
+                      </ng-template>
+                    </p-cellEditor>
                   </td>
-                  <!-- Description -->
-                  <td>
-                    <input
-                      id="feeTermDescription"
-                      pInputText
-                      type="text"
-                      [(ngModel)]="termFee.fee.description"
-                      (ngModelChange)="onInputChange($event)"
-                    />
+                  <td pEditableColumn>
+                    <p-cellEditor>
+                      <ng-template #output>{{ row.fee.basedOn }}</ng-template>
+                      <ng-template #input>
+                        <p-select
+                          [disabled]="row.fee.type !== 'percentage'"
+                          [(ngModel)]="row.fee.basedOn"
+                          [options]="[
+                            { label: 'Interest', value: 'interest' },
+                            { label: 'Principal', value: 'principal' },
+                            { label: 'Total Payment', value: 'totalPayment' },
+                          ]"
+                        ></p-select>
+                      </ng-template>
+                    </p-cellEditor>
                   </td>
-                  <!-- Remove Button -->
-                  <td>
-                    <p-button
-                      icon="pi pi-trash"
-                      class="p-button-rounded"
-                      severity="danger"
-                      (click)="removeFeePerTerm(i)"
-                    ></p-button>
+                  <td pEditableColumn>
+                    <p-cellEditor>
+                      <ng-template #output>{{ row.fee.description }}</ng-template>
+                      <ng-template #input>
+                        <input pInputText [(ngModel)]="row.fee.description" />
+                      </ng-template>
+                    </p-cellEditor>
+                  </td>
+                  <td class="text-center" style="width:9rem">
+                    <div class="flex items-center justify-center gap-2">
+                      <button
+                        *ngIf="!editing"
+                        pButton
+                        pRipple
+                        text
+                        rounded
+                        severity="secondary"
+                        pInitEditableRow
+                        icon="pi pi-pencil"
+                      ></button>
+                      <button
+                        *ngIf="!editing"
+                        pButton
+                        pRipple
+                        text
+                        rounded
+                        severity="danger"
+                        icon="pi pi-trash"
+                        (click)="removeFeePerTerm(ri)"
+                      ></button>
+                      <button
+                        *ngIf="editing"
+                        pButton
+                        pRipple
+                        rounded
+                        severity="success"
+                        pSaveEditableRow
+                        icon="pi pi-check"
+                      ></button>
+                      <button
+                        *ngIf="editing"
+                        pButton
+                        pRipple
+                        rounded
+                        severity="secondary"
+                        pCancelEditableRow
+                        icon="pi pi-times"
+                      ></button>
+                    </div>
                   </td>
                 </tr>
-              </tbody>
-            </table>
+              </ng-template>
+            </p-table>
             <p-divider></p-divider>
             <div class="p-mt-2">
               <p-button

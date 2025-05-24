@@ -254,6 +254,24 @@ export class OverridesComponent implements OnInit {
     this.toggleAllTermPaymentAmountOverrides({ checked: val });
   }
 
+  get ffaMasterActive(): boolean {
+    if (!this.lendPeak) return true;
+    return this.lendPeak.amortization.feesForAllTerms.all.every((f) => f.active);
+  }
+  set ffaMasterActive(val: boolean) {
+    this.toggleAllFeesForAllTerms({ checked: val });
+  }
+
+  get fptMasterActive(): boolean {
+    if (!this.lendPeak) return true;
+    return this.lendPeak.amortization.feesPerTerm.all.every((tf) =>
+      tf.fees.every((f) => f.active),
+    );
+  }
+  set fptMasterActive(val: boolean) {
+    this.toggleAllFeesPerTerm({ checked: val });
+  }
+
   /* ✏️ Edit */
   onTpaEditInit(row: TermPaymentAmount) {
     this.tpaSnapshots[row.jsTermNumber] = row.json; // deep clone
@@ -934,6 +952,20 @@ export class OverridesComponent implements OnInit {
     this.onInputChange(true);
   }
 
+  toggleAllFeesForAllTerms(ev: any): void {
+    if (!this.lendPeak) return;
+    const ffa = this.lendPeak.amortization.feesForAllTerms;
+    ev.checked ? ffa.activateAll() : ffa.deactivateAll();
+    this.onInputChange(true);
+  }
+
+  toggleAllFeesPerTerm(ev: any): void {
+    if (!this.lendPeak) return;
+    const fpt = this.lendPeak.amortization.feesPerTerm;
+    ev.checked ? fpt.activateAll() : fpt.deactivateAll();
+    this.onInputChange(true);
+  }
+
   // Methods related to Pre Bill Day Term
   addPrebillDayTermRow() {
     if (!this.lendPeak) {
@@ -1108,6 +1140,7 @@ export class OverridesComponent implements OnInit {
         type: 'fixed',
         amount: 0,
         description: '',
+        active: true,
       }),
     );
 
@@ -1146,7 +1179,7 @@ export class OverridesComponent implements OnInit {
     feesPerTerm.addFee(
       new TermFees({
         termNumber: nextTerm,
-        fees: [new Fee({ type: 'fixed', amount: 0, description: '' })],
+        fees: [new Fee({ type: 'fixed', amount: 0, description: '', active: true })],
       }),
     );
 

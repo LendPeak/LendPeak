@@ -11,6 +11,13 @@ import {
   DemoA1,
   DemoA5,
   DemoA2,
+  DemoA3,
+  DemoA4,
+  DemoA6,
+  DemoA7,
+  DemoA8,
+  DemoA9,
+  DemoA10,
 } from '../../models/LendPeak/DemoLoans';
 import { LocalDate, ChronoUnit } from '@js-joda/core';
 import { Currency } from '../../utils/Currency';
@@ -356,4 +363,53 @@ describe('Demo Loans', () => {
       }
     });
   });
+describe('DemoA3', () => {
+  const loan = DemoA3.ImportObject();
+  it('should have id DEMO-A03', () => {
+    expect(loan.loan.id).toBe('DEMO-A03');
+  });
 });
+
+describe('DemoA4', () => {
+  const loan = DemoA4.ImportObject();
+  it('should have id DEMO-A04', () => {
+    expect(loan.loan.id).toBe('DEMO-A04');
+  });
+});
+
+describe('DemoA6', () => {
+  const loan = DemoA6.ImportObject();
+  it('should have id DEMO-A06', () => {
+    expect(loan.loan.id).toBe('DEMO-A06');
+  });
+});
+
+describe('DemoA7', () => {
+  const loan = DemoA7.ImportObject();
+  it('should have id DEMO-A07', () => {
+    expect(loan.loan.id).toBe('DEMO-A07');
+  });
+});
+
+describe('DemoA8', () => {
+  const loan = DemoA8.ImportObject();
+  it('should have id DEMO-A08', () => {
+    expect(loan.loan.id).toBe('DEMO-A08');
+  });
+});
+
+describe('DemoA9', () => {
+  const loan = DemoA9.ImportObject();
+  it('should have id DEMO-A09', () => {
+    expect(loan.loan.id).toBe('DEMO-A09');
+  });
+});
+
+describe('DemoA10', () => {
+  const loan = DemoA10.ImportObject();
+  it('should have id DEMO-A10', () => {
+    expect(loan.loan.id).toBe('DEMO-A10');
+  });
+});
+});
+

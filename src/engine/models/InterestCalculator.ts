@@ -57,6 +57,9 @@ export class InterestCalculator {
       if (daysInAMonth === undefined) {
         throw new Error("Days in a month must be provided for MonthlyRateDividedByDaysInMonth calculation type.");
       }
+      if (daysInAMonth <= 0) {
+        throw new Error("Days in a month must be greater than zero");
+      }
       this.daysInAMonth = daysInAMonth;
     }
   }
@@ -219,6 +222,9 @@ export class InterestCalculator {
   calculateDailyInterestUsingMonthlyRateDividedByDaysInMonth(annualInterestRate: Decimal, customAnnualInterestRate?: Decimal): Decimal {
     if (this.daysInAMonth === undefined) {
       throw new Error("Days in a month must be defined.");
+    }
+    if (this.daysInAMonth <= 0) {
+      throw new Error("Days in a month must be greater than zero");
     }
     return new Decimal(annualInterestRate).dividedBy(12).dividedBy(this.daysInAMonth);
   }

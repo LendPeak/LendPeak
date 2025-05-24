@@ -18,6 +18,8 @@ import {
   DemoA8,
   DemoA9,
   DemoA10,
+  DemoA11,
+  DemoA12,
 } from '../../models/LendPeak/DemoLoans';
 import { LocalDate, ChronoUnit } from '@js-joda/core';
 import { Currency } from '../../utils/Currency';
@@ -242,9 +244,7 @@ describe('Demo Loans', () => {
       loan.deposits.all.forEach((deposit, index) => {
         const scheduleEntry = schedule.entries.find((e) => e.term === index + 1);
         if (scheduleEntry) {
-          const diff = Math.abs(
-            ChronoUnit.DAYS.between(scheduleEntry.periodEndDate, deposit.effectiveDate)
-          );
+          const diff = Math.abs(ChronoUnit.DAYS.between(scheduleEntry.periodEndDate, deposit.effectiveDate));
           expect(diff).toBeLessThanOrEqual(3);
         }
       });
@@ -327,9 +327,9 @@ describe('Demo Loans', () => {
     it('should exclude skipped terms from deposit count', () => {
       const expectedDeposits = 21; // 24 terms minus 3 skipped
       expect(loan.deposits.length).toBe(expectedDeposits);
-   });
+    });
   });
-    
+
   describe('DemoA5', () => {
     const loan = DemoA5.ImportObject();
 
@@ -344,7 +344,7 @@ describe('Demo Loans', () => {
     it('should defer fees when refund exceeds payment', () => {
       const schedule = loan.loan.calculateAmortizationPlan();
       expect(schedule.entries[6].unbilledTotalDeferredFees.toNumber()).toBeGreaterThan(0);
-      });
+    });
   });
   describe('DemoA2', () => {
     const loan = DemoA2.ImportObject();
@@ -364,53 +364,78 @@ describe('Demo Loans', () => {
       }
     });
   });
-describe('DemoA3', () => {
-  const loan = DemoA3.ImportObject();
-  it('should have id DEMO-A03', () => {
-    expect(loan.loan.id).toBe('DEMO-A03');
+  describe('DemoA3', () => {
+    const loan = DemoA3.ImportObject();
+    it('should have id DEMO-A03', () => {
+      expect(loan.loan.id).toBe('DEMO-A03');
+    });
+  });
+
+  describe('DemoA4', () => {
+    const loan = DemoA4.ImportObject();
+    it('should have id DEMO-A04', () => {
+      expect(loan.loan.id).toBe('DEMO-A04');
+    });
+  });
+
+  describe('DemoA6', () => {
+    const loan = DemoA6.ImportObject();
+    it('should have id DEMO-A06', () => {
+      expect(loan.loan.id).toBe('DEMO-A06');
+    });
+  });
+
+  describe('DemoA7', () => {
+    const loan = DemoA7.ImportObject();
+    it('should have id DEMO-A07', () => {
+      expect(loan.loan.id).toBe('DEMO-A07');
+    });
+  });
+
+  describe('DemoA8', () => {
+    const loan = DemoA8.ImportObject();
+    it('should have id DEMO-A08', () => {
+      expect(loan.loan.id).toBe('DEMO-A08');
+    });
+  });
+
+  describe('DemoA9', () => {
+    const loan = DemoA9.ImportObject();
+    it('should have id DEMO-A09', () => {
+      expect(loan.loan.id).toBe('DEMO-A09');
+    });
+  });
+
+  describe('DemoA10', () => {
+    const loan = DemoA10.ImportObject();
+    it('should have id DEMO-A10', () => {
+      expect(loan.loan.id).toBe('DEMO-A10');
+    });
+  });
+
+  describe('DemoA11', () => {
+    const loan = DemoA11.ImportObject();
+    it('should have id DEMO-A11', () => {
+      expect(loan.loan.id).toBe('DEMO-A11');
+    });
+    it('should have a term extension and correct schedule length', () => {
+      expect(loan.loan.termExtensions.length).toBeGreaterThan(0);
+      expect(loan.loan.termExtensions.active[0].quantity).toBe(3);
+      expect(loan.loan.actualTerm).toBe(27); // 24 + 3
+      expect(loan.loan.calculateAmortizationPlan().length).toBe(27);
+    });
+  });
+
+  describe('DemoA12', () => {
+    const loan = DemoA12.ImportObject();
+    it('should have id DEMO-A12', () => {
+      expect(loan.loan.id).toBe('DEMO-A12');
+    });
+    it('should have a term extension and correct schedule length', () => {
+      expect(loan.loan.termExtensions.length).toBeGreaterThan(0);
+      expect(loan.loan.termExtensions.active[0].quantity).toBe(3);
+      expect(loan.loan.actualTerm).toBe(15); // 12 + 3
+      expect(loan.loan.calculateAmortizationPlan().length).toBe(15);
+    });
   });
 });
-
-describe('DemoA4', () => {
-  const loan = DemoA4.ImportObject();
-  it('should have id DEMO-A04', () => {
-    expect(loan.loan.id).toBe('DEMO-A04');
-  });
-});
-
-describe('DemoA6', () => {
-  const loan = DemoA6.ImportObject();
-  it('should have id DEMO-A06', () => {
-    expect(loan.loan.id).toBe('DEMO-A06');
-  });
-});
-
-describe('DemoA7', () => {
-  const loan = DemoA7.ImportObject();
-  it('should have id DEMO-A07', () => {
-    expect(loan.loan.id).toBe('DEMO-A07');
-  });
-});
-
-describe('DemoA8', () => {
-  const loan = DemoA8.ImportObject();
-  it('should have id DEMO-A08', () => {
-    expect(loan.loan.id).toBe('DEMO-A08');
-  });
-});
-
-describe('DemoA9', () => {
-  const loan = DemoA9.ImportObject();
-  it('should have id DEMO-A09', () => {
-    expect(loan.loan.id).toBe('DEMO-A09');
-  });
-});
-
-describe('DemoA10', () => {
-  const loan = DemoA10.ImportObject();
-  it('should have id DEMO-A10', () => {
-    expect(loan.loan.id).toBe('DEMO-A10');
-  });
-});
-});
-

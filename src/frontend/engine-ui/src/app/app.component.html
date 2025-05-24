@@ -104,29 +104,6 @@
           severity="danger"
           value="Past Due {{ lendPeak.bills.summary.daysPastDue }} Days"
         ></p-tag>
-        <p-badge
-          *ngIf="lendPeak.summary.highlights.payments.hasAdhocRefunds"
-          [value]="
-            lendPeak.summary.highlights.payments.totalAdhocRefunds +
-            ' Ad-hoc Refund' +
-            (lendPeak.summary.highlights.payments.totalAdhocRefunds > 1 ? 's' : '')
-          "
-          severity="warn"
-          styleClass="ml-2"
-        />
-        <p-tag
-          *ngIf="lendPeak.summary.highlights.payments.hasRefunds"
-          class="ml-2"
-          [severity]="lendPeak.summary.highlights.payments.activeRefunds > 0 ? 'contrast' : 'secondary'"
-          [value]="
-            lendPeak.summary.highlights.payments.activeRefunds +
-            '/' +
-            lendPeak.summary.highlights.payments.totalRefunds +
-            ' Refunds'
-          "
-          pTooltip="Active / Total refund records"
-          tooltipPosition="top"
-        />
         <p-tag
           *ngIf="lendPeak.summary.highlights.billing.hasOpenBills"
           class="ml-2"
@@ -199,6 +176,13 @@
           class="ml-2"
           severity="info"
           value="Balance Modifications"
+        ></p-tag>
+
+        <p-tag
+          *ngIf="lendPeak.summary.highlights.status.hasTermExtension"
+          class="ml-2"
+          severity="info"
+          value="Term Extension"
         ></p-tag>
       </div>
     </div>
@@ -1573,7 +1557,7 @@
     [modal]="true"
     [closable]="true"
     (onHide)="closeDemoLoanBrowserDialog()"
-    [style]="{ width: '40vw' }"
+    [style]="{ width: '70vw' }"
   >
     <app-demo-loan-browser (selected)="onDemoLoanSelected($event)"></app-demo-loan-browser>
   </p-dialog>

@@ -75,4 +75,63 @@ describe("InterestCalculator", () => {
     expect(paymentSplit.interest.getRoundedValue().toNumber()).toBeCloseTo(424.66, 2);
     expect(paymentSplit.remainingDeferredInterest.getRoundedValue().toNumber()).toBe(0);
   });
+
+  describe("MonthlyRateDividedByDaysInMonth calculation type", () => {
+    it("should throw an error when daysInAMonth is zero", () => {
+      expect(() => {
+        new InterestCalculator(
+          annualInterestRate,
+          CalendarType.ACTUAL_ACTUAL,
+          "MonthlyRateDividedByDaysInMonth",
+          0 // Zero days in month
+        );
+      }).toThrow("Days in a month must be greater than zero");
+    });
+
+    it("should throw an error when daysInAMonth is negative", () => {
+      expect(() => {
+        new InterestCalculator(
+          annualInterestRate,
+          CalendarType.ACTUAL_ACTUAL,
+          "MonthlyRateDividedByDaysInMonth",
+          -30 // Negative days
+        );
+      }).toThrow("Days in a month must be greater than zero");
+    });
+
+    it("should throw an error when daysInAMonth is undefined for MonthlyRateDividedByDaysInMonth type", () => {
+      expect(() => {
+        new InterestCalculator(
+          annualInterestRate,
+          CalendarType.ACTUAL_ACTUAL,
+          "MonthlyRateDividedByDaysInMonth"
+          // daysInAMonth is undefined
+        );
+      }).toThrow("Days in a month must be provided for MonthlyRateDividedByDaysInMonth calculation type.");
+    });
+
+    it("should calculate correctly when daysInAMonth is valid", () => {
+      const calculator = new InterestCalculator(
+        annualInterestRate,
+        CalendarType.ACTUAL_ACTUAL,
+        "MonthlyRateDividedByDaysInMonth",
+        30 // Valid days in month
+      );
+      
+      const dailyInterest = calculator.calculateDailyInterest(principal);
+      // 100,000 * 0.05 / 12 / 30 = 13.89
+      expect(dailyInterest.getRoundedValue().toNumber()).toBeCloseTo(13.89, 2);
+    });
+
+    it("should handle calculateInterestForDays with zero daysInAMonth", () => {
+      expect(() => {
+        new InterestCalculator(
+          annualInterestRate,
+          CalendarType.ACTUAL_ACTUAL,
+          "MonthlyRateDividedByDaysInMonth",
+          0
+        );
+      }).toThrow("Days in a month must be greater than zero");
+    });
+  });
 });

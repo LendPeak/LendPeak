@@ -43,5 +43,47 @@ describe("DateUtil", () => {
 
       expect(normalizedDate.toString()).toBe("2028-04-18");
     });
+
+    describe("String parsing edge cases", () => {
+      it("should throw an error for empty string", () => {
+        expect(() => DateUtil.normalizeDate("")).toThrow("DateUtil received null or undefined date");
+      });
+
+      it("should throw an error for short date strings", () => {
+        expect(() => DateUtil.normalizeDate("2023")).toThrow("Date string too short, expected format YYYY-MM-DD");
+        expect(() => DateUtil.normalizeDate("2023-1")).toThrow("Date string too short, expected format YYYY-MM-DD");
+        expect(() => DateUtil.normalizeDate("2023-1-1")).toThrow("Date string too short, expected format YYYY-MM-DD");
+        expect(() => DateUtil.normalizeDate("23-01-01")).toThrow("Date string too short, expected format YYYY-MM-DD");
+      });
+
+      it("should handle date strings with extra content after YYYY-MM-DD", () => {
+        const normalizedDate = DateUtil.normalizeDate("2023-10-26T10:00:00Z");
+        expect(normalizedDate.toString()).toBe("2023-10-26");
+      });
+
+      it("should throw an error for invalid date format even with 10+ characters", () => {
+        expect(() => DateUtil.normalizeDate("not-a-date")).toThrow("Invalid date format");
+        expect(() => DateUtil.normalizeDate("2023/10/26")).toThrow("Invalid date format");
+        expect(() => DateUtil.normalizeDate("26-10-2023")).toThrow("Invalid date format");
+      });
+    });
+  });
+
+  describe("toIsoDateString", () => {
+    it("should handle short strings without throwing", () => {
+      expect(() => DateUtil.toIsoDateString("2023")).not.toThrow();
+      expect(DateUtil.toIsoDateString("2023")).toBe("2023");
+    });
+
+    it("should extract YYYY-MM-DD from longer strings", () => {
+      expect(DateUtil.toIsoDateString("2023-10-26T10:00:00Z")).toBe("2023-10-26");
+    });
+  });
+
+  describe("normalizeDateTime", () => {
+    it("should handle short date strings by throwing appropriate error", () => {
+      expect(() => DateUtil.normalizeDateTime("2023")).toThrow("Date string too short, expected format YYYY-MM-DD");
+      expect(() => DateUtil.normalizeDateTime("2023-1")).toThrow("Date string too short, expected format YYYY-MM-DD");
+    });
   });
 });

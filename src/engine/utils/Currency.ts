@@ -282,6 +282,18 @@ export class Currency {
   }
 
   divide(amount: number | string | Decimal | Currency): Currency {
+    // Check for division by zero
+    let divisor: Decimal;
+    if (amount instanceof Currency) {
+      divisor = amount.value;
+    } else {
+      divisor = new Decimal(amount);
+    }
+    
+    if (divisor.isZero()) {
+      throw new Error("Division by zero is not allowed");
+    }
+    
     if (amount instanceof Currency) {
       return Currency.of(this.value.dividedBy(amount.value));
     } else {

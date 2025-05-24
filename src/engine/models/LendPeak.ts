@@ -1,32 +1,32 @@
-import { AmortizationVersionManager } from "./AmortizationVersionManager";
-import { FinancialOpsVersionManager } from "./FinancialOpsVersionManager";
+import { AmortizationVersionManager } from './AmortizationVersionManager';
+import { FinancialOpsVersionManager } from './FinancialOpsVersionManager';
 
-import { Amortization, AmortizationParams } from "./Amortization";
-import { BalanceModifications } from "./Amortization/BalanceModifications";
-import { BalanceModification } from "./Amortization/BalanceModification";
+import { Amortization, AmortizationParams } from './Amortization';
+import { BalanceModifications } from './Amortization/BalanceModifications';
+import { BalanceModification } from './Amortization/BalanceModification';
 
-import { DepositRecords } from "./DepositRecords";
-import { DepositRecord, AdhocRefundMeta } from "./DepositRecord";
+import { DepositRecords } from './DepositRecords';
+import { DepositRecord, AdhocRefundMeta } from './DepositRecord';
 
-import { InterestCalculator, PerDiemCalculationType } from "./InterestCalculator";
+import { InterestCalculator, PerDiemCalculationType } from './InterestCalculator';
 
-import { Bills } from "./Bills";
-import { BillPaymentDetail } from "./Bill/BillPaymentDetail";
-import { BillGenerator } from "./BillGenerator";
-import { Currency } from "../utils/Currency";
+import { Bills } from './Bills';
+import { BillPaymentDetail } from './Bill/BillPaymentDetail';
+import { BillGenerator } from './BillGenerator';
+import { Currency } from '../utils/Currency';
 
-import { PaymentApplication } from "./PaymentApplication";
-import { PaymentApplicationResult } from "./PaymentApplication/PaymentApplicationResult";
-import { PaymentAllocationStrategyName, PaymentComponent } from "./PaymentApplication/Types";
-import { LocalDate, ZoneId, ChronoUnit } from "@js-joda/core";
+import { PaymentApplication } from './PaymentApplication';
+import { PaymentApplicationResult } from './PaymentApplication/PaymentApplicationResult';
+import { PaymentAllocationStrategyName, PaymentComponent } from './PaymentApplication/Types';
+import { LocalDate, ZoneId, ChronoUnit } from '@js-joda/core';
 
-import Decimal from "decimal.js";
-import isSameOrAfter from "dayjs/plugin/isSameOrAfter";
-import isSameOrBefore from "dayjs/plugin/isSameOrBefore";
-import isBetween from "dayjs/plugin/isBetween";
-import { AllocationStrategy } from "./PaymentApplication/AllocationStrategy";
-import { DateUtil } from "../utils/DateUtil";
-import { UsageDetail } from "./Bill/DepositRecord/UsageDetail";
+import Decimal from 'decimal.js';
+import isSameOrAfter from 'dayjs/plugin/isSameOrAfter';
+import isSameOrBefore from 'dayjs/plugin/isSameOrBefore';
+import isBetween from 'dayjs/plugin/isBetween';
+import { AllocationStrategy } from './PaymentApplication/AllocationStrategy';
+import { DateUtil } from '../utils/DateUtil';
+import { UsageDetail } from './Bill/DepositRecord/UsageDetail';
 
 export interface PayoffQuoteResult {
   duePrincipal: Currency;
@@ -45,8 +45,8 @@ export class LendPeak {
   _amortizationVersionManager?: AmortizationVersionManager;
   _financialOpsVersionManager?: FinancialOpsVersionManager;
 
-  _allocationStrategy: AllocationStrategy = PaymentApplication.getAllocationStrategyFromName("FIFO");
-  paymentPriority: PaymentComponent[] = ["interest", "fees", "principal"];
+  _allocationStrategy: AllocationStrategy = PaymentApplication.getAllocationStrategyFromName('FIFO');
+  paymentPriority: PaymentComponent[] = ['interest', 'fees', 'principal'];
 
   _balanceModificationChanged: boolean = false;
 
@@ -55,7 +55,7 @@ export class LendPeak {
   /** -------------------------------------------------
    *  Auto-close threshold: if the payoffQuote.dueTotal
    *  is ≤ this amount AND > 0, the engine will create
-   *  a synthetic “Auto Close” payment that zeros-out
+   *  a synthetic "Auto Close" payment that zeros-out
    *  the loan.
    *  ------------------------------------------------*/
   private _autoCloseThreshold: Currency = Currency.of(0.1);
@@ -106,7 +106,7 @@ export class LendPeak {
       this.paymentPriority = params.paymentPriority;
     }
 
-    if (typeof params.autoCloseThreshold !== "undefined") {
+    if (typeof params.autoCloseThreshold !== 'undefined') {
       this.autoCloseThreshold = params.autoCloseThreshold;
     }
 
@@ -137,7 +137,7 @@ export class LendPeak {
   }
 
   set allocationStrategy(value: AllocationStrategy | PaymentAllocationStrategyName) {
-    if (typeof value === "string") {
+    if (typeof value === 'string') {
       this._allocationStrategy = PaymentApplication.getAllocationStrategyFromName(value);
     } else {
       this._allocationStrategy = value;
@@ -187,7 +187,7 @@ export class LendPeak {
     }
 
     if (this._bills.all.length === 0) {
-      console.info("bills are being set to zero");
+      console.info('bills are being set to zero');
     }
   }
 
@@ -239,7 +239,7 @@ export class LendPeak {
   }
 
   calc() {
-    let previousVersion = ""; // empty → always enters the loop once
+    let previousVersion = ''; // empty → always enters the loop once
     let guard = 0; // safety to avoid infinite loops
     this.updateModelValues();
     this.cleanupBalanceModifications();
@@ -267,7 +267,7 @@ export class LendPeak {
    *  rebuild ad-hoc-refund BMs that are still relevant.
    * -----------------------------------------------------------------*/
   cleanupBalanceModifications() {
-    /** 0️⃣  Start by stripping out every system BM we can’t trust */
+    /** 0️⃣  Start by stripping out every system BM we can't trust */
     const removedSystemBmIds = new Set<string>();
     const survivorManualBMs = new BalanceModifications();
 
@@ -284,7 +284,9 @@ export class LendPeak {
       for (const dep of this.depositRecords.all) {
         /* drop usage-detail rows that pointed at a deleted BM */
         if (dep.usageDetails?.length) {
-          dep.usageDetails = dep.usageDetails.filter((u) => !removedSystemBmIds.has(u.balanceModification?.id as string));
+          dep.usageDetails = dep.usageDetails.filter(
+            (u) => !removedSystemBmIds.has(u.balanceModification?.id as string)
+          );
         }
 
         /* clear the memoised id on ad-hoc refund metadata */
@@ -350,7 +352,7 @@ export class LendPeak {
           id: `ADHOC_REFUND_BM_${dep.id}`,
           amount: wantAmt,
           date: wantDate,
-          type: "increase",
+          type: 'increase',
           description: `Ad-hoc refund ${dep.id}`,
           isSystemModification: true,
           metadata: { depositId: dep.id },
@@ -369,7 +371,7 @@ export class LendPeak {
     }
   }
   /* ────────────────────────────────────────────────────────────────────────────
-   *  Helper: one “normal” payment run (no auto-close decisions)
+   *  Helper: one "normal" payment run (no auto-close decisions)
    * ────────────────────────────────────────────────────────────────────────── */
   private runPaymentPipeline() {
     this.depositRecords.clearHistory();
@@ -393,7 +395,7 @@ export class LendPeak {
   /* ────────────────────────────────────────────────────────────────────────────
    *  MAIN: applyPayments()
    *         • handles ad-hoc refunds   (balance-impacting ↑ principal)
-   *         • handles auto-close rows  (synthetic “waiver” deposits)
+   *         • handles auto-close rows  (synthetic "waiver" deposits)
    *         • finally runs the payment engine
    * ────────────────────────────────────────────────────────────────────────── */
   applyPayments(): void {
@@ -411,7 +413,7 @@ export class LendPeak {
           id: `ADHOC_REFUND_BM_${d.id}`,
           amount: d.amount.abs(), // principal ↑
           date: d.effectiveDate,
-          type: "increase",
+          type: 'increase',
           description: `Ad-hoc refund ${d.id}`,
           isSystemModification: true, // <-- user cannot delete
           metadata: { depositId: d.id },
@@ -422,7 +424,7 @@ export class LendPeak {
         this.bills.regenerateBillsAfterDate(bm.date);
 
         meta.balanceModificationId = bm.id;
-        refundsTouched.push(d); // remember – we’ll re-attach usage rows
+        refundsTouched.push(d); // remember – we'll re-attach usage rows
       }
     }
 
@@ -452,11 +454,11 @@ export class LendPeak {
       /* need a new waiver amount */
       const newWaiver = new DepositRecord({
         amount: remainder,
-        currency: "USD",
+        currency: 'USD',
         effectiveDate: this.currentDate,
-        paymentMethod: "system",
-        depositor: "Auto Close",
-        metadata: { type: "auto_close", systemGenerated: true },
+        paymentMethod: 'system',
+        depositor: 'Auto Close',
+        metadata: { type: 'auto_close', systemGenerated: true },
         depositRecords: this.depositRecords,
       });
       newWaiver.id = `AUTO_CLOSE_${Date.now()}`;
@@ -470,7 +472,7 @@ export class LendPeak {
     /* =========================================================
      *  2)  RE-ATTACH helper UsageDetail rows for the refunds
      *      (run *after* the final payment pipeline so they
-     *       don’t get wiped by clearHistory())
+     *       don't get wiped by clearHistory())
      * =======================================================*/
     for (const d of refundsTouched) {
       const meta = d.metadata as AdhocRefundMeta;
@@ -483,7 +485,7 @@ export class LendPeak {
 
       d.addUsageDetail(
         new UsageDetail({
-          billId: "Ad-hoc Refund",
+          billId: 'Ad-hoc Refund',
           period: 0,
           billDueDate: d.effectiveDate,
           allocatedPrincipal: bm.amount,
@@ -579,7 +581,7 @@ export class LendPeak {
 
   static get DEFAULT_AMORTIZATION_PARAMS(): AmortizationParams {
     const defaultAmortizationParams: AmortizationParams = {
-      name: "Default Loan",
+      name: 'Default Loan',
 
       loanAmount: Currency.of(1000),
       originationFee: Currency.of(10),
@@ -692,14 +694,16 @@ export class LendPeak {
     let dueFees = billSummary.dueFees; // posted / due fees
     let dueTotal = duePrincipal.add(dueInterest).add(dueFees);
 
-    /* ── 2)  If we’re part-way through the last open Bill,
-            tack on additional accrued interest up to “today” ─────────── */
+    /* ── 2)  If we're part-way through the last open Bill,
+            tack on additional accrued interest up to "today" ─────────── */
     const lastOpenBill = this.bills.lastOpenBill;
 
     if (lastOpenBill && this.currentDate.isBefore(lastOpenBill.amortizationEntry.periodEndDate)) {
       /* If interest accrues from *day zero*, count the payoff date itself
        ⇒ use currentDate + 1 day when asking the amortization engine.   */
-      const interestSnapshotDate = this.amortization.interestAccruesFromDayZero ? this.currentDate.plusDays(1) : this.currentDate;
+      const interestSnapshotDate = this.amortization.interestAccruesFromDayZero
+        ? this.currentDate.plusDays(1)
+        : this.currentDate;
 
       const totalAccruedInterest = this.amortization.getAccruedInterestByDate(interestSnapshotDate);
 
@@ -714,7 +718,7 @@ export class LendPeak {
       }
     }
 
-    /* ── 3)  Unapplied deposits (they don’t change _due_ figures
+    /* ── 3)  Unapplied deposits (they don't change _due_ figures
             here, but are reported back to the caller) ────────────────── */
     const unusedAmountFromDeposis = this.depositRecords.unusedAmount;
     // If you want dueTotal to exclude unused deposits, uncomment:
@@ -797,6 +801,8 @@ export class LendPeak {
           hasOverpayment: this.hasOverpayment,
           isEarlyPayoff: this.isEarlyPayoff,
           isPastDue: this.bills.pastDue.length > 0,
+          hasTermExtension:
+            this.amortization.termExtensions.length > 0 && this.amortization.termExtensions.active.length > 0,
         },
         payments: {
           monthlyPayment: this.amortization.equitedMonthlyPayment,

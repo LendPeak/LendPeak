@@ -50,6 +50,41 @@ describe("Currency Class", () => {
     expect(result.getValue().toString()).toBe("25");
   });
 
+  describe("Division by zero handling", () => {
+    it("should throw an error when dividing by zero (number)", () => {
+      const amount = Currency.of(100);
+      expect(() => amount.divide(0)).toThrow("Division by zero is not allowed");
+    });
+
+    it("should throw an error when dividing by zero (string)", () => {
+      const amount = Currency.of(100);
+      expect(() => amount.divide("0")).toThrow("Division by zero is not allowed");
+    });
+
+    it("should throw an error when dividing by zero (Decimal)", () => {
+      const amount = Currency.of(100);
+      const zero = new Decimal(0);
+      expect(() => amount.divide(zero)).toThrow("Division by zero is not allowed");
+    });
+
+    it("should throw an error when dividing by zero (Currency)", () => {
+      const amount = Currency.of(100);
+      const zero = Currency.of(0);
+      expect(() => amount.divide(zero)).toThrow("Division by zero is not allowed");
+    });
+
+    it("should allow division by very small non-zero numbers", () => {
+      const amount = Currency.of(100);
+      const result = amount.divide("0.0000000000000000001");
+      expect(result.getValue().toString()).toBe("1e+21");
+    });
+
+    it("should handle negative zero as zero", () => {
+      const amount = Currency.of(100);
+      expect(() => amount.divide(-0)).toThrow("Division by zero is not allowed");
+    });
+  });
+
   it("should track rounding error correctly", () => {
     const amount = Currency.of(123.456);
     const result = amount.round(2, RoundingMethod.ROUND_HALF_UP);

@@ -12,7 +12,8 @@ export type Tag =
   | 'custom-calendar'
   | 'early-payoff'
   | 'auto-close'
-  | 'edge';
+  | 'edge'
+  | 'term-extension';
 
 /** categories must match the four tabs: everyday | hardship | edge | regression */
 export interface DemoLoanDescriptor {
@@ -32,7 +33,7 @@ export const DEMO_LOANS: DemoLoanDescriptor[] = [
     subtitle: 'Equal principal + interest payments for two years',
     category: 'everyday',
     tags: ['payments'],
-    notes: 'Straight “happy-path” amortisation',
+    notes: 'Straight "happy-path" amortisation',
   },
   {
     id: 'DEMO-C02',
@@ -40,7 +41,7 @@ export const DEMO_LOANS: DemoLoanDescriptor[] = [
     subtitle: 'Loan created today; first payment not yet due',
     category: 'everyday',
     tags: ['no-payments'],
-    notes: 'Useful for “new-loan” UI and ledger tests',
+    notes: 'Useful for "new-loan" UI and ledger tests',
   },
   {
     id: 'DEMO-C03',
@@ -72,7 +73,7 @@ export const DEMO_LOANS: DemoLoanDescriptor[] = [
     subtitle: 'Single rate reduction applied mid-term',
     category: 'everyday',
     tags: ['payments', 'mods'],
-    notes: 'Simple “one-off” modification',
+    notes: 'Simple "one-off" modification',
   },
   {
     id: 'DEMO-C07',
@@ -124,6 +125,22 @@ export const DEMO_LOANS: DemoLoanDescriptor[] = [
     tags: ['mods', 'missed-payments', 'edge'],
     notes: 'Shows deferred-interest accounting',
   },
+  {
+    id: 'DEMO-A11',
+    title: 'Hardship: 3-Month Payment Holiday (with Term Extension)',
+    subtitle: 'Terms 4–6 skipped with zero interest; term extended by 3 months',
+    category: 'hardship',
+    tags: ['mods', 'missed-payments', 'term-extension'],
+    notes: 'Zero-rate deferral window, term extension applied',
+  },
+  {
+    id: 'DEMO-A12',
+    title: 'Hardship: Skip Payments, Interest Accrues (with Term Extension)',
+    subtitle: 'Payments paused, interest capitalised and deferred; term extended by 3 months',
+    category: 'hardship',
+    tags: ['mods', 'missed-payments', 'edge', 'term-extension'],
+    notes: 'Deferred-interest accounting, term extension applied',
+  },
 
   // ─── Edge-cases / Advanced ────────────────────────────────────────────
   {
@@ -156,7 +173,7 @@ export const DEMO_LOANS: DemoLoanDescriptor[] = [
     subtitle: 'First six terms allow unpaid interest to capitalise',
     category: 'edge',
     tags: ['mods', 'edge', 'custom-calendar'],
-    notes: 'Covers “neg-am” edge case',
+    notes: 'Covers "neg-am" edge case',
   },
   {
     id: 'DEMO-A07',

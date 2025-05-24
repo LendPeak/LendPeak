@@ -39,6 +39,11 @@ export class DateUtil {
       throw new Error("DateUtil received null or undefined date");
     }
 
+    // Check string length before entering try block
+    if (typeof date === "string" && date.length < 10) {
+      throw new Error("Date string too short, expected format YYYY-MM-DD");
+    }
+
     try {
       if (date instanceof LocalDate) {
         return date;
@@ -74,6 +79,11 @@ export class DateUtil {
     if (date === null || date === undefined || date === "") {
       console.error("DateUtil received null or undefined date");
       throw new Error("DateUtil received null or undefined date");
+    }
+
+    // Check string length before entering try block
+    if (typeof date === "string" && date.length < 10) {
+      throw new Error("Date string too short, expected format YYYY-MM-DD");
     }
 
     try {
@@ -129,7 +139,9 @@ export class DateUtil {
     }
 
     if (typeof date === "string") {
-      return date.substring(0, 10); // Extract YYYY-MM-DD
+      // For toIsoDateString, we'll return the string as-is if it's too short
+      // This method is more lenient as it's used for display purposes
+      return date.length >= 10 ? date.substring(0, 10) : date;
     }
 
     return "";

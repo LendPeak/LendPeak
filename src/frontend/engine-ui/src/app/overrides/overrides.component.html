@@ -62,7 +62,8 @@
     </span>
     <!-- Modified Indicator -->
     <span *ngIf="isModified" class="p-mr-2 modified-indicator">
-      <i class="pi pi-info-circle"></i> Modified
+      <i class="pi pi-info-circle"></i>
+      Modified
     </span>
   </div>
 </p-toolbar>
@@ -78,28 +79,15 @@
   <div class="p-fluid">
     <div class="field">
       <label for="settingName">Setting Name</label>
-      <input
-        id="settingName"
-        name="settingName"
-        type="text"
-        pInputText
-        [(ngModel)]="newSetting.name"
-      />
+      <input id="settingName" name="settingName" type="text" pInputText [(ngModel)]="newSetting.name" />
     </div>
     <div class="field-checkbox">
-      <p-checkbox
-        inputId="isDefault"
-        [(ngModel)]="newSetting.isDefault"
-        binary="true"
-      ></p-checkbox>
+      <p-checkbox inputId="isDefault" [(ngModel)]="newSetting.isDefault" binary="true"></p-checkbox>
       <label for="isDefault">Set as default</label>
     </div>
   </div>
   <div class="flex justify-content-end gap-2">
-    <p-button
-      label="Cancel"
-      (click)="showSaveSettingsDialog = false"
-    ></p-button>
+    <p-button label="Cancel" (click)="showSaveSettingsDialog = false"></p-button>
     <p-button label="Save" class="" (click)="confirmSaveSettings()"></p-button>
   </div>
 </p-dialog>
@@ -112,13 +100,7 @@
   [style]="{ width: '600px' }"
   [closable]="false"
 >
-  <p-table
-    [value]="savedSettings"
-    selectionMode="single"
-    [(selection)]="selectedSetting"
-    [paginator]="true"
-    [rows]="5"
-  >
+  <p-table [value]="savedSettings" selectionMode="single" [(selection)]="selectedSetting" [paginator]="true" [rows]="5">
     <ng-template pTemplate="header">
       <tr>
         <th>Name</th>
@@ -133,53 +115,27 @@
         <td>{{ setting.name }}</td>
         <td>{{ setting.version }}</td>
         <td>
-          {{ getVersionById(setting.previousVersionId)?.version || "N/A" }}
+          {{ getVersionById(setting.previousVersionId)?.version || 'N/A' }}
         </td>
-        <td>{{ setting.createdAt.toString() | date: "short" }}</td>
+        <td>{{ setting.createdAt.toString() | date: 'short' }}</td>
         <td>
-          <p-button
-            icon="pi pi-eye"
-            severity="info"
-            class="mr-2"
-            (click)="previewSettings(setting)"
-          ></p-button>
-          <p-button
-            icon="pi pi-trash"
-            severity="danger"
-            (click)="deleteSetting(setting.id)"
-          ></p-button>
+          <p-button icon="pi pi-eye" severity="info" class="mr-2" (click)="previewSettings(setting)"></p-button>
+          <p-button icon="pi pi-trash" severity="danger" (click)="deleteSetting(setting.id)"></p-button>
         </td>
       </tr>
     </ng-template>
   </p-table>
   <div class="flex justify-content-end gap-2">
-    <p-button
-      label="Cancel"
-      class="mr-2"
-      (click)="showLoadSettingsDialog = false"
-    ></p-button>
-    <p-button
-      label="Load"
-      class=""
-      [disabled]="!selectedSetting"
-      (click)="confirmLoadSettings()"
-    ></p-button>
+    <p-button label="Cancel" class="mr-2" (click)="showLoadSettingsDialog = false"></p-button>
+    <p-button label="Load" class="" [disabled]="!selectedSetting" (click)="confirmLoadSettings()"></p-button>
   </div>
 </p-dialog>
 
 <!-- Preview Settings Dialog -->
-<p-dialog
-  header="Settings Preview"
-  [(visible)]="showPreviewSettingsDialog"
-  [modal]="true"
-  [style]="{ width: '600px' }"
->
+<p-dialog header="Settings Preview" [(visible)]="showPreviewSettingsDialog" [modal]="true" [style]="{ width: '600px' }">
   <pre>{{ selectedSetting | json }}</pre>
   <div class="flex justify-content-end gap-2">
-    <p-button
-      label="Close"
-      (click)="showPreviewSettingsDialog = false"
-    ></p-button>
+    <p-button label="Close" (click)="showPreviewSettingsDialog = false"></p-button>
   </div>
 </p-dialog>
 
@@ -199,11 +155,7 @@
             <p-badge
               class="mr-4"
               badgeSize="xlarge"
-              [severity]="
-                lendPeak.amortization.rateSchedules.allCustom.length > 0
-                  ? 'contrast'
-                  : 'secondary'
-              "
+              [severity]="lendPeak.amortization.rateSchedules.allCustom.length > 0 ? 'contrast' : 'secondary'"
               [value]="lendPeak.amortization.rateSchedules.allCustom.length"
             />
 
@@ -212,10 +164,7 @@
         </p-accordion-header>
         <p-accordion-content>
           <div class="p-fluid">
-            <table
-              *ngIf="lendPeak.amortization.rateSchedules.allCustom.length > 0"
-              class="p-datatable p-component"
-            >
+            <table *ngIf="lendPeak.amortization.rateSchedules.allCustom.length > 0" class="p-datatable p-component">
               <thead>
                 <tr>
                   <th>Start Date</th>
@@ -225,12 +174,7 @@
                 </tr>
               </thead>
               <tbody>
-                <tr
-                  *ngFor="
-                    let rate of lendPeak.amortization.rateSchedules.allCustom;
-                    let i = index
-                  "
-                >
+                <tr *ngFor="let rate of lendPeak.amortization.rateSchedules.allCustom; let i = index">
                   <!-- Start Date -->
                   <td>
                     <p-datepicker
@@ -317,11 +261,7 @@
               </tbody>
             </table>
             <div class="p-mt-2">
-              <p-button
-                label="Add New Rate Row"
-                icon="pi pi-plus"
-                (click)="addRateOverride()"
-              ></p-button>
+              <p-button label="Add New Rate Row" icon="pi pi-plus" (click)="addRateOverride()"></p-button>
             </div>
           </div>
         </p-accordion-content>
@@ -332,11 +272,7 @@
             <p-badge
               class="mr-4"
               badgeSize="xlarge"
-              [severity]="
-                lendPeak.amortization.calendars.length > 0
-                  ? 'contrast'
-                  : 'secondary'
-              "
+              [severity]="lendPeak.amortization.calendars.length > 0 ? 'contrast' : 'secondary'"
               [value]="lendPeak.amortization.calendars.length"
             />
             Term Calendar Override
@@ -370,43 +306,25 @@
               </ng-template>
 
               <!-- BODY -->
-              <ng-template
-                #body
-                let-row
-                let-editing="editing"
-                let-ri="rowIndex"
-              >
+              <ng-template #body let-row let-editing="editing" let-ri="rowIndex">
                 <tr
                   [pEditableRow]="row"
                   [ngClass]="{
-                    'bg-red-50':
-                      lendPeak!.amortization.calendars.isDuplicateTermNumber(
-                        row.jsTermNumber
-                      ),
+                    'bg-red-50': lendPeak!.amortization.calendars.isDuplicateTermNumber(row.jsTermNumber),
                     'opacity-40': !row.active,
                   }"
                 >
                   <!-- row toggle (always visible) -->
                   <td>
-                    <p-toggleswitch
-                      [(ngModel)]="row.active"
-                      (ngModelChange)="onInputChange($event)"
-                    >
-                    </p-toggleswitch>
+                    <p-toggleswitch [(ngModel)]="row.active" (ngModelChange)="onInputChange($event)"></p-toggleswitch>
                   </td>
 
                   <!-- Period dates – read-only -->
                   <td>
-                    {{
-                      getStartDateForTerm(row.jsTermNumber).toString()
-                        | date: "yyyy-MM-dd"
-                    }}
+                    {{ getStartDateForTerm(row.jsTermNumber).toString() | date: 'yyyy-MM-dd' }}
                   </td>
                   <td>
-                    {{
-                      getEndDateForTerm(row.jsTermNumber).toString()
-                        | date: "yyyy-MM-dd"
-                    }}
+                    {{ getEndDateForTerm(row.jsTermNumber).toString() | date: 'yyyy-MM-dd' }}
                   </td>
 
                   <!-- Term # – editable -->
@@ -414,9 +332,7 @@
                     <p-cellEditor>
                       <ng-template #output>{{ row.jsTermNumber }}</ng-template>
                       <ng-template #input>
-                        <p-inputNumber
-                          [(ngModel)]="row.jsTermNumber"
-                        ></p-inputNumber>
+                        <p-inputNumber [(ngModel)]="row.jsTermNumber"></p-inputNumber>
                       </ng-template>
                     </p-cellEditor>
                   </td>
@@ -424,16 +340,13 @@
                   <!-- Calendar Type – editable -->
                   <td pEditableColumn>
                     <p-cellEditor>
-                      <ng-template #output>{{
-                        row.calendar.userFriendlyName
-                      }}</ng-template>
+                      <ng-template #output>{{ row.calendar.userFriendlyName }}</ng-template>
                       <ng-template #input>
                         <p-select
                           [options]="calendarTypes"
                           [(ngModel)]="row.calendar.calendarType"
                           appendTo="body"
-                        >
-                        </p-select>
+                        ></p-select>
                       </ng-template>
                     </p-cellEditor>
                   </td>
@@ -532,16 +445,12 @@
             <p-badge
               class="mr-4"
               badgeSize="xlarge"
-              [severity]="
-                lendPeak.amortization.termInterestAmountOverride.length > 0
-                  ? 'contrast'
-                  : 'secondary'
-              "
+              [severity]="lendPeak.amortization.termInterestAmountOverride.length > 0 ? 'contrast' : 'secondary'"
               [value]="lendPeak.amortization.termInterestAmountOverride.length"
             />
             Term Interest Amount Override
-          </div></p-accordion-header
-        >
+          </div>
+        </p-accordion-header>
         <p-accordion-content>
           <div class="p-fluid">
             <!-- TERM INTEREST AMOUNT OVERRIDE TABLE -->
@@ -571,42 +480,27 @@
               </ng-template>
 
               <!-- ─── BODY ─────────────────────────────────────────────── -->
-              <ng-template
-                #body
-                let-row
-                let-editing="editing"
-                let-ri="rowIndex"
-              >
+              <ng-template #body let-row let-editing="editing" let-ri="rowIndex">
                 <tr
                   [pEditableRow]="row"
                   [ngClass]="{
                     'opacity-40': !row.active,
-                    'bg-red-50':
-                      lendPeak!.amortization.termInterestAmountOverride.isDuplicateTermNumber(
-                        row.jsTermNumber
-                      ),
+                    'bg-red-50': lendPeak!.amortization.termInterestAmountOverride.isDuplicateTermNumber(
+                      row.jsTermNumber
+                    ),
                   }"
                 >
                   <!-- active toggle -->
                   <td>
-                    <p-toggleswitch
-                      [(ngModel)]="row.active"
-                      (ngModelChange)="onInputChange($event)"
-                    ></p-toggleswitch>
+                    <p-toggleswitch [(ngModel)]="row.active" (ngModelChange)="onInputChange($event)"></p-toggleswitch>
                   </td>
 
                   <!-- dates (read-only) -->
                   <td>
-                    {{
-                      getStartDateForTerm(row.jsTermNumber).toString()
-                        | date: "yyyy-MM-dd"
-                    }}
+                    {{ getStartDateForTerm(row.jsTermNumber).toString() | date: 'yyyy-MM-dd' }}
                   </td>
                   <td>
-                    {{
-                      getEndDateForTerm(row.jsTermNumber).toString()
-                        | date: "yyyy-MM-dd"
-                    }}
+                    {{ getEndDateForTerm(row.jsTermNumber).toString() | date: 'yyyy-MM-dd' }}
                   </td>
 
                   <!-- term # (editable) -->
@@ -614,9 +508,7 @@
                     <p-cellEditor>
                       <ng-template #output>{{ row.jsTermNumber }}</ng-template>
                       <ng-template #input>
-                        <p-inputNumber
-                          [(ngModel)]="row.jsTermNumber"
-                        ></p-inputNumber>
+                        <p-inputNumber [(ngModel)]="row.jsTermNumber"></p-inputNumber>
                       </ng-template>
                     </p-cellEditor>
                   </td>
@@ -624,9 +516,7 @@
                   <!-- interest amount (editable) -->
                   <td pEditableColumn>
                     <p-cellEditor>
-                      <ng-template #output>{{
-                        row.jsInterestAmount.toFixed(2)
-                      }}</ng-template>
+                      <ng-template #output>{{ row.jsInterestAmount.toFixed(2) }}</ng-template>
                       <ng-template #input>
                         <p-inputNumber
                           [(ngModel)]="row.jsInterestAmount"
@@ -634,8 +524,7 @@
                           locale="en-US"
                           [minFractionDigits]="2"
                           [maxFractionDigits]="2"
-                        >
-                        </p-inputNumber>
+                        ></p-inputNumber>
                       </ng-template>
                     </p-cellEditor>
                   </td>
@@ -643,11 +532,7 @@
                   <!-- variance (editable) -->
                   <td pEditableColumn>
                     <p-cellEditor>
-                      <ng-template #output>
-                        {{
-                          row.jsAcceptableRateVariance * 100 | number: "1.2-4"
-                        }} %
-                      </ng-template>
+                      <ng-template #output>{{ row.jsAcceptableRateVariance * 100 | number: '1.2-4' }} %</ng-template>
                       <ng-template #input>
                         <p-inputNumber
                           [(ngModel)]="row.jsAcceptableRateVariance"
@@ -655,8 +540,7 @@
                           locale="en-US"
                           [minFractionDigits]="4"
                           [maxFractionDigits]="10"
-                        >
-                        </p-inputNumber>
+                        ></p-inputNumber>
                       </ng-template>
                     </p-cellEditor>
                   </td>
@@ -668,32 +552,27 @@
                       <!-- warning icon (shown only when threshold exceeded) -->
                       <i
                         *ngIf="
-                          lendPeak!.amortization.repaymentSchedule.getEntryByTerm(
-                            row.jsTermNumber
-                          )?.metadata?.equivalentAnnualRateVarianceExceeded
+                          lendPeak!.amortization.repaymentSchedule.getEntryByTerm(row.jsTermNumber)?.metadata
+                            ?.equivalentAnnualRateVarianceExceeded
                         "
                         class="pi pi-exclamation-triangle text-red-500 mr-1"
                         style="font-size: 1.4rem"
                         pTooltip="
         WARNING: Equivalent annual rate variance for this term is
         {{
-                          lendPeak!.amortization.repaymentSchedule.getEntryByTerm(
-                            row.jsTermNumber
-                          )?.metadata?.equivalentAnnualRateVariance
-                            | percent: '1.2-4'
+                          lendPeak!.amortization.repaymentSchedule.getEntryByTerm(row.jsTermNumber)?.metadata
+                            ?.equivalentAnnualRateVariance | percent: '1.2-4'
                         }},
         which exceeds the acceptable threshold
         {{ row.jsAcceptableRateVariance | percent: '1.2-4' }}.
       "
                         tooltipPosition="left"
-                      >
-                      </i>
+                      ></i>
 
                       <!-- always show the calculated rate value -->
                       {{
-                        lendPeak!.amortization.repaymentSchedule.getEntryByTerm(
-                          row.jsTermNumber
-                        )?.jsPeriodInterestRate | percent: "1.2-4"
+                        lendPeak!.amortization.repaymentSchedule.getEntryByTerm(row.jsTermNumber)?.jsPeriodInterestRate
+                          | percent: '1.2-4'
                       }}
                     </ng-container>
 
@@ -796,14 +675,9 @@
             <p-badge
               class="mr-4"
               badgeSize="xlarge"
-              [severity]="
-                lendPeak.amortization.termInterestRateOverride.length
-                  ? 'contrast'
-                  : 'secondary'
-              "
+              [severity]="lendPeak.amortization.termInterestRateOverride.length ? 'contrast' : 'secondary'"
               [value]="lendPeak.amortization.termInterestRateOverride.length"
-            >
-            </p-badge>
+            ></p-badge>
             Term Interest-Rate Override
           </div>
         </p-accordion-header>
@@ -812,7 +686,6 @@
           <p-table
             [value]="lendPeak!.amortization.termInterestRateOverride.all"
             dataKey="jsTermNumber"
-            
             editMode="row"
             class="p-datatable p-component"
           >
@@ -823,8 +696,7 @@
                   <p-toggleswitch
                     [(ngModel)]="tiroMasterActive"
                     (ngModelChange)="toggleAllTiro($event)"
-                  >
-                  </p-toggleswitch>
+                  ></p-toggleswitch>
                 </th>
                 <th>Start</th>
                 <th>End</th>
@@ -835,43 +707,25 @@
             </ng-template>
 
             <!-- body -->
-            <ng-template
-              pTemplate="body"
-              let-row
-              let-editing="editing"
-              let-ri="rowIndex"
-            >
+            <ng-template pTemplate="body" let-row let-editing="editing" let-ri="rowIndex">
               <tr
                 [pEditableRow]="row"
                 [ngClass]="{
                   'opacity-40': !row.active,
-                  'bg-red-50':
-                    lendPeak!.amortization.termInterestRateOverride.isDuplicateTermNumber(
-                      row.jsTermNumber
-                    ),
+                  'bg-red-50': lendPeak!.amortization.termInterestRateOverride.isDuplicateTermNumber(row.jsTermNumber),
                 }"
               >
                 <!-- active toggle -->
                 <td>
-                  <p-toggleswitch
-                    [(ngModel)]="row.active"
-                    (ngModelChange)="onInputChange($event)"
-                  >
-                  </p-toggleswitch>
+                  <p-toggleswitch [(ngModel)]="row.active" (ngModelChange)="onInputChange($event)"></p-toggleswitch>
                 </td>
 
                 <!-- dates (read-only) -->
                 <td>
-                  {{
-                    getStartDateForTerm(row.jsTermNumber).toString()
-                      | date: "yyyy-MM-dd"
-                  }}
+                  {{ getStartDateForTerm(row.jsTermNumber).toString() | date: 'yyyy-MM-dd' }}
                 </td>
                 <td>
-                  {{
-                    getEndDateForTerm(row.jsTermNumber).toString()
-                      | date: "yyyy-MM-dd"
-                  }}
+                  {{ getEndDateForTerm(row.jsTermNumber).toString() | date: 'yyyy-MM-dd' }}
                 </td>
 
                 <!-- term # (editable) -->
@@ -879,9 +733,7 @@
                   <p-cellEditor>
                     <ng-template #output>{{ row.jsTermNumber }}</ng-template>
                     <ng-template #input>
-                      <p-inputNumber
-                        [(ngModel)]="row.jsTermNumber"
-                      ></p-inputNumber>
+                      <p-inputNumber [(ngModel)]="row.jsTermNumber"></p-inputNumber>
                     </ng-template>
                   </p-cellEditor>
                 </td>
@@ -890,7 +742,7 @@
                 <td pEditableColumn>
                   <p-cellEditor>
                     <ng-template #output>
-                      {{ row.jsInterestRate | number: "1.4-8" }}
+                      {{ row.jsInterestRate | number: '1.4-8' }}
                     </ng-template>
                     <ng-template #input>
                       <p-inputNumber
@@ -899,8 +751,7 @@
                         [minFractionDigits]="4"
                         [maxFractionDigits]="8"
                         suffix="%"
-                      >
-                      </p-inputNumber>
+                      ></p-inputNumber>
                     </ng-template>
                   </p-cellEditor>
                 </td>
@@ -961,12 +812,7 @@
           <div class="p-mt-2">
             <p-divider></p-divider>
 
-            <p-button
-              label="Add Rate Override"
-              icon="pi pi-plus"
-              (click)="addTermInterestRateOverrideRow()"
-            >
-            </p-button>
+            <p-button label="Add Rate Override" icon="pi pi-plus" (click)="addTermInterestRateOverrideRow()"></p-button>
 
             <p-button
               label="Re-Sort"
@@ -974,8 +820,7 @@
               severity="info"
               icon="pi pi-refresh"
               (click)="refreshSortForTermInterestOverride()"
-            >
-            </p-button>
+            ></p-button>
 
             <p-button
               label="Remove All"
@@ -983,37 +828,31 @@
               severity="danger"
               icon="pi pi-trash"
               (click)="removeAllTermInterestOverride()"
-            >
-            </p-button>
+            ></p-button>
           </div>
         </p-accordion-content>
       </p-accordion-panel>
 
       <!-- Payoff Settings Section -->
       <p-accordion-panel value="payoffConfiguration">
-        <p-accordion-header
-          ><div>
+        <p-accordion-header>
+          <div>
             <p-badge
               class="mr-4"
               badgeSize="xlarge"
-              [severity]="
-                lendPeak.amortization.jsPayoffDate ? 'contrast' : 'secondary'
-              "
+              [severity]="lendPeak.amortization.jsPayoffDate ? 'contrast' : 'secondary'"
               [value]="lendPeak.amortization.jsPayoffDate ? 1 : 0"
             />
             Payoff Configuration
-          </div></p-accordion-header
-        >
+          </div>
+        </p-accordion-header>
         <p-accordion-content>
           <div class="grid">
             <!-- Payoff Date-->
             <div class="col">
               <label for="payoffDate">
                 Payoff Date
-                <i
-                  class="pi pi-info-circle tooltip-icon"
-                  (click)="showTooltip($event, jsPayoffDate)"
-                ></i>
+                <i class="pi pi-info-circle tooltip-icon" (click)="showTooltip($event, jsPayoffDate)"></i>
               </label>
 
               <p-datepicker
@@ -1033,9 +872,8 @@
               <!-- Tooltip Overlay -->
               <p-popover #jsPayoffDate>
                 <ng-template pTemplate="content">
-                  Payoff Date is the date when the loan is paid off in full.
-                  System will alter billing cycle to ensure the loan is paid off
-                  on this date.
+                  Payoff Date is the date when the loan is paid off in full. System will alter billing cycle to ensure
+                  the loan is paid off on this date.
                 </ng-template>
               </p-popover>
             </div>
@@ -1045,39 +883,28 @@
 
       <!-- Payment Settings Section -->
       <p-accordion-panel value="paymentSettings">
-        <p-accordion-header
-          ><div>
+        <p-accordion-header>
+          <div>
             <p-badge
               class="mr-4"
               badgeSize="xlarge"
-              [severity]="
-                lendPeak.amortization.jsHasCustomEquitedMonthlyPayment
-                  ? 'contrast'
-                  : 'secondary'
-              "
-              [value]="
-                lendPeak.amortization.jsHasCustomEquitedMonthlyPayment ? 1 : 0
-              "
+              [severity]="lendPeak.amortization.jsHasCustomEquitedMonthlyPayment ? 'contrast' : 'secondary'"
+              [value]="lendPeak.amortization.jsHasCustomEquitedMonthlyPayment ? 1 : 0"
             />
             Equated Installment Payments (EIP)
-          </div></p-accordion-header
-        >
+          </div>
+        </p-accordion-header>
         <p-accordion-content>
           <div class="p-fluid">
             <div class="field">
               <label for="jsEquitedMonthlyPayment">
                 Term Payment Amount
-                <i
-                  class="pi pi-info-circle tooltip-icon"
-                  (click)="showTooltip($event, termPaymentAmountTooltip)"
-                ></i>
+                <i class="pi pi-info-circle tooltip-icon" (click)="showTooltip($event, termPaymentAmountTooltip)"></i>
               </label>
               <p-inputgroup>
                 <p-inputgroup-addon>
                   <p-checkbox
-                    [(ngModel)]="
-                      lendPeak.amortization.jsHasCustomEquitedMonthlyPayment
-                    "
+                    [(ngModel)]="lendPeak.amortization.jsHasCustomEquitedMonthlyPayment"
                     (ngModelChange)="onInputChange($event)"
                     binary="true"
                     inputId="hasCustomEquitedMonthlyPayment"
@@ -1092,9 +919,7 @@
                   mode="decimal"
                   [minFractionDigits]="2"
                   [maxFractionDigits]="2"
-                  [disabled]="
-                    !lendPeak.amortization.hasCustomEquitedMonthlyPayment
-                  "
+                  [disabled]="!lendPeak.amortization.hasCustomEquitedMonthlyPayment"
                   (ngModelChange)="onInputChange($event)"
                 ></p-inputNumber>
               </p-inputgroup>
@@ -1102,8 +927,8 @@
               <!-- Tooltip Overlay -->
               <p-popover #termPaymentAmountTooltip>
                 <ng-template pTemplate="content">
-                  Override the calculated payment amount per term. For example,
-                  enter "$1,200" to set a fixed payment amount.
+                  Override the calculated payment amount per term. For example, enter "$1,200" to set a fixed payment
+                  amount.
                 </ng-template>
               </p-popover>
             </div>
@@ -1113,21 +938,17 @@
 
       <!-- Term Payment Amount -->
       <p-accordion-panel value="termPaymentAmount">
-        <p-accordion-header
-          ><div>
+        <p-accordion-header>
+          <div>
             <p-badge
               class="mr-4"
               badgeSize="xlarge"
-              [severity]="
-                lendPeak.amortization.termPaymentAmountOverride.length > 0
-                  ? 'contrast'
-                  : 'secondary'
-              "
+              [severity]="lendPeak.amortization.termPaymentAmountOverride.length > 0 ? 'contrast' : 'secondary'"
               [value]="lendPeak.amortization.termPaymentAmountOverride.length"
             />
             Term Payment Amount
-          </div></p-accordion-header
-        >
+          </div>
+        </p-accordion-header>
         <p-accordion-content>
           <div class="p-fluid">
             <!-- TERM PAYMENT AMOUNT OVERRIDE TABLE -->
@@ -1143,11 +964,8 @@
                   <th style="width: 3rem">
                     <p-toggleswitch
                       [(ngModel)]="tpaMasterActive"
-                      (ngModelChange)="
-                        toggleAllTermPaymentAmountOverrides($event)
-                      "
-                    >
-                    </p-toggleswitch>
+                      (ngModelChange)="toggleAllTermPaymentAmountOverrides($event)"
+                    ></p-toggleswitch>
                   </th>
                   <th>Period Start</th>
                   <th>Period End</th>
@@ -1158,45 +976,27 @@
               </ng-template>
 
               <!-- BODY -->
-              <ng-template
-                #body
-                let-row
-                let-editing="editing"
-                let-ri="rowIndex"
-              >
+              <ng-template #body let-row let-editing="editing" let-ri="rowIndex">
                 <tr
                   [pEditableRow]="row"
                   [ngClass]="{
                     'bg-red-50':
-                      lendPeak!.amortization.termPaymentAmountOverride.isDuplicateTermNumber(
-                        row.jsTermNumber
-                      ) ||
-                      row.jsTermNumber >=
-                        lendPeak!.amortization.repaymentSchedule.lastEntry.term,
+                      lendPeak!.amortization.termPaymentAmountOverride.isDuplicateTermNumber(row.jsTermNumber) ||
+                      row.jsTermNumber >= lendPeak!.amortization.repaymentSchedule.lastEntry.term,
                     'opacity-40': !row.active,
                   }"
                 >
                   <!-- row toggle -->
                   <td>
-                    <p-toggleswitch
-                      [(ngModel)]="row.active"
-                      (ngModelChange)="onInputChange($event)"
-                    >
-                    </p-toggleswitch>
+                    <p-toggleswitch [(ngModel)]="row.active" (ngModelChange)="onInputChange($event)"></p-toggleswitch>
                   </td>
 
                   <!-- dates (read-only) -->
                   <td>
-                    {{
-                      getStartDateForTerm(row.jsTermNumber).toString()
-                        | date: "yyyy-MM-dd"
-                    }}
+                    {{ getStartDateForTerm(row.jsTermNumber).toString() | date: 'yyyy-MM-dd' }}
                   </td>
                   <td>
-                    {{
-                      getEndDateForTerm(row.jsTermNumber).toString()
-                        | date: "yyyy-MM-dd"
-                    }}
+                    {{ getEndDateForTerm(row.jsTermNumber).toString() | date: 'yyyy-MM-dd' }}
                   </td>
 
                   <!-- term # (editable) -->
@@ -1204,9 +1004,7 @@
                     <p-cellEditor>
                       <ng-template #output>{{ row.jsTermNumber }}</ng-template>
                       <ng-template #input>
-                        <p-inputNumber
-                          [(ngModel)]="row.jsTermNumber"
-                        ></p-inputNumber>
+                        <p-inputNumber [(ngModel)]="row.jsTermNumber"></p-inputNumber>
                       </ng-template>
                     </p-cellEditor>
                   </td>
@@ -1214,9 +1012,7 @@
                   <!-- payment amount (editable) -->
                   <td pEditableColumn>
                     <p-cellEditor>
-                      <ng-template #output>{{
-                        row.jsPaymentAmount.toFixed(2)
-                      }}</ng-template>
+                      <ng-template #output>{{ row.jsPaymentAmount.toFixed(2) }}</ng-template>
                       <ng-template #input>
                         <p-inputNumber
                           [(ngModel)]="row.jsPaymentAmount"
@@ -1224,8 +1020,7 @@
                           locale="en-US"
                           [minFractionDigits]="2"
                           [maxFractionDigits]="2"
-                        >
-                        </p-inputNumber>
+                        ></p-inputNumber>
                       </ng-template>
                     </p-cellEditor>
                   </td>
@@ -1316,21 +1111,17 @@
 
       <!-- Change Payment Date -->
       <p-accordion-panel value="changePaymentDates">
-        <p-accordion-header
-          ><div>
+        <p-accordion-header>
+          <div>
             <p-badge
               class="mr-4"
               badgeSize="xlarge"
-              [severity]="
-                lendPeak.amortization.changePaymentDates.length > 0
-                  ? 'contrast'
-                  : 'secondary'
-              "
+              [severity]="lendPeak.amortization.changePaymentDates.length > 0 ? 'contrast' : 'secondary'"
               [value]="lendPeak.amortization.changePaymentDates.length"
             />
             Change Payment Date
-          </div></p-accordion-header
-        >
+          </div>
+        </p-accordion-header>
         <p-accordion-content>
           <div class="p-fluid">
             <!-- CHANGE-PAYMENT DATE TABLE -->
@@ -1347,8 +1138,7 @@
                     <p-toggleswitch
                       [(ngModel)]="cpdMasterActive"
                       (ngModelChange)="toggleAllChangePaymentDates($event)"
-                    >
-                    </p-toggleswitch>
+                    ></p-toggleswitch>
                   </th>
                   <th>Period Start</th>
                   <th>Period End</th>
@@ -1360,43 +1150,25 @@
               </ng-template>
 
               <!-- BODY -->
-              <ng-template
-                #body
-                let-row
-                let-editing="editing"
-                let-ri="rowIndex"
-              >
+              <ng-template #body let-row let-editing="editing" let-ri="rowIndex">
                 <tr
                   [pEditableRow]="row"
                   [ngClass]="{
-                    'bg-red-50':
-                      lendPeak!.amortization.changePaymentDates.isDuplicateTermNumber(
-                        row.termNumber
-                      ),
+                    'bg-red-50': lendPeak!.amortization.changePaymentDates.isDuplicateTermNumber(row.termNumber),
                     'opacity-40': !row.active,
                   }"
                 >
                   <!-- row toggle -->
                   <td>
-                    <p-toggleswitch
-                      [(ngModel)]="row.active"
-                      (ngModelChange)="onInputChange($event)"
-                    >
-                    </p-toggleswitch>
+                    <p-toggleswitch [(ngModel)]="row.active" (ngModelChange)="onInputChange($event)"></p-toggleswitch>
                   </td>
 
                   <!-- Dates from repayment schedule (read-only) -->
                   <td>
-                    {{
-                      getStartDateForTerm(row.termNumber).toString()
-                        | date: "yyyy-MM-dd"
-                    }}
+                    {{ getStartDateForTerm(row.termNumber).toString() | date: 'yyyy-MM-dd' }}
                   </td>
                   <td>
-                    {{
-                      getEndDateForTerm(row.termNumber).toString()
-                        | date: "yyyy-MM-dd"
-                    }}
+                    {{ getEndDateForTerm(row.termNumber).toString() | date: 'yyyy-MM-dd' }}
                   </td>
 
                   <!-- Term # (editable) -->
@@ -1404,9 +1176,7 @@
                     <p-cellEditor>
                       <ng-template #output>{{ row.termNumber }}</ng-template>
                       <ng-template #input>
-                        <p-inputNumber
-                          [(ngModel)]="row.termNumber"
-                        ></p-inputNumber>
+                        <p-inputNumber [(ngModel)]="row.termNumber"></p-inputNumber>
                       </ng-template>
                     </p-cellEditor>
                   </td>
@@ -1414,16 +1184,16 @@
                   <!-- Old Date (editable) -->
                   <td>
                     <ng-container *ngIf="row.originalEndDate; else noDate">
-                      {{ row.originalEndDate.toString() | date: "yyyy-MM-dd" }}
+                      {{ row.originalEndDate.toString() | date: 'yyyy-MM-dd' }}
                     </ng-container>
-                    <ng-template #noDate> N/A </ng-template>
+                    <ng-template #noDate>N/A</ng-template>
                   </td>
 
                   <!-- New Date (editable) -->
                   <td pEditableColumn>
                     <p-cellEditor>
                       <ng-template #output>
-                        {{ row.jsNewDate | date: "yyyy-MM-dd" }}
+                        {{ row.jsNewDate | date: 'yyyy-MM-dd' }}
                       </ng-template>
                       <ng-template #input>
                         <p-datepicker
@@ -1431,8 +1201,7 @@
                           dateFormat="yy-mm-dd"
                           showIcon
                           appendTo="body"
-                        >
-                        </p-datepicker>
+                        ></p-datepicker>
                       </ng-template>
                     </p-cellEditor>
                   </td>
@@ -1516,21 +1285,17 @@
 
       <!-- Pre Bill Day Term -->
       <p-accordion-panel value="preBillDayTerm">
-        <p-accordion-header
-          ><div>
+        <p-accordion-header>
+          <div>
             <p-badge
               class="mr-4"
               badgeSize="xlarge"
-              [severity]="
-                lendPeak.amortization.preBillDays.hasCustom
-                  ? 'contrast'
-                  : 'secondary'
-              "
+              [severity]="lendPeak.amortization.preBillDays.hasCustom ? 'contrast' : 'secondary'"
               [value]="lendPeak.amortization.preBillDays.allCustom.length"
             />
             Pre Bill Day Term
-          </div></p-accordion-header
-        >
+          </div>
+        </p-accordion-header>
         <p-accordion-content>
           <div class="p-fluid">
             <!-- PRE-BILL DAY TERM TABLE -->
@@ -1547,8 +1312,7 @@
                     <p-toggleswitch
                       [(ngModel)]="pbdMasterActive"
                       (ngModelChange)="toggleAllPreBillDays($event)"
-                    >
-                    </p-toggleswitch>
+                    ></p-toggleswitch>
                   </th>
                   <th>Period Start</th>
                   <th>Period End</th>
@@ -1559,37 +1323,19 @@
               </ng-template>
 
               <!-- BODY -->
-              <ng-template
-                #body
-                let-row
-                let-editing="editing"
-                let-ri="rowIndex"
-              >
-                <tr
-                  [pEditableRow]="row"
-                  [ngClass]="{ 'opacity-40': !row.active }"
-                >
+              <ng-template #body let-row let-editing="editing" let-ri="rowIndex">
+                <tr [pEditableRow]="row" [ngClass]="{ 'opacity-40': !row.active }">
                   <!-- row toggle -->
                   <td>
-                    <p-toggleswitch
-                      [(ngModel)]="row.active"
-                      (ngModelChange)="onInputChange($event)"
-                    >
-                    </p-toggleswitch>
+                    <p-toggleswitch [(ngModel)]="row.active" (ngModelChange)="onInputChange($event)"></p-toggleswitch>
                   </td>
 
                   <!-- period dates (read-only) -->
                   <td>
-                    {{
-                      getStartDateForTerm(row.termNumber).toString()
-                        | date: "yyyy-MM-dd"
-                    }}
+                    {{ getStartDateForTerm(row.termNumber).toString() | date: 'yyyy-MM-dd' }}
                   </td>
                   <td>
-                    {{
-                      getEndDateForTerm(row.termNumber).toString()
-                        | date: "yyyy-MM-dd"
-                    }}
+                    {{ getEndDateForTerm(row.termNumber).toString() | date: 'yyyy-MM-dd' }}
                   </td>
 
                   <!-- term # (editable) -->
@@ -1597,9 +1343,7 @@
                     <p-cellEditor>
                       <ng-template #output>{{ row.termNumber }}</ng-template>
                       <ng-template #input>
-                        <p-inputNumber
-                          [(ngModel)]="row.termNumber"
-                        ></p-inputNumber>
+                        <p-inputNumber [(ngModel)]="row.termNumber"></p-inputNumber>
                       </ng-template>
                     </p-cellEditor>
                   </td>
@@ -1609,9 +1353,7 @@
                     <p-cellEditor>
                       <ng-template #output>{{ row.preBillDays }}</ng-template>
                       <ng-template #input>
-                        <p-inputNumber
-                          [(ngModel)]="row.preBillDays"
-                        ></p-inputNumber>
+                        <p-inputNumber [(ngModel)]="row.preBillDays"></p-inputNumber>
                       </ng-template>
                     </p-cellEditor>
                   </td>
@@ -1676,11 +1418,7 @@
             </p-table>
 
             <div class="p-mt-2">
-              <p-button
-                label="Add New Term Row"
-                icon="pi pi-plus"
-                (click)="addPrebillDayTermRow()"
-              ></p-button>
+              <p-button label="Add New Term Row" icon="pi pi-plus" (click)="addPrebillDayTermRow()"></p-button>
 
               <p-button
                 severity="danger"
@@ -1700,11 +1438,7 @@
             <p-badge
               class="mr-4"
               badgeSize="xlarge"
-              [severity]="
-                lendPeak.amortization.dueBillDays.hasCustom
-                  ? 'contrast'
-                  : 'secondary'
-              "
+              [severity]="lendPeak.amortization.dueBillDays.hasCustom ? 'contrast' : 'secondary'"
               [value]="lendPeak.amortization.dueBillDays.allCustom.length"
             />
             Due Bill Day Term
@@ -1727,8 +1461,7 @@
                     <p-toggleswitch
                       [(ngModel)]="dbdMasterActive"
                       (ngModelChange)="toggleAllDueBillDays($event)"
-                    >
-                    </p-toggleswitch>
+                    ></p-toggleswitch>
                   </th>
                   <th>Period Start</th>
                   <th>Period End</th>
@@ -1739,43 +1472,25 @@
               </ng-template>
 
               <!-- BODY -->
-              <ng-template
-                #body
-                let-row
-                let-editing="editing"
-                let-ri="rowIndex"
-              >
+              <ng-template #body let-row let-editing="editing" let-ri="rowIndex">
                 <tr
                   [pEditableRow]="row"
                   [ngClass]="{
-                    'bg-red-50':
-                      lendPeak!.amortization.dueBillDays.isDuplicateTermNumber(
-                        row.termNumber
-                      ),
+                    'bg-red-50': lendPeak!.amortization.dueBillDays.isDuplicateTermNumber(row.termNumber),
                     'opacity-40': !row.active,
                   }"
                 >
                   <!-- row toggle -->
                   <td>
-                    <p-toggleswitch
-                      [(ngModel)]="row.active"
-                      (ngModelChange)="onInputChange($event)"
-                    >
-                    </p-toggleswitch>
+                    <p-toggleswitch [(ngModel)]="row.active" (ngModelChange)="onInputChange($event)"></p-toggleswitch>
                   </td>
 
                   <!-- Period dates (read-only) -->
                   <td>
-                    {{
-                      getStartDateForTerm(row.termNumber).toString()
-                        | date: "yyyy-MM-dd"
-                    }}
+                    {{ getStartDateForTerm(row.termNumber).toString() | date: 'yyyy-MM-dd' }}
                   </td>
                   <td>
-                    {{
-                      getEndDateForTerm(row.termNumber).toString()
-                        | date: "yyyy-MM-dd"
-                    }}
+                    {{ getEndDateForTerm(row.termNumber).toString() | date: 'yyyy-MM-dd' }}
                   </td>
 
                   <!-- Term # (editable) -->
@@ -1783,9 +1498,7 @@
                     <p-cellEditor>
                       <ng-template #output>{{ row.termNumber }}</ng-template>
                       <ng-template #input>
-                        <p-inputNumber
-                          [(ngModel)]="row.termNumber"
-                        ></p-inputNumber>
+                        <p-inputNumber [(ngModel)]="row.termNumber"></p-inputNumber>
                       </ng-template>
                     </p-cellEditor>
                   </td>
@@ -1793,13 +1506,9 @@
                   <!-- Days after period end (editable) -->
                   <td pEditableColumn>
                     <p-cellEditor>
-                      <ng-template #output>{{
-                        row.daysDueAfterPeriodEnd
-                      }}</ng-template>
+                      <ng-template #output>{{ row.daysDueAfterPeriodEnd }}</ng-template>
                       <ng-template #input>
-                        <p-inputNumber
-                          [(ngModel)]="row.daysDueAfterPeriodEnd"
-                        ></p-inputNumber>
+                        <p-inputNumber [(ngModel)]="row.daysDueAfterPeriodEnd"></p-inputNumber>
                       </ng-template>
                     </p-cellEditor>
                   </td>
@@ -1884,21 +1593,17 @@
       </p-accordion-panel>
       <!-- Balance Modifications -->
       <p-accordion-panel value="balanceModifications">
-        <p-accordion-header
-          ><div>
+        <p-accordion-header>
+          <div>
             <p-badge
               class="mr-4"
               badgeSize="xlarge"
-              [severity]="
-                lendPeak.amortization.balanceModifications.all.length > 0
-                  ? 'contrast'
-                  : 'secondary'
-              "
+              [severity]="lendPeak.amortization.balanceModifications.all.length > 0 ? 'contrast' : 'secondary'"
               [value]="lendPeak.amortization.balanceModifications.all.length"
             />
             Balance Modifications
-          </div></p-accordion-header
-        >
+          </div>
+        </p-accordion-header>
         <p-accordion-content>
           <div class="grid">
             <div class="col-12">
@@ -1914,11 +1619,7 @@
                     <th style="width: 20%">Actions</th>
                   </tr>
                 </ng-template>
-                <ng-template
-                  pTemplate="body"
-                  let-balanceModification
-                  let-i="rowIndex"
-                >
+                <ng-template pTemplate="body" let-balanceModification let-i="rowIndex">
                   <tr>
                     <!-- Date -->
                     <td>
@@ -1976,9 +1677,7 @@
                     </td>
                     <!-- System Generated -->
                     <td>
-                      <span>{{
-                        balanceModification.isSystemModification ? "Yes" : "No"
-                      }}</span>
+                      <span>{{ balanceModification.isSystemModification ? 'Yes' : 'No' }}</span>
                     </td>
                     <!-- Description -->
                     <td>
@@ -2018,21 +1717,17 @@
       </p-accordion-panel>
       <!-- Fees That Apply to All Terms -->
       <p-accordion-panel value="feesForAllTerms">
-        <p-accordion-header
-          ><div>
+        <p-accordion-header>
+          <div>
             <p-badge
               class="mr-4"
               badgeSize="xlarge"
-              [severity]="
-                lendPeak.amortization.feesForAllTerms.length > 0
-                  ? 'contrast'
-                  : 'secondary'
-              "
+              [severity]="lendPeak.amortization.feesForAllTerms.length > 0 ? 'contrast' : 'secondary'"
               [value]="lendPeak.amortization.feesForAllTerms.length"
             />
             Fees That Apply to All Terms
-          </div></p-accordion-header
-        >
+          </div>
+        </p-accordion-header>
         <p-accordion-content>
           <div class="p-fluid">
             <p-table
@@ -2044,7 +1739,7 @@
             >
               <ng-template #header>
                 <tr>
-                  <th style="width:3rem">
+                  <th style="width: 3rem">
                     <p-toggleswitch
                       [(ngModel)]="ffaMasterActive"
                       (ngModelChange)="toggleAllFeesForAllTerms($event)"
@@ -2054,16 +1749,13 @@
                   <th>Amount / Percentage</th>
                   <th>Based On</th>
                   <th>Description</th>
-                  <th style="width:9rem">Actions</th>
+                  <th style="width: 9rem">Actions</th>
                 </tr>
               </ng-template>
               <ng-template pTemplate="body" let-row let-editing="editing" let-ri="rowIndex">
                 <tr [pEditableRow]="row" [ngClass]="{ 'opacity-40': !row.active }">
                   <td>
-                    <p-toggleswitch
-                      [(ngModel)]="row.active"
-                      (ngModelChange)="onInputChange($event)"
-                    ></p-toggleswitch>
+                    <p-toggleswitch [(ngModel)]="row.active" (ngModelChange)="onInputChange($event)"></p-toggleswitch>
                   </td>
                   <td pEditableColumn>
                     <p-cellEditor>
@@ -2132,7 +1824,7 @@
                       </ng-template>
                     </p-cellEditor>
                   </td>
-                  <td class="text-center" style="width:9rem">
+                  <td class="text-center" style="width: 9rem">
                     <div class="flex items-center justify-center gap-2">
                       <button
                         *ngIf="!editing"
@@ -2182,11 +1874,7 @@
             </p-table>
             <p-divider></p-divider>
             <div class="p-mt-2">
-              <p-button
-                label="Add Fee"
-                icon="pi pi-plus"
-                (click)="addFeeForAllTerms()"
-              ></p-button>
+              <p-button label="Add Fee" icon="pi pi-plus" (click)="addFeeForAllTerms()"></p-button>
             </div>
           </div>
         </p-accordion-content>
@@ -2194,21 +1882,17 @@
 
       <!-- Fees Per Term -->
       <p-accordion-panel value="feesPerTerm">
-        <p-accordion-header
-          ><div>
+        <p-accordion-header>
+          <div>
             <p-badge
               class="mr-4"
               badgeSize="xlarge"
-              [severity]="
-                lendPeak.amortization.feesPerTerm.length > 0
-                  ? 'contrast'
-                  : 'secondary'
-              "
+              [severity]="lendPeak.amortization.feesPerTerm.length > 0 ? 'contrast' : 'secondary'"
               [value]="lendPeak.amortization.feesPerTerm.length"
             />
             Fees Per Term
-          </div></p-accordion-header
-        >
+          </div>
+        </p-accordion-header>
         <p-accordion-content>
           <div class="p-fluid">
             <p-table
@@ -2220,7 +1904,7 @@
             >
               <ng-template #header>
                 <tr>
-                  <th style="width:3rem">
+                  <th style="width: 3rem">
                     <p-toggleswitch
                       [(ngModel)]="fptMasterActive"
                       (ngModelChange)="toggleAllFeesPerTerm($event)"
@@ -2231,13 +1915,16 @@
                   <th>Amount / Percentage</th>
                   <th>Based On</th>
                   <th>Description</th>
-                  <th style="width:9rem">Actions</th>
+                  <th style="width: 9rem">Actions</th>
                 </tr>
               </ng-template>
               <ng-template pTemplate="body" let-row let-editing="editing" let-ri="rowIndex">
                 <tr [pEditableRow]="row" [ngClass]="{ 'opacity-40': !row.fee.active }">
                   <td>
-                    <p-toggleswitch [(ngModel)]="row.fee.active" (ngModelChange)="onInputChange($event)"></p-toggleswitch>
+                    <p-toggleswitch
+                      [(ngModel)]="row.fee.active"
+                      (ngModelChange)="onInputChange($event)"
+                    ></p-toggleswitch>
                   </td>
                   <td pEditableColumn>
                     <p-cellEditor>
@@ -2314,7 +2001,7 @@
                       </ng-template>
                     </p-cellEditor>
                   </td>
-                  <td class="text-center" style="width:9rem">
+                  <td class="text-center" style="width: 9rem">
                     <div class="flex items-center justify-center gap-2">
                       <button
                         *ngIf="!editing"
@@ -2364,16 +2051,168 @@
             </p-table>
             <p-divider></p-divider>
             <div class="p-mt-2">
+              <p-button label="Add Fee" icon="pi pi-plus" (click)="addFeePerTerm()"></p-button>
+            </div>
+          </div>
+        </p-accordion-content>
+      </p-accordion-panel>
+
+      <!-- Term Extensions -->
+      <p-accordion-panel value="termExtensions" *ngIf="termExtensions">
+        <p-accordion-header>
+          <div>
+            <p-badge
+              class="mr-4"
+              badgeSize="xlarge"
+              [severity]="(termExtensions.length || 0) > 0 ? 'contrast' : 'secondary'"
+              [value]="termExtensions.length || 0"
+            />
+            Term Extensions
+          </div>
+        </p-accordion-header>
+        <p-accordion-content>
+          <div class="p-fluid">
+            <div class="field flex align-items-center mb-3">
+              <label class="mr-2">EMI Recalculation Mode:</label>
+              <!-- NOTE: Make sure SelectModule from 'primeng/select' is imported in your parent module and added to the imports array. -->
+              <p-select
+                *ngIf="termExtensions"
+                [options]="emiRecalculationModes"
+                [(ngModel)]="termExtensions.emiRecalculationMode"
+                (onChange)="onEmiRecalculationModeChange($event)"
+                optionLabel="label"
+                optionValue="value"
+                [style.width]="'220px'"
+              ></p-select>
+              <ng-container *ngIf="termExtensions && termExtensions.emiRecalculationMode === 'fromTerm'">
+                <label class="ml-4 mr-2">Recalculate at Term:</label>
+                <p-inputNumber
+                  *ngIf="termExtensions"
+                  [(ngModel)]="termExtensions.emiRecalculationTerm"
+                  (ngModelChange)="onEmiRecalculationTermChange($event)"
+                  [min]="1"
+                  [max]="lendPeak.amortization.actualTerm || 1"
+                  [style.width]="'100px'"
+                ></p-inputNumber>
+              </ng-container>
+            </div>
+            <p-table [value]="termExtensions.all || []" dataKey="id" editMode="row" class="p-datatable p-component">
+              <ng-template #header>
+                <tr>
+                  <th style="width: 3rem">
+                    <p-toggleswitch
+                      [(ngModel)]="termExtensionMasterActive"
+                      (ngModelChange)="toggleAllTermExtensions($event)"
+                    ></p-toggleswitch>
+                  </th>
+                  <th>Quantity</th>
+                  <th>Date</th>
+                  <th>Description</th>
+                  <th>Active</th>
+                  <th style="width: 9rem">Actions</th>
+                </tr>
+              </ng-template>
+              <ng-template pTemplate="body" let-row let-editing="editing" let-ri="rowIndex">
+                <tr [pEditableRow]="row" [ngClass]="{ 'opacity-40': !row.active }">
+                  <td>
+                    <p-toggleswitch [(ngModel)]="row.active" (ngModelChange)="onInputChange($event)"></p-toggleswitch>
+                  </td>
+                  <td pEditableColumn>
+                    <p-cellEditor>
+                      <ng-template #output>{{ row.quantity }}</ng-template>
+                      <ng-template #input>
+                        <p-inputNumber [(ngModel)]="row.quantity"></p-inputNumber>
+                      </ng-template>
+                    </p-cellEditor>
+                  </td>
+                  <td pEditableColumn>
+                    <p-cellEditor>
+                      <ng-template #output>{{ row.date | date: 'yyyy-MM-dd' }}</ng-template>
+                      <ng-template #input>
+                        <p-calendar [(ngModel)]="row.date" dateFormat="yy-mm-dd"></p-calendar>
+                      </ng-template>
+                    </p-cellEditor>
+                  </td>
+                  <td pEditableColumn>
+                    <p-cellEditor>
+                      <ng-template #output>{{ row.description }}</ng-template>
+                      <ng-template #input>
+                        <input pInputText [(ngModel)]="row.description" />
+                      </ng-template>
+                    </p-cellEditor>
+                  </td>
+                  <td>
+                    <p-toggleswitch [(ngModel)]="row.active" (ngModelChange)="onInputChange($event)"></p-toggleswitch>
+                  </td>
+                  <td class="text-center" style="width: 9rem">
+                    <div class="flex items-center justify-center gap-2">
+                      <button
+                        *ngIf="!editing"
+                        pButton
+                        pRipple
+                        text
+                        rounded
+                        severity="secondary"
+                        pInitEditableRow
+                        icon="pi pi-pencil"
+                        (click)="onTermExtensionEditInit(row, ri)"
+                        pTooltip="Edit row"
+                      ></button>
+                      <button
+                        *ngIf="!editing"
+                        pButton
+                        pRipple
+                        text
+                        rounded
+                        severity="danger"
+                        icon="pi pi-trash"
+                        (click)="removeTermExtension(ri)"
+                        pTooltip="Remove row"
+                      ></button>
+                      <button
+                        *ngIf="editing"
+                        pButton
+                        pRipple
+                        rounded
+                        severity="success"
+                        pSaveEditableRow
+                        icon="pi pi-check"
+                        (click)="onTermExtensionEditSave(row, ri)"
+                        pTooltip="Save"
+                      ></button>
+                      <button
+                        *ngIf="editing"
+                        pButton
+                        pRipple
+                        rounded
+                        severity="secondary"
+                        pCancelEditableRow
+                        icon="pi pi-times"
+                        (click)="onTermExtensionEditCancel(row, ri)"
+                        pTooltip="Cancel"
+                      ></button>
+                    </div>
+                  </td>
+                </tr>
+              </ng-template>
+            </p-table>
+            <div class="p-mt-2">
               <p-button
-                label="Add Fee"
+                class="pr-2"
+                label="Add Term Extension"
                 icon="pi pi-plus"
-                (click)="addFeePerTerm()"
+                (click)="addTermExtension()"
+              ></p-button>
+              <p-button
+                severity="danger"
+                label="Remove All"
+                icon="pi pi-trash"
+                (click)="removeAllTermExtensions()"
               ></p-button>
             </div>
           </div>
         </p-accordion-content>
       </p-accordion-panel>
-      <!-- End of Accordion -->
     </p-accordion>
   </div>
 </div>

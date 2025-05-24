@@ -7,3 +7,7 @@ export * from "./demo-c6";
 export * from "./demo-c7";
 export * from "./demo-c8";
 export * from "./demo-c10";
+export * from "./demo-a1";
+export * from "./demo-a2";
+export * from "./demo-a3";
+export * from "./demo-a5";

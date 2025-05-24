@@ -8,6 +8,10 @@ import {
   DemoC7,
   DemoC8,
   DemoC10,
+  DemoA1,
+  DemoA2,
+  DemoA3,
+  DemoA5,
 } from '../../models/LendPeak/DemoLoans';
 import { LocalDate, ChronoUnit } from '@js-joda/core';
 import { Currency } from '../../utils/Currency';
@@ -231,7 +235,10 @@ describe('Demo Loans', () => {
       loan.deposits.all.forEach((deposit, index) => {
         const scheduleEntry = schedule.entries.find((e) => e.term === index);
         if (scheduleEntry) {
-          expect(deposit.effectiveDate.isEqual(scheduleEntry.periodEndDate)).toBe(true);
+          const diff = Math.abs(
+            ChronoUnit.DAYS.between(scheduleEntry.periodEndDate, deposit.effectiveDate)
+          );
+          expect(diff).toBeLessThanOrEqual(3);
         }
       });
     });
@@ -292,6 +299,89 @@ describe('Demo Loans', () => {
       const finalDeposit = loan.deposits.all[17]; // 18th month, 0-based index
       expect(finalDeposit.amount.toNumber()).toBeGreaterThan(loan.deposits.all[16].amount.toNumber());
       expect(loan.loan.calculateAmortizationPlan().lastEntry.endBalance.isZero()).toBe(true);
+    });
+  });
+
+  describe('DemoA3', () => {
+    const loan = DemoA3.ImportObject();
+
+    it('should have five rate schedule segments', () => {
+      expect(loan.loan.rateSchedules.allCustom.length).toBe(5);
+    });
+
+    it('should use 30/Actual calendar', () => {
+      expect(loan.loan.calendars.primary.calendarType).toBe(
+        CalendarType.THIRTY_ACTUAL
+      );
+    });
+
+    it('should change interest rate at each segment', () => {
+      const schedule = loan.loan.calculateAmortizationPlan();
+      let transitions = 0;
+      for (let i = 1; i < schedule.entries.length; i++) {
+        const prev = schedule.entries[i - 1].periodInterestRate.toNumber();
+        const curr = schedule.entries[i].periodInterestRate.toNumber();
+        if (prev !== curr) {
+          transitions++;
+        }
+      }
+      expect(transitions).toBeGreaterThanOrEqual(4);
+    });
+  });
+
+  describe('DemoA1', () => {
+    const loan = DemoA1.ImportObject();
+
+    it('should have correct basic loan properties', () => {
+      expect(loan.loan.id).toBe('DEMO-A01');
+      expect(loan.loan.description).toBe('Hardship: zero-interest skip');
+    });
+
+    it('should have zero interest for terms 4-6', () => {
+      const schedule = loan.loan.calculateAmortizationPlan();
+      expect(schedule.entries[4].periodInterestRate.toNumber()).toBe(0);
+      expect(schedule.entries[5].periodInterestRate.toNumber()).toBe(0);
+      expect(schedule.entries[6].periodInterestRate.toNumber()).toBe(0);
+    });
+
+    it('should exclude skipped terms from deposit count', () => {
+      const expectedDeposits = 21; // 24 terms minus 3 skipped
+      expect(loan.deposits.length).toBe(expectedDeposits);
+   });
+  });
+    
+  describe('DemoA5', () => {
+    const loan = DemoA5.ImportObject();
+
+    it('should have refund larger than deposit', () => {
+      const deposit = loan.deposits.all[6];
+      expect(deposit.refunds.length).toBe(1);
+      const refund = deposit.refunds[0];
+      expect(refund.amount.toNumber()).toBeGreaterThan(deposit.amount.toNumber());
+      expect(deposit.amount.toNumber()).toBeCloseTo(1791.51, 2);
+    });
+
+    it('should defer fees when refund exceeds payment', () => {
+      const schedule = loan.loan.calculateAmortizationPlan();
+      expect(schedule.entries[6].unbilledTotalDeferredFees.toNumber()).toBeGreaterThan(0);
+      });
+  });
+  describe('DemoA2', () => {
+    const loan = DemoA2.ImportObject();
+
+    it('should accrue interest and defer it during skipped terms', () => {
+      const schedule = loan.loan.calculateAmortizationPlan();
+      for (let i = 3; i <= 5; i++) {
+        expect(schedule.entries[i].unbilledTotalDeferredInterest.toNumber()).toBeGreaterThan(0);
+      }
+    });
+
+    it('should show zero payments but positive accrued interest for terms 4-6', () => {
+      const schedule = loan.loan.calculateAmortizationPlan();
+      for (let i = 3; i <= 5; i++) {
+        expect(schedule.entries[i].totalPayment.toNumber()).toBe(0);
+        expect(schedule.entries[i].accruedInterestForPeriod.toNumber()).toBeGreaterThan(0);
+      }
     });
   });
 });

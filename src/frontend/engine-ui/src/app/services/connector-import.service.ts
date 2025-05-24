@@ -295,7 +295,7 @@ export class ConnectorImportService {
   }
 
   /**
-   * Fetch multiple loans for a range of systemIds, e.g., fromSystemId to toSystemId.
+   * Fetch multiple loans for a range of systemIds, e.g., fromSystemId up to toSystemId.
    * This performs multiple GET requests in parallel using forkJoin.
    */
   private fetchBySystemIdRange(

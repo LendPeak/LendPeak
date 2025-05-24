@@ -293,8 +293,15 @@ export class Currency {
     return this.value.toFixed(2);
   }
 
-  toJson(): string {
+  toJSON(): string {
     return this.toCurrencyString();
+  }
+
+  /**
+   * @deprecated Use toJSON instead.
+   */
+  toJson(): string {
+    return this.toJSON();
   }
 
   /**
@@ -314,12 +321,20 @@ export class Currency {
     }
   }
 
-  lessThan(other: Currency): boolean {
-    return this.value.lessThan(other.getValue());
+  lessThan(other: number | string | Decimal | Currency): boolean {
+    if (other instanceof Currency) {
+      return this.value.lessThan(other.getValue());
+    } else {
+      return this.value.lessThan(other);
+    }
   }
 
-  greaterThanOrEqualTo(other: Currency): boolean {
-    return this.value.greaterThanOrEqualTo(other.getValue());
+  greaterThanOrEqualTo(other: number | string | Decimal | Currency): boolean {
+    if (other instanceof Currency) {
+      return this.value.greaterThanOrEqualTo(other.getValue());
+    } else {
+      return this.value.greaterThanOrEqualTo(other);
+    }
   }
 
   lessThanOrEqualTo(other: number | string | Decimal | Currency): boolean {

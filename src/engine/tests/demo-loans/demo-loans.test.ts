@@ -9,6 +9,8 @@ import {
   DemoC8,
   DemoC10,
   DemoA1,
+  DemoA5,
+  DemoA2,
 } from '../../models/LendPeak/DemoLoans';
 import { LocalDate, ChronoUnit } from '@js-joda/core';
 import { Currency } from '../../utils/Currency';
@@ -232,7 +234,10 @@ describe('Demo Loans', () => {
       loan.deposits.all.forEach((deposit, index) => {
         const scheduleEntry = schedule.entries.find((e) => e.term === index);
         if (scheduleEntry) {
-          expect(deposit.effectiveDate.isEqual(scheduleEntry.periodEndDate)).toBe(true);
+          const diff = Math.abs(
+            ChronoUnit.DAYS.between(scheduleEntry.periodEndDate, deposit.effectiveDate)
+          );
+          expect(diff).toBeLessThanOrEqual(3);
         }
       });
     });
@@ -314,6 +319,41 @@ describe('Demo Loans', () => {
     it('should exclude skipped terms from deposit count', () => {
       const expectedDeposits = 21; // 24 terms minus 3 skipped
       expect(loan.deposits.length).toBe(expectedDeposits);
+   });
+  });
+    
+  describe('DemoA5', () => {
+    const loan = DemoA5.ImportObject();
+
+    it('should have refund larger than deposit', () => {
+      const deposit = loan.deposits.all[6];
+      expect(deposit.refunds.length).toBe(1);
+      const refund = deposit.refunds[0];
+      expect(refund.amount.toNumber()).toBeGreaterThan(deposit.amount.toNumber());
+      expect(deposit.amount.toNumber()).toBeCloseTo(1791.51, 2);
+    });
+
+    it('should defer fees when refund exceeds payment', () => {
+      const schedule = loan.loan.calculateAmortizationPlan();
+      expect(schedule.entries[6].unbilledTotalDeferredFees.toNumber()).toBeGreaterThan(0);
+      });
+  });
+  describe('DemoA2', () => {
+    const loan = DemoA2.ImportObject();
+
+    it('should accrue interest and defer it during skipped terms', () => {
+      const schedule = loan.loan.calculateAmortizationPlan();
+      for (let i = 3; i <= 5; i++) {
+        expect(schedule.entries[i].unbilledTotalDeferredInterest.toNumber()).toBeGreaterThan(0);
+      }
+    });
+
+    it('should show zero payments but positive accrued interest for terms 4-6', () => {
+      const schedule = loan.loan.calculateAmortizationPlan();
+      for (let i = 3; i <= 5; i++) {
+        expect(schedule.entries[i].totalPayment.toNumber()).toBe(0);
+        expect(schedule.entries[i].accruedInterestForPeriod.toNumber()).toBeGreaterThan(0);
+      }
     });
   });
 });

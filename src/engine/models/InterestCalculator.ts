@@ -28,6 +28,7 @@ export interface APRInputs {
   loanAmount: Decimal;
   originationFee: Decimal;
   terms: AmortizationTerm[];
+  startDate: Date;
 }
 
 export class InterestCalculator {
@@ -65,7 +66,10 @@ export class InterestCalculator {
     return (endDate.getTime() - startDate.getTime()) / millisPerYear;
   }
 
-  static calculateRealAPR({ loanAmount, originationFee, terms }: APRInputs, precision: number = 10): Decimal {
+  static calculateRealAPR(
+    { loanAmount, originationFee, terms, startDate }: APRInputs,
+    precision: number = 10
+  ): Decimal {
     const maxIterations = 100;
     const tolerance = 1e-9;
 
@@ -94,44 +98,43 @@ export class InterestCalculator {
       throw new Error("Net loan amount after subtracting origination fee must be greater than zero.");
     }
 
-    const cashFlows: Decimal[] = [];
+    interface CashFlow {
+      amount: Decimal;
+      t: number; // time in years from startDate
+    }
 
-    // Cash inflow at time zero (from the lender's perspective, it's an outflow)
-    cashFlows.push(netLoanAmount.negated());
+    const cashFlows: CashFlow[] = [];
+
+    cashFlows.push({ amount: netLoanAmount.negated(), t: 0 });
 
     terms.forEach((term) => {
       const payment = term.principal.plus(term.interest);
-      // Payments are inflows to the lender (outflows from borrower), so they are positive
-      cashFlows.push(payment);
+      const years = this.yearFraction(startDate, term.paymentDate);
+      cashFlows.push({ amount: payment, t: years });
     });
 
-    // Function to calculate NPV for a given monthly interest rate
-    const npv = (monthlyRate: Decimal): Decimal => {
-      return cashFlows.reduce((sum, cashFlow, index) => {
-        const discountFactor = new Decimal(1).plus(monthlyRate).pow(index);
-        return sum.plus(cashFlow.div(discountFactor));
+    const npv = (rate: Decimal): Decimal => {
+      return cashFlows.reduce((sum, cf) => {
+        const discount = new Decimal(1).plus(rate).pow(cf.t);
+        return sum.plus(cf.amount.div(discount));
       }, new Decimal(0));
     };
 
-    // Function to calculate derivative of NPV with respect to monthlyRate
-    const npvDerivative = (monthlyRate: Decimal): Decimal => {
-      return cashFlows.reduce((sum, cashFlow, index) => {
-        if (index === 0) {
-          return sum; // No derivative at time zero
-        }
-        const discountFactor = new Decimal(1).plus(monthlyRate).pow(index + 1);
-        const termDerivative = cashFlow.times(-index).div(discountFactor);
+    const npvDerivative = (rate: Decimal): Decimal => {
+      return cashFlows.reduce((sum, cf) => {
+        if (cf.t === 0) return sum;
+        const discount = new Decimal(1).plus(rate).pow(cf.t + 1);
+        const termDerivative = cf.amount.times(-cf.t).div(discount);
         return sum.plus(termDerivative);
       }, new Decimal(0));
     };
 
-    // Newton-Raphson method to find the APR that solves the NPV equation
-    let monthlyRate = new Decimal(0.01 / 12); // Initial guess for monthly rate
+    let annualRate = new Decimal(0.05); // initial guess 5%
     let iteration = 0;
 
     while (iteration < maxIterations) {
-      const currentNPV = npv(monthlyRate);
-      const derivative = npvDerivative(monthlyRate);
+      const currentNPV = npv(annualRate);
+      const derivative = npvDerivative(annualRate);
 
       if (derivative.abs().lessThan(tolerance)) {
         console.warn("APR calculation failed: Derivative is too small. This may occur due to invalid or inconsistent input values, such as negative balances or improper cash flows.");
@@ -140,14 +143,14 @@ export class InterestCalculator {
         return new Decimal(0);
       }
 
-      const newRate = monthlyRate.minus(currentNPV.div(derivative));
+      const newRate = annualRate.minus(currentNPV.div(derivative));
 
-      if (newRate.minus(monthlyRate).abs().lessThan(tolerance)) {
-        monthlyRate = newRate;
+      if (newRate.minus(annualRate).abs().lessThan(tolerance)) {
+        annualRate = newRate;
         break;
       }
 
-      monthlyRate = newRate;
+      annualRate = newRate;
       iteration++;
     }
 
@@ -155,10 +158,6 @@ export class InterestCalculator {
       throw new Error("APR calculation failed: Maximum number of iterations reached. This may occur due to invalid inputs or the method not converging.");
     }
 
-    // Convert monthly rate to annual rate (APR)
-    const annualRate = monthlyRate.times(12);
-
-    // Return APR in percentage format with the desired precision
     return annualRate.times(100).toDecimalPlaces(precision);
   }
 

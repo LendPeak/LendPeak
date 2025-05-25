@@ -118,7 +118,10 @@ export class DepositRecords {
     return this._records.find((record) => record.id === id);
   }
 
-  atIndex(index: number): DepositRecord {
+  atIndex(index: number): DepositRecord | undefined {
+    if (index < 0 || index >= this._records.length) {
+      return undefined;
+    }
     return this._records[index];
   }
 
@@ -131,6 +134,10 @@ export class DepositRecords {
   }
 
   removeRecordAtIndex(index: number) {
+    if (index < 0 || index >= this._records.length) {
+      console.warn(`Invalid index ${index} for removeRecordAtIndex. Array length: ${this._records.length}`);
+      return;
+    }
     this.modified = true;
     this._records.splice(index, 1);
     this.reSort();

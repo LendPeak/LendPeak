@@ -125,7 +125,8 @@ export class BalanceModification {
   set amount(amount: Currency | number | Decimal) {
     this._amount = Currency.of(amount);
     this.jsAmount = this._amount.toNumber();
-    this.unusedAmount = this._amount;
+    // Recalculate unused amount: new amount minus what's already been used
+    this.unusedAmount = this._amount.subtract(this._usedAmount);
   }
 
   static rehydrateFromJSON(json: any): BalanceModification {

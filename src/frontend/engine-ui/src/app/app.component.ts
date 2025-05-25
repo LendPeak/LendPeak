@@ -60,6 +60,16 @@ import { LoaderService } from './shared/components/loader/loader.service';
 
 declare let gtag: Function;
 
+// Utility function for mobile device detection
+function isMobileDevice(): boolean {
+  const ua = navigator.userAgent || navigator.vendor || (window as any).opera;
+  if (/android/i.test(ua)) return true;
+  if (/iPad|iPhone|iPod/.test(ua) && !(window as any).MSStream) return true;
+  // Touch capability (optional, for tablets)
+  if ('ontouchstart' in window && /Mobile|Tablet|iPad|iPhone|Android/.test(ua)) return true;
+  return false;
+}
+
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
@@ -2006,6 +2016,6 @@ export class AppComponent implements OnChanges, AfterViewInit, OnInit, OnDestroy
   mobileBlocked: boolean = false;
 
   updateMobileBlocked = () => {
-    this.mobileBlocked = window.innerWidth < 800 || window.innerHeight < 600;
+    this.mobileBlocked = isMobileDevice();
   };
 }

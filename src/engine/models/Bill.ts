@@ -386,7 +386,7 @@ export class Bill {
       feesDue: this.feesDue,
       remainingTotal: this.remainingTotal,
       remainingFees: this.remainingFees,
-      remainintPrincipal: this.remainingPrincipal,
+      remainingPrincipal: this.remainingPrincipal,
       remainingInterest: this.remainingInterest,
       allocatedTotalSum: this.allocatedTotalSum,
       allocatedFeesSum: this.allocatedFeesSum,

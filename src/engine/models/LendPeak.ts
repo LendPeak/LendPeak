@@ -232,9 +232,9 @@ export class LendPeak {
     }
     // check type and if not fiancial ops version manager, call fromJSON static method
     if (!(value instanceof FinancialOpsVersionManager)) {
-      FinancialOpsVersionManager.fromJSON(value);
+      this._financialOpsVersionManager = FinancialOpsVersionManager.fromJSON(value);
     } else {
-      this._financialOpsVersionManager;
+      this._financialOpsVersionManager = value;
     }
   }
 

@@ -38,6 +38,14 @@ describe('TermExtension', () => {
     expect(ext.jsActive).toBe(false);
     expect(ext.jsId).toBe('id1');
   });
+
+  it('should normalize jsDate to UTC midnight', () => {
+    const dateWithTz = new Date('2024-03-01T10:00:00-05:00');
+    const ext = new TermExtension({ quantity: 1, date: dateWithTz });
+    expect(ext.jsDate.toISOString()).toBe('2024-03-01T00:00:00.000Z');
+    ext.date = '2024-04-15';
+    expect(ext.jsDate.toISOString()).toBe('2024-04-15T00:00:00.000Z');
+  });
 });
 
 describe('TermExtensions', () => {

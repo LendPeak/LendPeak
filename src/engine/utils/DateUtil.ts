@@ -152,18 +152,15 @@ export class DateUtil {
   // this helps in UI to display the same date in all timezones
   // and it returns regular javascript Date
   static normalizeDateToJsDate(date: LocalDate): Date {
-    // if (dayjs.isDayjs(date)) {
-    //   return new Date(date.year(), date.month(), date.date());
-    // } else {
     try {
-      const jsDate = new Date(date.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli());
+      const jsDate = new Date(
+        date.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli(),
+      );
       return jsDate;
     } catch (e) {
       console.error("Error normalizing date to JS Date", e);
       throw new Error("Invalid date format");
     }
-
-    // }
   }
 
   static normalizeDateTimeToJsDate(date: LocalDateTime): Date {

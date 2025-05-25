@@ -86,4 +86,46 @@ describe("DateUtil", () => {
       expect(() => DateUtil.normalizeDateTime("2023-1")).toThrow("Date string too short, expected format YYYY-MM-DD");
     });
   });
+
+  describe("parseLoanProDateToLocalDate", () => {
+    it("should correctly parse milliseconds timestamp", () => {
+      const input = "/Date(1698278400000)/"; // 2023-10-26 UTC
+      const result = DateUtil.parseLoanProDateToLocalDate(input);
+      expect(result.toString()).toBe("2023-10-26");
+    });
+
+    it("should correctly parse seconds timestamp", () => {
+      const input = "/Date(1698278400)/"; // 2023-10-26 UTC in seconds
+      const result = DateUtil.parseLoanProDateToLocalDate(input);
+      expect(result.toString()).toBe("2023-10-26");
+    });
+
+    it("should throw on invalid input", () => {
+      expect(() => DateUtil.parseLoanProDateToLocalDate("/Date(foo)/")).toThrow("Invalid LoanPro date format");
+    });
+  });
+
+  describe("parseLoanProDateToLocalDateTime", () => {
+    it("should correctly parse milliseconds timestamp", () => {
+      const input = "/Date(1698278400000)/"; // 2023-10-26T00:00:00Z
+      const result = DateUtil.parseLoanProDateToLocalDateTime(input);
+      expect(result.toString()).toBe("2023-10-26T00:00");
+    });
+
+    it("should correctly parse seconds timestamp", () => {
+      const input = "/Date(1698278400)/"; // 2023-10-26T00:00:00Z in seconds
+      const result = DateUtil.parseLoanProDateToLocalDateTime(input);
+      expect(result.toString()).toBe("2023-10-26T00:00");
+    });
+  });
+
+  describe("monthsBetween", () => {
+    it("should never return negative zero", () => {
+      const a = LocalDate.parse("2023-04-30");
+      const b = LocalDate.parse("2023-03-31");
+      const diff = DateUtil.monthsBetween(a, b);
+      expect(Object.is(diff, -0)).toBe(false);
+      expect(diff).toBe(0);
+    });
+  });
 });

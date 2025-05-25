@@ -1,5 +1,6 @@
 import { Bills } from "./Bills";
 import { DepositRecords } from "./DepositRecords";
+import { DateUtil } from "../utils/DateUtil";
 import cloneDeep from "lodash/cloneDeep";
 import dayjs from "dayjs";
 import isSameOrAfter from "dayjs/plugin/isSameOrAfter";
@@ -224,7 +225,10 @@ export class FinancialOpsVersionManager {
 
     const oldSnap = targetVer.snapshot;
     // Reconstruct the domain objects from oldSnap
-    this.bills = new Bills(oldSnap.bills || []);
+    this.bills = new Bills({
+      bills: oldSnap.bills || [],
+      currentDate: DateUtil.today(),
+    });
     this.deposits = new DepositRecords(oldSnap.deposits || []);
 
     // Now create a new version flagged as rollback
@@ -276,7 +280,10 @@ export class FinancialOpsVersionManager {
       throw new Error("Invalid data: missing currentFinancialOps");
     }
 
-    const bills = new Bills(data.currentFinancialOps.bills || []);
+    const bills = new Bills({
+      bills: data.currentFinancialOps.bills || [],
+      currentDate: DateUtil.today(),
+    });
     const deposits = new DepositRecords(data.currentFinancialOps.deposits || []);
     const mgr = new FinancialOpsVersionManager(bills, deposits);
     mgr.versionNumber = data.versionNumber || 0;

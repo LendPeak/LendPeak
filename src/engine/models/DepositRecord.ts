@@ -693,7 +693,7 @@ export class DepositRecord {
       insertedDate: DateUtil.normalizeDate("${this.insertedDate.toString()}"),
       effectiveDate: DateUtil.normalizeDate("${this.effectiveDate.toString()}"),
       clearingDate: ${this.clearingDate ? `DateUtil.normalizeDate("${this.clearingDate.toString()}")` : "undefined"},
-      systemDate: DateUtil.normalizeDate("${this.systemDate.toString()}"),
+      systemDate: DateUtil.normalizeDateTime("${this.systemDate.toString()}"),
       paymentMethod: ${this.paymentMethod ? `"${this.paymentMethod}"` : "undefined"},
       depositor: ${this.depositor ? `"${this.depositor}"` : "undefined"},
       depositLocation: ${this.depositLocation ? `"${this.depositLocation}"` : "undefined"},

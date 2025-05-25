@@ -1,8 +1,8 @@
-import { BillGenerator } from "../../models/BillGenerator";
-import { Amortization } from "../../models/Amortization";
-import { Currency } from "../../utils/Currency";
-import { LocalDate } from "@js-joda/core";
-import Decimal from "decimal.js";
+import { BillGenerator } from '../../models/BillGenerator';
+import { Amortization } from '../../models/Amortization';
+import { Currency } from '../../utils/Currency';
+import { LocalDate } from '@js-joda/core';
+import Decimal from 'decimal.js';
 
 describe('BillGenerator', () => {
   it('generates bills matching the amortization schedule', () => {
@@ -22,6 +22,8 @@ describe('BillGenerator', () => {
     for (let i = 0; i < bills.length; i++) {
       const bill = bills.atIndex(i);
       const entry = schedule.entries[i];
+      expect(bill).toBeDefined();
+      if (!bill) throw new Error('Bill is undefined at index ' + i);
       expect(bill.openDate.isEqual(entry.periodBillOpenDate)).toBe(true);
       expect(bill.dueDate.isEqual(entry.periodBillDueDate)).toBe(true);
       expect(bill.principalDue.equals(entry.principal)).toBe(true);

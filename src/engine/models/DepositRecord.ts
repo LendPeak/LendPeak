@@ -385,7 +385,7 @@ export class DepositRecord {
 
   set systemDate(value: LocalDateTime | Date | string) {
     this._systemDate = DateUtil.normalizeDateTime(value);
-    this.jsSystemDate = new Date(this._systemDate.toString());
+    this.jsSystemDate = DateUtil.normalizeDateTimeToJsDate(this._systemDate);
     this.versionChanged();
   }
 
@@ -578,7 +578,7 @@ export class DepositRecord {
     this.jsCreatedDate = DateUtil.normalizeDateToJsDate(this.createdDate);
     this.jsInsertedDate = DateUtil.normalizeDateToJsDate(this.insertedDate);
     this.jsEffectiveDate = DateUtil.normalizeDateToJsDate(this.effectiveDate);
-    this.jsSystemDate = new Date(this.systemDate.toString());
+    this.jsSystemDate = DateUtil.normalizeDateTimeToJsDate(this.systemDate);
     if (this.clearingDate) {
       this.jsClearingDate = DateUtil.normalizeDateToJsDate(this.clearingDate);
     } else {
@@ -660,7 +660,7 @@ export class DepositRecord {
       insertedDate: DateUtil.normalizeDateToJsDate(this.insertedDate),
       effectiveDate: DateUtil.normalizeDateToJsDate(this.effectiveDate),
       clearingDate: this.clearingDate ? DateUtil.normalizeDateToJsDate(this.clearingDate) : undefined,
-      systemDate: new Date(this.systemDate.toString()),
+      systemDate: DateUtil.normalizeDateTimeToJsDate(this.systemDate),
       paymentMethod: this.paymentMethod,
       depositor: this.depositor,
       depositLocation: this.depositLocation,

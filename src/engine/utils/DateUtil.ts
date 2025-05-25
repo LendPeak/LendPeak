@@ -166,6 +166,15 @@ export class DateUtil {
     // }
   }
 
+  static normalizeDateTimeToJsDate(date: LocalDateTime): Date {
+    try {
+      return new Date(date.atZone(ZoneOffset.UTC).toInstant().toEpochMilli());
+    } catch (e) {
+      console.error("Error normalizing date time to JS Date", e);
+      throw new Error("Invalid date format");
+    }
+  }
+
   // equivalent to dayjs date.isBetween(period.startDate, period.endDate, "day", "[)")
   static isBetweenHalfOpen(date: LocalDate, start: LocalDate, end: LocalDate): boolean {
     return (date.isEqual(start) || date.isAfter(start)) && date.isBefore(end);

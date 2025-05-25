@@ -1,4 +1,5 @@
 import { LocalDate } from '@js-joda/core';
+import { DateUtil } from '../utils/DateUtil';
 
 export interface TermExtensionParams {
   quantity: number;
@@ -47,12 +48,12 @@ export class TermExtension {
     this.modified = true;
   }
 
-  get date() {
+  get date(): LocalDate {
     return this._date;
   }
   set date(v: LocalDate | Date | string) {
-    this._date = v instanceof LocalDate ? v : LocalDate.parse(v instanceof Date ? v.toISOString().slice(0, 10) : v);
-    this.jsDate = new Date(this._date.toString());
+    this._date = DateUtil.normalizeDate(v);
+    this.jsDate = DateUtil.normalizeDateToJsDate(this._date);
     this.modified = true;
   }
 
@@ -85,7 +86,7 @@ export class TermExtension {
 
   updateJsValues(): void {
     this.jsQuantity = this.quantity;
-    this.jsDate = new Date(this.date.toString());
+    this.jsDate = DateUtil.normalizeDateToJsDate(this.date);
     this.jsDescription = this.description;
     this.jsActive = this.active;
     this.jsId = this.id;

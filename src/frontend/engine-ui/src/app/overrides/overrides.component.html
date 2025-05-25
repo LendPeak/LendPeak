@@ -2133,6 +2133,16 @@
                               ? 'Recalculate from Start'
                               : 'Recalculate from Term ' + row.emiRecalculationTerm
                         }}
+                        <ng-container
+                          *ngIf="row.emiRecalculationMode === 'fromStart' || row.emiRecalculationMode === 'fromTerm'"
+                        >
+                          <span
+                            class="pi pi-info-circle ml-2"
+                            pTooltip="If checked, skip-a-pay periods (zero-dollar terms) will be ignored when recalculating EMI. If unchecked, they will be included in the term count."
+                            tooltipPosition="top"
+                            style="color: #2196f3; cursor: pointer"
+                          ></span>
+                        </ng-container>
                       </ng-template>
                       <ng-template #input>
                         <p-select
@@ -2152,6 +2162,31 @@
                             [max]="lendPeak.amortization.actualTerm || 1"
                             [style.width]="'80px'"
                           ></p-inputNumber>
+                        </ng-container>
+                        <ng-container
+                          *ngIf="row.emiRecalculationMode === 'fromStart' || row.emiRecalculationMode === 'fromTerm'"
+                        >
+                          <div class="mt-2">
+                            <p-checkbox
+                              binary="true"
+                              [(ngModel)]="row.ignoreSkipTermsForEmiRecalculation"
+                              inputId="ignoreSkipTermsForEmiRecalculation-{{ ri }}"
+                              [style]="{ 'vertical-align': 'middle' }"
+                            ></p-checkbox>
+                            <label
+                              for="ignoreSkipTermsForEmiRecalculation-{{ ri }}"
+                              class="ml-2"
+                              style="font-weight: normal; cursor: pointer"
+                            >
+                              Ignore skip-a-pay periods when recalculating EMI
+                            </label>
+                            <span
+                              class="pi pi-info-circle ml-1"
+                              pTooltip="If checked, skip-a-pay periods (zero-dollar terms) will be ignored when recalculating EMI. If unchecked, they will be included in the term count."
+                              tooltipPosition="top"
+                              style="color: #2196f3; cursor: pointer"
+                            ></span>
+                          </div>
                         </ng-container>
                         <ng-container *ngIf="row.emiRecalculationMode === 'none'">
                           <div class="text-warning mt-1" style="font-size: 0.9em; color: #f39c12">

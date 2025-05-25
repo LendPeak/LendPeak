@@ -9,6 +9,11 @@ export interface TermExtensionParams {
   id?: string;
   emiRecalculationMode?: 'none' | 'fromStart' | 'fromTerm';
   emiRecalculationTerm?: number;
+  /**
+   * If true (default), skip-a-pay periods (zero-dollar terms) are ignored when recalculating EMI for this extension.
+   * If false, skip-a-pay periods are included in the term count for EMI recalculation.
+   */
+  ignoreSkipTermsForEmiRecalculation?: boolean;
 }
 
 export class TermExtension {
@@ -19,6 +24,11 @@ export class TermExtension {
   private _id?: string;
   private _emiRecalculationMode: 'none' | 'fromStart' | 'fromTerm' = 'none';
   private _emiRecalculationTerm?: number;
+  /**
+   * If true (default), skip-a-pay periods (zero-dollar terms) are ignored when recalculating EMI for this extension.
+   * If false, skip-a-pay periods are included in the term count for EMI recalculation.
+   */
+  private _ignoreSkipTermsForEmiRecalculation: boolean = true;
 
   jsQuantity!: number;
   jsDate!: Date;
@@ -27,6 +37,7 @@ export class TermExtension {
   jsId?: string;
   jsEmiRecalculationMode!: 'none' | 'fromStart' | 'fromTerm';
   jsEmiRecalculationTerm?: number;
+  jsIgnoreSkipTermsForEmiRecalculation!: boolean;
 
   private _modified = false;
   get modified(): boolean {
@@ -44,6 +55,8 @@ export class TermExtension {
     this.id = params.id;
     this.emiRecalculationMode = params.emiRecalculationMode ?? 'none';
     this.emiRecalculationTerm = params.emiRecalculationTerm;
+    this.ignoreSkipTermsForEmiRecalculation =
+      params.ignoreSkipTermsForEmiRecalculation !== undefined ? params.ignoreSkipTermsForEmiRecalculation : true;
     this.updateJsValues();
   }
 
@@ -110,6 +123,15 @@ export class TermExtension {
     this.modified = true;
   }
 
+  get ignoreSkipTermsForEmiRecalculation() {
+    return this._ignoreSkipTermsForEmiRecalculation;
+  }
+  set ignoreSkipTermsForEmiRecalculation(v: boolean) {
+    this._ignoreSkipTermsForEmiRecalculation = v;
+    this.jsIgnoreSkipTermsForEmiRecalculation = v;
+    this.modified = true;
+  }
+
   updateJsValues(): void {
     this.jsQuantity = this.quantity;
     this.jsDate = DateUtil.normalizeDateToJsDate(this.date);
@@ -118,6 +140,7 @@ export class TermExtension {
     this.jsId = this.id;
     this.jsEmiRecalculationMode = this.emiRecalculationMode;
     this.jsEmiRecalculationTerm = this.emiRecalculationTerm;
+    this.jsIgnoreSkipTermsForEmiRecalculation = this.ignoreSkipTermsForEmiRecalculation;
   }
 
   updateModelValues(): void {
@@ -128,6 +151,7 @@ export class TermExtension {
     this.id = this.jsId;
     this.emiRecalculationMode = this.jsEmiRecalculationMode;
     this.emiRecalculationTerm = this.jsEmiRecalculationTerm;
+    this.ignoreSkipTermsForEmiRecalculation = this.jsIgnoreSkipTermsForEmiRecalculation;
   }
 
   get json(): TermExtensionParams {
@@ -139,6 +163,7 @@ export class TermExtension {
       id: this.id,
       emiRecalculationMode: this.emiRecalculationMode,
       emiRecalculationTerm: this.emiRecalculationTerm,
+      ignoreSkipTermsForEmiRecalculation: this.ignoreSkipTermsForEmiRecalculation,
     };
   }
   toJSON() {

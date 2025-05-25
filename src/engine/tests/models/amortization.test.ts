@@ -13,6 +13,7 @@ import { RateSchedule } from '@models/RateSchedule';
 import { RateSchedules } from '@models/RateSchedules';
 import { BalanceModification } from '@models/Amortization/BalanceModification';
 import { BalanceModifications } from '@models/Amortization/BalanceModifications';
+import { TermPaymentAmounts } from '@models/TermPaymentAmounts';
 
 describe('Amortization', () => {
   it('should generate a correct amortization schedule for a simple case', () => {
@@ -482,5 +483,156 @@ describe('Additional Amortization Scenarios', () => {
 
     expect(modEntry.balanceModificationAmount.toNumber()).toBe(-100);
     expect(nextEntry.startBalance.toNumber()).toBeCloseTo(modEntry.endBalance.toNumber());
+  });
+});
+
+describe('Term Extension EMI recalculation with skip-a-pay flag', () => {
+  const loanAmount = Currency.of(1200);
+  const interestRate = new Decimal(0.05);
+  const term = 12;
+  const startDate = DateUtil.normalizeDate('2023-01-01');
+
+  it('should ignore skip-a-pay periods when ignoreSkipTermsForEmiRecalculation is true (fromStart)', () => {
+    // 2 skip-a-pay periods (terms 3 and 7)
+    const termPaymentAmountOverride = new TermPaymentAmounts([
+      { termNumber: 3, paymentAmount: 0 },
+      { termNumber: 7, paymentAmount: 0 },
+    ]);
+    const termExtensions = new TermExtensions([
+      {
+        quantity: 2,
+        date: '2023-06-01',
+        description: 'Hardship',
+        active: true,
+        emiRecalculationMode: 'fromStart',
+        ignoreSkipTermsForEmiRecalculation: true,
+      },
+    ]);
+    const amortization = new Amortization({
+      loanAmount,
+      annualInterestRate: interestRate,
+      term,
+      startDate,
+      termPaymentAmountOverride,
+    });
+    amortization.termExtensions = termExtensions;
+    const schedule = amortization.calculateAmortizationPlan();
+    // Should have 14 terms (12 + 2 extension)
+    expect(schedule.length).toBe(14);
+    // EMI should be calculated over 12 paying terms (14 total - 2 skip)
+    const nonZeroPayments = schedule.entries.filter((e) => e.totalPayment.toNumber() > 0);
+    expect(nonZeroPayments.length).toBe(12);
+    // All skip-a-pay periods should have zero payment
+    expect(schedule.entries[3].totalPayment.toNumber()).toBe(0);
+    expect(schedule.entries[7].totalPayment.toNumber()).toBe(0);
+  });
+
+  it('should include skip-a-pay periods when ignoreSkipTermsForEmiRecalculation is false (fromStart)', () => {
+    // 2 skip-a-pay periods (terms 3 and 7)
+    const termPaymentAmountOverride = new TermPaymentAmounts([
+      { termNumber: 3, paymentAmount: 0 },
+      { termNumber: 7, paymentAmount: 0 },
+    ]);
+    const termExtensions = new TermExtensions([
+      {
+        quantity: 2,
+        date: '2023-06-01',
+        description: 'Hardship',
+        active: true,
+        emiRecalculationMode: 'fromStart',
+        ignoreSkipTermsForEmiRecalculation: false,
+      },
+    ]);
+    const amortization = new Amortization({
+      loanAmount,
+      annualInterestRate: interestRate,
+      term,
+      startDate,
+      termPaymentAmountOverride,
+    });
+    amortization.termExtensions = termExtensions;
+    const schedule = amortization.calculateAmortizationPlan();
+    // Should have 14 terms (12 + 2 extension)
+    expect(schedule.length).toBe(14);
+    // EMI should be calculated over 14 terms (including skip-a-pay)
+    const nonZeroPayments = schedule.entries.filter((e) => e.totalPayment.toNumber() > 0);
+    expect(nonZeroPayments.length).toBe(12); // 2 are zero, but EMI is lower
+    // All skip-a-pay periods should have zero payment
+    expect(schedule.entries[3].totalPayment.toNumber()).toBe(0);
+    expect(schedule.entries[7].totalPayment.toNumber()).toBe(0);
+    // EMI for non-skip terms should be lower than if skip-a-pay were ignored
+    const emiWithSkip = schedule.entries[1].totalPayment.toNumber();
+    expect(emiWithSkip).toBeLessThan(1200 / 12); // Should be less than $100
+  });
+
+  it('should ignore skip-a-pay periods when ignoreSkipTermsForEmiRecalculation is true (fromTerm)', () => {
+    // 1 skip-a-pay period after recalc (term 10)
+    const termPaymentAmountOverride = new TermPaymentAmounts([{ termNumber: 10, paymentAmount: 0 }]);
+    const termExtensions = new TermExtensions([
+      {
+        quantity: 2,
+        date: '2023-06-01',
+        description: 'Hardship',
+        active: true,
+        emiRecalculationMode: 'fromTerm',
+        emiRecalculationTerm: 8,
+        ignoreSkipTermsForEmiRecalculation: true,
+      },
+    ]);
+    const amortization = new Amortization({
+      loanAmount,
+      annualInterestRate: interestRate,
+      term,
+      startDate,
+      termPaymentAmountOverride,
+    });
+    amortization.termExtensions = termExtensions;
+    const schedule = amortization.calculateAmortizationPlan();
+    // Should have 14 terms (12 + 2 extension)
+    expect(schedule.length).toBe(14);
+    // EMI after recalc should be based on 5 paying terms (from term 8 to 13, minus skip at 10)
+    const recalcStart = 8;
+    const payingTerms = 14 - recalcStart - 1; // 1 skip at 10
+    const nonZeroPayments = schedule.entries.slice(recalcStart).filter((e) => e.totalPayment.toNumber() > 0);
+    expect(nonZeroPayments.length).toBe(payingTerms);
+    // Skip-a-pay period should have zero payment
+    expect(schedule.entries[10].totalPayment.toNumber()).toBe(0);
+  });
+
+  it('should include skip-a-pay periods when ignoreSkipTermsForEmiRecalculation is false (fromTerm)', () => {
+    // 1 skip-a-pay period after recalc (term 10)
+    const termPaymentAmountOverride = new TermPaymentAmounts([{ termNumber: 10, paymentAmount: 0 }]);
+    const termExtensions = new TermExtensions([
+      {
+        quantity: 2,
+        date: '2023-06-01',
+        description: 'Hardship',
+        active: true,
+        emiRecalculationMode: 'fromTerm',
+        emiRecalculationTerm: 8,
+        ignoreSkipTermsForEmiRecalculation: false,
+      },
+    ]);
+    const amortization = new Amortization({
+      loanAmount,
+      annualInterestRate: interestRate,
+      term,
+      startDate,
+      termPaymentAmountOverride,
+    });
+    amortization.termExtensions = termExtensions;
+    const schedule = amortization.calculateAmortizationPlan();
+    // Should have 14 terms (12 + 2 extension)
+    expect(schedule.length).toBe(14);
+    // EMI after recalc should be based on 6 terms (from term 8 to 13, including skip at 10)
+    const recalcStart = 8;
+    const payingTerms = 14 - recalcStart; // includes skip
+    const nonZeroPayments = schedule.entries.slice(recalcStart).filter((e) => e.totalPayment.toNumber() > 0);
+    expect(nonZeroPayments.length).toBe(payingTerms - 1); // 1 is zero
+    // Skip-a-pay period should have zero payment
+    expect(schedule.entries[10].totalPayment.toNumber()).toBe(0);
+    // EMI for non-skip terms should be lower than if skip-a-pay were ignored
+    const emiWithSkip = schedule.entries[recalcStart].totalPayment.toNumber();
+    expect(emiWithSkip).toBeLessThan(1200 / 5); // Should be less than if only paying terms counted
   });
 });

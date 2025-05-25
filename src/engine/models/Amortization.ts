@@ -2246,7 +2246,10 @@ export class Amortization {
         return this.contractualEquitedMonthlyPayment!;
       }
       if (ext.emiRecalculationMode === 'fromStart') {
-        return this.calculateFixedMonthlyPayment(this.totalLoanAmount, this.getPayingTermCount());
+        // Use the flag to determine how to count paying terms
+        const ignoreSkip = ext.ignoreSkipTermsForEmiRecalculation;
+        const payingTerms = ignoreSkip ? this.getPayingTermCount(0) : this.actualTerm - 0;
+        return this.calculateFixedMonthlyPayment(this.totalLoanAmount, payingTerms);
       }
       if (ext.emiRecalculationMode === 'fromTerm' && typeof ext.emiRecalculationTerm === 'number') {
         const recalcTerm = ext.emiRecalculationTerm;
@@ -2264,8 +2267,9 @@ export class Amortization {
           this._emiRecalculationPrincipalCache[recalcTerm] = this.calculatePartialPlanUpToTerm(recalcTerm);
         }
         const balance = this._emiRecalculationPrincipalCache[recalcTerm];
-        const remaining = this.getPayingTermCount(recalcTerm);
-        return this.calculateFixedMonthlyPayment(balance, remaining);
+        const ignoreSkip = ext.ignoreSkipTermsForEmiRecalculation;
+        const payingTerms = ignoreSkip ? this.getPayingTermCount(recalcTerm) : this.actualTerm - recalcTerm;
+        return this.calculateFixedMonthlyPayment(balance, payingTerms);
       }
     }
     // 3️⃣  Default: use contractual EMI

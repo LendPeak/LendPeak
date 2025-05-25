@@ -247,6 +247,10 @@ export class DepositRecord {
   }
 
   removeUsageDetail(index: number): void {
+    if (index < 0 || index >= this._usageDetails.length) {
+      console.warn(`Invalid index ${index} for removeUsageDetail. Array length: ${this._usageDetails.length}`);
+      return;
+    }
     this._usageDetails.splice(index, 1);
     this.versionChanged();
   }

@@ -475,7 +475,7 @@ describe("RateSchedule Class", () => {
     const rs = new RateSchedule({
       annualInterestRate: 5,
       startDate: "2025-01-01",
-      endDate: "2025-02-01",
+      endDate: "2025-12-31",
     });
     expect(rs.modified).toBe(false);
 
@@ -499,10 +499,10 @@ describe("RateSchedule Class", () => {
     expect(DateUtil.toIsoDateString(rs.jsStartDate)).toBe("2025-01-01");
     expect(DateUtil.toIsoDateString(rs.jsEndDate)).toBe("2025-01-31");
 
-    // change the model
+    // change the model - update end date first to avoid validation error
     rs.annualInterestRate = 12;
-    rs.startDate = "2025-03-10";
     rs.endDate = "2025-03-15";
+    rs.startDate = "2025-03-10";
 
     // update JS from model
     rs.updateJsValues();
@@ -538,6 +538,98 @@ describe("RateSchedule Class", () => {
       startDate: rs.startDate.toString(),
       endDate: rs.endDate.toString(),
       type: "custom",
+    });
+  });
+
+  describe("Date range validation", () => {
+    it("should throw an error when endDate is before startDate", () => {
+      expect(() => {
+        new RateSchedule({
+          annualInterestRate: 0.05,
+          startDate: "2024-12-31",
+          endDate: "2024-01-01", // End date before start date
+        });
+      }).toThrow("End date must be on or after start date");
+    });
+
+    it("should throw an error when endDate equals startDate but time makes it invalid", () => {
+      expect(() => {
+        new RateSchedule({
+          annualInterestRate: 0.05,
+          startDate: LocalDate.parse("2024-06-15"),
+          endDate: LocalDate.parse("2024-06-14"), // Day before
+        });
+      }).toThrow("End date must be on or after start date");
+    });
+
+    it("should allow endDate to equal startDate (same day rate)", () => {
+      expect(() => {
+        new RateSchedule({
+          annualInterestRate: 0.05,
+          startDate: "2024-06-15",
+          endDate: "2024-06-15", // Same date
+        });
+      }).not.toThrow();
+    });
+
+    it("should allow valid date ranges", () => {
+      expect(() => {
+        new RateSchedule({
+          annualInterestRate: 0.05,
+          startDate: "2024-01-01",
+          endDate: "2024-12-31",
+        });
+      }).not.toThrow();
+    });
+
+    it("should validate dates when setting startDate after construction", () => {
+      const rs = new RateSchedule({
+        annualInterestRate: 0.05,
+        startDate: "2024-01-01",
+        endDate: "2024-12-31",
+      });
+
+      expect(() => {
+        rs.startDate = "2025-01-01"; // Setting start date after end date
+      }).toThrow("Start date must be on or before end date");
+    });
+
+    it("should validate dates when setting endDate after construction", () => {
+      const rs = new RateSchedule({
+        annualInterestRate: 0.05,
+        startDate: "2024-01-01",
+        endDate: "2024-12-31",
+      });
+
+      expect(() => {
+        rs.endDate = "2023-12-31"; // Setting end date before start date
+      }).toThrow("End date must be on or after start date");
+    });
+
+    it("should handle LocalDate objects correctly", () => {
+      const startDate = LocalDate.parse("2024-01-01");
+      const endDate = LocalDate.parse("2023-12-31");
+
+      expect(() => {
+        new RateSchedule({
+          annualInterestRate: 0.05,
+          startDate: startDate,
+          endDate: endDate,
+        });
+      }).toThrow("End date must be on or after start date");
+    });
+
+    it("should handle Date objects correctly", () => {
+      const startDate = new Date("2024-01-01");
+      const endDate = new Date("2023-12-31");
+
+      expect(() => {
+        new RateSchedule({
+          annualInterestRate: 0.05,
+          startDate: startDate,
+          endDate: endDate,
+        });
+      }).toThrow("End date must be on or after start date");
     });
   });
 });

@@ -1163,14 +1163,20 @@ export class Amortization {
 
   get equitedMonthlyPayment(): Currency {
     if (!this._equitedMonthlyPayment || this.termExtensions.hasModified) {
-      this._equitedMonthlyPayment = this.calculateFixedMonthlyPayment();
+      this._equitedMonthlyPayment = this.calculateFixedMonthlyPayment(
+   this.totalLoanAmount,
+   this.getPayingTermCount()
+ );
       this.modificationOptimizationTracker = 'equitedMonthlyPayment';
     }
     if (this.hasCustomEquitedMonthlyPayment) {
       return this._equitedMonthlyPayment;
     } else {
       if (this.isUpdatedSinceLastCalculation('equitedMonthlyPayment')) {
-        this._equitedMonthlyPayment = this.calculateFixedMonthlyPayment();
+        this._equitedMonthlyPayment = this.calculateFixedMonthlyPayment(
+          this.totalLoanAmount,
+          this.getPayingTermCount()
+        );
         this.modificationOptimizationTracker = 'equitedMonthlyPayment';
       }
       return this._equitedMonthlyPayment;
@@ -1182,7 +1188,7 @@ export class Amortization {
 
     if (value === undefined || value === null) {
       this.hasCustomEquitedMonthlyPayment = false;
-      this._equitedMonthlyPayment = this.calculateFixedMonthlyPayment();
+       this._equitedMonthlyPayment = this.calculateFixedMonthlyPayment(this.totalLoanAmount, this.getPayingTermCount());
       this.modificationOptimizationTracker = 'equitedMonthlyPayment';
 
       return;
@@ -2191,52 +2197,53 @@ export class Amortization {
   }
 
   getTermPaymentAmount(termNumber: number): Currency {
-    // Check for manual override first
-    const manualOverride = this.termPaymentAmountOverride.active.find((override) => override.termNumber === termNumber);
-    if (manualOverride) {
-      return manualOverride.paymentAmount;
-    }
-    // Fallback to EMI logic
+    /* 1️⃣  manual override wins */
+    const manual = this.termPaymentAmountOverride.active.find((o) => o.termNumber === termNumber);
+    if (manual) return manual.paymentAmount;
+
+    /* 2️⃣  EMI logic (respects skip-a-pay) */
     const mode = this.termExtensions.emiRecalculationMode;
-    if (mode === 'fromStart') {
-      const cacheKey = 'fromStart';
-      const currentTerms = this.actualTerm;
-      if (!this._emiCache[cacheKey] || this._emiCache[cacheKey].terms !== currentTerms) {
-        this._emiCache[cacheKey] = {
-          value: this.calculateFixedMonthlyPayment(this.totalLoanAmount, currentTerms),
-          terms: currentTerms,
+
+    /* helper to memoise by key & term-count */
+    const memo = (key: string, principal: Currency, terms: number): Currency => {
+      if (!this._emiCache[key] || this._emiCache[key].terms !== terms) {
+        this._emiCache[key] = {
+          value: this.calculateFixedMonthlyPayment(principal, terms),
+          terms,
         };
       }
-      return this._emiCache[cacheKey].value;
-    } else if (mode === 'fromTerm' && typeof this.termExtensions.emiRecalculationTerm === 'number') {
-      const recalcTerm = this.termExtensions.emiRecalculationTerm;
-      if (termNumber < recalcTerm) {
-        const cacheKey = 'original';
-        const currentTerms = this.actualTerm;
-        if (!this._emiCache[cacheKey] || this._emiCache[cacheKey].terms !== currentTerms) {
-          this._emiCache[cacheKey] = {
-            value: this.calculateFixedMonthlyPayment(this.totalLoanAmount, currentTerms),
-            terms: currentTerms,
-          };
-        }
-        return this._emiCache[cacheKey].value;
-      } else {
-        const cacheKey = `fromTerm_${recalcTerm}`;
-        const currentTerms = this.actualTerm - recalcTerm;
-        if (!this._emiCache[cacheKey] || this._emiCache[cacheKey].terms !== currentTerms) {
-          // Find remaining principal at recalcTerm
-          const schedule = this.calculateAmortizationPlan();
-          const entry = schedule.entries.find((e) => e.term === recalcTerm - 1);
-          const remainingPrincipal = entry ? entry.endBalance : this.totalLoanAmount;
-          this._emiCache[cacheKey] = {
-            value: this.calculateFixedMonthlyPayment(remainingPrincipal, currentTerms),
-            terms: currentTerms,
-          };
-        }
-        return this._emiCache[cacheKey].value;
-      }
+      return this._emiCache[key].value;
+    };
+
+    if (mode === 'fromStart') {
+      return memo('fromStart', this.totalLoanAmount, this.getPayingTermCount());
     }
-    return this.equitedMonthlyPayment;
+
+    if (mode === 'fromTerm' && typeof this.termExtensions.emiRecalculationTerm === 'number') {
+      const recalcTerm = this.termExtensions.emiRecalculationTerm;
+
+      if (termNumber < recalcTerm) {
+        return memo('original', this.totalLoanAmount, this.getPayingTermCount());
+      }
+
+      /* we’re in or after the recalculation term  */
+      const key = `fromTerm_${recalcTerm}`;
+      const remaining = this.getPayingTermCount(recalcTerm);
+
+      if (!this._emiCache[key] || this._emiCache[key].terms !== remaining) {
+        /* find principal that’s still outstanding at recalcTerm */
+        const entry = this.calculateAmortizationPlan().entries.find((e) => e.term === recalcTerm - 1);
+        const balance = entry ? entry.endBalance : this.totalLoanAmount;
+        this._emiCache[key] = {
+          value: this.calculateFixedMonthlyPayment(balance, remaining),
+          terms: remaining,
+        };
+      }
+      return this._emiCache[key].value;
+    }
+
+    /* default (uses overall paying-term count) */
+    return memo('default', this.totalLoanAmount, this.getPayingTermCount());
   }
 
   /**
@@ -3194,5 +3201,24 @@ export class Amortization {
     const termExtensions = this.termExtensions?.getTotalActiveExtensionQuantity?.() || 0;
     const result = contractualTerm + termExtensions;
     return result;
+  }
+
+  /** ──────────────────────────────  SKIP-A-PAY HELPERS  ────────────────────────────── **/
+
+  /** Returns the term numbers that are actively “skip-a-pay” (paymentAmount === 0). */
+  private getSkipTerms(startTerm = 0): number[] {
+    return this.termPaymentAmountOverride.active
+      .filter((ovr) => ovr.paymentAmount.isZero() && ovr.termNumber >= startTerm)
+      .map((ovr) => ovr.termNumber);
+  }
+
+  /**
+   * How many terms will actually collect an instalment.
+   * startTerm ⇒  use this when we need “remaining paying terms from X”.
+   */
+  private getPayingTermCount(startTerm = 0): number {
+    const payingTerms = this.actualTerm - startTerm - this.getSkipTerms(startTerm).length;
+    /* Guard-rail so we never divide by zero */
+    return Math.max(1, payingTerms);
   }
 }

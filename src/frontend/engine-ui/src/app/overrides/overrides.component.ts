@@ -93,7 +93,7 @@ export class OverridesComponent implements OnInit {
     { label: 'Recalculate EMI from Term', value: 'fromTerm' },
   ];
 
-  private termExtensionSnapshots: Record<string, any> = {};
+  private termExtensionSnapshots: Record<number, any> = {};
 
   constructor(private overrideSettingsService: OverrideSettingsService) {}
 
@@ -1428,22 +1428,23 @@ export class OverridesComponent implements OnInit {
     delete this.tiroSnapshots[row.jsTermNumber];
   }
 
-  // Add state for term extension editing
-  get termExtensions() {
-    return this.lendPeak?.amortization.termExtensions;
-  }
+  // --- Term Extensions helpers ---
   get termExtensionMasterActive(): boolean {
-    if (!this.termExtensions) return true;
-    return this.termExtensions.all.every((e) => e.active);
+    if (!this.lendPeak) return true;
+    return this.lendPeak.amortization.termExtensions.all.every((e) => e.active);
+  }
+  set termExtensionMasterActive(val: boolean) {
+    this.toggleAllTermExtensions({ checked: val });
   }
   toggleAllTermExtensions(ev: any): void {
-    if (!this.termExtensions) return;
-    ev.checked ? this.termExtensions.activateAll() : this.termExtensions.deactivateAll();
+    if (!this.lendPeak) return;
+    const te = this.lendPeak.amortization.termExtensions;
+    ev.checked ? te.activateAll() : te.deactivateAll();
     this.onInputChange(true);
   }
   addTermExtension() {
-    if (!this.termExtensions || !this.lendPeak) return;
-    this.termExtensions.addExtension(
+    if (!this.lendPeak) return;
+    this.lendPeak.amortization.termExtensions.addExtension(
       new TermExtension({
         quantity: 1,
         date: new Date(),
@@ -1451,20 +1452,16 @@ export class OverridesComponent implements OnInit {
         active: true,
       }),
     );
-    // Reassign to trigger Angular change detection, following the pattern of other overrides
-    this.lendPeak.amortization.termExtensions = this.termExtensions;
     this.onInputChange(true);
   }
   removeTermExtension(index: number) {
-    if (!this.termExtensions || !this.lendPeak) return;
-    this.termExtensions.removeExtensionAtIndex(index);
-    this.lendPeak.amortization.termExtensions = this.termExtensions;
+    if (!this.lendPeak) return;
+    this.lendPeak.amortization.termExtensions.removeExtensionAtIndex(index);
     this.onInputChange(true);
   }
   removeAllTermExtensions() {
-    if (!this.termExtensions || !this.lendPeak) return;
-    this.termExtensions.removeAll();
-    this.lendPeak.amortization.termExtensions = this.termExtensions;
+    if (!this.lendPeak) return;
+    this.lendPeak.amortization.termExtensions.removeAll();
     this.onInputChange(true);
   }
   onTermExtensionEditInit(row: TermExtension, index: number) {
@@ -1479,17 +1476,5 @@ export class OverridesComponent implements OnInit {
       Object.assign(row, this.termExtensionSnapshots[index]);
       delete this.termExtensionSnapshots[index];
     }
-  }
-  onEmiRecalculationModeChange(event: any) {
-    // PrimeNG emits { originalEvent, value } or just value
-    const value = event && event.value !== undefined ? event.value : event;
-    if (!this.termExtensions) return;
-    this.termExtensions.setEmiRecalculationMode(value);
-    this.onInputChange(true);
-  }
-  onEmiRecalculationTermChange(term: number) {
-    if (!this.termExtensions) return;
-    this.termExtensions.setEmiRecalculationTerm(term);
-    this.onInputChange(true);
   }
 }

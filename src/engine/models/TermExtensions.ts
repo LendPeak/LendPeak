@@ -4,19 +4,13 @@ export class TermExtensions {
   private _extensions: TermExtension[] = [];
   private _modified = false;
   onChange?: () => void;
-  emiRecalculationMode: 'fromStart' | 'fromTerm' = 'fromStart';
-  emiRecalculationTerm?: number;
 
   constructor(
     extensions: TermExtension[] | TermExtensionParams[] = [],
-    config?: { emiRecalculationMode?: 'fromStart' | 'fromTerm'; emiRecalculationTerm?: number }
+    config?: any // no longer supports emiRecalculationMode/Term at collection level
   ) {
     this.extensions = extensions as any;
     this.updateJsValues();
-    if (config) {
-      if (config.emiRecalculationMode) this.emiRecalculationMode = config.emiRecalculationMode;
-      if (typeof config.emiRecalculationTerm === 'number') this.emiRecalculationTerm = config.emiRecalculationTerm;
-    }
   }
 
   get modified(): boolean {
@@ -104,12 +98,10 @@ export class TermExtensions {
     return this.json;
   }
 
-  setEmiRecalculationMode(mode: 'fromStart' | 'fromTerm') {
-    this.emiRecalculationMode = mode;
-    if (this.onChange) this.onChange();
-  }
-  setEmiRecalculationTerm(term: number) {
-    this.emiRecalculationTerm = term;
-    if (this.onChange) this.onChange();
+  /**
+   * Returns the first active extension with EMI recalculation enabled (mode !== 'none'), or undefined.
+   */
+  get nextEmiRecalculationExtension(): TermExtension | undefined {
+    return this.active.find((e) => e.emiRecalculationMode && e.emiRecalculationMode !== 'none');
   }
 }

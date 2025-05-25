@@ -10,6 +10,8 @@ describe('TermExtension', () => {
       description: 'Hardship extension',
       active: true,
       id: 'abc123',
+      emiRecalculationMode: 'fromTerm',
+      emiRecalculationTerm: 10,
     };
     const ext = new TermExtension(params);
     expect(ext.quantity).toBe(3);
@@ -17,11 +19,15 @@ describe('TermExtension', () => {
     expect(ext.description).toBe('Hardship extension');
     expect(ext.active).toBe(true);
     expect(ext.id).toBe('abc123');
+    expect(ext.emiRecalculationMode).toBe('fromTerm');
+    expect(ext.emiRecalculationTerm).toBe(10);
     expect(ext.json.quantity).toBe(params.quantity);
     expect(ext.json.date).toBe(params.date.toString());
     expect(ext.json.description).toBe(params.description);
     expect(ext.json.active).toBe(params.active);
     expect(ext.json.id).toBe(params.id);
+    expect(ext.json.emiRecalculationMode).toBe('fromTerm');
+    expect(ext.json.emiRecalculationTerm).toBe(10);
   });
 
   it('should update fields and sync JS values', () => {
@@ -31,12 +37,16 @@ describe('TermExtension', () => {
     ext.description = 'Test';
     ext.active = false;
     ext.id = 'id1';
+    ext.emiRecalculationMode = 'fromStart';
+    ext.emiRecalculationTerm = 5;
     ext.updateJsValues();
     expect(ext.jsQuantity).toBe(2);
     expect(ext.jsDate).toBeInstanceOf(Date);
     expect(ext.jsDescription).toBe('Test');
     expect(ext.jsActive).toBe(false);
     expect(ext.jsId).toBe('id1');
+    expect(ext.jsEmiRecalculationMode).toBe('fromStart');
+    expect(ext.jsEmiRecalculationTerm).toBe(5);
   });
 
   it('should normalize jsDate to UTC midnight', () => {
@@ -75,15 +85,19 @@ describe('TermExtensions', () => {
   });
 
   it('should serialize and deserialize correctly', () => {
-    const exts = new TermExtensions([{ quantity: 2, date: '2024-01-01', description: 'A', active: true, id: 'a' }]);
+    const exts = new TermExtensions([
+      { quantity: 2, date: '2024-01-01', description: 'A', active: true, id: 'a', emiRecalculationMode: 'none' },
+    ]);
     const json = exts.json;
     expect(json[0].quantity).toBe(2);
     expect(json[0].description).toBe('A');
     expect(json[0].active).toBe(true);
     expect(json[0].id).toBe('a');
+    expect(json[0].emiRecalculationMode).toBe('none');
     // Re-create from JSON
     const exts2 = new TermExtensions(json);
     expect(exts2.length).toBe(1);
     expect(exts2.atIndex(0).quantity).toBe(2);
+    expect(exts2.atIndex(0).emiRecalculationMode).toBe('none');
   });
 });

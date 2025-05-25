@@ -1764,6 +1764,7 @@
                             { label: 'Fixed', value: 'fixed' },
                             { label: 'Percentage', value: 'percentage' },
                           ]"
+                          appendTo="body"
                         ></p-select>
                       </ng-template>
                     </p-cellEditor>
@@ -1809,6 +1810,7 @@
                             { label: 'Principal', value: 'principal' },
                             { label: 'Total Payment', value: 'totalPayment' },
                           ]"
+                          appendTo="body"
                         ></p-select>
                       </ng-template>
                     </p-cellEditor>
@@ -1941,6 +1943,7 @@
                             { label: 'Fixed', value: 'fixed' },
                             { label: 'Percentage', value: 'percentage' },
                           ]"
+                          appendTo="body"
                         ></p-select>
                       </ng-template>
                     </p-cellEditor>
@@ -1986,6 +1989,7 @@
                             { label: 'Principal', value: 'principal' },
                             { label: 'Total Payment', value: 'totalPayment' },
                           ]"
+                          appendTo="body"
                         ></p-select>
                       </ng-template>
                     </p-cellEditor>
@@ -2055,45 +2059,26 @@
       </p-accordion-panel>
 
       <!-- Term Extensions -->
-      <p-accordion-panel value="termExtensions" *ngIf="termExtensions">
+      <p-accordion-panel value="termExtensions" *ngIf="lendPeak?.amortization?.termExtensions">
         <p-accordion-header>
           <div>
             <p-badge
               class="mr-4"
               badgeSize="xlarge"
-              [severity]="(termExtensions.length || 0) > 0 ? 'contrast' : 'secondary'"
-              [value]="termExtensions.length || 0"
+              [severity]="(lendPeak.amortization.termExtensions.length || 0) > 0 ? 'contrast' : 'secondary'"
+              [value]="lendPeak.amortization.termExtensions.length || 0"
             />
             Term Extensions
           </div>
         </p-accordion-header>
         <p-accordion-content>
           <div class="p-fluid">
-            <div class="field flex align-items-center mb-3">
-              <label class="mr-2">EMI Recalculation Mode:</label>
-              <!-- NOTE: Make sure SelectModule from 'primeng/select' is imported in your parent module and added to the imports array. -->
-              <p-select
-                *ngIf="termExtensions"
-                [options]="emiRecalculationModes"
-                [(ngModel)]="termExtensions.emiRecalculationMode"
-                (onChange)="onEmiRecalculationModeChange($event)"
-                optionLabel="label"
-                optionValue="value"
-                [style.width]="'220px'"
-              ></p-select>
-              <ng-container *ngIf="termExtensions && termExtensions.emiRecalculationMode === 'fromTerm'">
-                <label class="ml-4 mr-2">Recalculate at Term:</label>
-                <p-inputNumber
-                  *ngIf="termExtensions"
-                  [(ngModel)]="termExtensions.emiRecalculationTerm"
-                  (ngModelChange)="onEmiRecalculationTermChange($event)"
-                  [min]="1"
-                  [max]="lendPeak.amortization.actualTerm || 1"
-                  [style.width]="'100px'"
-                ></p-inputNumber>
-              </ng-container>
-            </div>
-            <p-table [value]="termExtensions.all || []" dataKey="id" editMode="row" class="p-datatable p-component">
+            <p-table
+              [value]="lendPeak.amortization.termExtensions.all || []"
+              dataKey="id"
+              editMode="row"
+              class="p-datatable p-component"
+            >
               <ng-template #header>
                 <tr>
                   <th style="width: 3rem">
@@ -2105,7 +2090,7 @@
                   <th>Quantity</th>
                   <th>Date</th>
                   <th>Description</th>
-                  <th>Active</th>
+                  <th>EMI Recalculation</th>
                   <th style="width: 9rem">Actions</th>
                 </tr>
               </ng-template>
@@ -2126,7 +2111,7 @@
                     <p-cellEditor>
                       <ng-template #output>{{ row.date | date: 'yyyy-MM-dd' }}</ng-template>
                       <ng-template #input>
-                        <p-calendar [(ngModel)]="row.date" dateFormat="yy-mm-dd"></p-calendar>
+                        <p-calendar [(ngModel)]="row.date" dateFormat="yy-mm-dd" appendTo="body"></p-calendar>
                       </ng-template>
                     </p-cellEditor>
                   </td>
@@ -2138,8 +2123,44 @@
                       </ng-template>
                     </p-cellEditor>
                   </td>
-                  <td>
-                    <p-toggleswitch [(ngModel)]="row.active" (ngModelChange)="onInputChange($event)"></p-toggleswitch>
+                  <td pEditableColumn>
+                    <p-cellEditor>
+                      <ng-template #output>
+                        {{
+                          row.emiRecalculationMode === 'none'
+                            ? 'Maintain EMI'
+                            : row.emiRecalculationMode === 'fromStart'
+                              ? 'Recalculate from Start'
+                              : 'Recalculate from Term ' + row.emiRecalculationTerm
+                        }}
+                      </ng-template>
+                      <ng-template #input>
+                        <p-select
+                          [options]="[
+                            { label: 'Maintain EMI', value: 'none' },
+                            { label: 'Recalculate from Start', value: 'fromStart' },
+                            { label: 'Recalculate from Term', value: 'fromTerm' },
+                          ]"
+                          [(ngModel)]="row.emiRecalculationMode"
+                          appendTo="body"
+                        ></p-select>
+                        <ng-container *ngIf="row.emiRecalculationMode === 'fromTerm'">
+                          <label class="ml-2 mr-1">at Term:</label>
+                          <p-inputNumber
+                            [(ngModel)]="row.emiRecalculationTerm"
+                            [min]="1"
+                            [max]="lendPeak.amortization.actualTerm || 1"
+                            [style.width]="'80px'"
+                          ></p-inputNumber>
+                        </ng-container>
+                        <ng-container *ngIf="row.emiRecalculationMode === 'none'">
+                          <div class="text-warning mt-1" style="font-size: 0.9em; color: #f39c12">
+                            Maintaining EMI may result in the loan being paid off before the final term. The last
+                            scheduled payments may be zero.
+                          </div>
+                        </ng-container>
+                      </ng-template>
+                    </p-cellEditor>
                   </td>
                   <td class="text-center" style="width: 9rem">
                     <div class="flex items-center justify-center gap-2">

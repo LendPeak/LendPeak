@@ -260,6 +260,11 @@ export class Amortization {
 
   private _emiCache: { [key: string]: { value: Currency; terms: number } } = {};
 
+  private _contractualEquitedMonthlyPayment?: Currency;
+  private _contractualTerm?: number;
+
+  private _emiRecalculationPrincipalCache: { [term: number]: Currency } = {};
+
   constructor(params: AmortizationParams) {
     this._inputParams = cloneDeep(params);
 
@@ -322,6 +327,14 @@ export class Amortization {
 
     this.term = params.term;
     this.startDate = params.startDate;
+    // Store contractual values
+    this._contractualTerm = params.term;
+    if (params.equitedMonthlyPayment !== undefined) {
+      this._contractualEquitedMonthlyPayment = Currency.of(params.equitedMonthlyPayment);
+    } else {
+      // If not provided, calculate and store the initial EMI
+      this._contractualEquitedMonthlyPayment = this.calculateFixedMonthlyPayment(this.totalLoanAmount, params.term);
+    }
 
     if (params.hasCustomFirstPaymentDate !== undefined) {
       this.hasCustomFirstPaymentDate = params.hasCustomFirstPaymentDate;
@@ -1163,10 +1176,7 @@ export class Amortization {
 
   get equitedMonthlyPayment(): Currency {
     if (!this._equitedMonthlyPayment || this.termExtensions.hasModified) {
-      this._equitedMonthlyPayment = this.calculateFixedMonthlyPayment(
-   this.totalLoanAmount,
-   this.getPayingTermCount()
- );
+      this._equitedMonthlyPayment = this.calculateFixedMonthlyPayment(this.totalLoanAmount, this.getPayingTermCount());
       this.modificationOptimizationTracker = 'equitedMonthlyPayment';
     }
     if (this.hasCustomEquitedMonthlyPayment) {
@@ -1188,7 +1198,7 @@ export class Amortization {
 
     if (value === undefined || value === null) {
       this.hasCustomEquitedMonthlyPayment = false;
-       this._equitedMonthlyPayment = this.calculateFixedMonthlyPayment(this.totalLoanAmount, this.getPayingTermCount());
+      this._equitedMonthlyPayment = this.calculateFixedMonthlyPayment(this.totalLoanAmount, this.getPayingTermCount());
       this.modificationOptimizationTracker = 'equitedMonthlyPayment';
 
       return;
@@ -2196,54 +2206,70 @@ export class Amortization {
     }
   }
 
-  getTermPaymentAmount(termNumber: number): Currency {
-    /* 1️⃣  manual override wins */
+  /**
+   * Generate a partial amortization plan up to (but not including) a given term, using only contractual EMI.
+   */
+  private calculatePartialPlanUpToTerm(recalcTerm: number): Currency {
+    let startBalance = this.totalLoanAmount;
+    for (let termIndex = 0; termIndex < recalcTerm; termIndex++) {
+      // Use contractual EMI for all terms before recalcTerm
+      const fixedMonthlyPayment = this.contractualEquitedMonthlyPayment!;
+      // Simple interest calculation for this period
+      // (This is a simplification; you may want to use your full interest logic here)
+      // We'll use the same period schedule as the main plan
+      const period = this.periodsSchedule.atIndex(termIndex);
+      const daysInPeriod = period.endDate.toEpochDay() - period.startDate.toEpochDay();
+      const interest = startBalance.multiply(this.annualInterestRate).multiply(daysInPeriod).divide(365);
+      let principal = fixedMonthlyPayment.subtract(interest);
+      if (principal.greaterThan(startBalance)) {
+        principal = startBalance;
+      }
+      startBalance = startBalance.subtract(principal);
+      if (startBalance.lessThanOrEqualTo(0)) {
+        startBalance = Currency.zero;
+        break;
+      }
+    }
+    return startBalance;
+  }
+
+  getTermPaymentAmount(termNumber: number, _isForRecalculation: boolean = false): Currency {
+    // 1️⃣  manual override wins
     const manual = this.termPaymentAmountOverride.active.find((o) => o.termNumber === termNumber);
     if (manual) return manual.paymentAmount;
 
-    /* 2️⃣  EMI logic (respects skip-a-pay) */
-    const mode = this.termExtensions.emiRecalculationMode;
-
-    /* helper to memoise by key & term-count */
-    const memo = (key: string, principal: Currency, terms: number): Currency => {
-      if (!this._emiCache[key] || this._emiCache[key].terms !== terms) {
-        this._emiCache[key] = {
-          value: this.calculateFixedMonthlyPayment(principal, terms),
-          terms,
-        };
+    // 2️⃣  Check for active extension with EMI recalculation
+    const ext = this.termExtensions.active.find((e) => e.emiRecalculationMode && e.emiRecalculationMode !== 'none');
+    if (ext) {
+      if (ext.emiRecalculationMode === 'none') {
+        // Maintain original EMI
+        return this.contractualEquitedMonthlyPayment!;
       }
-      return this._emiCache[key].value;
-    };
-
-    if (mode === 'fromStart') {
-      return memo('fromStart', this.totalLoanAmount, this.getPayingTermCount());
+      if (ext.emiRecalculationMode === 'fromStart') {
+        return this.calculateFixedMonthlyPayment(this.totalLoanAmount, this.getPayingTermCount());
+      }
+      if (ext.emiRecalculationMode === 'fromTerm' && typeof ext.emiRecalculationTerm === 'number') {
+        const recalcTerm = ext.emiRecalculationTerm;
+        // If the recalculation term is beyond the schedule, treat as 'none'
+        if (recalcTerm >= this.actualTerm) {
+          return this.contractualEquitedMonthlyPayment!;
+        }
+        if (termNumber < recalcTerm) {
+          return this.contractualEquitedMonthlyPayment!;
+        }
+        // For terms at or after recalcTerm, recalculate EMI based on remaining principal and remaining terms
+        if (!this._emiRecalculationPrincipalCache[recalcTerm]) {
+          // Only calculate the principal at the recalculation term ONCE per plan
+          // Generate a partial plan up to recalcTerm using only contractual EMI
+          this._emiRecalculationPrincipalCache[recalcTerm] = this.calculatePartialPlanUpToTerm(recalcTerm);
+        }
+        const balance = this._emiRecalculationPrincipalCache[recalcTerm];
+        const remaining = this.getPayingTermCount(recalcTerm);
+        return this.calculateFixedMonthlyPayment(balance, remaining);
+      }
     }
-
-    if (mode === 'fromTerm' && typeof this.termExtensions.emiRecalculationTerm === 'number') {
-      const recalcTerm = this.termExtensions.emiRecalculationTerm;
-
-      if (termNumber < recalcTerm) {
-        return memo('original', this.totalLoanAmount, this.getPayingTermCount());
-      }
-
-      /* we’re in or after the recalculation term  */
-      const key = `fromTerm_${recalcTerm}`;
-      const remaining = this.getPayingTermCount(recalcTerm);
-
-      if (!this._emiCache[key] || this._emiCache[key].terms !== remaining) {
-        /* find principal that’s still outstanding at recalcTerm */
-        const entry = this.calculateAmortizationPlan().entries.find((e) => e.term === recalcTerm - 1);
-        const balance = entry ? entry.endBalance : this.totalLoanAmount;
-        this._emiCache[key] = {
-          value: this.calculateFixedMonthlyPayment(balance, remaining),
-          terms: remaining,
-        };
-      }
-      return this._emiCache[key].value;
-    }
-
-    /* default (uses overall paying-term count) */
-    return memo('default', this.totalLoanAmount, this.getPayingTermCount());
+    // 3️⃣  Default: use contractual EMI
+    return this.contractualEquitedMonthlyPayment!;
   }
 
   /**
@@ -2346,7 +2372,9 @@ export class Amortization {
    * Generates the amortization schedule.
    * @returns An array of AmortizationSchedule entries.
    */
-  public calculateAmortizationPlan(): AmortizationEntries {
+  public calculateAmortizationPlan(_isForRecalculation: boolean = false): AmortizationEntries {
+    // Clear the EMI recalculation cache at the start of each plan calculation
+    this._emiRecalculationPrincipalCache = {};
     const hadRealChanges = this.modifiedSinceLastCalculation;
     this.balanceModifications.resetUsedAmounts();
     this.resetUsageDetails();
@@ -2385,7 +2413,7 @@ export class Amortization {
       const dueBillDaysConfiguration = this.dueBillDays.atIndex(termIndex).daysDueAfterPeriodEnd;
       const billOpenDate = periodEndDate.minusDays(preBillDaysConfiguration);
       const billDueDate = periodEndDate.plusDays(dueBillDaysConfiguration);
-      const fixedMonthlyPayment = this.getTermPaymentAmount(termIndex);
+      const fixedMonthlyPayment = this.getTermPaymentAmount(termIndex, _isForRecalculation);
 
       let billedInterestForTerm = Currency.zero;
 
@@ -3097,6 +3125,8 @@ export class Amortization {
       accrueInterestAfterEndDate: this.accrueInterestAfterEndDate,
       interestAccruesFromDayZero: this.interestAccruesFromDayZero,
       termExtensions: this.termExtensions.json,
+      contractualEquitedMonthlyPayment: this._contractualEquitedMonthlyPayment?.toString(),
+      contractualTerm: this._contractualTerm,
     };
   }
 
@@ -3205,7 +3235,7 @@ export class Amortization {
 
   /** ──────────────────────────────  SKIP-A-PAY HELPERS  ────────────────────────────── **/
 
-  /** Returns the term numbers that are actively “skip-a-pay” (paymentAmount === 0). */
+  /** Returns the term numbers that are actively "skip-a-pay" (paymentAmount === 0). */
   private getSkipTerms(startTerm = 0): number[] {
     return this.termPaymentAmountOverride.active
       .filter((ovr) => ovr.paymentAmount.isZero() && ovr.termNumber >= startTerm)
@@ -3214,11 +3244,18 @@ export class Amortization {
 
   /**
    * How many terms will actually collect an instalment.
-   * startTerm ⇒  use this when we need “remaining paying terms from X”.
+   * startTerm ⇒  use this when we need "remaining paying terms from X".
    */
   private getPayingTermCount(startTerm = 0): number {
     const payingTerms = this.actualTerm - startTerm - this.getSkipTerms(startTerm).length;
     /* Guard-rail so we never divide by zero */
     return Math.max(1, payingTerms);
+  }
+
+  get contractualEquitedMonthlyPayment(): Currency | undefined {
+    return this._contractualEquitedMonthlyPayment;
+  }
+  get contractualTerm(): number | undefined {
+    return this._contractualTerm;
   }
 }

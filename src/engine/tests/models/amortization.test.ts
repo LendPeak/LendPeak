@@ -209,14 +209,14 @@ describe('Amortization with Term Extensions', () => {
     expect(amortization.actualTerm).toBe(12);
   });
 
-  it('should generate a schedule with length equal to actualTerm', () => {
+  it('should generate a schedule with length equal to contractual term plus active extensions', () => {
     const loanAmount = Currency.of(1000);
     const interestRate = new Decimal(0.05);
     const term = 12;
     const startDate = DateUtil.normalizeDate('2023-01-01');
 
     const termExtensions = new TermExtensions([
-      { quantity: 2, date: '2023-06-01', description: 'Hardship', active: true },
+      { quantity: 2, date: '2023-06-01', description: 'Hardship', active: true, emiRecalculationMode: 'fromStart' },
     ]);
 
     const amortization = new Amortization({
@@ -226,10 +226,167 @@ describe('Amortization with Term Extensions', () => {
       startDate,
     });
     amortization.termExtensions = termExtensions;
-    
+
     const schedule = amortization.calculateAmortizationPlan();
-    
-    expect(schedule.length).toBe(14);
+    const expectedLength = term + termExtensions.getTotalActiveExtensionQuantity();
+    expect(schedule.length).toBe(expectedLength);
+    expect(schedule.lastEntry.endBalance.toNumber()).toBe(0);
+  });
+
+  it('should not extend the schedule if emiRecalculationMode is none', () => {
+    const loanAmount = Currency.of(1000);
+    const interestRate = new Decimal(0.05);
+    const term = 12;
+    const startDate = DateUtil.normalizeDate('2023-01-01');
+
+    const termExtensions = new TermExtensions([
+      { quantity: 2, date: '2023-06-01', description: 'Hardship', active: true, emiRecalculationMode: 'none' },
+    ]);
+
+    const amortization = new Amortization({
+      loanAmount,
+      annualInterestRate: interestRate,
+      term,
+      startDate,
+    });
+    amortization.termExtensions = termExtensions;
+
+    const schedule = amortization.calculateAmortizationPlan();
+    expect(schedule.length).toBe(term);
+    expect(schedule.lastEntry.endBalance.toNumber()).toBe(0);
+  });
+
+  it('should handle multiple active extensions with different emiRecalculationModes', () => {
+    const loanAmount = Currency.of(1000);
+    const interestRate = new Decimal(0.05);
+    const term = 12;
+    const startDate = DateUtil.normalizeDate('2023-01-01');
+    const termExtensions = new TermExtensions([
+      { quantity: 1, date: '2023-06-01', description: 'A', active: true, emiRecalculationMode: 'fromStart' },
+      { quantity: 2, date: '2023-07-01', description: 'B', active: true, emiRecalculationMode: 'none' },
+      {
+        quantity: 1,
+        date: '2023-08-01',
+        description: 'C',
+        active: true,
+        emiRecalculationMode: 'fromTerm',
+        emiRecalculationTerm: 10,
+      },
+    ]);
+    const amortization = new Amortization({ loanAmount, annualInterestRate: interestRate, term, startDate });
+    amortization.termExtensions = termExtensions;
+    const schedule = amortization.calculateAmortizationPlan();
+    // Only the first extension with 'fromStart' should trigger EMI recalculation for the full extended term
+    const expectedLength = term + termExtensions.getTotalActiveExtensionQuantity();
+    expect(schedule.length).toBe(expectedLength);
+    expect(schedule.lastEntry.endBalance.toNumber()).toBe(0);
+  });
+
+  it('should recalculate EMI from a specific term when emiRecalculationMode is fromTerm', () => {
+    const loanAmount = Currency.of(1000);
+    const interestRate = new Decimal(0.05);
+    const term = 12;
+    const startDate = DateUtil.normalizeDate('2023-01-01');
+    const termExtensions = new TermExtensions([
+      {
+        quantity: 2,
+        date: '2023-06-01',
+        description: 'Hardship',
+        active: true,
+        emiRecalculationMode: 'fromTerm',
+        emiRecalculationTerm: 8,
+      },
+    ]);
+    const amortization = new Amortization({ loanAmount, annualInterestRate: interestRate, term, startDate });
+    amortization.termExtensions = termExtensions;
+    const schedule = amortization.calculateAmortizationPlan();
+    // Schedule should be extended, and EMI should change at the specified term
+    const expectedLength = term + 2;
+    expect(schedule.length).toBe(expectedLength);
+    // Check that the payment amount changes at the correct term
+    const emiBefore = schedule.entries[6].totalPayment.toNumber();
+    const emiAfter = schedule.entries[8].totalPayment.toNumber();
+    expect(emiBefore).not.toBeCloseTo(emiAfter);
+    expect(schedule.lastEntry.endBalance.toNumber()).toBe(0);
+  });
+
+  it('should ignore inactive extensions', () => {
+    const loanAmount = Currency.of(1000);
+    const interestRate = new Decimal(0.05);
+    const term = 12;
+    const startDate = DateUtil.normalizeDate('2023-01-01');
+    const termExtensions = new TermExtensions([
+      { quantity: 2, date: '2023-06-01', description: 'Inactive', active: false, emiRecalculationMode: 'fromStart' },
+    ]);
+    const amortization = new Amortization({ loanAmount, annualInterestRate: interestRate, term, startDate });
+    amortization.termExtensions = termExtensions;
+    const schedule = amortization.calculateAmortizationPlan();
+    expect(schedule.length).toBe(term);
+    expect(schedule.lastEntry.endBalance.toNumber()).toBe(0);
+  });
+
+  it('should ignore extensions with quantity 0', () => {
+    const loanAmount = Currency.of(1000);
+    const interestRate = new Decimal(0.05);
+    const term = 12;
+    const startDate = DateUtil.normalizeDate('2023-01-01');
+    const termExtensions = new TermExtensions([
+      { quantity: 0, date: '2023-06-01', description: 'Zero', active: true, emiRecalculationMode: 'fromStart' },
+    ]);
+    const amortization = new Amortization({ loanAmount, annualInterestRate: interestRate, term, startDate });
+    amortization.termExtensions = termExtensions;
+    const schedule = amortization.calculateAmortizationPlan();
+    expect(schedule.length).toBe(term);
+    expect(schedule.lastEntry.endBalance.toNumber()).toBe(0);
+  });
+
+  it('should update schedule when extension active state changes', () => {
+    const loanAmount = Currency.of(1000);
+    const interestRate = new Decimal(0.05);
+    const term = 12;
+    const startDate = DateUtil.normalizeDate('2023-01-01');
+    const termExtensions = new TermExtensions([
+      { quantity: 2, date: '2023-06-01', description: 'Dynamic', active: false, emiRecalculationMode: 'fromStart' },
+    ]);
+    const amortization = new Amortization({ loanAmount, annualInterestRate: interestRate, term, startDate });
+    amortization.termExtensions = termExtensions;
+    // Initially inactive
+    let schedule = amortization.calculateAmortizationPlan();
+    expect(schedule.length).toBe(term);
+    // Activate extension
+    amortization.termExtensions.atIndex(0).active = true;
+    amortization.preBillDays = amortization.preBillDays;
+    amortization.dueBillDays = amortization.dueBillDays;
+    schedule = amortization.calculateAmortizationPlan();
+    expect(schedule.length).toBe(term + 2);
+    // Deactivate again
+    amortization.termExtensions.atIndex(0).active = false;
+    amortization.preBillDays = amortization.preBillDays;
+    amortization.dueBillDays = amortization.dueBillDays;
+    schedule = amortization.calculateAmortizationPlan();
+    expect(schedule.length).toBe(term);
+  });
+
+  it('should handle extension with emiRecalculationTerm beyond schedule length gracefully', () => {
+    const loanAmount = Currency.of(1000);
+    const interestRate = new Decimal(0.05);
+    const term = 12;
+    const startDate = DateUtil.normalizeDate('2023-01-01');
+    const termExtensions = new TermExtensions([
+      {
+        quantity: 2,
+        date: '2023-06-01',
+        description: 'Edge',
+        active: true,
+        emiRecalculationMode: 'fromTerm',
+        emiRecalculationTerm: 20,
+      },
+    ]);
+    const amortization = new Amortization({ loanAmount, annualInterestRate: interestRate, term, startDate });
+    amortization.termExtensions = termExtensions;
+    const schedule = amortization.calculateAmortizationPlan();
+    // Should not throw, and schedule should NOT be extended
+    expect(schedule.length).toBe(term);
     expect(schedule.lastEntry.endBalance.toNumber()).toBe(0);
   });
 });
@@ -318,9 +475,7 @@ describe('Additional Amortization Scenarios', () => {
 
     const schedule = amortization.calculateAmortizationPlan();
 
-    const modificationIndex = schedule.entries.findIndex(
-      (e) => !e.balanceModificationAmount.isZero()
-    );
+    const modificationIndex = schedule.entries.findIndex((e) => !e.balanceModificationAmount.isZero());
     expect(modificationIndex).toBeGreaterThanOrEqual(0);
     const modEntry = schedule.entries[modificationIndex];
     const nextEntry = schedule.entries[modificationIndex + 1];

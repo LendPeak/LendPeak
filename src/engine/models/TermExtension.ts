@@ -7,6 +7,8 @@ export interface TermExtensionParams {
   description?: string;
   active?: boolean;
   id?: string;
+  emiRecalculationMode?: 'none' | 'fromStart' | 'fromTerm';
+  emiRecalculationTerm?: number;
 }
 
 export class TermExtension {
@@ -15,12 +17,16 @@ export class TermExtension {
   private _description?: string;
   private _active: boolean = true;
   private _id?: string;
+  private _emiRecalculationMode: 'none' | 'fromStart' | 'fromTerm' = 'none';
+  private _emiRecalculationTerm?: number;
 
   jsQuantity!: number;
   jsDate!: Date;
   jsDescription?: string;
   jsActive!: boolean;
   jsId?: string;
+  jsEmiRecalculationMode!: 'none' | 'fromStart' | 'fromTerm';
+  jsEmiRecalculationTerm?: number;
 
   private _modified = false;
   get modified(): boolean {
@@ -36,6 +42,8 @@ export class TermExtension {
     this.description = params.description;
     this.active = params.active ?? true;
     this.id = params.id;
+    this.emiRecalculationMode = params.emiRecalculationMode ?? 'none';
+    this.emiRecalculationTerm = params.emiRecalculationTerm;
     this.updateJsValues();
   }
 
@@ -84,12 +92,32 @@ export class TermExtension {
     this.modified = true;
   }
 
+  get emiRecalculationMode() {
+    return this._emiRecalculationMode;
+  }
+  set emiRecalculationMode(v: 'none' | 'fromStart' | 'fromTerm') {
+    this._emiRecalculationMode = v;
+    this.jsEmiRecalculationMode = v;
+    this.modified = true;
+  }
+
+  get emiRecalculationTerm() {
+    return this._emiRecalculationTerm;
+  }
+  set emiRecalculationTerm(v: number | undefined) {
+    this._emiRecalculationTerm = v;
+    this.jsEmiRecalculationTerm = v;
+    this.modified = true;
+  }
+
   updateJsValues(): void {
     this.jsQuantity = this.quantity;
     this.jsDate = DateUtil.normalizeDateToJsDate(this.date);
     this.jsDescription = this.description;
     this.jsActive = this.active;
     this.jsId = this.id;
+    this.jsEmiRecalculationMode = this.emiRecalculationMode;
+    this.jsEmiRecalculationTerm = this.emiRecalculationTerm;
   }
 
   updateModelValues(): void {
@@ -98,6 +126,8 @@ export class TermExtension {
     this.description = this.jsDescription;
     this.active = this.jsActive;
     this.id = this.jsId;
+    this.emiRecalculationMode = this.jsEmiRecalculationMode;
+    this.emiRecalculationTerm = this.jsEmiRecalculationTerm;
   }
 
   get json(): TermExtensionParams {
@@ -107,6 +137,8 @@ export class TermExtension {
       description: this.description,
       active: this.active,
       id: this.id,
+      emiRecalculationMode: this.emiRecalculationMode,
+      emiRecalculationTerm: this.emiRecalculationTerm,
     };
   }
   toJSON() {

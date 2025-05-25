@@ -2,6 +2,10 @@
 
 Welcome to LendPeak, an open-source lending software designed to be the best in the world, focusing on stability, transparency, and simplicity. LendPeak provides a robust platform for lenders and borrowers, ensuring smooth and reliable operations with a modern tech stack.
 
+### Recent Changes
+
+- The `Bill.summary` API now exposes a correctly named `remainingPrincipal` property.
+
 ## **Project Overview**
 
 LendPeak is built using the following technologies:

@@ -1,9 +1,10 @@
 /* TermPaymentAmounts.ts */
-import { TermPaymentAmount, TermPaymentAmountParams } from "./TermPaymentAmount";
+import { TermPaymentAmount, TermPaymentAmountParams } from './TermPaymentAmount';
 
 export class TermPaymentAmounts {
   private _paymentAmounts: TermPaymentAmount[] = [];
   private _modified = false;
+  onChange?: () => void;
 
   /* ─────────────────────────────────────────── */
   constructor(paymentAmounts: TermPaymentAmount[] | TermPaymentAmountParams[] = []) {
@@ -54,9 +55,13 @@ export class TermPaymentAmounts {
   /* ===== activation helpers ===== */
   deactivateAll(): void {
     this._paymentAmounts.forEach((p) => (p.active = false));
+    this.modified = true;
+    if (this.onChange) this.onChange();
   }
   activateAll(): void {
     this._paymentAmounts.forEach((p) => (p.active = true));
+    this.modified = true;
+    if (this.onChange) this.onChange();
   }
 
   /* ===== CRUD ===== */

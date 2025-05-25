@@ -95,8 +95,9 @@ describe("Functional Test - Early Payoff - one payment", () => {
     // we should have 3 bills
     expect(lendPeak.bills.length).toBe(3);
     const firstBill = lendPeak.bills.atIndex(0);
-    expect(firstBill.dueDate.isEqual(DateUtil.normalizeDate("2022-07-14"))).toBe(true);
-    expect(firstBill.totalDue).toBeDefined();
+    expect(firstBill).toBeDefined();
+    expect(firstBill!.dueDate.isEqual(DateUtil.normalizeDate("2022-07-14"))).toBe(true);
+    expect(firstBill!.totalDue).toBeDefined();
   });
 });
 
@@ -165,8 +166,9 @@ describe("Functional Test - Early Payoff - two payment", () => {
     // we should have 3 bills
     expect(lendPeak.bills.length).toBe(3);
     const firstBill = lendPeak.bills.atIndex(0);
-    expect(firstBill.dueDate.isEqual(DateUtil.normalizeDate("2022-07-14"))).toBe(true);
-    expect(firstBill.totalDue).toBeDefined();
+    expect(firstBill).toBeDefined();
+    expect(firstBill!.dueDate.isEqual(DateUtil.normalizeDate("2022-07-14"))).toBe(true);
+    expect(firstBill!.totalDue).toBeDefined();
   });
 });
 

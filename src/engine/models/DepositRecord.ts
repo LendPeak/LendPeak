@@ -281,7 +281,11 @@ export class DepositRecord {
     const idx = this._refunds.indexOf(refund);
     if (idx >= 0) {
       this._refunds.splice(idx, 1);
-      this.amount = this.amount.add(refund.amount); // give cash back
+      // Only add amount back if refund is currently active
+      // (inactive refunds have already had their amount added back)
+      if (refund.active) {
+        this.amount = this.amount.add(refund.amount); // give cash back
+      }
       this.versionChanged();
     }
   }

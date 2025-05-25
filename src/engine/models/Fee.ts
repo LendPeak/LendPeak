@@ -102,7 +102,7 @@ export class Fee {
   }
 
   set basedOn(value: FeeBasedOn | undefined) {
-    if (value !== "interest" && value !== "principal" && value !== "totalPayment") {
+    if (value !== undefined && value !== "interest" && value !== "principal" && value !== "totalPayment") {
       throw new Error("Fee basedOn must be either 'interest', 'principal', or 'totalPayment'");
     }
     this._basedOn = value;
@@ -134,16 +134,18 @@ export class Fee {
   }
 
   updateModelValues(): void {
-    if (this.jsAmount !== undefined) {
-      this.amount = this.jsAmount;
-    } else {
-      this.amount = undefined;
-    }
-
-    if (this.jsPercentage) {
-      this.percentage = this.jsPercentage;
-    } else {
-      this.percentage = undefined;
+    if (this.type === "fixed") {
+      if (this.jsAmount !== undefined) {
+        this.amount = this.jsAmount;
+      } else {
+        this.amount = undefined;
+      }
+    } else if (this.type === "percentage") {
+      if (this.jsPercentage) {
+        this.percentage = this.jsPercentage;
+      } else {
+        this.percentage = undefined;
+      }
     }
 
     this.active = this.jsActive;

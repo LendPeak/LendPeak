@@ -334,19 +334,19 @@ export class Bills {
     return this._bills.length;
   }
 
-  atIndex(index: number): Bill {
-    if (index < 0) {
-      return this.first;
+  atIndex(index: number): Bill | undefined {
+    if (index < 0 || index >= this._bills.length) {
+      return undefined;
     }
     return this._bills[index];
   }
 
-  get first(): Bill {
+  get first(): Bill | undefined {
     return this._bills[0];
   }
 
-  get last(): Bill {
-    return this._bills[this._bills.length - 1];
+  get last(): Bill | undefined {
+    return this._bills.length > 0 ? this._bills[this._bills.length - 1] : undefined;
   }
 
   get json() {

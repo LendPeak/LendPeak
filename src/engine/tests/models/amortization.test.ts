@@ -9,6 +9,10 @@ import Decimal from 'decimal.js';
 import { DateUtil } from '../../utils/DateUtil';
 import { TermExtension } from '@models/TermExtension';
 import { TermExtensions } from '@models/TermExtensions';
+import { RateSchedule } from '@models/RateSchedule';
+import { RateSchedules } from '@models/RateSchedules';
+import { BalanceModification } from '@models/Amortization/BalanceModification';
+import { BalanceModifications } from '@models/Amortization/BalanceModifications';
 
 describe('Amortization', () => {
   it('should generate a correct amortization schedule for a simple case', () => {
@@ -227,5 +231,101 @@ describe('Amortization with Term Extensions', () => {
     
     expect(schedule.length).toBe(14);
     expect(schedule.lastEntry.endBalance.toNumber()).toBe(0);
+  });
+});
+
+describe('Additional Amortization Scenarios', () => {
+  it('should honor a custom first payment date', () => {
+    const amortization = new Amortization({
+      loanAmount: Currency.of(1000),
+      annualInterestRate: new Decimal(0.05),
+      term: 12,
+      startDate: DateUtil.normalizeDate('2023-01-01'),
+      firstPaymentDate: DateUtil.normalizeDate('2023-02-15'),
+      hasCustomFirstPaymentDate: true,
+    });
+
+    const schedule = amortization.calculateAmortizationPlan();
+
+    expect(schedule.firstEntry.periodEndDate.toString()).toBe('2023-02-15');
+    expect(schedule.firstEntry.daysInPeriod).toBe(45);
+    expect(schedule.entries[1].periodStartDate.toString()).toBe('2023-02-15');
+  });
+
+  it('should apply pre-bill and due-bill offsets to bill dates', () => {
+    const amortization = new Amortization({
+      loanAmount: Currency.of(1000),
+      annualInterestRate: new Decimal(0.05),
+      term: 12,
+      startDate: DateUtil.normalizeDate('2023-01-01'),
+      defaultPreBillDaysConfiguration: 5,
+      defaultBillDueDaysAfterPeriodEndConfiguration: 10,
+    });
+
+    const schedule = amortization.calculateAmortizationPlan();
+    const first = schedule.firstEntry;
+
+    expect(first.periodBillOpenDate.toString()).toBe('2023-01-27');
+    expect(first.periodBillDueDate.toString()).toBe('2023-02-11');
+  });
+
+  it('should apply variable interest rates using a rate schedule', () => {
+    const rateSchedule = new RateSchedules([
+      new RateSchedule({
+        annualInterestRate: 0.05,
+        startDate: '2023-01-01',
+        endDate: '2023-06-30',
+        type: 'custom',
+      }),
+      new RateSchedule({
+        annualInterestRate: 0.1,
+        startDate: '2023-06-30',
+        endDate: '2023-12-31',
+        type: 'custom',
+      }),
+    ]);
+
+    const amortization = new Amortization({
+      loanAmount: Currency.of(1000),
+      annualInterestRate: new Decimal(0.05),
+      term: 12,
+      startDate: DateUtil.normalizeDate('2023-01-01'),
+      ratesSchedule: rateSchedule,
+    });
+
+    const schedule = amortization.calculateAmortizationPlan();
+
+    expect(schedule.entries[0].periodInterestRate.toNumber()).toBeCloseTo(0.05);
+    expect(schedule.entries[6].periodInterestRate.toNumber()).toBeCloseTo(0.1);
+  });
+
+  it('should reduce principal when a balance modification is applied', () => {
+    const balanceModifications = new BalanceModifications([
+      new BalanceModification({
+        amount: Currency.of(100),
+        date: DateUtil.normalizeDate('2023-03-01'),
+        type: 'decrease',
+      }),
+    ]);
+
+    const amortization = new Amortization({
+      loanAmount: Currency.of(1000),
+      annualInterestRate: new Decimal(0.05),
+      term: 12,
+      startDate: DateUtil.normalizeDate('2023-01-01'),
+      balanceModifications,
+    });
+
+    const schedule = amortization.calculateAmortizationPlan();
+
+    const modificationIndex = schedule.entries.findIndex(
+      (e) => !e.balanceModificationAmount.isZero()
+    );
+    expect(modificationIndex).toBeGreaterThanOrEqual(0);
+    const modEntry = schedule.entries[modificationIndex];
+    const nextEntry = schedule.entries[modificationIndex + 1];
+
+    expect(modEntry.balanceModificationAmount.toNumber()).toBe(-100);
+    expect(nextEntry.startBalance.toNumber()).toBeCloseTo(modEntry.endBalance.toNumber());
   });
 });

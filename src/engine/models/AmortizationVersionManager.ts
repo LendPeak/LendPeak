@@ -302,10 +302,7 @@ export class AmortizationVersionManager {
       throw new Error(`Version not found: ${versionId}`);
     }
 
-    const targetVersionSnapshot = inflateAmortizationIfNeeded(targetVersion?.snapshot || {});
-
-    // Rebuild from old snapshot
-    const oldSnapshot = targetVersionSnapshot;
+    const oldSnapshot = cloneDeep(targetVersion.snapshot || {});
 
     // some changes like endDate and equited montly payment amounts are returned however they might be calcuilated
     // and in those instances when they are calculated, we dont want to roll them back

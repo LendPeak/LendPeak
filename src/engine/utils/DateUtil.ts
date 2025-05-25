@@ -190,8 +190,15 @@ export class DateUtil {
    */
   static parseLoanProDateToLocalDate(dateString: string): LocalDate {
     try {
-      const timestamp = parseInt(dateString.replace("/Date(", "").replace(")/", ""), 10);
-      return LocalDate.ofInstant(Instant.ofEpochSecond(timestamp), ZoneOffset.UTC);
+      const raw = parseInt(
+        dateString.replace("/Date(", "").replace(")/", ""),
+        10,
+      );
+      if (isNaN(raw)) {
+        throw new Error("Invalid LoanPro date format");
+      }
+      const timestamp = raw < 1e12 ? raw * 1000 : raw;
+      return LocalDate.ofInstant(Instant.ofEpochMilli(timestamp), ZoneOffset.UTC);
     } catch (e) {
       console.error("Error parsing LoanPro date", e);
       throw new Error("Invalid LoanPro date format");
@@ -207,8 +214,18 @@ export class DateUtil {
    * This method keeps date and time, but completely discards the timezone.
    */
   static parseLoanProDateToLocalDateTime(dateString: string): LocalDateTime {
-    const timestamp = parseInt(dateString.replace("/Date(", "").replace(")/", ""), 10);
-    return LocalDateTime.ofInstant(Instant.ofEpochSecond(timestamp), ZoneOffset.UTC);
+    const raw = parseInt(
+      dateString.replace("/Date(", "").replace(")/", ""),
+      10,
+    );
+    if (isNaN(raw)) {
+      throw new Error("Invalid LoanPro date format");
+    }
+    const timestamp = raw < 1e12 ? raw * 1000 : raw;
+    return LocalDateTime.ofInstant(
+      Instant.ofEpochMilli(timestamp),
+      ZoneOffset.UTC,
+    );
   }
 
   static monthsBetween(date1: LocalDate, date2: LocalDate): number {
@@ -237,6 +254,8 @@ export class DateUtil {
     }
 
     // Apply the sign based on the original order
-    return sign * totalMonths;
+    const result = sign * totalMonths;
+    // Avoid returning negative zero
+    return result === 0 ? 0 : result;
   }
 }

@@ -766,7 +766,7 @@ export class Amortization {
     return this._preBillDays;
   }
 
-  set preBillDays(value: PreBillDaysConfigurations) {
+  set preBillDays(value: PreBillDaysConfigurations | undefined) {
     this.modifiedSinceLastCalculation = true;
 
     if (!value) {
@@ -888,7 +888,7 @@ export class Amortization {
     return this._dueBillDays;
   }
 
-  set dueBillDays(value: BillDueDaysConfigurations) {
+  set dueBillDays(value: BillDueDaysConfigurations | undefined) {
     this.modifiedSinceLastCalculation = true;
 
     if (!value || value.length === 0) {
@@ -1535,31 +1535,11 @@ export class Amortization {
     this.modifiedSinceLastCalculation = true;
 
     if (value === 'dailySimpleInterest') {
-      if (this.preBillDays.length > 1) {
-        throw new Error('Pre-bill days are not used in Daily Simple Interest billing model');
-      }
-      if (this.dueBillDays.length > 1) {
-        throw new Error('Due-bill days are not used in Daily Simple Interest billing model');
-      }
-      // now lets make sure that the pre-bill days and due-bill days are set to 0, if not, since user
-      // might have passed custom values, we will throw an error
-      if (this.preBillDays.first.preBillDays !== 0) {
-        throw new Error('Pre-bill days are not used in Daily Simple Interest billing model');
-      }
-
-      if (this.dueBillDays.first.daysDueAfterPeriodEnd !== 0) {
-        throw new Error('Due-bill days are not used in Daily Simple Interest billing model');
-      }
-
-      // while we are at it, just to make sure default values are not passed in
-      // we will also throw an error if they are not zero
-      if (this.defaultPreBillDaysConfiguration !== 0) {
-        throw new Error('Pre-bill days are not used in Daily Simple Interest billing model');
-      }
-
-      if (this.defaultBillDueDaysAfterPeriodEndConfiguration !== 0) {
-        throw new Error('Due-bill days are not used in Daily Simple Interest billing model');
-      }
+      // Reset pre-bill and due-bill days to empty/zero as required by DSI model
+      this.preBillDays = undefined;
+      this.dueBillDays = undefined;
+      this.defaultPreBillDaysConfiguration = 0;
+      this.defaultBillDueDaysAfterPeriodEndConfiguration = 0;
     }
 
     this._billingModel = value;

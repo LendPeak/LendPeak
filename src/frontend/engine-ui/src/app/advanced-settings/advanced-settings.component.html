@@ -308,7 +308,7 @@
         </div>
 
         <!-- Conditionally display these fields only for 'amortized' loans -->
-        <div *ngIf="lendPeak.amortization.billingModel === 'amortized'" class="field grid">
+        <div class="field grid">
           <!-- Default Pre Bill Days -->
           <div class="field col-6">
             <label for="defaultPreBillDaysConfiguration">
@@ -324,6 +324,7 @@
               inputStyleClass="w-full"
               [style]="{ width: '100%' }"
               [inputStyle]="{ width: '100%' }"
+              [disabled]="lendPeak.amortization.billingModel === 'dailySimpleInterest'"
             ></p-inputNumber>
             <!-- Popover replacing OverlayPanel -->
             <p-popover #defaultPreBillDaysTooltip>
@@ -347,6 +348,7 @@
               inputStyleClass="w-full"
               [style]="{ width: '100%' }"
               [inputStyle]="{ width: '100%' }"
+              [disabled]="lendPeak.amortization.billingModel === 'dailySimpleInterest'"
             ></p-inputNumber>
             <!-- Popover replacing OverlayPanel -->
             <p-popover #defaultDueDateDaysTooltip>
@@ -354,6 +356,12 @@
                 Number of days after the period end when the payment is due by default.
               </ng-template>
             </p-popover>
+          </div>
+
+          <div class="col-12" *ngIf="lendPeak.amortization.billingModel === 'dailySimpleInterest'">
+            <p-message severity="info">
+              Pre Bill Days and Due Date Days are not used in Daily Simple Interest (DSI) loans and are disabled.
+            </p-message>
           </div>
         </div>
 

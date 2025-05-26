@@ -10,7 +10,10 @@ import { DropDownOptionNumber, DropDownOptionString } from '../models/common.mod
 import { CalendarType } from 'lendpeak-engine/models/Calendar';
 
 import { PaymentAllocationStrategyName, PaymentComponent } from 'lendpeak-engine/models/PaymentApplication/Types';
-import { Amortization, FlushUnbilledInterestDueToRoundingErrorType } from 'lendpeak-engine/models/Amortization';
+import {
+  Amortization,
+  FlushUnbilledInterestDueToRoundingErrorType,
+} from 'lendpeak-engine/models/Amortization';
 import { Calendar } from 'lendpeak-engine/models/Calendar';
 import { TermCalendars } from 'lendpeak-engine/models/TermCalendars';
 import { LendPeak } from 'lendpeak-engine/models/LendPeak';
@@ -106,8 +109,8 @@ export class AdvancedSettingsComponent implements OnInit {
   ];
 
   billingModelOptions: DropDownOptionString[] = [
-    { label: 'Amortized Loan', value: 'amortized' },
-    { label: 'Daily Simple Interest Loan', value: 'dailySimpleInterest' },
+    { label: 'Amortized', value: 'amortized' },
+    { label: 'Daily Simple Interest', value: 'dailySimpleInterest' },
   ];
 
   paymentAllocationStrategies: DropDownOptionString[] = [
@@ -203,7 +206,7 @@ export class AdvancedSettingsComponent implements OnInit {
       this.lendPeak.amortization.roundingMethod = settings.roundingMethod;
       this.lendPeak.amortization.flushUnbilledInterestRoundingErrorMethod = settings.flushMethod;
       this.lendPeak.amortization.perDiemCalculationType = settings.perDiemCalculationType;
-      this.lendPeak.amortization.billingModel = settings.billingModel;
+      this.lendPeak.amortization.billingModel = settings.billingModel || 'amortized';
       this.paymentAllocationStrategyName = settings.paymentAllocationStrategy;
       this.paymentPriority = settings.paymentPriority;
       this.lendPeak.amortization.defaultPreBillDaysConfiguration = settings.defaultPreBillDaysConfiguration;

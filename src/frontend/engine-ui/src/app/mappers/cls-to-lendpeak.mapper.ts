@@ -145,7 +145,6 @@ export class ClsToLendPeakMapper {
       calendars: new TermCalendars({ primary: CalendarType.THIRTY_360_US }),
       // equitedMonthlyPayment: loan.paymentAmount,
 
-      billingModel: 'amortized',
       flushUnbilledInterestRoundingErrorMethod:
         FlushUnbilledInterestDueToRoundingErrorType.AT_END,
 

@@ -1,7 +1,7 @@
-import { LocalDate } from "@js-joda/core";
-import { Currency } from "../../../utils/Currency";
-import { BalanceModification } from "../../Amortization/BalanceModification";
-import { DateUtil } from "../../../utils/DateUtil";
+import { LocalDate } from '@js-joda/core';
+import { Currency } from '../../../utils/Currency';
+import { BalanceModification } from '../../Amortization/BalanceModification';
+import { DateUtil } from '../../../utils/DateUtil';
 
 export interface UsageDetailParams {
   billId: string;
@@ -15,6 +15,8 @@ export interface UsageDetailParams {
   daysEarly?: number;
   billFullySatisfiedDate?: LocalDate | Date | string;
   balanceModification?: BalanceModification;
+  dsiInterestSavings?: number;
+  dsiInterestPenalty?: number;
 }
 
 export class UsageDetail {
@@ -44,6 +46,9 @@ export class UsageDetail {
   private _billFullySatisfiedDate?: LocalDate;
   jsBillFullySatisfiedDate?: Date;
 
+  dsiInterestSavings?: number;
+  dsiInterestPenalty?: number;
+
   constructor(params: UsageDetailParams) {
     this.billId = params.billId;
     this.period = params.period;
@@ -62,6 +67,9 @@ export class UsageDetail {
     if (params.balanceModification) {
       this.balanceModification = params.balanceModification;
     }
+
+    this.dsiInterestSavings = params.dsiInterestSavings;
+    this.dsiInterestPenalty = params.dsiInterestPenalty;
   }
 
   get balanceModification(): BalanceModification | undefined {
@@ -71,7 +79,7 @@ export class UsageDetail {
   set balanceModification(value: BalanceModification | undefined) {
     if (value && this._balanceModification) {
       if (value.id !== this._balanceModification.id) {
-        throw new Error("Balance modification is already set and cannot be changed");
+        throw new Error('Balance modification is already set and cannot be changed');
       }
     }
     if (value) {
@@ -92,7 +100,11 @@ export class UsageDetail {
       date: DateUtil.normalizeDate(json.date),
       daysLate: json.daysLate,
       daysEarly: json.daysEarly,
-      billFullySatisfiedDate: json.billFullySatisfiedDate ? DateUtil.normalizeDate(json.billFullySatisfiedDate) : undefined,
+      billFullySatisfiedDate: json.billFullySatisfiedDate
+        ? DateUtil.normalizeDate(json.billFullySatisfiedDate)
+        : undefined,
+      dsiInterestSavings: json.dsiInterestSavings,
+      dsiInterestPenalty: json.dsiInterestPenalty,
     });
   }
 
@@ -195,6 +207,8 @@ export class UsageDetail {
       daysLate: this.daysLate,
       daysEarly: this.daysEarly,
       billFullySatisfiedDate: this.jsBillFullySatisfiedDate,
+      dsiInterestSavings: this.dsiInterestSavings,
+      dsiInterestPenalty: this.dsiInterestPenalty,
     };
   }
 }

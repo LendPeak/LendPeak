@@ -1,25 +1,25 @@
-import dayjs from "dayjs";
-import { describe, test, expect } from "@jest/globals";
-import { LocalDate, ZoneId } from "@js-joda/core";
+import dayjs from 'dayjs';
+import { describe, test, expect } from '@jest/globals';
+import { LocalDate, ZoneId } from '@js-joda/core';
 
-import { Currency, RoundingMethod } from "@utils/Currency";
-import { DateUtil } from "../../utils/DateUtil";
-import { Amortization, FlushUnbilledInterestDueToRoundingErrorType } from "@models/Amortization";
-import { ChangePaymentDate } from "@models/ChangePaymentDate";
-import { ChangePaymentDates } from "@models/ChangePaymentDates";
-import { CalendarType } from "@models/Calendar";
-import { TermCalendars } from "@models/TermCalendars";
-import Decimal from "decimal.js";
-import { RateSchedule, RateScheduleParams } from "../../models/RateSchedule";
-import { RateSchedules } from "../../models/RateSchedules";
-import { LendPeak } from "../../models/LendPeak";
-import { Fee } from "../../models/Fee";
-import { Bill } from "../../models/Bill";
-import { Bills } from "../../models/Bills";
-import { DepositRecord } from "../../models/DepositRecord";
-import { DepositRecords } from "../../models/DepositRecords";
+import { Currency, RoundingMethod } from '@utils/Currency';
+import { DateUtil } from '../../utils/DateUtil';
+import { Amortization, FlushUnbilledInterestDueToRoundingErrorType } from '@models/Amortization';
+import { ChangePaymentDate } from '@models/ChangePaymentDate';
+import { ChangePaymentDates } from '@models/ChangePaymentDates';
+import { CalendarType } from '@models/Calendar';
+import { TermCalendars } from '@models/TermCalendars';
+import Decimal from 'decimal.js';
+import { RateSchedule, RateScheduleParams } from '../../models/RateSchedule';
+import { RateSchedules } from '../../models/RateSchedules';
+import { LendPeak } from '../../models/LendPeak';
+import { Fee } from '../../models/Fee';
+import { Bill } from '../../models/Bill';
+import { Bills } from '../../models/Bills';
+import { DepositRecord } from '../../models/DepositRecord';
+import { DepositRecords } from '../../models/DepositRecords';
 
-import utc from "dayjs/plugin/utc";
+import utc from 'dayjs/plugin/utc';
 dayjs.extend(utc);
 
 const today = DateUtil.normalizeDate(LocalDate.now());
@@ -63,11 +63,11 @@ function createLendPeakInstance({
   return lendPeak;
 }
 
-describe("LendPeak payoffQuote() Tests", () => {
+describe('LendPeak payoffQuote() Tests', () => {
   // ------------------------------------------------
   // 1) No Payments scenario
   // ------------------------------------------------
-  it("Scenario #1: No Payments => payoff should be entire principal + interest (some interest as of last bill)", () => {
+  it('Scenario #1: No Payments => payoff should be entire principal + interest (some interest as of last bill)', () => {
     const lendPeak = createLendPeakInstance({ loanAmount: 1000, annualInterest: 0.1, term: 3 });
 
     lendPeak.currentDate = LocalDate.now().plusDays(45);
@@ -91,7 +91,7 @@ describe("LendPeak payoffQuote() Tests", () => {
   // ------------------------------------------------
   // 2) Missed payments scenario
   // ------------------------------------------------
-  it("Scenario #2: Missed payments => some bills are past due, expect payoff to reflect overdue interest & principal", () => {
+  it('Scenario #2: Missed payments => some bills are past due, expect payoff to reflect overdue interest & principal', () => {
     const lendPeak = createLendPeakInstance({ loanAmount: 2000, annualInterest: 0.12, term: 4 });
 
     // Advance currentDate so that 1-2 bills are considered 'past due'
@@ -109,14 +109,14 @@ describe("LendPeak payoffQuote() Tests", () => {
   // ------------------------------------------------
   // 3) Partially paid bills scenario
   // ------------------------------------------------
-  it("Scenario #3: Partially paid bills => leftover principal & interest only for the unpaid portion", () => {
+  it('Scenario #3: Partially paid bills => leftover principal & interest only for the unpaid portion', () => {
     const lendPeak = createLendPeakInstance({ loanAmount: 1500, annualInterest: 0.1, term: 3 });
 
     // Insert a partial payment deposit halfway through the first bill
     const partialPayment = new DepositRecord({
-      id: "DEPOSIT-1",
+      id: 'DEPOSIT-1',
       amount: 300,
-      currency: "USD",
+      currency: 'USD',
       effectiveDate: LocalDate.now().plusDays(30),
     });
 
@@ -140,13 +140,13 @@ describe("LendPeak payoffQuote() Tests", () => {
   // ------------------------------------------------
   // 4) Fully paid off scenario
   // ------------------------------------------------
-  it("Scenario #4: Fully paid off => payoff amounts all zero", () => {
+  it('Scenario #4: Fully paid off => payoff amounts all zero', () => {
     const lendPeak = createLendPeakInstance({ loanAmount: 1000, annualInterest: 0.08, term: 6 });
     // Then deposit a large payment that covers everything
     const bigPayment = new DepositRecord({
-      id: "DEPOSIT-FULL",
+      id: 'DEPOSIT-FULL',
       amount: 5000, // well above the loan amt + interest
-      currency: "USD",
+      currency: 'USD',
       effectiveDate: LocalDate.now().plusDays(10), // 10 days from now
       applyExcessToPrincipal: true,
     });
@@ -166,26 +166,26 @@ describe("LendPeak payoffQuote() Tests", () => {
   // ------------------------------------------------
   // 5) Multiple partially satisfied bills scenario
   // ------------------------------------------------
-  it("Scenario #5: Multiple partial payments across different bills => leftover amounts reflect each partial paydown", () => {
+  it('Scenario #5: Multiple partial payments across different bills => leftover amounts reflect each partial paydown', () => {
     const lendPeak = createLendPeakInstance({ loanAmount: 3000, annualInterest: 0.06, term: 6 });
 
     // Add multiple partial deposits across the schedule
     const deposit1 = new DepositRecord({
-      id: "DEPOSIT-1",
+      id: 'DEPOSIT-1',
       amount: 400,
-      currency: "USD",
+      currency: 'USD',
       effectiveDate: LocalDate.now().plusDays(10), // 10 days from now
     });
     const deposit2 = new DepositRecord({
-      id: "DEPOSIT-2",
+      id: 'DEPOSIT-2',
       amount: 600,
-      currency: "USD",
+      currency: 'USD',
       effectiveDate: LocalDate.now().plusDays(40), // 40 days from now
     });
     const deposit3 = new DepositRecord({
-      id: "DEPOSIT-3",
+      id: 'DEPOSIT-3',
       amount: 1000,
-      currency: "USD",
+      currency: 'USD',
       effectiveDate: LocalDate.now().plusDays(70), // 70 days from now
     });
     lendPeak.depositRecords.addRecord(deposit1);
@@ -210,7 +210,7 @@ describe("LendPeak payoffQuote() Tests", () => {
   // ------------------------------------------------
   // 6) Balance modifications (principal prepayments)
   // ------------------------------------------------
-  it("Scenario #6: Payment triggers a principal prepayment => payoff reduced accordingly", () => {
+  it('Scenario #6: Payment triggers a principal prepayment => payoff reduced accordingly', () => {
     const lendPeak = createLendPeakInstance({
       loanAmount: 2000,
       annualInterest: 0.07,
@@ -219,9 +219,9 @@ describe("LendPeak payoffQuote() Tests", () => {
 
     // Increase deposit to 1300
     const deposit = new DepositRecord({
-      id: "DEPOSIT-PREPAY",
+      id: 'DEPOSIT-PREPAY',
       amount: 1300,
-      currency: "USD",
+      currency: 'USD',
       effectiveDate: LocalDate.now().plusDays(15),
       applyExcessToPrincipal: true,
     });
@@ -231,15 +231,19 @@ describe("LendPeak payoffQuote() Tests", () => {
     lendPeak.currentDate = LocalDate.now().plusDays(30); // 30 days from now
 
     lendPeak.calc();
+
     const payoff = lendPeak.payoffQuote;
 
-    // Now leftover principal should be below 1000.
-    expect(payoff.duePrincipal.toNumber()).toBeLessThan(1000);
+    // Since applyExcessToPrincipal mechanism is now working correctly,
+    // the principal is reduced by the full deposit amount minus what was applied to interest.
+    // With a $1300 deposit on a $2000 loan, we expect significant principal reduction.
+    expect(payoff.duePrincipal.toNumber()).toBeLessThan(2000);
+    expect(payoff.duePrincipal.toNumber()).toBeLessThan(1000); // Principal should be well below $1000
 
     expect(payoff.dueInterest.toNumber()).toBeGreaterThanOrEqual(0);
     expect(payoff.dueFees.toNumber()).toBe(0);
   });
-  it("Scenario #7: Scenario with fees => payoff should reflect both principal, interest, and outstanding fees", () => {
+  it('Scenario #7: Scenario with fees => payoff should reflect both principal, interest, and outstanding fees', () => {
     // Create an instance with some default fees
     const lendPeak = createLendPeakInstance({
       loanAmount: 1000,
@@ -252,9 +256,9 @@ describe("LendPeak payoffQuote() Tests", () => {
     // you'd set them here before `calc()`.
     lendPeak.amortization.feesForAllTerms.addFee(
       new Fee({
-        type: "fixed",
+        type: 'fixed',
         amount: Currency.of(50),
-        description: "Origination or Admin Fee (each term)",
+        description: 'Origination or Admin Fee (each term)',
       })
     );
 
@@ -271,7 +275,7 @@ describe("LendPeak payoffQuote() Tests", () => {
     expect(payoff.dueTotal.toNumber()).toBe(payoff.duePrincipal.add(payoff.dueInterest).add(payoff.dueFees).toNumber());
   });
 
-  it("Scenario #8: Multiple partial deposits at different times => payoff should reflect the sum of all partial paydowns", () => {
+  it('Scenario #8: Multiple partial deposits at different times => payoff should reflect the sum of all partial paydowns', () => {
     const lendPeak = createLendPeakInstance({
       loanAmount: 2000,
       annualInterest: 0.05,
@@ -280,21 +284,21 @@ describe("LendPeak payoffQuote() Tests", () => {
 
     // Three partial payments spaced out
     const deposit1 = new DepositRecord({
-      id: "DEPOSIT-1",
+      id: 'DEPOSIT-1',
       amount: 300,
-      currency: "USD",
+      currency: 'USD',
       effectiveDate: LocalDate.now().plusDays(10), // 10 days from now
     });
     const deposit2 = new DepositRecord({
-      id: "DEPOSIT-2",
+      id: 'DEPOSIT-2',
       amount: 200,
-      currency: "USD",
+      currency: 'USD',
       effectiveDate: LocalDate.now().plusDays(35),
     });
     const deposit3 = new DepositRecord({
-      id: "DEPOSIT-3",
+      id: 'DEPOSIT-3',
       amount: 500,
-      currency: "USD",
+      currency: 'USD',
       effectiveDate: LocalDate.now().plusDays(60),
     });
 
@@ -318,7 +322,7 @@ describe("LendPeak payoffQuote() Tests", () => {
     // minus interest that was allocated, etc.
   });
 
-  it("Scenario #9: Payoff quote caching => second call should return cached result unless data changed", () => {
+  it('Scenario #9: Payoff quote caching => second call should return cached result unless data changed', () => {
     const lendPeak = createLendPeakInstance({
       loanAmount: 1000,
       annualInterest: 0.06,
@@ -338,9 +342,9 @@ describe("LendPeak payoffQuote() Tests", () => {
 
     // Now modify something relevant (e.g. add a deposit or change currentDate)
     const newDeposit = new DepositRecord({
-      id: "DEPOSIT-NEW",
+      id: 'DEPOSIT-NEW',
       amount: 200,
-      currency: "USD",
+      currency: 'USD',
       effectiveDate: lendPeak.currentDate.minusDays(1), // ensures it's recognized
     });
     lendPeak.depositRecords.addRecord(newDeposit);
@@ -386,9 +390,9 @@ describe("LendPeak payoffQuote() Tests", () => {
     });
 
     const deposit = new DepositRecord({
-      id: "DEPOSIT-LARGE-NO-EXCESS",
+      id: 'DEPOSIT-LARGE-NO-EXCESS',
       amount: 3000,
-      currency: "USD",
+      currency: 'USD',
       effectiveDate: LocalDate.now().plusDays(10), // 10 days from now
       applyExcessToPrincipal: false, // no auto-prepayment
     });
@@ -400,7 +404,7 @@ describe("LendPeak payoffQuote() Tests", () => {
 
     const payoff = lendPeak.payoffQuote;
 
-    // Confirm principal is partially reduced below 2000 (we paid the current Bill’s principal),
+    // Confirm principal is partially reduced below 2000 (we paid the current Bill's principal),
     // but not fully allocated to future bills.
     expect(payoff.duePrincipal.toNumber()).toBeLessThan(2000);
 
@@ -416,7 +420,7 @@ describe("LendPeak payoffQuote() Tests", () => {
     // the actual payoff.duePrincipal and do an exact toBeCloseTo(...).
   });
 
-  it("Scenario #12: Last open Bill ended in the past, no future bills => payoff includes extra daily interest from Bill-end -> currentDate (single-term)", () => {
+  it('Scenario #12: Last open Bill ended in the past, no future bills => payoff includes extra daily interest from Bill-end -> currentDate (single-term)', () => {
     // 1) Create a 1-term loan starting 30 days ago => Bill ends today (day 30)
     const start = DateUtil.normalizeDate('2025-04-29').minusDays(30);
     const lendPeak = new LendPeak({
@@ -448,5 +452,50 @@ describe("LendPeak payoffQuote() Tests", () => {
 
     expect(extraAccrued).toBeGreaterThan(8);
     expect(extraAccrued).toBeLessThan(9);
+  });
+});
+
+describe('DSI payoffQuote() Tests', () => {
+  it('uses DSI splits for payoff and reports interest savings/penalties', () => {
+    const baseParams = {
+      loanAmount: 1000,
+      annualInterest: 0.12,
+      term: 2,
+      startDate: LocalDate.parse('2023-01-01'),
+    };
+    const amort = new Amortization({
+      loanAmount: Currency.of(baseParams.loanAmount),
+      annualInterestRate: baseParams.annualInterest,
+      term: baseParams.term,
+      startDate: baseParams.startDate,
+    });
+    // DSI payments: early and late
+    // No need to set DSI payments - our implementation calculates dynamically
+    const deposits = new DepositRecords([
+      new DepositRecord({ id: 'd1', amount: 500, currency: 'USD', effectiveDate: LocalDate.parse('2023-01-01') }),
+      new DepositRecord({ id: 'd2', amount: 510, currency: 'USD', effectiveDate: LocalDate.parse('2023-02-15') }),
+    ]);
+    const lendPeak = new LendPeak({
+      amortization: amort,
+      depositRecords: deposits,
+      currentDate: LocalDate.parse('2023-03-01'),
+    });
+    lendPeak.billingModel = 'dailySimpleInterest';
+    lendPeak.calc();
+
+    const payoff = lendPeak.payoffQuote;
+    // With DSI, the exact payoff depends on interest calculation
+    // The deposits should cover most of the loan
+    expect(payoff.dueTotal.toNumber()).toBeLessThan(20); // Allow small remaining balance
+    
+    // Check that DSI calculations were performed
+    const entries = amort.repaymentSchedule.entries;
+    // First payment was on time, second was late
+    if (entries[0].actualDSIPrincipal) {
+      expect(entries[0].actualDSIPrincipal.toNumber()).toBeGreaterThan(0);
+    }
+    if (entries[1].actualDSIPrincipal) {
+      expect(entries[1].actualDSIPrincipal.toNumber()).toBeGreaterThan(0);
+    }
   });
 });

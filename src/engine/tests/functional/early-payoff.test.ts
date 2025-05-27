@@ -1388,7 +1388,6 @@ describe("Functional Test - Early Payoff - multiple payments mid cycle", () => {
       }),
     ]),
     perDiemCalculationType: "AnnualRateDividedByDaysInYear",
-    billingModel: "amortized",
 
     calendars: new TermCalendars({
       primary: new Calendar(CalendarType.THIRTY_360_US),

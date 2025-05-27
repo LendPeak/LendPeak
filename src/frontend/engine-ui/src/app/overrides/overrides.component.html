@@ -1295,6 +1295,13 @@
         </p-accordion-header>
         <p-accordion-content>
           <div class="p-fluid">
+            <!-- DSI Notice -->
+            <p-message 
+              *ngIf="lendPeak.billingModel === 'dailySimpleInterest'" 
+              severity="info"
+              class="mb-3"
+              text="Pre-Bill Days are not applicable for Daily Simple Interest (DSI) loans. Bills are generated based on payment activity."
+            />
             <!-- PRE-BILL DAY TERM TABLE -->
             <p-table
               [value]="lendPeak!.amortization.preBillDays.allCustom"
@@ -1444,6 +1451,13 @@
 
         <p-accordion-content>
           <div class="p-fluid">
+            <!-- DSI Notice -->
+            <p-message 
+              *ngIf="lendPeak.billingModel === 'dailySimpleInterest'" 
+              severity="info"
+              class="mb-3"
+              text="Due Days are not applicable for Daily Simple Interest (DSI) loans. Bills are generated based on payment activity."
+            />
             <!-- DUE-BILL DAY TERM TABLE -->
             <p-table
               [value]="lendPeak!.amortization.dueBillDays.allCustom"

@@ -117,7 +117,6 @@ export class AmortizationExplainer {
       result += `- Origination Fee: ${this.amortization.originationFee.toCurrencyString()}\n`;
     }
 
-    result += `- Billing Model: ${this.amortization.billingModel === "dailySimpleInterest" ? "Daily Simple Interest" : "Amortized"}\n`;
     return result;
   }
 

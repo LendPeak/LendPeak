@@ -77,7 +77,7 @@
         <p-tag
           class="ml-2"
           severity="info"
-          [value]="lendPeak.amortization.billingModel === 'amortized' ? 'Amortized' : 'Daily Simple Interest'"
+          [value]="lendPeak.billingModel === 'amortized' ? 'Amortized' : 'Daily Simple Interest'"
         ></p-tag>
         <p-tag
           *ngIf="lendPeak.summary.highlights.status.isPaidInFull"

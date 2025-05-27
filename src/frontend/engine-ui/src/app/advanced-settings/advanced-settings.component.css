@@ -52,3 +52,61 @@
   transition: opacity 0.18s, transform 0.18s, background 0.18s;
   pointer-events: none;
 }
+
+/* Billing Model Override Container Styling */
+.billing-override-container {
+  background-color: #f8f9fa;
+  border: 1px solid #dee2e6;
+  transition: all 0.2s ease-in-out;
+}
+
+.billing-override-container:hover {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+  border-color: #c3c6c9;
+}
+
+/* Header styling */
+.billing-override-container .font-semibold {
+  font-size: 0.95rem;
+}
+
+/* Table styling within container */
+.billing-override-container .p-datatable {
+  border: 1px solid #e9ecef;
+  border-radius: 4px;
+  overflow: hidden;
+  background-color: #ffffff;
+}
+
+.billing-override-container .p-datatable .p-datatable-header {
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #e9ecef;
+}
+
+/* Action buttons container */
+.billing-override-container .border-top-1 {
+  margin-top: 1rem;
+  padding-top: 1rem;
+}
+
+/* Badge styling */
+.billing-override-container .p-badge {
+  min-width: 1.5rem;
+  height: 1.5rem;
+  line-height: 1.5rem;
+}
+
+/* Message styling */
+.billing-override-container .p-message {
+  border-left: 4px solid #007bff;
+  background-color: #ffffff;
+}
+
+/* Additional text color fixes */
+.billing-override-container .text-color-secondary {
+  color: #6c757d;
+}
+
+.billing-override-container .text-primary {
+  color: #007bff;
+}

@@ -280,7 +280,7 @@
           </label>
           <p-select
             id="billingModel"
-            [(ngModel)]="lendPeak.amortization.billingModel"
+            [(ngModel)]="lendPeak.billingModel"
             name="billingModel"
             [options]="billingModelOptions"
             placeholder="Select a loan type"
@@ -307,6 +307,181 @@
           </p-popover>
         </div>
 
+        <!-- Billing Model Overrides -->
+        <div class="field">
+          <label for="billingModelOverrides">
+            Billing Model Overrides
+            <i class="pi pi-info-circle tooltip-icon" (click)="showTooltip($event, billingModelOverridesTooltip)"></i>
+          </label>
+          <p-popover #billingModelOverridesTooltip>
+            <ng-template pTemplate="content">
+              Override the billing model for specific terms. For example, you can switch from Amortized to DSI for
+              certain terms.
+            </ng-template>
+          </p-popover>
+          
+          <!-- Container with visual boundaries -->
+          <div class="billing-override-container mt-3 p-3 border-round">
+            <!-- Header section -->
+            <div class="flex align-items-center justify-content-between mb-3">
+              <div class="flex align-items-center gap-2">
+                <i class="pi pi-file-edit text-primary"></i>
+                <span class="font-semibold text-color-secondary">Term-Specific Billing Model Changes</span>
+              </div>
+              <p-badge 
+                [value]="(lendPeak.billingModelOverrides ? lendPeak.billingModelOverrides.length : 0).toString()" 
+                [severity]="lendPeak.billingModelOverrides && lendPeak.billingModelOverrides.length > 0 ? 'success' : 'secondary'"
+              ></p-badge>
+            </div>
+            
+            <!-- Message when no overrides -->
+            <p-message 
+              *ngIf="!lendPeak.billingModelOverrides || lendPeak.billingModelOverrides.length === 0"
+              severity="info"
+              styleClass="mb-3"
+              [closable]="false"
+            >
+              No billing model overrides configured. Click "Add Override" to specify term-specific billing model changes.
+            </p-message>
+            
+            <!-- Inline editable table -->
+            <p-table 
+              *ngIf="lendPeak.billingModelOverrides && lendPeak.billingModelOverrides.length > 0"
+              [value]="lendPeak.billingModelOverrides" 
+              dataKey="term"
+              editMode="row"
+              class="p-datatable-sm"
+              [style]="{'margin-bottom': '1rem'}"
+            >
+            <ng-template #header>
+              <tr>
+                <th style="width: 20%">Term</th>
+                <th style="width: 25%">Period Start</th>
+                <th style="width: 25%">Period End</th>
+                <th style="width: 20%">Billing Model</th>
+                <th style="width: 10%">Actions</th>
+              </tr>
+            </ng-template>
+            <ng-template #body let-row let-editing="editing" let-ri="rowIndex">
+              <tr [pEditableRow]="row">
+                <!-- Term Number - editable -->
+                <td pEditableColumn>
+                  <p-cellEditor>
+                    <ng-template #output>{{ row.term }}</ng-template>
+                    <ng-template #input>
+                      <p-inputNumber 
+                        [(ngModel)]="row.term" 
+                        [min]="0"
+                        [showButtons]="true"
+                        class="w-full"
+                      ></p-inputNumber>
+                    </ng-template>
+                  </p-cellEditor>
+                </td>
+                
+                <!-- Period Start - read only -->
+                <td>{{ getTermStartDate(row.term) | date: 'MM/dd/yyyy' }}</td>
+                
+                <!-- Period End - read only -->
+                <td>{{ getTermEndDate(row.term) | date: 'MM/dd/yyyy' }}</td>
+                
+                <!-- Billing Model - editable -->
+                <td pEditableColumn>
+                  <p-cellEditor>
+                    <ng-template #output>
+                      {{ row.model === 'dailySimpleInterest' ? 'Daily Simple Interest' : 'Amortized' }}
+                    </ng-template>
+                    <ng-template #input>
+                      <p-select
+                        [(ngModel)]="row.model"
+                        [options]="billingModelOptions"
+                        optionLabel="label"
+                        optionValue="value"
+                        appendTo="body"
+                        class="w-full"
+                      ></p-select>
+                    </ng-template>
+                  </p-cellEditor>
+                </td>
+                
+                <!-- Actions -->
+                <td class="text-center">
+                  <div class="flex align-items-center justify-content-center gap-2">
+                    <!-- view mode -->
+                    <button
+                      *ngIf="!editing"
+                      pButton
+                      pRipple
+                      type="button"
+                      pInitEditableRow
+                      icon="pi pi-pencil"
+                      (click)="onBmoEditInit(row)"
+                      class="p-button-rounded p-button-text"
+                      pTooltip="Edit row"
+                    ></button>
+
+                    <button
+                      *ngIf="!editing"
+                      pButton
+                      pRipple
+                      type="button"
+                      icon="pi pi-trash"
+                      (click)="removeBillingModelOverride(ri)"
+                      class="p-button-rounded p-button-text p-button-danger"
+                      pTooltip="Remove row"
+                    ></button>
+
+                    <!-- edit mode -->
+                    <button
+                      *ngIf="editing"
+                      pButton
+                      pRipple
+                      type="button"
+                      pSaveEditableRow
+                      icon="pi pi-check"
+                      (click)="onBmoEditSave(row)"
+                      class="p-button-rounded p-button-text p-button-success"
+                      pTooltip="Save"
+                    ></button>
+
+                    <button
+                      *ngIf="editing"
+                      pButton
+                      pRipple
+                      type="button"
+                      pCancelEditableRow
+                      icon="pi pi-times"
+                      (click)="onBmoEditCancel(row, ri)"
+                      class="p-button-rounded p-button-text"
+                      pTooltip="Cancel"
+                    ></button>
+                  </div>
+                </td>
+              </tr>
+            </ng-template>
+            </p-table>
+            
+            <!-- Action buttons -->
+            <div class="flex gap-2 pt-2 border-top-1 surface-border">
+              <p-button
+                label="Add Override"
+                icon="pi pi-plus"
+                (click)="addBillingModelOverrideRow()"
+                class="p-button-sm"
+                severity="primary"
+              ></p-button>
+              <p-button
+                *ngIf="lendPeak.billingModelOverrides && lendPeak.billingModelOverrides.length > 0"
+                label="Remove All"
+                icon="pi pi-trash"
+                (click)="removeAllBillingModelOverrides()"
+                severity="danger"
+                class="p-button-sm p-button-outlined"
+              ></p-button>
+            </div>
+          </div>
+        </div>
+
         <!-- Conditionally display these fields only for 'amortized' loans -->
         <div class="field grid">
           <!-- Default Pre Bill Days -->
@@ -324,7 +499,6 @@
               inputStyleClass="w-full"
               [style]="{ width: '100%' }"
               [inputStyle]="{ width: '100%' }"
-              [disabled]="lendPeak.amortization.billingModel === 'dailySimpleInterest'"
             ></p-inputNumber>
             <!-- Popover replacing OverlayPanel -->
             <p-popover #defaultPreBillDaysTooltip>
@@ -348,7 +522,6 @@
               inputStyleClass="w-full"
               [style]="{ width: '100%' }"
               [inputStyle]="{ width: '100%' }"
-              [disabled]="lendPeak.amortization.billingModel === 'dailySimpleInterest'"
             ></p-inputNumber>
             <!-- Popover replacing OverlayPanel -->
             <p-popover #defaultDueDateDaysTooltip>
@@ -356,12 +529,6 @@
                 Number of days after the period end when the payment is due by default.
               </ng-template>
             </p-popover>
-          </div>
-
-          <div class="col-12" *ngIf="lendPeak.amortization.billingModel === 'dailySimpleInterest'">
-            <p-message severity="info">
-              Pre Bill Days and Due Date Days are not used in Daily Simple Interest (DSI) loans and are disabled.
-            </p-message>
           </div>
         </div>
 
@@ -807,3 +974,5 @@
     <button pButton label="Close" (click)="showPreviewSettingsDialog = false"></button>
   </div>
 </p-dialog>
+
+<!-- Dialog removed - now using inline editing -->

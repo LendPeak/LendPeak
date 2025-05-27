@@ -281,6 +281,27 @@
                   rowData.unbilledInterestDueToRounding.toNumber() | currency
                 }}
               </ng-container>
+              
+              <!-- DSI Currency fields -->
+              <ng-container *ngSwitchCase="'actualDSIPrincipal'">
+                <span *ngIf="rowData.actualDSIPrincipal">
+                  {{ rowData.actualDSIPrincipal.toNumber() | currency }}
+                </span>
+                <span *ngIf="!rowData.actualDSIPrincipal">-</span>
+              </ng-container>
+              <ng-container *ngSwitchCase="'actualDSIInterest'">
+                <span *ngIf="rowData.actualDSIInterest">
+                  {{ rowData.actualDSIInterest.toNumber() | currency }}
+                </span>
+                <span *ngIf="!rowData.actualDSIInterest">-</span>
+              </ng-container>
+              <ng-container *ngSwitchCase="'actualDSIFees'">
+                <span *ngIf="rowData.actualDSIFees">
+                  {{ rowData.actualDSIFees.toNumber() | currency }}
+                </span>
+                <span *ngIf="!rowData.actualDSIFees">-</span>
+              </ng-container>
+
               <ng-container *ngSwitchCase="'totalPayment'">
                 <span *ngIf="!rowData.billablePeriod">
                   <span class="pi pi-arrow-down"></span>
@@ -414,6 +435,42 @@
               <!-- Boolean fields -->
               <ng-container *ngSwitchCase="'billablePeriod'">
                 {{ rowData.billablePeriod === true ? "Yes" : "No" }}
+              </ng-container>
+
+              <!-- Billing Model field -->
+              <ng-container *ngSwitchCase="'billingModel'">
+                <span *ngIf="rowData.billingModel">
+                  {{ rowData.billingModel === 'dailySimpleInterest' ? 'DSI' : 'Amortized' }}
+                </span>
+                <span *ngIf="!rowData.billingModel">-</span>
+              </ng-container>
+
+              <!-- DSI Number fields -->
+              <ng-container *ngSwitchCase="'dsiInterestSavings'">
+                <span *ngIf="rowData.dsiInterestSavings != null">
+                  {{ rowData.dsiInterestSavings | currency }}
+                </span>
+                <span *ngIf="rowData.dsiInterestSavings == null">-</span>
+              </ng-container>
+              <ng-container *ngSwitchCase="'dsiInterestPenalty'">
+                <span *ngIf="rowData.dsiInterestPenalty != null">
+                  {{ rowData.dsiInterestPenalty | currency }}
+                </span>
+                <span *ngIf="rowData.dsiInterestPenalty == null">-</span>
+              </ng-container>
+
+              <!-- DSI Balance fields -->
+              <ng-container *ngSwitchCase="'actualDSIStartBalance'">
+                <span *ngIf="rowData.actualDSIStartBalance">
+                  {{ rowData.actualDSIStartBalance.toNumber() | currency }}
+                </span>
+                <span *ngIf="!rowData.actualDSIStartBalance">-</span>
+              </ng-container>
+              <ng-container *ngSwitchCase="'actualDSIEndBalance'">
+                <span *ngIf="rowData.actualDSIEndBalance">
+                  {{ rowData.actualDSIEndBalance.toNumber() | currency }}
+                </span>
+                <span *ngIf="!rowData.actualDSIEndBalance">-</span>
               </ng-container>
 
               <!-- Metadata field -->

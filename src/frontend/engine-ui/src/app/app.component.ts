@@ -257,6 +257,11 @@ export class AppComponent implements OnChanges, AfterViewInit, OnInit, OnDestroy
       })
         .addAmortizationVersionManager()
         .addFinancialOpsVersionManager();
+      
+      // Set default billing model if not already set
+      if (!lendPeak.billingModel) {
+        lendPeak.billingModel = 'amortized';
+      }
 
       this.loanModified = true;
 

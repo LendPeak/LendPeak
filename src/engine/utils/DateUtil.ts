@@ -50,12 +50,15 @@ export class DateUtil {
       }
 
       if (date instanceof Date) {
-        return LocalDate.of(date.getUTCFullYear(), date.getUTCMonth() + 1, date.getUTCDate());
+        // Use local date components to ensure timezone-agnostic behavior
+        // This ensures the date selected in UI is the date stored, like a birthday
+        return LocalDate.of(date.getFullYear(), date.getMonth() + 1, date.getDate());
       }
 
       if (typeof date === "number") {
         const jsDate = new Date(date);
-        return LocalDate.of(jsDate.getUTCFullYear(), jsDate.getUTCMonth() + 1, jsDate.getUTCDate());
+        // Use local date components to ensure timezone-agnostic behavior
+        return LocalDate.of(jsDate.getFullYear(), jsDate.getMonth() + 1, jsDate.getDate());
       }
 
       if (typeof date === "string") {
@@ -92,12 +95,14 @@ export class DateUtil {
       }
 
       if (date instanceof Date) {
-        return LocalDateTime.of(date.getUTCFullYear(), date.getUTCMonth() + 1, date.getUTCDate(), date.getUTCHours(), date.getUTCMinutes(), date.getUTCSeconds());
+        // Use local date/time components for consistency with date handling
+        return LocalDateTime.of(date.getFullYear(), date.getMonth() + 1, date.getDate(), date.getHours(), date.getMinutes(), date.getSeconds());
       }
 
       if (typeof date === "number") {
         const jsDate = new Date(date);
-        return LocalDateTime.of(jsDate.getUTCFullYear(), jsDate.getUTCMonth() + 1, jsDate.getUTCDate(), jsDate.getUTCHours(), jsDate.getUTCMinutes(), jsDate.getUTCSeconds());
+        // Use local date/time components for consistency with date handling
+        return LocalDateTime.of(jsDate.getFullYear(), jsDate.getMonth() + 1, jsDate.getDate(), jsDate.getHours(), jsDate.getMinutes(), jsDate.getSeconds());
       }
 
       if (typeof date === "string") {
@@ -135,7 +140,9 @@ export class DateUtil {
     }
 
     if (date instanceof Date) {
-      return LocalDate.of(date.getUTCFullYear(), date.getUTCMonth() + 1, date.getUTCDate()).toString();
+      // Use local date components to ensure timezone-agnostic behavior
+      // This ensures the displayed date matches what was selected
+      return LocalDate.of(date.getFullYear(), date.getMonth() + 1, date.getDate()).toString();
     }
 
     if (typeof date === "string") {
@@ -153,9 +160,10 @@ export class DateUtil {
   // and it returns regular javascript Date
   static normalizeDateToJsDate(date: LocalDate): Date {
     try {
-      const jsDate = new Date(
-        date.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli(),
-      );
+      // Create a Date using the local date components at noon to avoid DST issues
+      // Using noon (12:00) ensures we're far from midnight where DST transitions occur
+      // This makes the date timezone-agnostic - like a birthday that doesn't change
+      const jsDate = new Date(date.year(), date.monthValue() - 1, date.dayOfMonth(), 12, 0, 0, 0);
       return jsDate;
     } catch (e) {
       console.error("Error normalizing date to JS Date", e);

@@ -49,12 +49,20 @@ describe('TermExtension', () => {
     expect(ext.jsEmiRecalculationTerm).toBe(5);
   });
 
-  it('should normalize jsDate to UTC midnight', () => {
+  it('should normalize jsDate to be timezone-agnostic', () => {
     const dateWithTz = new Date('2024-03-01T10:00:00-05:00');
     const ext = new TermExtension({ quantity: 1, date: dateWithTz });
-    expect(ext.jsDate.toISOString()).toBe('2024-03-01T00:00:00.000Z');
+    // The date should be normalized to noon local time to avoid timezone issues
+    expect(ext.jsDate.getFullYear()).toBe(2024);
+    expect(ext.jsDate.getMonth()).toBe(2); // March (0-based)
+    expect(ext.jsDate.getDate()).toBe(1);
+    expect(ext.jsDate.getHours()).toBe(12); // Noon to avoid DST issues
+    
     ext.date = '2024-04-15';
-    expect(ext.jsDate.toISOString()).toBe('2024-04-15T00:00:00.000Z');
+    expect(ext.jsDate.getFullYear()).toBe(2024);
+    expect(ext.jsDate.getMonth()).toBe(3); // April (0-based)
+    expect(ext.jsDate.getDate()).toBe(15);
+    expect(ext.jsDate.getHours()).toBe(12); // Noon to avoid DST issues
   });
 });
 

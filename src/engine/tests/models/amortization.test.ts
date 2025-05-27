@@ -636,3 +636,50 @@ describe('Term Extension EMI recalculation with skip-a-pay flag', () => {
     expect(emiWithSkip).toBeLessThan(1200 / 5); // Should be less than if only paying terms counted
   });
 });
+
+describe('LendPeak BillingModel sticky override logic', () => {
+  const { LendPeak } = require('../../models/LendPeak');
+
+  it('should return default billingModel if no overrides', () => {
+    const lp = new LendPeak({});
+    lp.billingModel = 'amortized';
+    expect(lp.getBillingModelForTerm(0)).toBe('amortized');
+    expect(lp.getBillingModelForTerm(10)).toBe('amortized');
+  });
+
+  it('should use single override for all terms >= override', () => {
+    const lp = new LendPeak({});
+    lp.billingModel = 'amortized';
+    lp.billingModelOverrides = [{ term: 5, model: 'dailySimpleInterest' }];
+    expect(lp.getBillingModelForTerm(0)).toBe('amortized');
+    expect(lp.getBillingModelForTerm(4)).toBe('amortized');
+    expect(lp.getBillingModelForTerm(5)).toBe('dailySimpleInterest');
+    expect(lp.getBillingModelForTerm(10)).toBe('dailySimpleInterest');
+  });
+
+  it('should use most recent override for each term', () => {
+    const lp = new LendPeak({});
+    lp.billingModel = 'amortized';
+    lp.billingModelOverrides = [
+      { term: 5, model: 'dailySimpleInterest' },
+      { term: 10, model: 'amortized' },
+      { term: 15, model: 'dailySimpleInterest' },
+    ];
+    expect(lp.getBillingModelForTerm(0)).toBe('amortized');
+    expect(lp.getBillingModelForTerm(4)).toBe('amortized');
+    expect(lp.getBillingModelForTerm(5)).toBe('dailySimpleInterest');
+    expect(lp.getBillingModelForTerm(9)).toBe('dailySimpleInterest');
+    expect(lp.getBillingModelForTerm(10)).toBe('amortized');
+    expect(lp.getBillingModelForTerm(14)).toBe('amortized');
+    expect(lp.getBillingModelForTerm(15)).toBe('dailySimpleInterest');
+    expect(lp.getBillingModelForTerm(20)).toBe('dailySimpleInterest');
+  });
+
+  it('should handle empty overrides array', () => {
+    const lp = new LendPeak({});
+    lp.billingModel = 'amortized';
+    lp.billingModelOverrides = [];
+    expect(lp.getBillingModelForTerm(0)).toBe('amortized');
+    expect(lp.getBillingModelForTerm(100)).toBe('amortized');
+  });
+});

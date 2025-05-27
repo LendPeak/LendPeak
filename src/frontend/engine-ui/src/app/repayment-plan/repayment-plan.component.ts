@@ -59,6 +59,11 @@ export class RepaymentPlanComponent {
       default: true,
     },
     {
+      header: 'Billing Model',
+      field: 'billingModel',
+      default: false,
+    },
+    {
       header: 'Period Start Date',
       field: 'periodStartDate',
       default: true,
@@ -201,6 +206,42 @@ export class RepaymentPlanComponent {
       field: 'metadata',
       default: false,
     },
+    // DSI fields
+    {
+      header: 'DSI Actual Principal',
+      field: 'actualDSIPrincipal',
+      default: false,
+    },
+    {
+      header: 'DSI Actual Interest',
+      field: 'actualDSIInterest',
+      default: false,
+    },
+    {
+      header: 'DSI Actual Fees',
+      field: 'actualDSIFees',
+      default: false,
+    },
+    {
+      header: 'DSI Interest Savings',
+      field: 'dsiInterestSavings',
+      default: false,
+    },
+    {
+      header: 'DSI Interest Penalty',
+      field: 'dsiInterestPenalty',
+      default: false,
+    },
+    {
+      header: 'DSI Start Balance',
+      field: 'actualDSIStartBalance',
+      default: false,
+    },
+    {
+      header: 'DSI End Balance',
+      field: 'actualDSIEndBalance',
+      default: false,
+    },
   ];
 
   constructor(
@@ -226,6 +267,9 @@ export class RepaymentPlanComponent {
     } else {
       this.resetRepaymentPlanColumns();
     }
+    
+    // Auto-add DSI columns if loan uses DSI billing model
+    this.addDSIColumnsIfNeeded();
   }
 
   ngOnChanges(changes: SimpleChanges): void {}
@@ -388,5 +432,49 @@ export class RepaymentPlanComponent {
 
   showTilaDialogButton() {
     this.showTilaDialog = true;
+  }
+
+  private addDSIColumnsIfNeeded(): void {
+    if (!this.lendPeak) return;
+    
+    // Check if loan uses DSI or has DSI overrides
+    const usesDSI = this.lendPeak.billingModel === 'dailySimpleInterest' || 
+      (this.lendPeak.billingModelOverrides && this.lendPeak.billingModelOverrides.length > 0);
+    
+    // Always show billing model column if there are overrides or DSI
+    const showBillingModel = usesDSI || (this.lendPeak.billingModelOverrides && this.lendPeak.billingModelOverrides.length > 0);
+    
+    if (showBillingModel) {
+      // Ensure billing model column is visible
+      const billingModelColumn = this.availableRepaymentPlanCols.find(col => col.field === 'billingModel');
+      if (billingModelColumn) {
+        const columnIndex = this.availableRepaymentPlanCols.indexOf(billingModelColumn);
+        this.availableRepaymentPlanCols.splice(columnIndex, 1);
+        // Insert after Term column
+        const termIndex = this.selectedRepaymentPlanCols.findIndex(col => col.field === 'term');
+        this.selectedRepaymentPlanCols.splice(termIndex + 1, 0, billingModelColumn);
+      }
+    }
+    
+    if (usesDSI) {
+      // DSI columns to auto-add (excluding billingModel as it's already handled)
+      const dsiColumns = ['actualDSIPrincipal', 'actualDSIInterest', 'actualDSIFees', 'dsiInterestSavings', 'dsiInterestPenalty', 'actualDSIStartBalance', 'actualDSIEndBalance'];
+      
+      dsiColumns.forEach(fieldName => {
+        // Check if column is already selected
+        const isSelected = this.selectedRepaymentPlanCols.find(col => col.field === fieldName);
+        
+        if (!isSelected) {
+          // Find the column in available columns
+          const columnIndex = this.availableRepaymentPlanCols.findIndex(col => col.field === fieldName);
+          
+          if (columnIndex !== -1) {
+            // Move from available to selected
+            const column = this.availableRepaymentPlanCols.splice(columnIndex, 1)[0];
+            this.selectedRepaymentPlanCols.push(column);
+          }
+        }
+      });
+    }
   }
 }

@@ -99,7 +99,6 @@ export interface AmortizationParams {
   perDiemCalculationType?: PerDiemCalculationType;
   feesPerTerm?: FeesPerTerm;
   feesForAllTerms?: Fees;
-  billingModel?: BillingModel;
   termInterestAmountOverride?: TermInterestAmountOverrides;
   termInterestRateOverride?: TermInterestRateOverrides;
   acceptableRateVariance?: number | Decimal;
@@ -121,7 +120,7 @@ export interface AmortizationParams {
   termExtensions?: TermExtensions | TermExtension[] | TermExtensionParams[] | undefined | null;
 }
 
-export type BillingModel = 'amortized' | 'dailySimpleInterest';
+// BillingModel type is exported from LendPeak.ts
 
 /**
  * Amortization class to generate an amortization schedule for a loan.
@@ -217,6 +216,9 @@ export class Amortization {
   private _dueBillDays: BillDueDaysConfigurations = new BillDueDaysConfigurations();
   private _termPaymentAmountOverride: TermPaymentAmounts = new TermPaymentAmounts();
   private _balanceModifications: BalanceModifications = new BalanceModifications();
+  
+  // Track DSI payment history for accurate balance propagation
+  private _dsiPaymentHistory: Map<number, { actualStartBalance: Currency; actualEndBalance: Currency }> = new Map();
 
   private _defaultPreBillDaysConfiguration: number = Amortization.DEFAULT_PRE_BILL_DAYS_CONFIGURATION;
   jsDefaultPreBillDaysConfiguration!: number;
@@ -236,7 +238,6 @@ export class Amortization {
   private _repaymentSchedule!: AmortizationEntries;
   private _apr?: Decimal;
   private _perDiemCalculationType: PerDiemCalculationType = 'AnnualRateDividedByDaysInYear';
-  private _billingModel: BillingModel = 'amortized';
   private _feesPerTerm: FeesPerTerm = FeesPerTerm.empty();
   private _feesForAllTerms: Fees = new Fees();
   private _inputParams: AmortizationParams;
@@ -265,6 +266,18 @@ export class Amortization {
 
   private _emiRecalculationPrincipalCache: { [term: number]: Currency } = {};
 
+  // Callback to determine billing model for a term
+  private _getBillingModelForTerm?: (term: number) => 'amortized' | 'dailySimpleInterest';
+
+  // DSI support
+  private _dsiPayments: Array<{
+    term: number;
+    paymentDate: string | Date;
+    principalPaid: number;
+    interestPaid: number;
+    feesPaid: number;
+  }> = [];
+
   constructor(params: AmortizationParams) {
     this._inputParams = cloneDeep(params);
 
@@ -286,9 +299,6 @@ export class Amortization {
       this.acceptableRateVariance = params.acceptableRateVariance;
     }
 
-    if (params.billingModel) {
-      this.billingModel = params.billingModel;
-    }
 
     if (params.originationFee) {
       this.originationFee = params.originationFee;
@@ -448,6 +458,10 @@ export class Amortization {
 
   get accrueInterestAfterEndDate(): boolean {
     return this._accrueInterestAfterEndDate;
+  }
+
+  set getBillingModelForTerm(callback: (term: number) => 'amortized' | 'dailySimpleInterest') {
+    this._getBillingModelForTerm = callback;
   }
 
   get versionId(): string {
@@ -1527,23 +1541,6 @@ export class Amortization {
     this._calendars = calendars instanceof TermCalendars ? calendars : new TermCalendars(calendars);
   }
 
-  get billingModel(): BillingModel {
-    return this._billingModel;
-  }
-
-  set billingModel(value: BillingModel) {
-    this.modifiedSinceLastCalculation = true;
-
-    if (value === 'dailySimpleInterest') {
-      // Reset pre-bill and due-bill days to empty/zero as required by DSI model
-      this.preBillDays = undefined;
-      this.dueBillDays = undefined;
-      this.defaultPreBillDaysConfiguration = 0;
-      this.defaultBillDueDaysAfterPeriodEndConfiguration = 0;
-    }
-
-    this._billingModel = value;
-  }
 
   get annualInterestRate(): Decimal {
     return this._annualInterestRate;
@@ -2374,6 +2371,7 @@ export class Amortization {
 
     const schedule: AmortizationEntries = new AmortizationEntries();
     let startBalance = this.totalLoanAmount;
+    let actualDSIBalance = this.totalLoanAmount; // Track actual DSI balance separately
     //let termIndex = 0;
 
     // for (let term of this.periodsSchedule.periods) {
@@ -2393,10 +2391,14 @@ export class Amortization {
       const isCustomCalendar = this.calendars.hasCalendarForTerm(termIndex);
       const periodStartDate = term.startDate;
       const periodEndDate = term.endDate;
-      const preBillDaysConfiguration = this.preBillDays.atIndex(termIndex).preBillDays;
-      const dueBillDaysConfiguration = this.dueBillDays.atIndex(termIndex).daysDueAfterPeriodEnd;
-      const billOpenDate = periodEndDate.minusDays(preBillDaysConfiguration);
-      const billDueDate = periodEndDate.plusDays(dueBillDaysConfiguration);
+      // For DSI billing model, prebill and due days don't apply
+      const billingModel = this._getBillingModelForTerm ? this._getBillingModelForTerm(termIndex + 1) : 'amortized';
+      const isDSI = billingModel === 'dailySimpleInterest';
+      
+      const preBillDaysConfiguration = isDSI ? 0 : this.preBillDays.atIndex(termIndex).preBillDays;
+      const dueBillDaysConfiguration = isDSI ? 0 : this.dueBillDays.atIndex(termIndex).daysDueAfterPeriodEnd;
+      const billOpenDate = isDSI ? periodEndDate : periodEndDate.minusDays(preBillDaysConfiguration);
+      const billDueDate = isDSI ? periodEndDate : periodEndDate.plusDays(dueBillDaysConfiguration);
       const fixedMonthlyPayment = this.getTermPaymentAmount(termIndex, _isForRecalculation);
 
       let billedInterestForTerm = Currency.zero;
@@ -2406,7 +2408,28 @@ export class Amortization {
         (override) => override.termNumber === termIndex
       );
 
-      const loanBalancesInAPeriod = this.getModifiedBalance(periodStartDate, periodEndDate, startBalance);
+      // For DSI, check if we have actual balance from payment history or previous term
+      let balanceForCalculation = startBalance;
+      if (isDSI) {
+        // First check payment history
+        const paymentHistory = this.getDSIPaymentHistory(termIndex);
+        if (paymentHistory) {
+          balanceForCalculation = paymentHistory.actualStartBalance;
+          actualDSIBalance = paymentHistory.actualStartBalance;
+        } else if (termIndex > 0) {
+          // Check payment history for previous term
+          const prevPaymentHistory = this.getDSIPaymentHistory(termIndex - 1);
+          if (prevPaymentHistory) {
+            balanceForCalculation = prevPaymentHistory.actualEndBalance;
+            actualDSIBalance = prevPaymentHistory.actualEndBalance;
+            // Update startBalance for DSI to reflect actual balance
+            startBalance = actualDSIBalance;
+          }
+        }
+        
+      }
+      
+      const loanBalancesInAPeriod = this.getModifiedBalance(periodStartDate, periodEndDate, balanceForCalculation);
       const lastBalanceInPeriod = loanBalancesInAPeriod.length;
       let currentBalanceIndex = 0;
 
@@ -2555,10 +2578,10 @@ export class Amortization {
         // };
         // console.log("loan balance modifications", loanBalancesInAPeriod);
 
-        schedule.addEntry(
-          new AmortizationEntry({
+        const entryParams: any = {
             term: termIndex,
             billablePeriod: true,
+            billingModel: this._getBillingModelForTerm ? this._getBillingModelForTerm(termIndex + 1) : 'amortized',
             periodStartDate: periodStartDate,
             periodEndDate: periodEndDate,
             periodBillOpenDate: billOpenDate,
@@ -2588,8 +2611,27 @@ export class Amortization {
             unbilledInterestDueToRounding: this.unbilledInterestDueToRounding,
             calendar: termCalendar,
             metadata,
-          })
-        );
+          };
+          
+          // Add DSI balance tracking if this is a DSI term
+          if (isDSI) {
+            // Check if we have payment history for this term
+            const paymentHistory = this.getDSIPaymentHistory(termIndex);
+            if (paymentHistory) {
+              entryParams.actualDSIStartBalance = paymentHistory.actualStartBalance;
+              entryParams.actualDSIEndBalance = paymentHistory.actualEndBalance;
+            } else if (termIndex > 0) {
+              // Check if previous term has payment history to propagate
+              const prevPaymentHistory = this.getDSIPaymentHistory(termIndex - 1);
+              if (prevPaymentHistory) {
+                entryParams.actualDSIStartBalance = prevPaymentHistory.actualEndBalance;
+                // End balance will be set when payment is processed
+              }
+            }
+            // Don't set actualDSIStartBalance on initial calculation - only when payment is processed
+          }
+          
+          schedule.addEntry(new AmortizationEntry(entryParams));
 
         startBalance = balanceAfterPayment;
         if (balanceAfterPayment.lessThanOrEqualTo(0) && termIndex < this.actualTerm) {
@@ -2662,15 +2704,18 @@ export class Amortization {
             /* treatEndDateAsNonAccruing = */ treatEndDateAsNonAccruing
           );
 
+          // Use actual DSI balance for interest calculation if in DSI mode
+          const balanceForInterestCalc = isDSI && actualDSIBalance ? actualDSIBalance : startBalance;
+          
           let interestForPeriod: Currency;
           if (interestRateForPeriod.annualInterestRate.isZero()) {
             interestForPeriod = Currency.zero;
           } else {
-            interestForPeriod = interestCalculator.calculateInterestForDays(startBalance, daysInPeriod);
+            interestForPeriod = interestCalculator.calculateInterestForDays(balanceForInterestCalc, daysInPeriod);
             // interestForPeriod = this.round(interestForPeriod);
           }
           const rateMetadata = interestCalculator.calculateEquivalentAnnualRateMetadata(
-            startBalance,
+            balanceForInterestCalc,
             interestForPeriod,
             interestRateForPeriod.annualInterestRate,
             this.allowRateAbove100,
@@ -2732,6 +2777,7 @@ export class Amortization {
               new AmortizationEntry({
                 term: termIndex,
                 billablePeriod: false,
+                billingModel: this._getBillingModelForTerm ? this._getBillingModelForTerm(termIndex + 1) : 'amortized',
                 periodStartDate: interestRateForPeriod.startDate,
                 periodEndDate: interestRateForPeriod.endDate,
                 periodInterestRate: interestRateForPeriod.annualInterestRate,
@@ -2851,39 +2897,58 @@ export class Amortization {
 
           startBalance = balanceAfterPayment;
 
-          schedule.addEntry(
-            new AmortizationEntry({
-              term: termIndex,
-              billablePeriod: true,
-              periodStartDate: interestRateForPeriod.startDate,
-              periodEndDate: interestRateForPeriod.endDate,
-              periodBillOpenDate: billOpenDate,
-              periodBillDueDate: billDueDate,
-              billDueDaysAfterPeriodEndConfiguration: dueBillDaysConfiguration,
-              prebillDaysConfiguration: preBillDaysConfiguration,
-              //   periodInterestRate: interestRateForPeriod.annualInterestRate,
-              periodInterestRate: finalPeriodInterestRate,
-              principal: principal,
-              fees: totalFees,
-              billedDeferredFees: billedDeferredFees,
-              unbilledTotalDeferredFees: this.unbilledDeferredFees,
-              dueInterestForTerm: dueInterestForTerm,
-              accruedInterestForPeriod: accruedInterestForPeriod,
-              billedDeferredInterest: appliedDeferredInterest,
-              billedInterestForTerm: billedInterestForTerm,
-              balanceModificationAmount: periodStartBalance.modificationAmount,
-              endBalance: balanceAfterPayment,
-              startBalance: balanceBeforePayment,
-              totalPayment: totalPayment,
-              perDiem: perDiem,
-              daysInPeriod: daysInPeriod,
-              unbilledTotalDeferredInterest: this.unbilledDeferredInterest,
-              interestRoundingError: roundedInterest.getRoundingErrorAsCurrency(),
-              unbilledInterestDueToRounding: this.unbilledInterestDueToRounding,
-              calendar: termCalendar,
-              metadata,
-            })
-          );
+          const entryParams: any = {
+            term: termIndex,
+            billablePeriod: true,
+            billingModel: this._getBillingModelForTerm ? this._getBillingModelForTerm(termIndex + 1) : 'amortized',
+            periodStartDate: interestRateForPeriod.startDate,
+            periodEndDate: interestRateForPeriod.endDate,
+            periodBillOpenDate: billOpenDate,
+            periodBillDueDate: billDueDate,
+            billDueDaysAfterPeriodEndConfiguration: dueBillDaysConfiguration,
+            prebillDaysConfiguration: preBillDaysConfiguration,
+            //   periodInterestRate: interestRateForPeriod.annualInterestRate,
+            periodInterestRate: finalPeriodInterestRate,
+            principal: principal,
+            fees: totalFees,
+            billedDeferredFees: billedDeferredFees,
+            unbilledTotalDeferredFees: this.unbilledDeferredFees,
+            dueInterestForTerm: dueInterestForTerm,
+            accruedInterestForPeriod: accruedInterestForPeriod,
+            billedDeferredInterest: appliedDeferredInterest,
+            billedInterestForTerm: billedInterestForTerm,
+            balanceModificationAmount: periodStartBalance.modificationAmount,
+            endBalance: balanceAfterPayment,
+            startBalance: balanceBeforePayment,
+            totalPayment: totalPayment,
+            perDiem: perDiem,
+            daysInPeriod: daysInPeriod,
+            unbilledTotalDeferredInterest: this.unbilledDeferredInterest,
+            interestRoundingError: roundedInterest.getRoundingErrorAsCurrency(),
+            unbilledInterestDueToRounding: this.unbilledInterestDueToRounding,
+            calendar: termCalendar,
+            metadata,
+          };
+          
+          // Add DSI balance tracking if this is a DSI term
+          if (isDSI) {
+            // Check if we have payment history for this term
+            const paymentHistory = this.getDSIPaymentHistory(termIndex);
+            if (paymentHistory) {
+              entryParams.actualDSIStartBalance = paymentHistory.actualStartBalance;
+              entryParams.actualDSIEndBalance = paymentHistory.actualEndBalance;
+            } else if (termIndex > 0) {
+              // Check if previous term has payment history to propagate
+              const prevPaymentHistory = this.getDSIPaymentHistory(termIndex - 1);
+              if (prevPaymentHistory) {
+                entryParams.actualDSIStartBalance = prevPaymentHistory.actualEndBalance;
+                // End balance will be set when payment is processed
+              }
+            }
+            // Don't set actualDSIStartBalance on initial calculation - only when payment is processed
+          }
+          
+          schedule.addEntry(new AmortizationEntry(entryParams));
 
           if (balanceAfterPayment.lessThanOrEqualTo(0) && termIndex < this.actualTerm) {
             this.earlyRepayment = true;
@@ -2937,6 +3002,42 @@ export class Amortization {
             .add(lastPayment.fees);
           lastPayment.metadata.unbilledInterestApplied = true;
           lastPayment.metadata.unbilledInterestAmount = this.unbilledInterestDueToRounding.toNumber();
+        }
+      }
+    }
+
+    // After main loop, run DSI adjustment loop
+    if (this._dsiPayments && this._dsiPayments.length > 0) {
+      // Group DSI payments by term, allow multiple payments per term
+      const dsiByTerm: Record<number, Array<any>> = {};
+      for (const p of this._dsiPayments) {
+        if (!dsiByTerm[p.term]) dsiByTerm[p.term] = [];
+        dsiByTerm[p.term].push(p);
+      }
+      for (const entry of schedule.entries) {
+        const dsiPayments = dsiByTerm[entry.term];
+        if (dsiPayments && dsiPayments.length > 0) {
+          // Sum up principal, interest, fees for the term
+          const principalPaid = dsiPayments.reduce((sum, p) => sum + (p.principalPaid || 0), 0);
+          const interestPaid = dsiPayments.reduce((sum, p) => sum + (p.interestPaid || 0), 0);
+          const feesPaid = dsiPayments.reduce((sum, p) => sum + (p.feesPaid || 0), 0);
+          entry.actualDSIPrincipal = Currency.of(principalPaid);
+          entry.actualDSIInterest = Currency.of(interestPaid);
+          entry.actualDSIFees = Currency.of(feesPaid);
+          // Calculate savings/penalty
+          const projectedInterest = entry.accruedInterestForPeriod.toNumber();
+          if (interestPaid < projectedInterest) {
+            entry.dsiInterestSavings = projectedInterest - interestPaid;
+          } else if (interestPaid > projectedInterest) {
+            entry.dsiInterestPenalty = interestPaid - projectedInterest;
+          }
+          // Attach usage details (one per payment)
+          entry.usageDetails = dsiPayments.map((p) => ({
+            paymentDate: p.paymentDate,
+            principalPaid: p.principalPaid,
+            interestPaid: p.interestPaid,
+            feesPaid: p.feesPaid,
+          }));
         }
       }
     }
@@ -3049,7 +3150,6 @@ export class Amortization {
       changePaymentDates: this.changePaymentDates.json,
       balanceModifications: this.balanceModifications.json,
       perDiemCalculationType: this.perDiemCalculationType,
-      billingModel: this.billingModel,
       feesPerTerm: this.feesPerTerm.json,
       feesForAllTerms: this.feesForAllTerms.json,
       repaymentSchedule: this.repaymentSchedule.json,
@@ -3100,7 +3200,6 @@ export class Amortization {
       changePaymentDates: this.changePaymentDates.json,
       balanceModifications: this.balanceModifications.json,
       perDiemCalculationType: this.perDiemCalculationType,
-      billingModel: this.billingModel,
       feesPerTerm: this.feesPerTerm.json,
       feesForAllTerms: this.feesForAllTerms.json,
       repaymentSchedule: this.repaymentSchedule.json,
@@ -3241,5 +3340,33 @@ export class Amortization {
   }
   get contractualTerm(): number | undefined {
     return this._contractualTerm;
+  }
+
+  public setDSIPayments(
+    payments: Array<{
+      term: number;
+      paymentDate: string | Date;
+      principalPaid: number;
+      interestPaid: number;
+      feesPaid: number;
+    }>
+  ) {
+    this._dsiPayments = payments || [];
+  }
+  
+  /**
+   * Updates the DSI payment history for a specific term.
+   * This is used to track actual balances after payments are processed.
+   */
+  public updateDSIPaymentHistory(termNumber: number, actualStartBalance: Currency, actualEndBalance: Currency): void {
+    this._dsiPaymentHistory.set(termNumber, { actualStartBalance, actualEndBalance });
+    this.modifiedSinceLastCalculation = true;
+  }
+  
+  /**
+   * Gets the DSI payment history for a specific term.
+   */
+  public getDSIPaymentHistory(termNumber: number): { actualStartBalance: Currency; actualEndBalance: Currency } | undefined {
+    return this._dsiPaymentHistory.get(termNumber);
   }
 }

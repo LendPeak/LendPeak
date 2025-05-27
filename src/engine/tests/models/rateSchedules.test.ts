@@ -512,8 +512,9 @@ describe("RateSchedule Class", () => {
 
     // now let's change the JS values
     rs.jsAnnualInterestRate = 15;
-    rs.jsStartDate = new Date("2025-04-01");
-    rs.jsEndDate = new Date("2025-04-05");
+    // Create dates in local time to ensure timezone-agnostic behavior
+    rs.jsStartDate = new Date(2025, 3, 1); // April 1, 2025 (month is 0-based)
+    rs.jsEndDate = new Date(2025, 3, 5); // April 5, 2025
 
     // and update the model from JS
     rs.updateModelValues();

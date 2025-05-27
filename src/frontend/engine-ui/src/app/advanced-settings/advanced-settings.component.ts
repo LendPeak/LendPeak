@@ -16,7 +16,7 @@ import {
 } from 'lendpeak-engine/models/Amortization';
 import { Calendar } from 'lendpeak-engine/models/Calendar';
 import { TermCalendars } from 'lendpeak-engine/models/TermCalendars';
-import { LendPeak } from 'lendpeak-engine/models/LendPeak';
+import { LendPeak, BillingModel } from 'lendpeak-engine/models/LendPeak';
 import { RoundingMethod, Currency } from 'lendpeak-engine/utils/Currency';
 
 @Component({
@@ -125,6 +125,9 @@ export class AdvancedSettingsComponent implements OnInit {
 
   hoveredPriorityIndex: number | null = null;
 
+  // Billing model override editing state
+  private bmoSnapshots: Record<number, any> = {};
+
   constructor(private advancedSettingsService: AdvancedSettingsService) {}
 
   ngOnInit() {
@@ -170,7 +173,7 @@ export class AdvancedSettingsComponent implements OnInit {
     this.lendPeak.amortization.flushUnbilledInterestRoundingErrorMethod =
       FlushUnbilledInterestDueToRoundingErrorType.AT_THRESHOLD;
     this.lendPeak.amortization.perDiemCalculationType = 'AnnualRateDividedByDaysInYear';
-    this.lendPeak.amortization.billingModel = 'amortized';
+    this.lendPeak.billingModel = 'amortized';
     this.paymentAllocationStrategyName = 'FIFO';
     this.paymentPriority = ['interest', 'fees', 'principal'];
     this.lendPeak.amortization.defaultPreBillDaysConfiguration = 5;
@@ -180,6 +183,7 @@ export class AdvancedSettingsComponent implements OnInit {
     this.lendPeak.amortization.roundingPrecision = 2;
     this.lendPeak.autoCloseThreshold = Currency.of(10.0);
     this.lendPeak.amortization.interestAccruesFromDayZero = false;
+    this.lendPeak.billingModelOverrides = [];
 
     // Store as original settings
     this.originalSettings = this.getCurrentSettings();
@@ -206,7 +210,7 @@ export class AdvancedSettingsComponent implements OnInit {
       this.lendPeak.amortization.roundingMethod = settings.roundingMethod;
       this.lendPeak.amortization.flushUnbilledInterestRoundingErrorMethod = settings.flushMethod;
       this.lendPeak.amortization.perDiemCalculationType = settings.perDiemCalculationType;
-      this.lendPeak.amortization.billingModel = settings.billingModel || 'amortized';
+      this.lendPeak.billingModel = settings.billingModel || 'amortized';
       this.paymentAllocationStrategyName = settings.paymentAllocationStrategy;
       this.paymentPriority = settings.paymentPriority;
       this.lendPeak.amortization.defaultPreBillDaysConfiguration = settings.defaultPreBillDaysConfiguration;
@@ -215,6 +219,7 @@ export class AdvancedSettingsComponent implements OnInit {
       this.lendPeak.amortization.allowRateAbove100 = settings.allowRateAbove100;
       this.lendPeak.amortization.flushThreshold = settings.flushThreshold;
       this.lendPeak.amortization.roundingPrecision = settings.roundingPrecision;
+      this.lendPeak.billingModelOverrides = settings.billingModelOverrides || [];
 
       this.emitLoanChange();
       this.isModified = false;
@@ -285,7 +290,7 @@ export class AdvancedSettingsComponent implements OnInit {
       roundingMethod: this.lendPeak.amortization.roundingMethod,
       flushMethod: this.lendPeak.amortization.flushUnbilledInterestRoundingErrorMethod,
       perDiemCalculationType: this.lendPeak.amortization.perDiemCalculationType,
-      billingModel: this.lendPeak.amortization.billingModel,
+      billingModel: this.lendPeak.billingModel,
       paymentAllocationStrategyName: this.paymentAllocationStrategyName,
       paymentPriority: this.paymentPriority,
       defaultPreBillDaysConfiguration: this.lendPeak.amortization.defaultPreBillDaysConfiguration,
@@ -296,6 +301,7 @@ export class AdvancedSettingsComponent implements OnInit {
       roundingPrecision: this.lendPeak.amortization.roundingPrecision,
       autoCloseThreshold: this.lendPeak.autoCloseThreshold.toNumber(),
       interestAccruesFromDayZero: this.lendPeak.amortization.interestAccruesFromDayZero,
+      billingModelOverrides: this.lendPeak.billingModelOverrides || [],
     };
   }
 
@@ -319,7 +325,7 @@ export class AdvancedSettingsComponent implements OnInit {
     this.lendPeak.amortization.flushUnbilledInterestRoundingErrorMethod = settings.flushMethod || 'at_threshold';
     this.lendPeak.amortization.perDiemCalculationType =
       settings.perDiemCalculationType || 'AnnualRateDividedByDaysInYear';
-    this.lendPeak.amortization.billingModel = settings.billingModel || 'amortized';
+    this.lendPeak.billingModel = settings.billingModel || 'amortized';
     this.paymentAllocationStrategyName = settings.paymentAllocationStrategy || 'FIFO';
     this.paymentPriority = settings.paymentPriority || ['interest', 'fees', 'principal'];
     this.lendPeak.amortization.defaultPreBillDaysConfiguration = settings.defaultPreBillDaysConfiguration || 5;
@@ -331,6 +337,8 @@ export class AdvancedSettingsComponent implements OnInit {
     this.lendPeak.amortization.interestAccruesFromDayZero = settings.interestAccruesFromDayZero ?? false;
 
     this.lendPeak.autoCloseThreshold = Currency.of(settings.autoCloseThreshold ?? 10);
+    this.lendPeak.billingModelOverrides = settings.billingModelOverrides || [];
+    
     // Update loaded settings info
     this.loadedSettingName = setting.name;
     this.loadedSettingVersion = setting.version;
@@ -469,5 +477,84 @@ export class AdvancedSettingsComponent implements OnInit {
       this.paymentPriority[index] = temp;
       this.onPaymentPriorityChange();
     }
+  }
+
+  // Billing Model Override inline editing methods
+  onBmoEditInit(row: { term: number; model: BillingModel }): void {
+    this.bmoSnapshots[row.term] = { ...row }; // Save snapshot for cancel
+  }
+
+  onBmoEditSave(row: { term: number; model: BillingModel }): void {
+    delete this.bmoSnapshots[row.term];
+    // Sort overrides by term
+    if (this.lendPeak && this.lendPeak.billingModelOverrides) {
+      this.lendPeak.billingModelOverrides.sort((a, b) => a.term - b.term);
+    }
+    this.onInputChange();
+  }
+
+  onBmoEditCancel(row: { term: number; model: BillingModel }, ri: number): void {
+    const saved = this.bmoSnapshots[row.term];
+    if (saved) {
+      Object.assign(row, saved); // Restore from snapshot
+      delete this.bmoSnapshots[row.term];
+    }
+  }
+
+  addBillingModelOverrideRow(): void {
+    if (!this.lendPeak) return;
+    
+    // Initialize overrides array if needed
+    if (!this.lendPeak.billingModelOverrides) {
+      this.lendPeak.billingModelOverrides = [];
+    }
+
+    // Find the next available term number
+    let nextTerm = 0;
+    if (this.lendPeak.billingModelOverrides.length > 0) {
+      const maxTerm = Math.max(...this.lendPeak.billingModelOverrides.map(o => o.term));
+      nextTerm = maxTerm + 1;
+    }
+
+    // Add new override with default values
+    const newOverride = {
+      term: nextTerm,
+      model: this.lendPeak.billingModel === 'dailySimpleInterest' ? 'amortized' : 'dailySimpleInterest' as BillingModel
+    };
+    
+    this.lendPeak.billingModelOverrides.push(newOverride);
+    this.onInputChange();
+  }
+
+  removeBillingModelOverride(index: number): void {
+    if (!this.lendPeak || !this.lendPeak.billingModelOverrides) return;
+    
+    this.lendPeak.billingModelOverrides.splice(index, 1);
+    this.onInputChange();
+  }
+
+  removeAllBillingModelOverrides(): void {
+    if (!this.lendPeak) return;
+    
+    if (confirm('Remove all billing model overrides?')) {
+      this.lendPeak.billingModelOverrides = [];
+      this.onInputChange();
+    }
+  }
+
+  getTermStartDate(term: number): Date | null {
+    if (!this.lendPeak || !this.lendPeak.amortization || !this.lendPeak.amortization.repaymentSchedule) {
+      return null;
+    }
+    const entry = this.lendPeak.amortization.repaymentSchedule.entries.find(e => e.term === term);
+    return entry ? new Date(entry.periodStartDate.toString()) : null;
+  }
+
+  getTermEndDate(term: number): Date | null {
+    if (!this.lendPeak || !this.lendPeak.amortization || !this.lendPeak.amortization.repaymentSchedule) {
+      return null;
+    }
+    const entry = this.lendPeak.amortization.repaymentSchedule.entries.find(e => e.term === term);
+    return entry ? new Date(entry.periodEndDate.toString()) : null;
   }
 }

@@ -1,10 +1,10 @@
-import { Currency } from "../../utils/Currency";
-import { Bill } from "../Bill";
-import { PaymentAllocation } from "./PaymentAllocation";
-import { PaymentPriority } from "./Types";
-import { DepositRecord } from "../DepositRecord";
-import { UsageDetail } from "../Bill/DepositRecord/UsageDetail";
-import { BillPaymentDetail } from "../Bill/BillPaymentDetail";
+import { Currency } from '../../utils/Currency';
+import { Bill } from '../Bill';
+import { PaymentAllocation } from './PaymentAllocation';
+import { PaymentPriority } from './Types';
+import { DepositRecord } from '../DepositRecord';
+import { UsageDetail } from '../Bill/DepositRecord/UsageDetail';
+import { BillPaymentDetail } from '../Bill/BillPaymentDetail';
 
 /**
  * This version accumulates total principal, interest, fees
@@ -15,7 +15,12 @@ import { BillPaymentDetail } from "../Bill/BillPaymentDetail";
  * allocatedInterest=50, allocatedPrincipal=100.
  */
 export class AllocationHelper {
-  static allocateToBill(deposit: DepositRecord, bill: Bill, amount: Currency, paymentPriority: PaymentPriority): { allocation: PaymentAllocation; remainingAmount: Currency } {
+  static allocateToBill(
+    deposit: DepositRecord,
+    bill: Bill,
+    amount: Currency,
+    paymentPriority: PaymentPriority
+  ): { allocation: PaymentAllocation; remainingAmount: Currency } {
     let allocatedPrincipal = Currency.Zero();
     let allocatedInterest = Currency.Zero();
     let allocatedFees = Currency.Zero();
@@ -26,7 +31,7 @@ export class AllocationHelper {
       if (remainingAmount.isZero()) break;
 
       switch (component) {
-        case "interest": {
+        case 'interest': {
           const payInterest = Currency.min(remainingAmount, bill.interestDue);
           if (!payInterest.isZero()) {
             allocatedInterest = allocatedInterest.add(payInterest);
@@ -35,7 +40,7 @@ export class AllocationHelper {
           }
           break;
         }
-        case "fees": {
+        case 'fees': {
           const payFees = Currency.min(remainingAmount, bill.feesDue);
           if (!payFees.isZero()) {
             allocatedFees = allocatedFees.add(payFees);
@@ -44,7 +49,7 @@ export class AllocationHelper {
           }
           break;
         }
-        case "principal": {
+        case 'principal': {
           const payPrincipal = Currency.min(remainingAmount, bill.principalDue);
           if (!payPrincipal.isZero()) {
             allocatedPrincipal = allocatedPrincipal.add(payPrincipal);
@@ -60,19 +65,18 @@ export class AllocationHelper {
 
     // If we allocated anything, record one usage detail
     const totalAllocated = allocatedPrincipal.add(allocatedInterest).add(allocatedFees);
+    let usageDetail: UsageDetail | undefined = undefined;
     if (!totalAllocated.isZero()) {
-      deposit.addUsageDetail(
-        new UsageDetail({
-          billId: bill.id,
-          period: bill.period,
-          billDueDate: bill.dueDate,
-          allocatedPrincipal,
-          allocatedInterest,
-          allocatedFees,
-          date: deposit.effectiveDate,
-        })
-      );
-
+      usageDetail = new UsageDetail({
+        billId: bill.id,
+        period: bill.period,
+        billDueDate: bill.dueDate,
+        allocatedPrincipal,
+        allocatedInterest,
+        allocatedFees,
+        date: deposit.effectiveDate,
+      });
+      deposit.addUsageDetail(usageDetail);
       bill.paymentDetails.push(
         new BillPaymentDetail({
           depositId: deposit.id,
@@ -98,12 +102,12 @@ export class AllocationHelper {
     // Return PaymentAllocation so we can show how much we allocated
     const allocation: PaymentAllocation = {
       billId: bill.id,
+      bill,
+      usageDetails: usageDetail ? [usageDetail] : [],
       allocatedPrincipal,
       allocatedInterest,
       allocatedFees,
     };
-
-    // bill.paymentDetails.push(allocation);
 
     return { allocation, remainingAmount };
   }

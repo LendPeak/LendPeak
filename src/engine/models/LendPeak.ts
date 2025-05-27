@@ -34,6 +34,15 @@ export interface PayoffQuoteResult {
   dueFees: Currency;
   dueTotal: Currency;
   unusedAmountFromDeposis: Currency;
+  dsiInterestSavings?: number;
+  dsiInterestPenalty?: number;
+}
+
+export type BillingModel = 'amortized' | 'dailySimpleInterest';
+
+export interface BillingModelOverride {
+  term: number;
+  model: BillingModel;
 }
 
 export class LendPeak {
@@ -72,6 +81,10 @@ export class LendPeak {
   };
 
   paymentApplicationResults: PaymentApplicationResult[] = [];
+
+  private _billingModel: BillingModel = 'amortized';
+  private _billingModelOverrides: BillingModelOverride[] = [];
+
   constructor(params: {
     amortization?: Amortization;
     depositRecords?: DepositRecords;
@@ -83,6 +96,8 @@ export class LendPeak {
     autoCloseThreshold?: Currency | number;
     currentDate?: LocalDate;
     rawImportData?: string;
+    billingModel?: BillingModel;
+    billingModelOverrides?: Array<{ term: number; model: BillingModel }>;
   }) {
     this.rawImportData = params.rawImportData;
     this.setAmortization(params.amortization);
@@ -112,6 +127,14 @@ export class LendPeak {
 
     if (params.currentDate) {
       this.currentDate = params.currentDate;
+    }
+
+    if (params.billingModel) {
+      this.billingModel = params.billingModel;
+    }
+
+    if (params.billingModelOverrides) {
+      this.billingModelOverrides = params.billingModelOverrides;
     }
   }
 
@@ -155,6 +178,8 @@ export class LendPeak {
     } else {
       this._amortization = value;
     }
+    // Set the billing model callback
+    this._amortization.getBillingModelForTerm = (term: number) => this.getBillingModelForTerm(term);
   }
 
   get depositRecords(): DepositRecords {
@@ -383,6 +408,7 @@ export class LendPeak {
       amortization: this.amortization,
       bills: this.bills,
       deposits: this.depositRecords,
+      billingModel: this.billingModel,
       options: {
         allocationStrategy: this.allocationStrategy,
         paymentPriority: this.paymentPriority,
@@ -542,6 +568,8 @@ export class LendPeak {
         this.amortization = new Amortization(amortization);
       }
     }
+    // Set the billing model callback
+    this._amortization.getBillingModelForTerm = (term: number) => this.getBillingModelForTerm(term);
   }
 
   /** basic state flags */
@@ -686,66 +714,138 @@ export class LendPeak {
    *  Pay-off quote generator
    * ----------------------------------------------------------------*/
   private recomputePayoffQuote(): PayoffQuoteResult {
-    /* ── 1)  Bill-level balances that are already invoiced / due ───────── */
-    const billSummary = this.bills.summary;
+    // DSI-aware payoff calculation
+    let duePrincipal = Currency.zero;
+    let dueInterest = Currency.zero;
+    let dueFees = Currency.zero;
+    let dsiInterestSavings = 0;
+    let dsiInterestPenalty = 0;
+    const isDSI =
+      this._billingModel === 'dailySimpleInterest' ||
+      (this._billingModelOverrides && this._billingModelOverrides.some((o) => o.model === 'dailySimpleInterest'));
 
-    let duePrincipal = billSummary.remainingPrincipal; // unpaid principal
-    let dueInterest = billSummary.dueInterest; // interest already on Bills
-    let dueFees = billSummary.dueFees; // posted / due fees
-    let dueTotal = duePrincipal.add(dueInterest).add(dueFees);
+    if (isDSI) {
+      // For DSI, use bill's remaining due amounts, not original DSI splits
+      for (const bill of this.bills.all) {
+        const entry = bill.amortizationEntry;
+        const billingModel = this.getBillingModelForTerm(bill.period);
+        const isPaid = bill.isPaid && bill.isPaid();
+        if (isPaid) continue;
 
-    /* ── 2)  If we're part-way through the last open Bill,
-            tack on additional accrued interest up to "today" ─────────── */
-    const lastOpenBill = this.bills.lastOpenBill;
+        if (billingModel === 'dailySimpleInterest') {
+          // For DSI bills, calculate remaining due from DSI splits minus payments applied
+          if (entry && (entry.actualDSIPrincipal || entry.actualDSIInterest || entry.actualDSIFees)) {
+            // Use DSI splits as the basis, then subtract what's been paid
+            const dsiPrincipal = entry.actualDSIPrincipal || Currency.zero;
+            const dsiInterest = entry.actualDSIInterest || Currency.zero;
+            const dsiFees = entry.actualDSIFees || Currency.zero;
 
-    if (lastOpenBill && this.currentDate.isBefore(lastOpenBill.amortizationEntry.periodEndDate)) {
-      /* If interest accrues from *day zero*, count the payoff date itself
-       ⇒ use currentDate + 1 day when asking the amortization engine.   */
-      const interestSnapshotDate = this.amortization.interestAccruesFromDayZero
-        ? this.currentDate.plusDays(1)
-        : this.currentDate;
+            // Calculate what's been paid for this bill
+            let paidPrincipal = Currency.zero;
+            let paidInterest = Currency.zero;
+            let paidFees = Currency.zero;
 
-      const totalAccruedInterest = this.amortization.getAccruedInterestByDate(interestSnapshotDate);
+            for (const dep of this.depositRecords.all) {
+              for (const ud of dep.usageDetails || []) {
+                if (ud.billId === bill.id) {
+                  paidPrincipal = paidPrincipal.add(ud.allocatedPrincipal || Currency.zero);
+                  paidInterest = paidInterest.add(ud.allocatedInterest || Currency.zero);
+                  paidFees = paidFees.add(ud.allocatedFees || Currency.zero);
+                }
+              }
+            }
 
-      /* How much of that interest is **already** on Bills?                */
-      const interestAlreadyBilled = (billSummary as any).totalInterestBilled ?? billSummary.dueInterest;
+            // Remaining due = DSI split - payments applied
+            const remainingPrincipal = dsiPrincipal.subtract(paidPrincipal);
+            const remainingInterest = dsiInterest.subtract(paidInterest);
+            const remainingFees = dsiFees.subtract(paidFees);
 
-      const additionalInterest = totalAccruedInterest.subtract(interestAlreadyBilled);
+            if (!remainingPrincipal.isNegative()) duePrincipal = duePrincipal.add(remainingPrincipal);
+            if (!remainingInterest.isNegative()) dueInterest = dueInterest.add(remainingInterest);
+            if (!remainingFees.isNegative()) dueFees = dueFees.add(remainingFees);
+          } else {
+            // No DSI split, use bill's current due amounts
+            duePrincipal = duePrincipal.add(bill.principalDue || Currency.zero);
+            dueInterest = dueInterest.add(bill.interestDue || Currency.zero);
+            dueFees = dueFees.add(bill.feesDue || Currency.zero);
+          }
 
-      if (additionalInterest.getValue().greaterThan(0)) {
-        dueInterest = dueInterest.add(additionalInterest);
-        dueTotal = dueTotal.add(additionalInterest);
+          // Aggregate DSI savings/penalties from amortization entries
+          if (entry) {
+            dsiInterestSavings += entry.dsiInterestSavings || 0;
+            dsiInterestPenalty += entry.dsiInterestPenalty || 0;
+          }
+        } else {
+          // For amortized terms within a DSI loan, use projected amounts
+          if (entry) {
+            duePrincipal = duePrincipal.add(entry.principal || Currency.zero);
+            dueInterest = dueInterest.add(entry.dueInterestForTerm || Currency.zero);
+            dueFees = dueFees.add(entry.fees || Currency.zero);
+          }
+        }
+      }
+    } else {
+      // Amortized: use original logic with bills summary
+      const billSummary = this.bills.summary;
+      const unusedAmount = this.depositRecords.unusedAmount;
+
+      if (this.bills.openBills.length === 0 && unusedAmount.greaterThanOrEqualTo(billSummary.remainingPrincipal)) {
+        // Check if there's a deposit with applyExcessToPrincipal=true that could have paid off the loan
+        const hasExcessToPrincipalDeposit = this.depositRecords.all.some((dep) => dep.applyExcessToPrincipal === true);
+        if (hasExcessToPrincipalDeposit) {
+          // No open bills AND unused amount covers remaining principal AND excess was applied to principal means loan is paid off
+          duePrincipal = Currency.zero;
+          dueInterest = Currency.zero;
+          dueFees = Currency.zero;
+        } else {
+          // No excess to principal, use bills summary
+          duePrincipal = billSummary.remainingPrincipal;
+          dueInterest = billSummary.dueInterest;
+          dueFees = billSummary.dueFees;
+        }
+      } else {
+        duePrincipal = billSummary.remainingPrincipal;
+        dueInterest = billSummary.dueInterest;
+        dueFees = billSummary.dueFees;
+
+        // Add additional accrued interest if partway through last open bill
+        const lastOpenBill = this.bills.lastOpenBill;
+        if (lastOpenBill && this.currentDate.isBefore(lastOpenBill.amortizationEntry.periodEndDate)) {
+          const interestSnapshotDate = this.amortization.interestAccruesFromDayZero
+            ? this.currentDate.plusDays(1)
+            : this.currentDate;
+          const totalAccruedInterest = this.amortization.getAccruedInterestByDate(interestSnapshotDate);
+          const interestAlreadyBilled = (billSummary as any).totalInterestBilled ?? billSummary.dueInterest;
+          const additionalInterest = totalAccruedInterest.subtract(interestAlreadyBilled);
+          if (additionalInterest.getValue().greaterThan(0)) {
+            dueInterest = dueInterest.add(additionalInterest);
+          }
+        }
       }
     }
 
-    /* ── 3)  Unapplied deposits (they don't change _due_ figures
-            here, but are reported back to the caller) ────────────────── */
+    let dueTotal = duePrincipal.add(dueInterest).add(dueFees);
     const unusedAmountFromDeposis = this.depositRecords.unusedAmount;
-    // If you want dueTotal to exclude unused deposits, uncomment:
-    // dueTotal = dueTotal.subtract(unusedAmountFromDeposis);
-
-    /* ── 4)  Assemble result & cache fingerprints ─────────────────────── */
     const payoffResult: PayoffQuoteResult = {
       duePrincipal,
       dueInterest,
       dueFees,
       dueTotal,
       unusedAmountFromDeposis,
+      // @ts-ignore
+      dsiInterestSavings,
+      // @ts-ignore
+      dsiInterestPenalty,
     };
-
     this.payoffQuoteCache = {
       results: payoffResult,
-
       amortizationVersionId: this.amortization.versionId,
       amortizationDate: this.amortization.dateChanged,
-
       billsVersionId: this.bills.versionId,
       billsDate: this.bills.dateChanged,
-
       depositRecordsVersionId: this.depositRecords.versionId,
       depositRecordsDate: this.depositRecords.dateChanged,
     };
-
     return payoffResult;
   }
 
@@ -761,6 +861,8 @@ export class LendPeak {
       paymentPriority: this.paymentPriority,
       autoCloseThreshold: this.autoCloseThreshold.toNumber(),
       rawImportData: this.rawImportData,
+      billingModel: this.billingModel,
+      billingModelOverrides: this.billingModelOverrides,
     };
   }
 
@@ -778,6 +880,8 @@ export class LendPeak {
       allocationStrategy: PaymentApplication.getAllocationStrategyFromClass(this.allocationStrategy),
       paymentPriority: this.paymentPriority,
       autoCloseThreshold: this.autoCloseThreshold.toNumber(),
+      billingModel: this.billingModel,
+      billingModelOverrides: this.billingModelOverrides,
     };
   }
 
@@ -839,5 +943,40 @@ export class LendPeak {
     };
 
     return toReturn;
+  }
+
+  get billingModel(): BillingModel {
+    return this._billingModel;
+  }
+  set billingModel(value: BillingModel) {
+    this._billingModel = value;
+  }
+
+  get billingModelOverrides(): BillingModelOverride[] {
+    return this._billingModelOverrides;
+  }
+  set billingModelOverrides(overrides: BillingModelOverride[]) {
+    this._billingModelOverrides = overrides || [];
+  }
+
+  /**
+   * Returns the billing model for a given term, using sticky override logic.
+   * If a term has an override, use it. Otherwise, use the most recent override before that term, or the default if none.
+   */
+  getBillingModelForTerm(term: number): BillingModel {
+    if (!this._billingModelOverrides || this._billingModelOverrides.length === 0) {
+      return this._billingModel;
+    }
+    // Sort overrides by term ascending
+    const sorted = [...this._billingModelOverrides].sort((a, b) => a.term - b.term);
+    let model = this._billingModel;
+    for (const override of sorted) {
+      if (term >= override.term) {
+        model = override.model;
+      } else {
+        break;
+      }
+    }
+    return model;
   }
 }

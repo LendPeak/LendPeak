@@ -553,12 +553,12 @@ export class DepositRecord {
   updateModelValues(): void {
     this.amount = Currency.of(this.jsAmount || 0);
     this.currency = this.jsCurrency || "";
-    this.createdDate = this.jsCreatedDate;
-    this.insertedDate = this.jsInsertedDate;
-    this.effectiveDate = this.jsEffectiveDate;
-    this.systemDate = this.jsSystemDate;
+    this.createdDate = DateUtil.normalizeDate(this.jsCreatedDate);
+    this.insertedDate = DateUtil.normalizeDate(this.jsInsertedDate);
+    this.effectiveDate = DateUtil.normalizeDate(this.jsEffectiveDate);
+    this.systemDate = DateUtil.normalizeDateTime(this.jsSystemDate);
 
-    this.clearingDate = this.jsClearingDate;
+    this.clearingDate = this.jsClearingDate ? DateUtil.normalizeDate(this.jsClearingDate) : undefined;
     this.paymentMethod = this.jsPaymentMethod;
     this.depositor = this.jsDepositor;
     this.depositLocation = this.jsDepositLocation;

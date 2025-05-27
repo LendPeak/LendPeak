@@ -25,14 +25,18 @@ describe("DateUtil", () => {
     });
 
     it("should normalize a numeric timestamp to UTC date correctly", () => {
-      const inputTimestamp = Date.parse("2026-06-10"); // UTC timestamp at midnight
+      // Create a date in local time to ensure timezone-agnostic behavior
+      const localDate = new Date(2026, 5, 10); // June 10, 2026 (month is 0-based)
+      const inputTimestamp = localDate.getTime();
       const normalizedDate = DateUtil.normalizeDate(inputTimestamp);
 
       expect(normalizedDate.toString()).toBe("2026-06-10"); 
     });
 
     it("should handle a number input (timestamp) correctly", () => {
-      const timestamp = new Date("2027-09-21").getTime();
+      // Create a date in local time to ensure timezone-agnostic behavior
+      const localDate = new Date(2027, 8, 21); // September 21, 2027 (month is 0-based)
+      const timestamp = localDate.getTime();
       const normalizedDate = DateUtil.normalizeDate(timestamp);
       expect(normalizedDate.toString()).toBe("2027-09-21");
     });

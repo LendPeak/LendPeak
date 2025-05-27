@@ -1,10 +1,10 @@
-import Decimal from "decimal.js";
-import dayjs, { Dayjs } from "dayjs";
-import { BalanceModification } from "./BalanceModification";
-import { Currency } from "../../utils/Currency";
-import { Calendar, CalendarType } from "../Calendar";
-import { DateUtil } from "../../utils/DateUtil";
-import { LocalDate, ZoneId } from "@js-joda/core";
+import Decimal from 'decimal.js';
+import dayjs, { Dayjs } from 'dayjs';
+import { BalanceModification } from './BalanceModification';
+import { Currency } from '../../utils/Currency';
+import { Calendar, CalendarType } from '../Calendar';
+import { DateUtil } from '../../utils/DateUtil';
+import { LocalDate, ZoneId } from '@js-joda/core';
 
 /**
  * Optional metadata interface for the schedule entry
@@ -51,6 +51,7 @@ export interface AmortizationEntryParams {
   billDueDaysAfterPeriodEndConfiguration: number;
 
   billablePeriod: boolean;
+  billingModel?: 'amortized' | 'dailySimpleInterest';
 
   periodBillOpenDate: string | Date | LocalDate;
   periodBillDueDate: string | Date | LocalDate;
@@ -85,6 +86,10 @@ export interface AmortizationEntryParams {
   unbilledInterestDueToRounding: number | Currency;
 
   metadata?: AmortizationScheduleMetadata;
+  
+  // DSI balance tracking
+  actualDSIStartBalance?: number | Currency;
+  actualDSIEndBalance?: number | Currency;
 }
 
 /**
@@ -136,6 +141,19 @@ export class AmortizationEntry {
   private _calendar!: Calendar;
 
   private _metadata: AmortizationScheduleMetadata = {};
+  private _billingModel?: 'amortized' | 'dailySimpleInterest';
+
+  // DSI fields
+  public actualDSIPrincipal?: Currency;
+  public actualDSIInterest?: Currency;
+  public actualDSIFees?: Currency;
+  public dsiInterestSavings?: number;
+  public dsiInterestPenalty?: number;
+  public usageDetails: any[] = [];
+  
+  // DSI actual balance tracking
+  public actualDSIStartBalance?: Currency;
+  public actualDSIEndBalance?: Currency;
 
   //
   // =========== PUBLIC "js*" PROPERTIES FOR UI BINDING ===========
@@ -183,7 +201,18 @@ export class AmortizationEntry {
   //
   // ===================== CONSTRUCTOR =====================
   //
-  constructor(params: AmortizationEntryParams) {
+  constructor(
+    params: AmortizationEntryParams & {
+      actualDSIPrincipal?: Currency;
+      actualDSIInterest?: Currency;
+      actualDSIFees?: Currency;
+      dsiInterestSavings?: number;
+      dsiInterestPenalty?: number;
+      usageDetails?: any[];
+      actualDSIStartBalance?: Currency | number;
+      actualDSIEndBalance?: Currency | number;
+    }
+  ) {
     this.term = params.term;
 
     this.periodStartDate = params.periodStartDate;
@@ -232,6 +261,20 @@ export class AmortizationEntry {
     this.calendar = params.calendar;
 
     this.metadata = params.metadata ?? {};
+    this.billingModel = params.billingModel;
+
+    if (params.actualDSIPrincipal) this.actualDSIPrincipal = params.actualDSIPrincipal;
+    if (params.actualDSIInterest) this.actualDSIInterest = params.actualDSIInterest;
+    if (params.actualDSIFees) this.actualDSIFees = params.actualDSIFees;
+    if (params.dsiInterestSavings) this.dsiInterestSavings = params.dsiInterestSavings;
+    if (params.dsiInterestPenalty) this.dsiInterestPenalty = params.dsiInterestPenalty;
+    if (params.usageDetails) this.usageDetails = params.usageDetails;
+    if (params.actualDSIStartBalance !== undefined) {
+      this.actualDSIStartBalance = Currency.of(params.actualDSIStartBalance);
+    }
+    if (params.actualDSIEndBalance !== undefined) {
+      this.actualDSIEndBalance = Currency.of(params.actualDSIEndBalance);
+    }
 
     // Finally, push model data → jsX for the UI
     this.updateJsValues();
@@ -256,7 +299,7 @@ export class AmortizationEntry {
     return this._term;
   }
   public set term(value: number) {
-    if (typeof value !== "number") {
+    if (typeof value !== 'number') {
       throw new Error(`term must be a number. Received: ${typeof value}`);
     }
     this._term = value;
@@ -280,21 +323,21 @@ export class AmortizationEntry {
     return this._prebillDaysConfiguration;
   }
   public set prebillDaysConfiguration(val: number) {
-    this._prebillDaysConfiguration = this.parseNumber(val, "prebillDaysConfiguration");
+    this._prebillDaysConfiguration = this.parseNumber(val, 'prebillDaysConfiguration');
   }
 
   public get billDueDaysAfterPeriodEndConfiguration(): number {
     return this._billDueDaysAfterPeriodEndConfiguration;
   }
   public set billDueDaysAfterPeriodEndConfiguration(val: number) {
-    this._billDueDaysAfterPeriodEndConfiguration = this.parseNumber(val, "billDueDaysAfterPeriodEndConfiguration");
+    this._billDueDaysAfterPeriodEndConfiguration = this.parseNumber(val, 'billDueDaysAfterPeriodEndConfiguration');
   }
 
   public get billablePeriod(): boolean {
     return this._billablePeriod;
   }
   public set billablePeriod(raw: boolean) {
-    if (typeof raw !== "boolean") {
+    if (typeof raw !== 'boolean') {
       throw new Error(`billablePeriod must be boolean, got: ${raw}`);
     }
     this._billablePeriod = raw;
@@ -320,7 +363,7 @@ export class AmortizationEntry {
   public set periodInterestRate(raw: string | number | Decimal) {
     if (raw instanceof Decimal) {
       this._periodInterestRate = raw;
-    } else if (typeof raw === "number" || typeof raw === "string") {
+    } else if (typeof raw === 'number' || typeof raw === 'string') {
       this._periodInterestRate = new Decimal(raw);
     } else {
       throw new Error(`periodInterestRate must be Decimal|number|string, got: ${typeof raw}`);
@@ -331,91 +374,91 @@ export class AmortizationEntry {
     return this._principal;
   }
   public set principal(raw: number | Currency) {
-    this._principal = this.parseCurrency(raw, "principal");
+    this._principal = this.parseCurrency(raw, 'principal');
   }
 
   public get dueInterestForTerm(): Currency {
     return this._dueInterestForTerm;
   }
   public set dueInterestForTerm(raw: number | Currency) {
-    this._dueInterestForTerm = this.parseCurrency(raw, "dueInterestForTerm");
+    this._dueInterestForTerm = this.parseCurrency(raw, 'dueInterestForTerm');
   }
 
   public get accruedInterestForPeriod(): Currency {
     return this._accruedInterestForPeriod;
   }
   public set accruedInterestForPeriod(raw: number | Currency) {
-    this._accruedInterestForPeriod = this.parseCurrency(raw, "accruedInterestForPeriod");
+    this._accruedInterestForPeriod = this.parseCurrency(raw, 'accruedInterestForPeriod');
   }
 
   public get billedInterestForTerm(): Currency {
     return this._billedInterestForTerm;
   }
   public set billedInterestForTerm(raw: number | Currency) {
-    this._billedInterestForTerm = this.parseCurrency(raw, "billedInterestForTerm");
+    this._billedInterestForTerm = this.parseCurrency(raw, 'billedInterestForTerm');
   }
 
   public get billedDeferredInterest(): Currency {
     return this._billedDeferredInterest;
   }
   public set billedDeferredInterest(raw: number | Currency) {
-    this._billedDeferredInterest = this.parseCurrency(raw, "billedDeferredInterest");
+    this._billedDeferredInterest = this.parseCurrency(raw, 'billedDeferredInterest');
   }
 
   public get unbilledTotalDeferredInterest(): Currency {
     return this._unbilledTotalDeferredInterest;
   }
   public set unbilledTotalDeferredInterest(raw: number | Currency) {
-    this._unbilledTotalDeferredInterest = this.parseCurrency(raw, "unbilledTotalDeferredInterest");
+    this._unbilledTotalDeferredInterest = this.parseCurrency(raw, 'unbilledTotalDeferredInterest');
   }
 
   public get fees(): Currency {
     return this._fees;
   }
   public set fees(raw: number | Currency) {
-    this._fees = this.parseCurrency(raw, "fees");
+    this._fees = this.parseCurrency(raw, 'fees');
   }
 
   public get billedDeferredFees(): Currency {
     return this._billedDeferredFees;
   }
   public set billedDeferredFees(raw: number | Currency) {
-    this._billedDeferredFees = this.parseCurrency(raw, "billedDeferredFees");
+    this._billedDeferredFees = this.parseCurrency(raw, 'billedDeferredFees');
   }
 
   public get unbilledTotalDeferredFees(): Currency {
     return this._unbilledTotalDeferredFees;
   }
   public set unbilledTotalDeferredFees(raw: number | Currency) {
-    this._unbilledTotalDeferredFees = this.parseCurrency(raw, "unbilledTotalDeferredFees");
+    this._unbilledTotalDeferredFees = this.parseCurrency(raw, 'unbilledTotalDeferredFees');
   }
 
   public get totalPayment(): Currency {
     return this._totalPayment;
   }
   public set totalPayment(raw: number | Currency) {
-    this._totalPayment = this.parseCurrency(raw, "totalPayment");
+    this._totalPayment = this.parseCurrency(raw, 'totalPayment');
   }
 
   public get endBalance(): Currency {
     return this._endBalance;
   }
   public set endBalance(raw: number | Currency) {
-    this._endBalance = this.parseCurrency(raw, "endBalance");
+    this._endBalance = this.parseCurrency(raw, 'endBalance');
   }
 
   public get startBalance(): Currency {
     return this._startBalance;
   }
   public set startBalance(raw: number | Currency) {
-    this._startBalance = this.parseCurrency(raw, "startBalance");
+    this._startBalance = this.parseCurrency(raw, 'startBalance');
   }
 
   public get balanceModificationAmount(): Currency {
     return this._balanceModificationAmount;
   }
   public set balanceModificationAmount(raw: number | Currency) {
-    this._balanceModificationAmount = this.parseCurrency(raw, "balanceModificationAmount");
+    this._balanceModificationAmount = this.parseCurrency(raw, 'balanceModificationAmount');
   }
 
   public get balanceModification(): BalanceModification | undefined {
@@ -424,7 +467,7 @@ export class AmortizationEntry {
   public set balanceModification(raw: BalanceModification | object | undefined) {
     if (raw instanceof BalanceModification) {
       this._balanceModification = raw;
-    } else if (typeof raw === "object" && raw !== null) {
+    } else if (typeof raw === 'object' && raw !== null) {
       this._balanceModification = BalanceModification.fromJSON(raw);
     } else if (raw === undefined) {
       this._balanceModification = undefined;
@@ -437,28 +480,28 @@ export class AmortizationEntry {
     return this._perDiem;
   }
   public set perDiem(raw: number | Currency) {
-    this._perDiem = this.parseCurrency(raw, "perDiem");
+    this._perDiem = this.parseCurrency(raw, 'perDiem');
   }
 
   public get daysInPeriod(): number {
     return this._daysInPeriod;
   }
   public set daysInPeriod(val: number) {
-    this._daysInPeriod = this.parseNumber(val, "daysInPeriod");
+    this._daysInPeriod = this.parseNumber(val, 'daysInPeriod');
   }
 
   public get interestRoundingError(): Currency {
     return this._interestRoundingError;
   }
   public set interestRoundingError(raw: number | Currency) {
-    this._interestRoundingError = this.parseCurrency(raw, "interestRoundingError");
+    this._interestRoundingError = this.parseCurrency(raw, 'interestRoundingError');
   }
 
   public get unbilledInterestDueToRounding(): Currency {
     return this._unbilledInterestDueToRounding;
   }
   public set unbilledInterestDueToRounding(raw: number | Currency) {
-    this._unbilledInterestDueToRounding = this.parseCurrency(raw, "unbilledInterestDueToRounding");
+    this._unbilledInterestDueToRounding = this.parseCurrency(raw, 'unbilledInterestDueToRounding');
   }
 
   public get metadata(): AmortizationScheduleMetadata {
@@ -469,10 +512,17 @@ export class AmortizationEntry {
     if (!val) {
       val = {};
     }
-    if (typeof val !== "object") {
+    if (typeof val !== 'object') {
       throw new Error(`metadata must be an object, got: ${typeof val}`);
     }
     this._metadata = val;
+  }
+
+  public get billingModel(): 'amortized' | 'dailySimpleInterest' | undefined {
+    return this._billingModel;
+  }
+  public set billingModel(val: 'amortized' | 'dailySimpleInterest' | undefined) {
+    this._billingModel = val;
   }
 
   //
@@ -480,14 +530,14 @@ export class AmortizationEntry {
   //
 
   private parseNumber(val: any, fieldName: string): number {
-    if (typeof val === "number") return val;
+    if (typeof val === 'number') return val;
     throw new Error(`${fieldName} must be a number, got: ${val}`);
   }
 
   private parseCurrency(raw: number | Currency, fieldName: string): Currency {
     if (raw instanceof Currency) {
       return raw;
-    } else if (typeof raw === "number") {
+    } else if (typeof raw === 'number') {
       return Currency.of(raw);
     }
     throw new Error(`${fieldName} must be Currency or number, got: ${typeof raw}`);
@@ -586,12 +636,7 @@ export class AmortizationEntry {
   // ============= toJSON() / fromJSON() =============
   //
   public toJSON(): any {
-    return this.json;
-  }
-
-  /** A convenient property for raw JSON export. */
-  public get json(): any {
-    return {
+    const base = {
       term: this.term,
       periodStartDate: this.periodStartDate.toString(),
       periodEndDate: this.periodEndDate.toString(),
@@ -631,7 +676,17 @@ export class AmortizationEntry {
       calendar: this.calendar.calendarType,
 
       metadata: this.metadata,
+      
+      billingModel: this.billingModel,
+
+      actualDSIPrincipal: this.actualDSIPrincipal?.toNumber?.() ?? undefined,
+      actualDSIInterest: this.actualDSIInterest?.toNumber?.() ?? undefined,
+      actualDSIFees: this.actualDSIFees?.toNumber?.() ?? undefined,
+      dsiInterestSavings: this.dsiInterestSavings,
+      dsiInterestPenalty: this.dsiInterestPenalty,
+      usageDetails: this.usageDetails,
     };
+    return Object.assign(base /* existing fields */);
   }
 
   /**
@@ -680,6 +735,19 @@ export class AmortizationEntry {
       unbilledInterestDueToRounding: json.unbilledInterestDueToRounding,
 
       metadata: json.metadata,
+      
+      billingModel: json.billingModel,
+
+      actualDSIPrincipal: json.actualDSIPrincipal,
+      actualDSIInterest: json.actualDSIInterest,
+      actualDSIFees: json.actualDSIFees,
+      dsiInterestSavings: json.dsiInterestSavings,
+      dsiInterestPenalty: json.dsiInterestPenalty,
+      usageDetails: json.usageDetails,
     });
+  }
+
+  public get json() {
+    return this.toJSON();
   }
 }

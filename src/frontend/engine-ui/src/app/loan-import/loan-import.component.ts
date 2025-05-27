@@ -11,7 +11,8 @@ import dayjs from 'dayjs';
 import { Subscription, from } from 'rxjs';
 import { mergeMap, tap, finalize, first } from 'rxjs/operators';
 import { PerDiemCalculationType } from 'lendpeak-engine/models/InterestCalculator';
-import { FlushUnbilledInterestDueToRoundingErrorType, BillingModel } from 'lendpeak-engine/models/Amortization';
+import { FlushUnbilledInterestDueToRoundingErrorType } from 'lendpeak-engine/models/Amortization';
+import { BillingModel } from 'lendpeak-engine/models/LendPeak';
 import { ChangePaymentDate } from 'lendpeak-engine/models/ChangePaymentDate';
 import { ChangePaymentDates } from 'lendpeak-engine/models/ChangePaymentDates';
 import { LoanResponse, DueDateChange } from '../models/loanpro.model';
@@ -606,7 +607,6 @@ export class LoanImportComponent implements OnInit, OnDestroy {
       payoffDate: payoffTransaction ? DateUtil.parseLoanProDateToLocalDate(payoffTransaction.date) : undefined,
       calendars: new TermCalendars({ primary: calendarType }),
       roundingMethod: RoundingMethod.ROUND_HALF_EVEN,
-      billingModel: billingModel,
       perDiemCalculationType: perDiemCalculationType,
       roundingPrecision: 2,
       flushUnbilledInterestRoundingErrorMethod: flushUnbilledInterestRoundingErrorMethod,

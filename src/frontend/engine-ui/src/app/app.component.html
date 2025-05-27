@@ -93,7 +93,7 @@
           *ngIf="lendPeak.summary.highlights.status.hasOverpayment"
           class="ml-2"
           severity="danger"
-          value="Overpayment Detected {{ lendPeak.payoffQuote.unusedAmountFromDeposis.toNumber() | currency }}"
+          value="Overpayment Detected {{ lendPeak.payoffQuote.unusedAmountFromDeposits.toNumber() | currency }}"
         ></p-tag>
         <p-tag
           *ngIf="lendPeak.summary.highlights.status.isEarlyPayoff"
@@ -514,7 +514,7 @@
                   <div class="card-header-container font-semibold text-xl">Overpayment Amount</div>
                 </ng-template>
                 <p class="m-0 text-300 font-bold text-3xl text-center">
-                  {{ lendPeak.payoffQuote.unusedAmountFromDeposis.toNumber() | currency }}
+                  {{ lendPeak.payoffQuote.unusedAmountFromDeposits.toNumber() | currency }}
                 </p>
               </p-card>
             </div>
@@ -796,8 +796,8 @@
                 />
                 <p-tag
                   class="ml-4"
-                  [severity]="lendPeak.payoffQuote.unusedAmountFromDeposis.isZero() ? 'secondary' : 'danger'"
-                  value="Unused Amount: {{ lendPeak.payoffQuote.unusedAmountFromDeposis.toNumber() | currency }}"
+                  [severity]="lendPeak.payoffQuote.unusedAmountFromDeposits.isZero() ? 'secondary' : 'danger'"
+                  value="Unused Amount: {{ lendPeak.payoffQuote.unusedAmountFromDeposits.toNumber() | currency }}"
                 />
               </div>
             </p-card>

@@ -1335,8 +1335,8 @@ ID,Amount,Currency,Effective Date,Clearing Date,Unused Amount,Apply Excess To Pr
   // Force generation of schedule/bills, etc.
   lendPeak.calc();
 
-  it("unusedAmountFromDeposis must be zero", () => {
-    expect(lendPeak.payoffQuote.unusedAmountFromDeposis.toNumber()).toEqual(405.66);
+  it("unusedAmountFromDeposits must be zero", () => {
+    expect(lendPeak.payoffQuote.unusedAmountFromDeposits.toNumber()).toEqual(405.66);
   });
 
   it("payoff amount must be zero", () => {
@@ -1649,8 +1649,8 @@ describe("Functional Test - Early Payoff - multiple payments mid cycle", () => {
   // Force generation of schedule/bills, etc.
   lendPeak.calc();
 
-  // it("unusedAmountFromDeposis must be zero", () => {
-  //   expect(lendPeak.payoffQuote.unusedAmountFromDeposis.toNumber()).toEqual(405.66);
+  // it("unusedAmountFromDeposits must be zero", () => {
+  //   expect(lendPeak.payoffQuote.unusedAmountFromDeposits.toNumber()).toEqual(405.66);
   // });
 
   // it("payoff amount must be zero", () => {

@@ -33,7 +33,7 @@ export interface PayoffQuoteResult {
   dueInterest: Currency;
   dueFees: Currency;
   dueTotal: Currency;
-  unusedAmountFromDeposis: Currency;
+  unusedAmountFromDeposits: Currency;
 }
 
 export class LendPeak {
@@ -549,7 +549,7 @@ export class LendPeak {
     return this.payoffQuote.dueTotal.isZero();
   }
   get hasOverpayment(): boolean {
-    return !this.payoffQuote.unusedAmountFromDeposis.isZero();
+    return !this.payoffQuote.unusedAmountFromDeposits.isZero();
   }
 
   /** Paid in full **and** sooner than the contractual schedule */
@@ -644,7 +644,7 @@ export class LendPeak {
       dueInterest: this.payoffQuote.dueInterest.toNumber(),
       dueFees: this.payoffQuote.dueFees.toNumber(),
       dueTotal: this.payoffQuote.dueTotal.toNumber(),
-      unusedAmountFromDeposis: this.payoffQuote.unusedAmountFromDeposis.toNumber(),
+      unusedAmountFromDeposits: this.payoffQuote.unusedAmountFromDeposits.toNumber(),
       amortizationVersionId: this.amortization.versionId,
     });
   }
@@ -720,9 +720,9 @@ export class LendPeak {
 
     /* ── 3)  Unapplied deposits (they don't change _due_ figures
             here, but are reported back to the caller) ────────────────── */
-    const unusedAmountFromDeposis = this.depositRecords.unusedAmount;
+    const unusedAmountFromDeposits = this.depositRecords.unusedAmount;
     // If you want dueTotal to exclude unused deposits, uncomment:
-    // dueTotal = dueTotal.subtract(unusedAmountFromDeposis);
+    // dueTotal = dueTotal.subtract(unusedAmountFromDeposits);
 
     /* ── 4)  Assemble result & cache fingerprints ─────────────────────── */
     const payoffResult: PayoffQuoteResult = {
@@ -730,7 +730,7 @@ export class LendPeak {
       dueInterest,
       dueFees,
       dueTotal,
-      unusedAmountFromDeposis,
+      unusedAmountFromDeposits,
     };
 
     this.payoffQuoteCache = {

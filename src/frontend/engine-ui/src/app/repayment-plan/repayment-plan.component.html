@@ -472,6 +472,76 @@
                 </span>
                 <span *ngIf="!rowData.actualDSIEndBalance">-</span>
               </ng-container>
+              <ng-container *ngSwitchCase="'dsiInterestDays'">
+                <span *ngIf="rowData.dsiInterestDays !== undefined && rowData.dsiInterestDays !== null">
+                  {{ rowData.dsiInterestDays | number }}
+                </span>
+                <span *ngIf="rowData.dsiInterestDays === undefined || rowData.dsiInterestDays === null">-</span>
+              </ng-container>
+
+              <!-- Re-amortized fields -->
+              <ng-container *ngSwitchCase="'reAmortizedStartBalance'">
+                <span *ngIf="rowData.reAmortizedStartBalance">
+                  {{ rowData.reAmortizedStartBalance.toNumber() | currency }}
+                </span>
+                <span *ngIf="!rowData.reAmortizedStartBalance">-</span>
+              </ng-container>
+              <ng-container *ngSwitchCase="'reAmortizedEndBalance'">
+                <span *ngIf="rowData.reAmortizedEndBalance">
+                  {{ rowData.reAmortizedEndBalance.toNumber() | currency }}
+                </span>
+                <span *ngIf="!rowData.reAmortizedEndBalance">-</span>
+              </ng-container>
+              <ng-container *ngSwitchCase="'reAmortizedInterest'">
+                <span *ngIf="rowData.reAmortizedInterest">
+                  {{ rowData.reAmortizedInterest.toNumber() | currency }}
+                </span>
+                <span *ngIf="!rowData.reAmortizedInterest">-</span>
+              </ng-container>
+              <ng-container *ngSwitchCase="'reAmortizedPrincipal'">
+                <span *ngIf="rowData.reAmortizedPrincipal">
+                  {{ rowData.reAmortizedPrincipal.toNumber() | currency }}
+                </span>
+                <span *ngIf="!rowData.reAmortizedPrincipal">-</span>
+              </ng-container>
+              <ng-container *ngSwitchCase="'reAmortizedFees'">
+                <span *ngIf="rowData.reAmortizedFees">
+                  {{ rowData.reAmortizedFees.toNumber() | currency }}
+                </span>
+                <span *ngIf="!rowData.reAmortizedFees">-</span>
+              </ng-container>
+              <ng-container *ngSwitchCase="'reAmortizedTotalPayment'">
+                <span *ngIf="rowData.reAmortizedTotalPayment">
+                  {{ rowData.reAmortizedTotalPayment.toNumber() | currency }}
+                </span>
+                <span *ngIf="!rowData.reAmortizedTotalPayment">-</span>
+              </ng-container>
+              <ng-container *ngSwitchCase="'reAmortizedDsiInterestDays'">
+                <span *ngIf="rowData.reAmortizedDsiInterestDays !== undefined && rowData.reAmortizedDsiInterestDays !== null">
+                  {{ rowData.reAmortizedDsiInterestDays | number }}
+                </span>
+                <span *ngIf="rowData.reAmortizedDsiInterestDays === undefined || rowData.reAmortizedDsiInterestDays === null">-</span>
+              </ng-container>
+              <ng-container *ngSwitchCase="'reAmortizedPerDiem'">
+                <span *ngIf="rowData.reAmortizedPerDiem">
+                  {{ rowData.reAmortizedPerDiem.toNumber() | currency }}
+                </span>
+                <span *ngIf="!rowData.reAmortizedPerDiem">-</span>
+              </ng-container>
+
+              <!-- Status flags -->
+              <ng-container *ngSwitchCase="'isCurrentActiveTerm'">
+                <span *ngIf="rowData.isCurrentActiveTerm === true">
+                  <i class="pi pi-check" style="color: green;"></i> Yes
+                </span>
+                <span *ngIf="rowData.isCurrentActiveTerm !== true">-</span>
+              </ng-container>
+              <ng-container *ngSwitchCase="'isDelinquent'">
+                <span *ngIf="rowData.isDelinquent === true">
+                  <i class="pi pi-exclamation-triangle" style="color: orange;"></i> Yes
+                </span>
+                <span *ngIf="rowData.isDelinquent !== true">-</span>
+              </ng-container>
 
               <!-- Metadata field -->
               <ng-container *ngSwitchCase="'metadata'">

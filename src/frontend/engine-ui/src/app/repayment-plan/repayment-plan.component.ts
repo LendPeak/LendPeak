@@ -242,6 +242,63 @@ export class RepaymentPlanComponent {
       field: 'actualDSIEndBalance',
       default: false,
     },
+    {
+      header: 'DSI Interest Days',
+      field: 'dsiInterestDays',
+      default: false,
+    },
+    // Re-amortized fields
+    {
+      header: 'Re-amortized Start Balance',
+      field: 'reAmortizedStartBalance',
+      default: false,
+    },
+    {
+      header: 'Re-amortized End Balance',
+      field: 'reAmortizedEndBalance',
+      default: false,
+    },
+    {
+      header: 'Re-amortized Interest',
+      field: 'reAmortizedInterest',
+      default: false,
+    },
+    {
+      header: 'Re-amortized Principal',
+      field: 'reAmortizedPrincipal',
+      default: false,
+    },
+    {
+      header: 'Re-amortized Fees',
+      field: 'reAmortizedFees',
+      default: false,
+    },
+    {
+      header: 'Re-amortized Total Payment',
+      field: 'reAmortizedTotalPayment',
+      default: false,
+    },
+    {
+      header: 'Re-amortized DSI Days',
+      field: 'reAmortizedDsiInterestDays',
+      default: false,
+    },
+    {
+      header: 'Re-amortized Per Diem',
+      field: 'reAmortizedPerDiem',
+      default: false,
+    },
+    // Status flags
+    {
+      header: 'Is Current Active Term',
+      field: 'isCurrentActiveTerm',
+      default: false,
+    },
+    {
+      header: 'Is Delinquent',
+      field: 'isDelinquent',
+      default: false,
+    },
   ];
 
   constructor(
@@ -458,7 +515,17 @@ export class RepaymentPlanComponent {
     
     if (usesDSI) {
       // DSI columns to auto-add (excluding billingModel as it's already handled)
-      const dsiColumns = ['actualDSIPrincipal', 'actualDSIInterest', 'actualDSIFees', 'dsiInterestSavings', 'dsiInterestPenalty', 'actualDSIStartBalance', 'actualDSIEndBalance'];
+      const dsiColumns = [
+        'actualDSIPrincipal', 'actualDSIInterest', 'actualDSIFees', 
+        'dsiInterestSavings', 'dsiInterestPenalty', 'actualDSIStartBalance', 
+        'actualDSIEndBalance', 'dsiInterestDays',
+        // Re-amortized fields
+        'reAmortizedStartBalance', 'reAmortizedEndBalance', 'reAmortizedInterest',
+        'reAmortizedPrincipal', 'reAmortizedFees', 'reAmortizedTotalPayment',
+        'reAmortizedDsiInterestDays', 'reAmortizedPerDiem',
+        // Status flags
+        'isCurrentActiveTerm', 'isDelinquent'
+      ];
       
       dsiColumns.forEach(fieldName => {
         // Check if column is already selected

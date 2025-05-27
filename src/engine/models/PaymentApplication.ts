@@ -163,15 +163,44 @@ export class PaymentApplication {
       const result = options.allocationStrategy.apply(currentDate, deposit, this.bills, options.paymentPriority);
       
       // After applying payment, calculate DSI-specific values
-      for (const allocation of result.allocations) {
+      // Sort allocations by term to ensure we process them in order
+      const sortedAllocations = result.allocations.sort((a, b) => {
+        const termA = a.bill?.amortizationEntry?.term || 0;
+        const termB = b.bill?.amortizationEntry?.term || 0;
+        return termA - termB;
+      });
+      
+      for (const allocation of sortedAllocations) {
         const bill = allocation.bill;
         if (bill && bill.amortizationEntry) {
           const entry = bill.amortizationEntry;
           const paymentDate = deposit.effectiveDate;
           const dueDate = bill.dueDate;
           
-          // Calculate days difference
-          const daysDiff = ChronoUnit.DAYS.between(dueDate, paymentDate);
+          // First, establish the actual DSI start balance for this term
+          // For DSI, we always recalculate the start balance based on payment history
+          // This ensures cascading balances work correctly
+          if (true) { // Always recalculate for DSI
+            if (entry.term === 0) {
+              entry.actualDSIStartBalance = entry.startBalance;
+            } else {
+              // Check payment history first
+              const prevPaymentHistory = this.amortization.getDSIPaymentHistory(entry.term - 1);
+              
+              if (prevPaymentHistory && prevPaymentHistory.actualEndBalance) {
+                entry.actualDSIStartBalance = prevPaymentHistory.actualEndBalance;
+              } else {
+                // Check previous entry in the schedule that has been processed in this batch
+                const prevEntry = this.amortization.repaymentSchedule.entries[entry.term - 1];
+                if (prevEntry && prevEntry.actualDSIEndBalance) {
+                  entry.actualDSIStartBalance = prevEntry.actualDSIEndBalance;
+                } else {
+                  // Use original projected start balance
+                  entry.actualDSIStartBalance = entry.startBalance;
+                }
+              }
+            }
+          }
           
           // Get the annual rate and calculate daily rate based on calendar
           const annualRate = this.amortization.annualInterestRate;
@@ -179,20 +208,27 @@ export class PaymentApplication {
           const daysInYear = calendar.daysInYear();
           const dailyRate = annualRate.toNumber() / daysInYear;
           
-          // Calculate actual interest based on payment date
-          const principalBalance = entry.startBalance;
-          const daysInPeriod = entry.daysInPeriod;
+          // Use the actual DSI start balance for interest calculation
+          const principalBalance = entry.actualDSIStartBalance;
           
-          // For DSI, interest accrues daily up to the payment date
-          // If payment is early, less interest; if late, more interest
-          let actualDaysForInterest = daysInPeriod;
+          // For DSI, calculate actual interest days based on payment history
+          let actualDaysForInterest: number;
+          let previousPaymentDate: LocalDate;
           
-          if (daysDiff < 0) {
-            // Early payment - reduce days
-            actualDaysForInterest = daysInPeriod + daysDiff; // daysDiff is negative
-          } else if (daysDiff > 0) {
-            // Late payment - increase days
-            actualDaysForInterest = daysInPeriod + daysDiff;
+          if (entry.term === 0) {
+            // First term: calculate days from loan start to payment date
+            previousPaymentDate = entry.periodStartDate;
+            actualDaysForInterest = calendar.daysBetween(previousPaymentDate, paymentDate);
+          } else {
+            // Subsequent terms: calculate days from previous payment date to current payment date
+            const prevEntry = this.amortization.repaymentSchedule.entries[entry.term - 1];
+            if (prevEntry && prevEntry.dsiPreviousPaymentDate) {
+              previousPaymentDate = prevEntry.dsiPreviousPaymentDate;
+            } else {
+              // Fallback to previous term's end date
+              previousPaymentDate = prevEntry ? prevEntry.periodEndDate : entry.periodStartDate;
+            }
+            actualDaysForInterest = calendar.daysBetween(previousPaymentDate, paymentDate);
           }
           
           // Calculate actual interest
@@ -207,33 +243,29 @@ export class PaymentApplication {
           
           entry.actualDSIPrincipal = actualPrincipal;
           entry.actualDSIFees = Currency.of(allocation.allocatedFees.toNumber());
-          
-          // Track DSI balances
-          if (!entry.actualDSIStartBalance) {
-            entry.actualDSIStartBalance = entry.startBalance;
-          }
           // Calculate end balance: start - principal paid
           entry.actualDSIEndBalance = entry.actualDSIStartBalance.subtract(entry.actualDSIPrincipal);
+          
+          // Set the actual DSI interest days for this payment
+          entry.dsiInterestDays = actualDaysForInterest;
+          
+          // Update the payment date on the entry for DSI interest duration tracking
+          entry.dsiPreviousPaymentDate = paymentDate;
           
           // Store in amortization's DSI payment history for future recalculations
           this.amortization.updateDSIPaymentHistory(
             entry.term,
             entry.actualDSIStartBalance,
-            entry.actualDSIEndBalance
+            entry.actualDSIEndBalance,
+            paymentDate,
+            entry.actualDSIInterest,
+            entry.actualDSIPrincipal,
+            entry.actualDSIFees,
+            entry.dsiInterestDays
           );
           
-          // Calculate savings or penalty
-          const projectedInterest = entry.dueInterestForTerm;
-          if (actualInterest.lessThan(projectedInterest)) {
-            entry.dsiInterestSavings = projectedInterest.subtract(actualInterest).toNumber();
-            entry.dsiInterestPenalty = 0;
-          } else if (actualInterest.greaterThan(projectedInterest)) {
-            entry.dsiInterestPenalty = actualInterest.subtract(projectedInterest).toNumber();
-            entry.dsiInterestSavings = 0;
-          } else {
-            entry.dsiInterestSavings = 0;
-            entry.dsiInterestPenalty = 0;
-          }
+          // DSI interest savings/penalty will be calculated during re-amortization
+          // when we have the re-amortized interest values available
         }
       }
       
@@ -435,11 +467,35 @@ export class PaymentApplication {
         if (!entry.actualDSIEndBalance) {
           entry.actualDSIEndBalance = entry.actualDSIStartBalance;
           
+          // Calculate DSI interest days for unpaid term
+          if (entry.term === 0) {
+            // First term unpaid: use standard days in period
+            entry.dsiInterestDays = entry.daysInPeriod;
+          } else {
+            // Subsequent terms: calculate from previous payment/due date
+            const prevEntry = this.amortization.repaymentSchedule.entries[entry.term - 1];
+            if (prevEntry && prevEntry.dsiPreviousPaymentDate) {
+              entry.dsiInterestDays = entry.calendar.daysBetween(prevEntry.dsiPreviousPaymentDate, entry.periodBillDueDate);
+            } else {
+              // Fallback to standard days
+              entry.dsiInterestDays = entry.daysInPeriod;
+            }
+          }
+          
+          // For DSI interest duration tracking, use the due date as the "payment" date
+          // This ensures the next term calculates interest from the correct date
+          entry.dsiPreviousPaymentDate = entry.periodBillDueDate;
+          
           // Store in amortization's DSI payment history
           this.amortization.updateDSIPaymentHistory(
             entry.term,
             entry.actualDSIStartBalance,
-            entry.actualDSIEndBalance
+            entry.actualDSIEndBalance,
+            entry.periodBillDueDate,
+            Currency.zero, // No interest paid
+            Currency.zero, // No principal paid
+            Currency.zero, // No fees paid
+            entry.dsiInterestDays
           );
           
           // Calculate penalty interest for the unpaid term

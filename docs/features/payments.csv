@@ -1,0 +1,21 @@
+ID,Sequence,Active,Amount,Currency,System Date,Effective Date,Clearing Date,Depositor,Deposit Location,Payment Method,Reference Number,Notes,Allocated Total,Allocated Principal,Allocated Interest,Allocated Fees,Unused Amount,Apply Excess To Principal,Excess Applied Date,Total Refunded (Active),Total Refunds Count,Active Refunds Count,Is Adhoc Refund,Adhoc Balance Impacting,Has Static Allocation,Static Allocation Principal,Static Allocation Interest,Static Allocation Fees,Static Allocation Prepayment,Metadata Type,Metadata,Usage Details Count,Usage Details Bills
+DEPOSIT-C01-1,,Yes,956.01,USD,2025-05-17T08:00,2023-10-16,,,,,,,956.01,730.18,225.83,0,0,No,,0,0,0,No,No,No,,,,,,,1,BILL-0-v6pvy2gnd
+DEPOSIT-C01-2,,Yes,956.01,USD,2025-05-17T08:00,2023-11-21,,,,,,,956.01,738.42,217.59,0,0,No,,0,0,0,No,No,No,,,,,,,1,BILL-1-98jdna1vv
+DEPOSIT-C01-3,,Yes,956.01,USD,2025-05-17T08:00,2023-12-21,,,,,,,956.01,746.76,209.25,0,0,No,,0,0,0,No,No,No,,,,,,,1,BILL-2-ljpkvrgit
+DEPOSIT-C01-4,,Yes,956.01,USD,2025-05-17T08:00,2024-01-21,,,,,,,956.01,755.19,200.82,0,0,No,,0,0,0,No,No,No,,,,,,,1,BILL-3-y8sk1j580
+DEPOSIT-C01-5,,Yes,956.01,USD,2025-05-17T08:00,2024-02-21,,,,,,,956.01,763.72,192.29,0,0,No,,0,0,0,No,No,No,,,,,,,1,BILL-4-0a5nxg494
+DEPOSIT-C01-6,,Yes,956.01,USD,2025-05-17T08:00,2024-03-21,,,,,,,956.01,772.34,183.67,0,0,No,,0,0,0,No,No,No,,,,,,,1,BILL-5-4d7wljxpa
+DEPOSIT-C01-7,,Yes,956.01,USD,2025-05-17T08:00,2024-04-21,,,,,,,956.01,781.06,174.95,0,0,No,,0,0,0,No,No,No,,,,,,,1,BILL-6-c5kcuzkci
+DEPOSIT-C01-8,,Yes,956.01,USD,2025-05-17T08:00,2024-05-21,,,,,,,956.01,789.88,166.13,0,0,No,,0,0,0,No,No,No,,,,,,,1,BILL-7-gk0pgsfzy
+DEPOSIT-C01-9,,Yes,956.01,USD,2025-05-17T08:00,2024-06-21,,,,,,,956.01,798.8,157.21,0,0,No,,0,0,0,No,No,No,,,,,,,1,BILL-8-lcx5al513
+DEPOSIT-C01-10,,Yes,956.01,USD,2025-05-17T08:00,2024-07-21,,,,,,,956.01,807.82,148.19,0,0,No,,0,0,0,No,No,No,,,,,,,1,BILL-9-bu0bnh0gd
+DEPOSIT-C01-11,,Yes,956.01,USD,2025-05-17T08:00,2024-08-21,,,,,,,956.01,816.94,139.07,0,0,No,,0,0,0,No,No,No,,,,,,,1,BILL-10-u7xrvx3ew
+DEPOSIT-C01-12,,Yes,956.01,USD,2025-05-17T08:00,2024-09-21,,,,,,,956.01,826.17,129.84,0,0,No,,0,0,0,No,No,No,,,,,,,1,BILL-11-oxedlec8k
+DEPOSIT-C01-13,,Yes,956.01,USD,2025-05-17T08:00,2024-10-21,,,,,,,956.01,835.5,120.51,0,0,No,,0,0,0,No,No,No,,,,,,,1,BILL-12-q6snvv4h9
+DEPOSIT-C01-14,,Yes,956.01,USD,2025-05-17T08:00,2024-11-21,,,,,,,956.01,844.93,111.08,0,0,No,,0,0,0,No,No,No,,,,,,,1,BILL-13-bzfgb0llf
+DEPOSIT-C01-15,,Yes,956.01,USD,2025-05-17T08:00,2024-12-21,,,,,,,956.01,854.47,101.54,0,0,No,,0,0,0,No,No,No,,,,,,,1,BILL-14-8kyzzwucw
+DEPOSIT-C01-16,,Yes,956.01,USD,2025-05-17T08:00,2025-01-21,,,,,,,956.01,864.12,91.89,0,0,No,,0,0,0,No,No,No,,,,,,,1,BILL-15-s61zljyka
+DEPOSIT-C01-17,,Yes,956.01,USD,2025-05-17T08:00,2025-02-21,,,,,,,956.01,873.88,82.13,0,0,No,,0,0,0,No,No,No,,,,,,,1,BILL-16-kvrnygnqh
+DEPOSIT-C01-18,,Yes,956.01,USD,2025-05-17T08:00,2025-03-21,,,,,,,956.01,883.75,72.26,0,0,No,,0,0,0,No,No,No,,,,,,,1,BILL-17-qkad7irrf
+DEPOSIT-C01-19,,Yes,956.01,USD,2025-05-17T08:00,2025-04-21,,,,,,,956.01,893.72,62.29,0,0,No,,0,0,0,No,No,No,,,,,,,1,BILL-18-dhoyn82zj
+DEPOSIT-C01-20,,Yes,956.01,USD,2025-05-17T08:00,2025-05-21,,,,,,,956.01,903.82,52.19,0,0,No,,0,0,0,No,No,No,,,,,,,1,BILL-19-x36n70igf

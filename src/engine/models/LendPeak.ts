@@ -223,6 +223,9 @@ export class LendPeak {
   set currentDate(value: LocalDate | Date | string) {
     this._currentDate = DateUtil.normalizeDate(value);
     this.bills.currentDate = this._currentDate;
+    if (this._amortization) {
+      this._amortization.currentDate = this._currentDate;
+    }
   }
 
   get amortizationVersionManager(): AmortizationVersionManager | undefined {
@@ -282,6 +285,11 @@ export class LendPeak {
       // 3️⃣  run the full payment pipeline
       this.applyPayments();
     } while (previousVersion !== this.amortization.versionId && ++guard < 4);
+
+    // 4️⃣ Calculate DSI re-amortization after all payments are applied
+    if (this.billingModel === 'dailySimpleInterest' || this._billingModelOverrides.some(o => o.model === 'dailySimpleInterest')) {
+      this.amortization.calculateDSIReAmortization();
+    }
 
     this.updateJsValues();
   }
@@ -570,6 +578,10 @@ export class LendPeak {
     }
     // Set the billing model callback
     this._amortization.getBillingModelForTerm = (term: number) => this.getBillingModelForTerm(term);
+    // Pass currentDate to amortization if available
+    if (this.currentDate) {
+      this._amortization.currentDate = this.currentDate;
+    }
   }
 
   /** basic state flags */
@@ -605,6 +617,37 @@ export class LendPeak {
   /** Calendar-month delta (rounded down) between planned and actual end dates */
   get monthsSaved(): number {
     return Math.max(ChronoUnit.MONTHS.between(this.actualPayoff, this.expectedMaturity), 0);
+  }
+
+  /**
+   * Calculates total DSI savings and penalty across all terms
+   * Returns the net amount (positive for savings, negative for penalty)
+   */
+  get totalDSIImpact(): { netAmount: number; savings: number; penalty: number } {
+    let totalSavings = 0;
+    let totalPenalty = 0;
+    
+    // Only calculate for DSI loans
+    const isDSI = this._billingModel === 'dailySimpleInterest' || 
+      (this._billingModelOverrides && this._billingModelOverrides.some(o => o.model === 'dailySimpleInterest'));
+    
+    if (!isDSI) {
+      return { netAmount: 0, savings: 0, penalty: 0 };
+    }
+    
+    // Iterate through all amortization entries
+    for (const entry of this.amortization.repaymentSchedule.entries) {
+      if (entry.billingModel === 'dailySimpleInterest') {
+        totalSavings += entry.dsiInterestSavings || 0;
+        totalPenalty += entry.dsiInterestPenalty || 0;
+      }
+    }
+    
+    return {
+      netAmount: totalSavings - totalPenalty,
+      savings: totalSavings,
+      penalty: totalPenalty
+    };
   }
 
   static get DEFAULT_AMORTIZATION_PARAMS(): AmortizationParams {

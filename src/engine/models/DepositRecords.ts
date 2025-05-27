@@ -304,10 +304,15 @@ export class DepositRecords {
 
     const cols = [
       { h: "ID", v: (d: DepositRecord) => d.id },
+      { h: "Active", v: (d: DepositRecord) => (d.active ? "Yes" : "No") },
       { h: "Amount", v: (d: DepositRecord) => d.amount.getRoundedValue(roundingPrecision) },
       { h: "Currency", v: (d: DepositRecord) => d.currency },
+      { h: "System Date", v: (d: DepositRecord) => (d.systemDate ? d.systemDate.toString() : "") },
       { h: "Effective Date", v: (d: DepositRecord) => d.effectiveDate.toString() },
       { h: "Clearing Date", v: (d: DepositRecord) => (d.clearingDate ? d.clearingDate.toString() : "") },
+      { h: "Depositor", v: (d: DepositRecord) => d.depositor || '' },
+      { h: "Deposit Location", v: (d: DepositRecord) => d.depositLocation || '' },
+      { h: "Payment Method", v: (d: DepositRecord) => d.paymentMethod || '' },
       {
         h: "Allocated Total",
         v: (d: DepositRecord) => d.allocatedTotal.getRoundedValue(roundingPrecision),
@@ -327,7 +332,23 @@ export class DepositRecords {
       { h: "Unused Amount", v: (d: DepositRecord) => d.unusedAmount.getRoundedValue(roundingPrecision) },
       { h: "Apply Excess To Principal", v: (d: DepositRecord) => (d.applyExcessToPrincipal ? "Yes" : "No") },
       { h: "Excess Applied Date", v: (d: DepositRecord) => (d.excessAppliedDate ? d.excessAppliedDate.toString() : "") },
-      { h: "Active", v: (d: DepositRecord) => (d.active ? "Yes" : "No") },
+      { h: "Total Refunded (Active)", v: (d: DepositRecord) => d.activeRefundAmount.getRoundedValue(roundingPrecision) },
+      { h: "Total Refunds Count", v: (d: DepositRecord) => d.refunds?.length || 0 },
+      { h: "Active Refunds Count", v: (d: DepositRecord) => d.refunds?.filter(r => r.active).length || 0 },
+      { h: "Is Adhoc Refund", v: (d: DepositRecord) => d.isAdhocRefund ? "Yes" : "No" },
+      { h: "Adhoc Balance Impacting", v: (d: DepositRecord) => d.adhocBalanceImpacting ? "Yes" : "No" },
+      // Static allocation details
+      { h: "Has Static Allocation", v: (d: DepositRecord) => d.staticAllocation ? "Yes" : "No" },
+      { h: "Static Allocation Principal", v: (d: DepositRecord) => d.staticAllocation?.principal.getRoundedValue(roundingPrecision) || '' },
+      { h: "Static Allocation Interest", v: (d: DepositRecord) => d.staticAllocation?.interest.getRoundedValue(roundingPrecision) || '' },
+      { h: "Static Allocation Fees", v: (d: DepositRecord) => d.staticAllocation?.fees.getRoundedValue(roundingPrecision) || '' },
+      { h: "Static Allocation Prepayment", v: (d: DepositRecord) => d.staticAllocation?.prepayment.getRoundedValue(roundingPrecision) || '' },
+      // Metadata
+      { h: "Metadata Type", v: (d: DepositRecord) => d.metadata?.type || '' },
+      { h: "Metadata", v: (d: DepositRecord) => d.metadata ? JSON.stringify(d.metadata) : '' },
+      // Usage details summary
+      { h: "Usage Details Count", v: (d: DepositRecord) => d.usageDetails?.length || 0 },
+      { h: "Usage Details Bills", v: (d: DepositRecord) => d.usageDetails?.map(u => u.billId).join(';') || '' },
     ];
 
     const esc = (s: any) => {
@@ -338,6 +359,49 @@ export class DepositRecords {
 
     const header = cols.map((c) => c.h).join(",");
     const rows = this.allSorted.map((d) => cols.map((c) => esc(c.v(d))).join(","));
+    return [header, ...rows].join("\n");
+  }
+
+  /**
+   * Exports all usage details across all deposits to CSV format.
+   * This provides a detailed view of how each deposit was allocated to bills.
+   */
+  exportUsageDetailsToCSV(roundingPrecision = 2): string {
+    const usageDetails: Array<{deposit: DepositRecord, usage: any}> = [];
+    
+    // Collect all usage details with their parent deposit
+    this.allSorted.forEach(deposit => {
+      if (deposit.usageDetails && deposit.usageDetails.length > 0) {
+        deposit.usageDetails.forEach(usage => {
+          usageDetails.push({ deposit, usage });
+        });
+      }
+    });
+
+    if (usageDetails.length === 0) return "";
+
+    const cols = [
+      { h: "Deposit ID", v: (item: any) => item.deposit.id },
+      { h: "Deposit Amount", v: (item: any) => item.deposit.amount.getRoundedValue(roundingPrecision) },
+      { h: "Deposit Effective Date", v: (item: any) => item.deposit.effectiveDate.toString() },
+      { h: "Bill ID", v: (item: any) => item.usage.billId },
+      { h: "Bill Due Date", v: (item: any) => item.usage.billDueDate?.toString() || '' },
+      { h: "Allocated Principal", v: (item: any) => item.usage.allocatedPrincipal.getRoundedValue(roundingPrecision) },
+      { h: "Allocated Interest", v: (item: any) => item.usage.allocatedInterest.getRoundedValue(roundingPrecision) },
+      { h: "Allocated Fees", v: (item: any) => item.usage.allocatedFees.getRoundedValue(roundingPrecision) },
+      { h: "Allocated Total", v: (item: any) => (item.usage.allocatedPrincipal.add(item.usage.allocatedInterest).add(item.usage.allocatedFees)).getRoundedValue(roundingPrecision) },
+      { h: "Allocation Date", v: (item: any) => item.usage.allocationDate?.toString() || '' },
+      { h: "Allocation Type", v: (item: any) => item.usage.allocationType || '' },
+    ];
+
+    const esc = (s: any) => {
+      let str = String(s);
+      if (str.includes('"')) str = str.replace(/"/g, '""');
+      return /[",\n]/.test(str) ? `"${str}"` : str;
+    };
+
+    const header = cols.map((c) => c.h).join(",");
+    const rows = usageDetails.map((item) => cols.map((c) => esc(c.v(item))).join(","));
     return [header, ...rows].join("\n");
   }
 

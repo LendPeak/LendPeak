@@ -122,6 +122,15 @@ export class AppComponent implements OnChanges, AfterViewInit, OnInit, OnDestroy
   actualLoanSummary?: ActualLoanSummary;
   pastDueSummary?: PastDueSummary;
 
+  // DSI Impact tracking
+  get dsiImpact(): { netAmount: number; savings: number; penalty: number } {
+    return this.lendPeak.totalDSIImpact;
+  }
+
+  get hasDSIOverrides(): boolean {
+    return this.lendPeak.billingModelOverrides && this.lendPeak.billingModelOverrides.length > 0;
+  }
+
   showRawImportDialogVisible: boolean = false;
   rawImportJSON: any = {};
 

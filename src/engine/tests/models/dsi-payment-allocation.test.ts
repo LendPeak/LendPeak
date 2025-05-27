@@ -174,6 +174,9 @@ describe('DSI Payment Allocation', () => {
       });
       paymentApp.processDeposits(latePaymentDate);
       
+      // Recalculate to trigger DSI re-amortization
+      loan.calc();
+      
       const firstEntry = loan.amortization.repaymentSchedule.entries[0];
       
       // Actual interest should be higher than expected due to late payment

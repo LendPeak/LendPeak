@@ -48,6 +48,10 @@ export class AmortizationExport {
         value: (entry: AmortizationEntry) => entry.term,
       },
       {
+        header: "Billing Model",
+        value: (entry: AmortizationEntry) => entry.billingModel || '',
+      },
+      {
         header: "Period Start Date",
         value: (entry: AmortizationEntry) => entry.periodStartDate.toString(),
       },
@@ -134,6 +138,106 @@ export class AmortizationExport {
       {
         header: "Unbilled Interest Due To Rounding",
         value: (entry: AmortizationEntry) => entry.unbilledInterestDueToRounding.getRoundedValue(this.amortization.roundingPrecision),
+      },
+      // DSI fields
+      {
+        header: "DSI Previous Payment Date",
+        value: (entry: AmortizationEntry) => entry.dsiPreviousPaymentDate?.toString() || '',
+      },
+      {
+        header: "DSI Interest Days",
+        value: (entry: AmortizationEntry) => entry.dsiInterestDays || '',
+      },
+      {
+        header: "DSI Actual Start Balance",
+        value: (entry: AmortizationEntry) => entry.actualDSIStartBalance?.getRoundedValue(this.amortization.roundingPrecision) || '',
+      },
+      {
+        header: "DSI Actual End Balance",
+        value: (entry: AmortizationEntry) => entry.actualDSIEndBalance?.getRoundedValue(this.amortization.roundingPrecision) || '',
+      },
+      {
+        header: "DSI Actual Interest",
+        value: (entry: AmortizationEntry) => entry.actualDSIInterest?.getRoundedValue(this.amortization.roundingPrecision) || '',
+      },
+      {
+        header: "DSI Actual Principal",
+        value: (entry: AmortizationEntry) => entry.actualDSIPrincipal?.getRoundedValue(this.amortization.roundingPrecision) || '',
+      },
+      {
+        header: "DSI Actual Fees",
+        value: (entry: AmortizationEntry) => entry.actualDSIFees?.getRoundedValue(this.amortization.roundingPrecision) || '',
+      },
+      {
+        header: "DSI Interest Savings",
+        value: (entry: AmortizationEntry) => entry.dsiInterestSavings || '',
+      },
+      {
+        header: "DSI Interest Penalty",
+        value: (entry: AmortizationEntry) => entry.dsiInterestPenalty || '',
+      },
+      // Re-amortization fields
+      {
+        header: "Re-amortized Start Balance",
+        value: (entry: AmortizationEntry) => entry.reAmortizedStartBalance?.getRoundedValue(this.amortization.roundingPrecision) || '',
+      },
+      {
+        header: "Re-amortized End Balance",
+        value: (entry: AmortizationEntry) => entry.reAmortizedEndBalance?.getRoundedValue(this.amortization.roundingPrecision) || '',
+      },
+      {
+        header: "Re-amortized Interest",
+        value: (entry: AmortizationEntry) => entry.reAmortizedInterest?.getRoundedValue(this.amortization.roundingPrecision) || '',
+      },
+      {
+        header: "Re-amortized Principal",
+        value: (entry: AmortizationEntry) => entry.reAmortizedPrincipal?.getRoundedValue(this.amortization.roundingPrecision) || '',
+      },
+      {
+        header: "Re-amortized Fees",
+        value: (entry: AmortizationEntry) => entry.reAmortizedFees?.getRoundedValue(this.amortization.roundingPrecision) || '',
+      },
+      {
+        header: "Re-amortized Total Payment",
+        value: (entry: AmortizationEntry) => entry.reAmortizedTotalPayment?.getRoundedValue(this.amortization.roundingPrecision) || '',
+      },
+      {
+        header: "Re-amortized DSI Interest Days",
+        value: (entry: AmortizationEntry) => entry.reAmortizedDsiInterestDays || '',
+      },
+      {
+        header: "Re-amortized Per Diem",
+        value: (entry: AmortizationEntry) => entry.reAmortizedPerDiem?.getRoundedValue(this.amortization.roundingPrecision) || '',
+      },
+      // Status flags
+      {
+        header: "Is Current Active Term",
+        value: (entry: AmortizationEntry) => entry.isCurrentActiveTerm ? 'Yes' : 'No',
+      },
+      {
+        header: "Is Delinquent",
+        value: (entry: AmortizationEntry) => entry.isDelinquent ? 'Yes' : 'No',
+      },
+      {
+        header: "Last Payment Date",
+        value: (entry: AmortizationEntry) => entry.lastPaymentDate?.toString() || '',
+      },
+      // Other fields
+      {
+        header: "Billable Period",
+        value: (entry: AmortizationEntry) => entry.billablePeriod ? 'Yes' : 'No',
+      },
+      {
+        header: "Pre-bill Days",
+        value: (entry: AmortizationEntry) => entry.prebillDaysConfiguration || '',
+      },
+      {
+        header: "Bill Due Days After Period End",
+        value: (entry: AmortizationEntry) => entry.billDueDaysAfterPeriodEndConfiguration || '',
+      },
+      {
+        header: "Calendar Type",
+        value: (entry: AmortizationEntry) => entry.calendar?.calendarType || '',
       },
       // Step 3: Add metadata fields dynamically
       ...metadataKeysArray.map((key) => ({

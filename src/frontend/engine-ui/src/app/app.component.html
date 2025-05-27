@@ -881,6 +881,41 @@
                   </p-card>
                 </div>
               </div>
+              <!-- DSI Savings/Penalty Tile -->
+              <div class="grid mt-3" *ngIf="lendPeak.billingModel === 'dailySimpleInterest' || hasDSIOverrides">
+                <div class="col-12">
+                  <p-card [ngClass]="{'dsi-savings-card': dsiImpact.netAmount >= 0, 'dsi-penalty-card': dsiImpact.netAmount < 0}">
+                    <ng-template #header>
+                      <div class="card-header-container font-semibold text-xl">
+                        DSI {{ dsiImpact.netAmount >= 0 ? 'Savings' : 'Penalty' }}
+                      </div>
+                    </ng-template>
+
+                    <p class="m-0 font-semibold text-5xl text-center" 
+                       [ngClass]="{'text-green-600': dsiImpact.netAmount >= 0, 'text-red-600': dsiImpact.netAmount < 0}">
+                      {{ dsiImpact.netAmount >= 0 ? '+' : '' }}{{ dsiImpact.netAmount | currency }}
+                    </p>
+                    
+                    <div class="dsi-details mt-3 text-center">
+                      <div class="flex justify-content-center gap-4">
+                        <p-tag 
+                          severity="success" 
+                          [value]="'Savings: ' + (dsiImpact.savings | currency)"
+                          *ngIf="dsiImpact.savings > 0">
+                        </p-tag>
+                        <p-tag 
+                          severity="danger" 
+                          [value]="'Penalty: ' + (dsiImpact.penalty | currency)"
+                          *ngIf="dsiImpact.penalty > 0">
+                        </p-tag>
+                      </div>
+                      <div class="text-sm text-500 mt-2">
+                        Total payment activity impact on interest charges
+                      </div>
+                    </div>
+                  </p-card>
+                </div>
+              </div>
             </p-accordion-content>
           </p-accordion-panel>
         </p-accordion>

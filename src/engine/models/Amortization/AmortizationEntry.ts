@@ -90,6 +90,25 @@ export interface AmortizationEntryParams {
   // DSI balance tracking
   actualDSIStartBalance?: number | Currency;
   actualDSIEndBalance?: number | Currency;
+  
+  // DSI interest duration tracking
+  dsiInterestDays?: number;
+  dsiPreviousPaymentDate?: LocalDate;
+  
+  // Re-amortized fields
+  reAmortizedStartBalance?: number | Currency;
+  reAmortizedEndBalance?: number | Currency;
+  reAmortizedInterest?: number | Currency;
+  reAmortizedPrincipal?: number | Currency;
+  reAmortizedFees?: number | Currency;
+  reAmortizedTotalPayment?: number | Currency;
+  reAmortizedDsiInterestDays?: number;
+  reAmortizedPerDiem?: number | Currency;
+  
+  // Status flags
+  isCurrentActiveTerm?: boolean;
+  isDelinquent?: boolean;
+  lastPaymentDate?: LocalDate;
 }
 
 /**
@@ -154,6 +173,29 @@ export class AmortizationEntry {
   // DSI actual balance tracking
   public actualDSIStartBalance?: Currency;
   public actualDSIEndBalance?: Currency;
+  
+  // DSI interest duration tracking
+  public dsiInterestDays?: number;
+  public dsiPreviousPaymentDate?: LocalDate;
+
+  // Re-amortized balance fields
+  public reAmortizedStartBalance?: Currency;
+  public reAmortizedEndBalance?: Currency;
+
+  // Re-amortized payment breakdown
+  public reAmortizedInterest?: Currency;
+  public reAmortizedPrincipal?: Currency;
+  public reAmortizedFees?: Currency;
+  public reAmortizedTotalPayment?: Currency;
+
+  // Re-amortized DSI tracking
+  public reAmortizedDsiInterestDays?: number;
+  public reAmortizedPerDiem?: Currency;
+
+  // Status flags
+  public isCurrentActiveTerm?: boolean;
+  public isDelinquent?: boolean;
+  public lastPaymentDate?: LocalDate;
 
   //
   // =========== PUBLIC "js*" PROPERTIES FOR UI BINDING ===========
@@ -211,6 +253,17 @@ export class AmortizationEntry {
       usageDetails?: any[];
       actualDSIStartBalance?: Currency | number;
       actualDSIEndBalance?: Currency | number;
+      reAmortizedStartBalance?: Currency | number;
+      reAmortizedEndBalance?: Currency | number;
+      reAmortizedInterest?: Currency | number;
+      reAmortizedPrincipal?: Currency | number;
+      reAmortizedFees?: Currency | number;
+      reAmortizedTotalPayment?: Currency | number;
+      reAmortizedDsiInterestDays?: number;
+      reAmortizedPerDiem?: Currency | number;
+      isCurrentActiveTerm?: boolean;
+      isDelinquent?: boolean;
+      lastPaymentDate?: LocalDate;
     }
   ) {
     this.term = params.term;
@@ -274,6 +327,47 @@ export class AmortizationEntry {
     }
     if (params.actualDSIEndBalance !== undefined) {
       this.actualDSIEndBalance = Currency.of(params.actualDSIEndBalance);
+    }
+    if (params.dsiInterestDays !== undefined) {
+      this.dsiInterestDays = params.dsiInterestDays;
+    }
+    if (params.dsiPreviousPaymentDate) {
+      this.dsiPreviousPaymentDate = params.dsiPreviousPaymentDate;
+    }
+
+    // Initialize re-amortized fields
+    if (params.reAmortizedStartBalance !== undefined) {
+      this.reAmortizedStartBalance = Currency.of(params.reAmortizedStartBalance);
+    }
+    if (params.reAmortizedEndBalance !== undefined) {
+      this.reAmortizedEndBalance = Currency.of(params.reAmortizedEndBalance);
+    }
+    if (params.reAmortizedInterest !== undefined) {
+      this.reAmortizedInterest = Currency.of(params.reAmortizedInterest);
+    }
+    if (params.reAmortizedPrincipal !== undefined) {
+      this.reAmortizedPrincipal = Currency.of(params.reAmortizedPrincipal);
+    }
+    if (params.reAmortizedFees !== undefined) {
+      this.reAmortizedFees = Currency.of(params.reAmortizedFees);
+    }
+    if (params.reAmortizedTotalPayment !== undefined) {
+      this.reAmortizedTotalPayment = Currency.of(params.reAmortizedTotalPayment);
+    }
+    if (params.reAmortizedDsiInterestDays !== undefined) {
+      this.reAmortizedDsiInterestDays = params.reAmortizedDsiInterestDays;
+    }
+    if (params.reAmortizedPerDiem !== undefined) {
+      this.reAmortizedPerDiem = Currency.of(params.reAmortizedPerDiem);
+    }
+    if (params.isCurrentActiveTerm !== undefined) {
+      this.isCurrentActiveTerm = params.isCurrentActiveTerm;
+    }
+    if (params.isDelinquent !== undefined) {
+      this.isDelinquent = params.isDelinquent;
+    }
+    if (params.lastPaymentDate) {
+      this.lastPaymentDate = params.lastPaymentDate;
     }
 
     // Finally, push model data → jsX for the UI
@@ -685,6 +779,23 @@ export class AmortizationEntry {
       dsiInterestSavings: this.dsiInterestSavings,
       dsiInterestPenalty: this.dsiInterestPenalty,
       usageDetails: this.usageDetails,
+      actualDSIStartBalance: this.actualDSIStartBalance?.toNumber?.() ?? undefined,
+      actualDSIEndBalance: this.actualDSIEndBalance?.toNumber?.() ?? undefined,
+      dsiInterestDays: this.dsiInterestDays,
+      dsiPreviousPaymentDate: this.dsiPreviousPaymentDate?.toString?.() ?? undefined,
+      
+      // Re-amortized fields
+      reAmortizedStartBalance: this.reAmortizedStartBalance?.toNumber?.() ?? undefined,
+      reAmortizedEndBalance: this.reAmortizedEndBalance?.toNumber?.() ?? undefined,
+      reAmortizedInterest: this.reAmortizedInterest?.toNumber?.() ?? undefined,
+      reAmortizedPrincipal: this.reAmortizedPrincipal?.toNumber?.() ?? undefined,
+      reAmortizedFees: this.reAmortizedFees?.toNumber?.() ?? undefined,
+      reAmortizedTotalPayment: this.reAmortizedTotalPayment?.toNumber?.() ?? undefined,
+      reAmortizedDsiInterestDays: this.reAmortizedDsiInterestDays,
+      reAmortizedPerDiem: this.reAmortizedPerDiem?.toNumber?.() ?? undefined,
+      isCurrentActiveTerm: this.isCurrentActiveTerm,
+      isDelinquent: this.isDelinquent,
+      lastPaymentDate: this.lastPaymentDate?.toString?.() ?? undefined,
     };
     return Object.assign(base /* existing fields */);
   }
@@ -744,6 +855,23 @@ export class AmortizationEntry {
       dsiInterestSavings: json.dsiInterestSavings,
       dsiInterestPenalty: json.dsiInterestPenalty,
       usageDetails: json.usageDetails,
+      actualDSIStartBalance: json.actualDSIStartBalance,
+      actualDSIEndBalance: json.actualDSIEndBalance,
+      dsiInterestDays: json.dsiInterestDays,
+      dsiPreviousPaymentDate: json.dsiPreviousPaymentDate,
+      
+      // Re-amortized fields
+      reAmortizedStartBalance: json.reAmortizedStartBalance,
+      reAmortizedEndBalance: json.reAmortizedEndBalance,
+      reAmortizedInterest: json.reAmortizedInterest,
+      reAmortizedPrincipal: json.reAmortizedPrincipal,
+      reAmortizedFees: json.reAmortizedFees,
+      reAmortizedTotalPayment: json.reAmortizedTotalPayment,
+      reAmortizedDsiInterestDays: json.reAmortizedDsiInterestDays,
+      reAmortizedPerDiem: json.reAmortizedPerDiem,
+      isCurrentActiveTerm: json.isCurrentActiveTerm,
+      isDelinquent: json.isDelinquent,
+      lastPaymentDate: json.lastPaymentDate,
     });
   }
 
